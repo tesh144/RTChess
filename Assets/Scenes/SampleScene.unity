@@ -1636,7 +1636,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9218407696684505593, guid: f605eb6ec8e794527ab85039928f1788, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 33.66
       objectReference: {fileID: 0}
     - target: {fileID: 9218407696684505593, guid: f605eb6ec8e794527ab85039928f1788, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -2207,6 +2207,26 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 16.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 57
+      objectReference: {fileID: 0}
+    - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -7.8378
+      objectReference: {fileID: 0}
     - target: {fileID: 3313957662665470214, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 87
@@ -2214,6 +2234,22 @@ PrefabInstance:
     - target: {fileID: 4247668821411773139, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_Name
       value: GatchaButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 5755166475851321005, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5755166475851321005, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5755166475851321005, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5755166475851321005, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
