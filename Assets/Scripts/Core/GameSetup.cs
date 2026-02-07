@@ -126,11 +126,12 @@ namespace ClockworkGrid
             SetupWaveManager();
             SetupUI();
             SetupDockBar();
-            SetupWaveTimelineUI();
+            // SetupWaveTimelineUI(); // REMOVED: Timeline UI now manually created in Unity Editor scene
             SetupGameOverManager();
             SetupDebugPanel();
             SetupDebugMenu();
             SetupDebugPlacer();
+            // SetupTimelineTestButton(); // Removed: Timeline integrates automatically with WaveManager
             SetupLighting();
         }
 
@@ -455,7 +456,10 @@ namespace ClockworkGrid
 
         private void SetupUI()
         {
-            // Create EventSystem for UI input (required for button clicks)
+            // UI is now manually created in Unity Editor!
+            // This method just ensures EventSystem exists and finds UI components
+
+            // Create EventSystem if missing (required for button clicks)
             if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 GameObject eventSystemObj = new GameObject("EventSystem");
@@ -463,468 +467,114 @@ namespace ClockworkGrid
                 eventSystemObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
             }
 
-            // Create canvas
-            GameObject canvasObj = new GameObject("UICanvas");
-            Canvas canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 100;
-            canvasObj.AddComponent<CanvasScaler>();
-            canvasObj.AddComponent<GraphicRaycaster>();
+            // All UI should be manually created in the scene following the guide in:
+            // SETUP_UI_HIERARCHY.md (to be created)
 
-            // VERTICAL INTERVAL TIMER BAR (left edge)
-            // Background strip
-            GameObject intervalBarBg = new GameObject("IntervalBarBackground");
-            intervalBarBg.transform.SetParent(canvasObj.transform, false);
-            Image barBgImage = intervalBarBg.AddComponent<Image>();
-            barBgImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-            barBgImage.color = new Color(0.1f, 0.1f, 0.1f, 0.7f);
-
-            RectTransform barBgRect = intervalBarBg.GetComponent<RectTransform>();
-            barBgRect.anchorMin = new Vector2(0, 0);
-            barBgRect.anchorMax = new Vector2(0, 1);
-            barBgRect.pivot = new Vector2(0, 0.5f);
-            barBgRect.anchoredPosition = new Vector2(0, 0);
-            barBgRect.sizeDelta = new Vector2(25f, -40f); // 25px wide, 20px padding top/bottom
-
-            // Vertical fill bar (fills upward)
-            GameObject intervalBarFill = new GameObject("IntervalBarFill");
-            intervalBarFill.transform.SetParent(intervalBarBg.transform, false);
-            Image fillImage = intervalBarFill.AddComponent<Image>();
-            fillImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-            fillImage.color = new Color(0f, 0.83f, 1f, 0.95f); // Bright cyan #00D4FF
-            fillImage.type = Image.Type.Filled;
-            fillImage.fillMethod = Image.FillMethod.Vertical;
-            fillImage.fillOrigin = (int)Image.OriginVertical.Bottom; // Fill from bottom upward
-
-            RectTransform fillRect = intervalBarFill.GetComponent<RectTransform>();
-            fillRect.anchorMin = Vector2.zero;
-            fillRect.anchorMax = Vector2.one;
-            fillRect.sizeDelta = Vector2.zero;
-            fillRect.offsetMin = Vector2.zero;
-            fillRect.offsetMax = Vector2.zero;
-
-            // Interval count number (small, at top of bar)
-            GameObject intervalTextObj = new GameObject("IntervalText");
-            intervalTextObj.transform.SetParent(intervalBarBg.transform, false);
-
-            TextMeshProUGUI intervalText = intervalTextObj.AddComponent<TextMeshProUGUI>();
-            intervalText.text = "0";
-            intervalText.fontSize = 16;
-            intervalText.color = Color.white;
-            intervalText.alignment = TextAlignmentOptions.Center;
-            intervalText.fontStyle = FontStyles.Bold;
-
-            RectTransform intervalTextRect = intervalTextObj.GetComponent<RectTransform>();
-            intervalTextRect.anchorMin = new Vector2(0, 1);
-            intervalTextRect.anchorMax = new Vector2(1, 1);
-            intervalTextRect.pivot = new Vector2(0.5f, 1);
-            intervalTextRect.anchoredPosition = new Vector2(0, 5f);
-            intervalTextRect.sizeDelta = new Vector2(0, 30f);
-
-            // TOKEN DISPLAY (top-right corner, Phase 6 redesign)
-            // Container with background
-            GameObject tokenContainerObj = new GameObject("TokenContainer");
-            tokenContainerObj.transform.SetParent(canvasObj.transform, false);
-
-            RectTransform tokenContainer = tokenContainerObj.AddComponent<RectTransform>();
-            tokenContainer.anchorMin = new Vector2(1, 1);
-            tokenContainer.anchorMax = new Vector2(1, 1);
-            tokenContainer.pivot = new Vector2(1, 1);
-            tokenContainer.anchoredPosition = new Vector2(-20, -20);
-            tokenContainer.sizeDelta = new Vector2(140f, 60f);
-
-            // Background panel
-            Image containerBg = tokenContainerObj.AddComponent<Image>();
-            containerBg.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-            containerBg.color = new Color(0.15f, 0.15f, 0.2f, 0.9f); // Dark purple-gray
-
-            // Token icon (circular coin)
-            GameObject iconObj = new GameObject("TokenIcon");
-            iconObj.transform.SetParent(tokenContainerObj.transform, false);
-
-            RectTransform iconRect = iconObj.AddComponent<RectTransform>();
-            iconRect.anchorMin = new Vector2(0, 0.5f);
-            iconRect.anchorMax = new Vector2(0, 0.5f);
-            iconRect.pivot = new Vector2(0, 0.5f);
-            iconRect.anchoredPosition = new Vector2(15f, 0f);
-            iconRect.sizeDelta = new Vector2(40f, 40f);
-
-            Image tokenIcon = iconObj.AddComponent<Image>();
-            tokenIcon.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-            tokenIcon.color = new Color(1f, 0.9f, 0.2f); // Gold
-            tokenIcon.type = Image.Type.Filled;
-            tokenIcon.fillMethod = Image.FillMethod.Radial360;
-            tokenIcon.fillOrigin = (int)Image.Origin360.Top;
-
-            // Inner circle (creates coin effect)
-            GameObject innerCircleObj = new GameObject("InnerCircle");
-            innerCircleObj.transform.SetParent(iconObj.transform, false);
-
-            RectTransform innerRect = innerCircleObj.AddComponent<RectTransform>();
-            innerRect.anchorMin = Vector2.zero;
-            innerRect.anchorMax = Vector2.one;
-            innerRect.sizeDelta = new Vector2(-10f, -10f); // Inset by 5px on each side
-
-            Image innerCircle = innerCircleObj.AddComponent<Image>();
-            innerCircle.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-            innerCircle.color = new Color(0.8f, 0.7f, 0.1f); // Darker gold
-
-            // Token count text
-            GameObject tokenTextObj = new GameObject("TokenText");
-            tokenTextObj.transform.SetParent(tokenContainerObj.transform, false);
-
-            TextMeshProUGUI tokenText = tokenTextObj.AddComponent<TextMeshProUGUI>();
-            tokenText.text = "10";
-            tokenText.fontSize = 36;
-            tokenText.color = new Color(1f, 0.95f, 0.8f); // Light cream
-            tokenText.alignment = TextAlignmentOptions.MidlineRight;
-            tokenText.fontStyle = FontStyles.Bold;
-
-            RectTransform tokenTextRect = tokenTextObj.GetComponent<RectTransform>();
-            tokenTextRect.anchorMin = new Vector2(0.4f, 0);
-            tokenTextRect.anchorMax = new Vector2(1f, 1f);
-            tokenTextRect.pivot = new Vector2(1, 0.5f);
-            tokenTextRect.anchoredPosition = new Vector2(-10f, 0f);
-            tokenTextRect.sizeDelta = Vector2.zero;
-
-            // WAVE TIMELINE (top-center, below token counter)
-            GameObject timelineContainerObj = new GameObject("WaveTimelineContainer");
-            timelineContainerObj.transform.SetParent(canvasObj.transform, false);
-
-            RectTransform timelineContainer = timelineContainerObj.AddComponent<RectTransform>();
-            timelineContainer.anchorMin = new Vector2(0.5f, 1f);
-            timelineContainer.anchorMax = new Vector2(0.5f, 1f);
-            timelineContainer.pivot = new Vector2(0.5f, 1f);
-            timelineContainer.anchoredPosition = new Vector2(0f, -70f); // Below token text
-            timelineContainer.sizeDelta = new Vector2(600f, 80f);
-
-            // Background
-            Image timelineBg = timelineContainerObj.AddComponent<Image>();
-            timelineBg.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-            timelineBg.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
-
-            // Progress fill bar (shows current position in timeline)
-            GameObject progressObj = new GameObject("ProgressFill");
-            progressObj.transform.SetParent(timelineContainerObj.transform, false);
-
-            Image progressFill = progressObj.AddComponent<Image>();
-            progressFill.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-            progressFill.color = new Color(0f, 0.83f, 1f, 0.5f); // Semi-transparent cyan
-            progressFill.type = Image.Type.Filled;
-            progressFill.fillMethod = Image.FillMethod.Horizontal;
-            progressFill.fillOrigin = (int)Image.OriginHorizontal.Left;
-
-            RectTransform progressRect = progressObj.GetComponent<RectTransform>();
-            progressRect.anchorMin = Vector2.zero;
-            progressRect.anchorMax = Vector2.one;
-            progressRect.sizeDelta = Vector2.zero;
-
-            // Markers panel (holds wave markers)
-            GameObject markersPanelObj = new GameObject("MarkersPanel");
-            markersPanelObj.transform.SetParent(timelineContainerObj.transform, false);
-
-            RectTransform markersPanel = markersPanelObj.AddComponent<RectTransform>();
-            markersPanel.anchorMin = Vector2.zero;
-            markersPanel.anchorMax = Vector2.one;
-            markersPanel.sizeDelta = Vector2.zero;
-
-            // Wave info text (above timeline)
-            GameObject waveInfoObj = new GameObject("WaveInfoText");
-            waveInfoObj.transform.SetParent(timelineContainerObj.transform, false);
-
-            TextMeshProUGUI waveInfoText = waveInfoObj.AddComponent<TextMeshProUGUI>();
-            waveInfoText.text = "Wave 1: 40s";
-            waveInfoText.fontSize = 18;
-            waveInfoText.color = Color.white;
-            waveInfoText.alignment = TextAlignmentOptions.Center;
-            waveInfoText.fontStyle = FontStyles.Bold;
-
-            RectTransform waveInfoRect = waveInfoObj.GetComponent<RectTransform>();
-            waveInfoRect.anchorMin = new Vector2(0f, 1f);
-            waveInfoRect.anchorMax = new Vector2(1f, 1f);
-            waveInfoRect.pivot = new Vector2(0.5f, 0f);
-            waveInfoRect.anchoredPosition = new Vector2(0f, 5f);
-            waveInfoRect.sizeDelta = new Vector2(0f, 25f);
-
-            // Add WaveTimelineUI component
-            WaveTimelineUI waveTimelineUI = canvasObj.AddComponent<WaveTimelineUI>();
-            SetPrivateField(waveTimelineUI, "timelineContainer", timelineContainer);
-            SetPrivateField(waveTimelineUI, "timelineBackground", timelineBg);
-            SetPrivateField(waveTimelineUI, "progressFill", progressFill);
-            SetPrivateField(waveTimelineUI, "markersPanel", markersPanel);
-            SetPrivateField(waveTimelineUI, "waveInfoText", waveInfoText);
-
-            // Instructions text (bottom-center)
-            GameObject instructionsObj = new GameObject("InstructionsText");
-            instructionsObj.transform.SetParent(canvasObj.transform, false);
-
-            TextMeshProUGUI instructions = instructionsObj.AddComponent<TextMeshProUGUI>();
-            instructions.text = "Left-click: Player Soldier (3 tokens)  |  Right-click: Resource  |  Middle/Shift+Left: Enemy Soldier";
-            instructions.fontSize = 16;
-            instructions.color = new Color(1f, 1f, 1f, 0.6f);
-            instructions.alignment = TextAlignmentOptions.Bottom;
-
-            RectTransform instrRect = instructionsObj.GetComponent<RectTransform>();
-            instrRect.anchorMin = new Vector2(0.5f, 0);
-            instrRect.anchorMax = new Vector2(0.5f, 0);
-            instrRect.pivot = new Vector2(0.5f, 0);
-            instrRect.anchoredPosition = new Vector2(0, 20);
-            instrRect.sizeDelta = new Vector2(500, 40);
-
-            // Hook up IntervalUI
-            IntervalUI intervalUI = canvasObj.AddComponent<IntervalUI>();
-            SetPrivateField(intervalUI, "intervalText", intervalText);
-            SetPrivateField(intervalUI, "verticalBar", fillImage);
-
-            // Hook up token UI (Phase 6)
-            TokenUI tokenUI = canvasObj.AddComponent<TokenUI>();
-            SetPrivateField(tokenUI, "tokenText", tokenText);
-            SetPrivateField(tokenUI, "tokenIcon", tokenIcon);
-            SetPrivateField(tokenUI, "container", tokenContainer);
+            Debug.Log("SetupUI: UI should be manually created in scene hierarchy");
         }
 
         private void SetupDockBar()
         {
-            Canvas canvas = FindObjectOfType<Canvas>();
-            if (canvas == null) return;
+            // DockBarManager, HandManager, and DragDropHandler should be manually created in Unity Editor!
+            // This method just finds them and initializes them if needed
 
-            // Create DragDropHandler singleton
-            GameObject dragHandlerObj = new GameObject("DragDropHandler");
-            dragHandlerObj.AddComponent<DragDropHandler>();
+            // Find DragDropHandler (should exist as standalone GameObject)
+            DragDropHandler dragHandler = FindObjectOfType<DragDropHandler>();
+            if (dragHandler == null)
+            {
+                Debug.LogWarning("DragDropHandler not found in scene. Please create it manually.");
+            }
 
-            // Create HandManager (Phase 2, updated Iteration 6)
-            GameObject handObj = new GameObject("HandManager");
-            HandManager handManager = handObj.AddComponent<HandManager>();
+            // Find HandManager (should exist as standalone GameObject)
+            HandManager handManager = FindObjectOfType<HandManager>();
+            if (handManager == null)
+            {
+                Debug.LogWarning("HandManager not found in scene. Please create it manually.");
+                return;
+            }
+
+            // Initialize HandManager
             handManager.Initialize(); // Iteration 6: Uses RaritySystem
 
             // Give player starting hand (3 Soldiers - Phase 2 spec)
             handManager.GiveStartingHand();
 
-            // Create DockBarManager
-            GameObject dockObj = new GameObject("DockBarManager");
-            dockObj.transform.SetParent(canvas.transform, false);
+            // Find DockBarManager (should exist under UICanvas)
+            DockBarManager dockManager = FindObjectOfType<DockBarManager>();
+            if (dockManager == null)
+            {
+                Debug.LogWarning("DockBarManager not found in scene. Please create it manually under UICanvas.");
+                return;
+            }
 
-            DockBarManager dockManager = dockObj.AddComponent<DockBarManager>();
-            dockManager.Initialize(canvas, handManager);
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas != null)
+            {
+                dockManager.Initialize(canvas, handManager);
+            }
+
+            Debug.Log("SetupDockBar: Found and initialized dock bar components");
         }
 
         private void SetupDebugPanel()
         {
-            // Find the canvas (created in SetupUI)
-            Canvas canvas = FindObjectOfType<Canvas>();
-            if (canvas == null) return;
+            // DebugPanel and HiddenDebugButton should be manually created in Unity Editor!
+            // This method just finds them if they exist
 
-            // Create debug panel root (hidden by default)
-            GameObject panelRoot = new GameObject("DebugPanelRoot");
-            panelRoot.transform.SetParent(canvas.transform, false);
+            DebugPanel debugPanel = FindObjectOfType<DebugPanel>();
+            if (debugPanel == null)
+            {
+                Debug.LogWarning("DebugPanel not found in scene. Debug panel will not be available.");
+            }
 
-            Image panelBg = panelRoot.AddComponent<Image>();
-            panelBg.color = new Color(0.1f, 0.1f, 0.1f, 0.95f);
+            HiddenDebugButton hiddenButton = FindObjectOfType<HiddenDebugButton>();
+            if (hiddenButton == null)
+            {
+                Debug.LogWarning("HiddenDebugButton not found in scene. Debug panel will not be toggleable.");
+            }
 
-            RectTransform panelRect = panelRoot.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
-            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRect.pivot = new Vector2(0.5f, 0.5f);
-            panelRect.anchoredPosition = Vector2.zero;
-            panelRect.sizeDelta = new Vector2(400, 350);
-
-            // Title
-            GameObject titleObj = new GameObject("Title");
-            titleObj.transform.SetParent(panelRoot.transform, false);
-            TextMeshProUGUI title = titleObj.AddComponent<TextMeshProUGUI>();
-            title.text = "DEBUG PANEL";
-            title.fontSize = 28;
-            title.color = Color.yellow;
-            title.alignment = TextAlignmentOptions.Center;
-            title.fontStyle = FontStyles.Bold;
-
-            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0, 1);
-            titleRect.anchorMax = new Vector2(1, 1);
-            titleRect.pivot = new Vector2(0.5f, 1);
-            titleRect.anchoredPosition = new Vector2(0, -20);
-            titleRect.sizeDelta = new Vector2(-40, 40);
-
-            // Buttons container
-            float yPos = -80;
-            float buttonHeight = 45;
-            float spacing = 10;
-
-            // Pause button
-            Button pauseBtn = CreateDebugButton(panelRoot.transform, "Pause", yPos);
-            TextMeshProUGUI pauseBtnText = pauseBtn.GetComponentInChildren<TextMeshProUGUI>();
-            yPos -= buttonHeight + spacing;
-
-            // Speed buttons row
-            GameObject speedRow = new GameObject("SpeedRow");
-            speedRow.transform.SetParent(panelRoot.transform, false);
-            RectTransform speedRowRect = speedRow.AddComponent<RectTransform>();
-            speedRowRect.anchorMin = new Vector2(0, 1);
-            speedRowRect.anchorMax = new Vector2(1, 1);
-            speedRowRect.pivot = new Vector2(0.5f, 1);
-            speedRowRect.anchoredPosition = new Vector2(0, yPos);
-            speedRowRect.sizeDelta = new Vector2(-40, buttonHeight);
-
-            Button speed1x = CreateSmallButton(speedRow.transform, "1x", 0);
-            Button speed2x = CreateSmallButton(speedRow.transform, "2x", 1);
-            Button speed4x = CreateSmallButton(speedRow.transform, "4x", 2);
-            yPos -= buttonHeight + spacing;
-
-            // Speed label
-            GameObject speedLabelObj = new GameObject("SpeedLabel");
-            speedLabelObj.transform.SetParent(panelRoot.transform, false);
-            TextMeshProUGUI speedLabel = speedLabelObj.AddComponent<TextMeshProUGUI>();
-            speedLabel.text = "Speed: 1x";
-            speedLabel.fontSize = 20;
-            speedLabel.color = Color.white;
-            speedLabel.alignment = TextAlignmentOptions.Center;
-
-            RectTransform speedLabelRect = speedLabelObj.GetComponent<RectTransform>();
-            speedLabelRect.anchorMin = new Vector2(0, 1);
-            speedLabelRect.anchorMax = new Vector2(1, 1);
-            speedLabelRect.pivot = new Vector2(0.5f, 1);
-            speedLabelRect.anchoredPosition = new Vector2(0, yPos);
-            speedLabelRect.sizeDelta = new Vector2(-40, 30);
-            yPos -= 40 + spacing;
-
-            // Add 100 Tokens button
-            Button addTokensBtn = CreateDebugButton(panelRoot.transform, "+100 Tokens", yPos);
-            yPos -= buttonHeight + spacing;
-
-            // Clear All button
-            Button clearBtn = CreateDebugButton(panelRoot.transform, "Clear All", yPos);
-
-            // Add DebugPanel component
-            DebugPanel debugPanel = canvas.gameObject.AddComponent<DebugPanel>();
-            SetPrivateField(debugPanel, "panelRoot", panelRoot);
-            SetPrivateField(debugPanel, "pauseButton", pauseBtn);
-            SetPrivateField(debugPanel, "clearAllButton", clearBtn);
-            SetPrivateField(debugPanel, "add100TokensButton", addTokensBtn);
-            SetPrivateField(debugPanel, "speed1xButton", speed1x);
-            SetPrivateField(debugPanel, "speed2xButton", speed2x);
-            SetPrivateField(debugPanel, "speed4xButton", speed4x);
-            SetPrivateField(debugPanel, "pauseButtonText", pauseBtnText);
-            SetPrivateField(debugPanel, "speedText", speedLabel);
-
-            // Create hidden tap button (top-right corner)
-            GameObject hiddenBtnObj = new GameObject("HiddenDebugButton");
-            hiddenBtnObj.transform.SetParent(canvas.transform, false);
-
-            Image hiddenImg = hiddenBtnObj.AddComponent<Image>();
-            hiddenImg.color = new Color(0, 0, 0, 0.01f); // Nearly invisible
-
-            RectTransform hiddenRect = hiddenBtnObj.GetComponent<RectTransform>();
-            hiddenRect.anchorMin = new Vector2(1, 1);
-            hiddenRect.anchorMax = new Vector2(1, 1);
-            hiddenRect.pivot = new Vector2(1, 1);
-            hiddenRect.anchoredPosition = new Vector2(-10, -10);
-            hiddenRect.sizeDelta = new Vector2(100, 100);
-
-            hiddenBtnObj.AddComponent<HiddenDebugButton>();
-        }
-
-        private Button CreateDebugButton(Transform parent, string text, float yPos)
-        {
-            GameObject btnObj = new GameObject($"Button_{text}");
-            btnObj.transform.SetParent(parent, false);
-
-            Image btnImg = btnObj.AddComponent<Image>();
-            btnImg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
-
-            Button btn = btnObj.AddComponent<Button>();
-            var colors = btn.colors;
-            colors.normalColor = new Color(0.3f, 0.3f, 0.3f, 1f);
-            colors.highlightedColor = new Color(0.4f, 0.4f, 0.4f, 1f);
-            colors.pressedColor = new Color(0.2f, 0.2f, 0.2f, 1f);
-            btn.colors = colors;
-
-            RectTransform btnRect = btnObj.GetComponent<RectTransform>();
-            btnRect.anchorMin = new Vector2(0, 1);
-            btnRect.anchorMax = new Vector2(1, 1);
-            btnRect.pivot = new Vector2(0.5f, 1);
-            btnRect.anchoredPosition = new Vector2(0, yPos);
-            btnRect.sizeDelta = new Vector2(-40, 45);
-
-            // Button text
-            GameObject textObj = new GameObject("Text");
-            textObj.transform.SetParent(btnObj.transform, false);
-
-            TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = 20;
-            tmp.color = Color.white;
-            tmp.alignment = TextAlignmentOptions.Center;
-
-            RectTransform textRect = textObj.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-
-            return btn;
-        }
-
-        private Button CreateSmallButton(Transform parent, string text, int index)
-        {
-            GameObject btnObj = new GameObject($"Button_{text}");
-            btnObj.transform.SetParent(parent, false);
-
-            Image btnImg = btnObj.AddComponent<Image>();
-            btnImg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
-
-            Button btn = btnObj.AddComponent<Button>();
-            var colors = btn.colors;
-            colors.normalColor = new Color(0.3f, 0.3f, 0.3f, 1f);
-            colors.highlightedColor = new Color(0.4f, 0.4f, 0.4f, 1f);
-            colors.pressedColor = new Color(0.2f, 0.2f, 0.2f, 1f);
-            btn.colors = colors;
-
-            RectTransform btnRect = btnObj.GetComponent<RectTransform>();
-            btnRect.anchorMin = new Vector2(0, 0);
-            btnRect.anchorMax = new Vector2(0, 1);
-            btnRect.pivot = new Vector2(0, 0.5f);
-
-            float width = 110;
-            float spacing = 10;
-            btnRect.anchoredPosition = new Vector2(index * (width + spacing), 0);
-            btnRect.sizeDelta = new Vector2(width, 0);
-
-            // Button text
-            GameObject textObj = new GameObject("Text");
-            textObj.transform.SetParent(btnObj.transform, false);
-
-            TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = 18;
-            tmp.color = Color.white;
-            tmp.alignment = TextAlignmentOptions.Center;
-
-            RectTransform textRect = textObj.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-
-            return btn;
+            Debug.Log("SetupDebugPanel: Checked for debug panel components");
         }
 
         private void SetupDebugMenu()
         {
+            // DebugMenu should be manually created in Unity Editor!
+            // This method just finds it and initializes if needed
+
+            DebugMenu debugMenu = FindObjectOfType<DebugMenu>();
+            if (debugMenu == null)
+            {
+                Debug.LogWarning("DebugMenu not found in scene. Debug menu will not be available.");
+                return;
+            }
+
             Canvas canvas = FindObjectOfType<Canvas>();
-            if (canvas == null) return;
+            if (canvas != null)
+            {
+                debugMenu.Initialize(canvas);
+            }
 
-            GameObject debugMenuObj = new GameObject("DebugMenu");
-            debugMenuObj.transform.SetParent(canvas.transform, false);
-
-            DebugMenu debugMenu = debugMenuObj.AddComponent<DebugMenu>();
-            debugMenu.Initialize(canvas);
+            Debug.Log("SetupDebugMenu: Found and initialized debug menu");
         }
 
         private void SetupDebugPlacer()
         {
-            GameObject placerObj = new GameObject("DebugPlacer");
-            CellDebugPlacer placer = placerObj.AddComponent<CellDebugPlacer>();
+            // CellDebugPlacer should be manually created in Unity Editor!
+            // This method just finds it and assigns prefab references if needed
+
+            CellDebugPlacer placer = FindObjectOfType<CellDebugPlacer>();
+            if (placer == null)
+            {
+                Debug.LogWarning("CellDebugPlacer not found in scene. Debug placement will not be available.");
+                return;
+            }
+
+            // Assign prefab references using reflection
             SetPrivateField(placer, "soldierPrefab", soldierPrefab);
             SetPrivateField(placer, "enemySoldierPrefab", enemySoldierPrefab);
             SetPrivateField(placer, "resourceNodePrefab", resourceNodePrefab);
+
+            Debug.Log("SetupDebugPlacer: Found and configured debug placer");
         }
 
         private void SetupWaveManager()
@@ -944,22 +594,26 @@ namespace ClockworkGrid
             waveManager.Initialize();
         }
 
-        private void SetupWaveTimelineUI()
-        {
-            Canvas canvas = FindObjectOfType<Canvas>();
-            if (canvas == null)
-            {
-                Debug.LogWarning("No Canvas found for WaveTimelineUI");
-                return;
-            }
-
-            GameObject timelineObj = new GameObject("WaveTimelineUI");
-            WaveTimelineUI timelineUI = timelineObj.AddComponent<WaveTimelineUI>();
-            timelineUI.Initialize(canvas);
-        }
+        // SetupWaveTimelineUI() REMOVED: Timeline UI is now manually created in Unity Editor
+        // To set up the timeline UI:
+        // 1. Add a GameObject to the UICanvas in the scene hierarchy
+        // 2. Name it "SpawnTimelineContainer"
+        // 3. Add the SpawnTimelineUI component
+        // 4. Assign the UI references in the Inspector
+        // See SpawnTimelineUI.cs for details
 
         private void SetupGameOverManager()
         {
+            // GameOverManager should be manually created in Unity Editor!
+            // This method just finds it and initializes if needed
+
+            GameOverManager gameOverManager = FindObjectOfType<GameOverManager>();
+            if (gameOverManager == null)
+            {
+                Debug.LogWarning("GameOverManager not found in scene. Game over screen will not work.");
+                return;
+            }
+
             Canvas canvas = FindObjectOfType<Canvas>();
             if (canvas == null)
             {
@@ -967,9 +621,8 @@ namespace ClockworkGrid
                 return;
             }
 
-            GameObject gameOverObj = new GameObject("GameOverManager");
-            GameOverManager gameOverManager = gameOverObj.AddComponent<GameOverManager>();
             gameOverManager.Initialize(canvas);
+            Debug.Log("SetupGameOverManager: Found and initialized game over manager");
         }
 
         private void SetupLighting()
