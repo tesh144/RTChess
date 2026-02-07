@@ -27,7 +27,8 @@ namespace ClockworkGrid
         [SerializeField] private float baseIntervalDuration = 2.0f;
 
         [Header("Soldier Stats (Common)")]
-        [SerializeField] private GameObject soldierPrefabOverride; // Drag a prefab here, or leave empty for procedural
+        [SerializeField] private GameObject soldierPlayerPrefab; // Drag player prefab, or leave empty for procedural
+        [SerializeField] private GameObject soldierEnemyPrefab; // Drag enemy prefab, or leave empty for procedural
         [SerializeField] private float soldierRarityWeight = 60f;
         [SerializeField] private int soldierHP = 10;
         [SerializeField] private int soldierAttackDamage = 3;
@@ -37,7 +38,8 @@ namespace ClockworkGrid
         [SerializeField] private int soldierRevealRadius = 1;
 
         [Header("Ogre Stats (Epic)")]
-        [SerializeField] private GameObject ogrePrefabOverride; // Drag a prefab here, or leave empty for procedural
+        [SerializeField] private GameObject ogrePlayerPrefab; // Drag player prefab, or leave empty for procedural
+        [SerializeField] private GameObject ogreEnemyPrefab; // Drag enemy prefab, or leave empty for procedural
         [SerializeField] private float ogreRarityWeight = 5f;
         [SerializeField] private int ogreHP = 20;
         [SerializeField] private int ogreAttackDamage = 5;
@@ -49,7 +51,8 @@ namespace ClockworkGrid
         [SerializeField] private Color ogreColor = new Color(0.8f, 0.4f, 1f);
 
         [Header("Ninja Stats (Rare)")]
-        [SerializeField] private GameObject ninjaPrefabOverride; // Drag a prefab here, or leave empty for procedural
+        [SerializeField] private GameObject ninjaPlayerPrefab; // Drag player prefab, or leave empty for procedural
+        [SerializeField] private GameObject ninjaEnemyPrefab; // Drag enemy prefab, or leave empty for procedural
         [SerializeField] private float ninjaRarityWeight = 35f;
         [SerializeField] private int ninjaHP = 5;
         [SerializeField] private int ninjaAttackDamage = 1;
@@ -89,10 +92,16 @@ namespace ClockworkGrid
         [SerializeField] private float cameraHeight = 12f;
         [SerializeField] private float cameraTiltAngle = 15f;
 
+        // Player prefabs (runtime-created)
         private GameObject soldierPrefab;
         private GameObject ogrePrefab;
         private GameObject ninjaPrefab;
+
+        // Enemy prefabs (runtime-created, separate visuals from player)
         private GameObject enemySoldierPrefab;
+        private GameObject enemyOgrePrefab;
+        private GameObject enemyNinjaPrefab;
+
         private GameObject resourceNodePrefab;
 
         // Iteration 8: Multi-level resource prefabs
@@ -288,28 +297,39 @@ namespace ClockworkGrid
         /// </summary>
         private void SetupUnitPrefabs()
         {
-            // Create Soldier prefab (use override if assigned, otherwise generate procedurally)
+            // --- Player prefabs ---
             soldierPrefab = CreateUnitPrefab(
-                soldierPrefabOverride, "SoldierPrefab", playerColor, 1f,
+                soldierPlayerPrefab, "SoldierPrefab", playerColor, 1f,
                 soldierHP, soldierAttackDamage, soldierAttackRange,
                 soldierAttackInterval, soldierResourceCost);
 
-            // Create Ogre prefab (use override if assigned, otherwise generate procedurally)
             ogrePrefab = CreateUnitPrefab(
-                ogrePrefabOverride, "OgrePrefab", ogreColor, ogreModelScale,
+                ogrePlayerPrefab, "OgrePrefab", ogreColor, ogreModelScale,
                 ogreHP, ogreAttackDamage, ogreAttackRange,
                 ogreAttackInterval, ogreResourceCost);
 
-            // Create Ninja prefab (use override if assigned, otherwise generate procedurally)
             ninjaPrefab = CreateUnitPrefab(
-                ninjaPrefabOverride, "NinjaPrefab", ninjaColor, ninjaModelScale,
+                ninjaPlayerPrefab, "NinjaPrefab", ninjaColor, ninjaModelScale,
                 ninjaHP, ninjaAttackDamage, ninjaAttackRange,
                 ninjaAttackInterval, ninjaResourceCost);
 
-            // Store enemy variant (same prefabs, different team applied at spawn)
-            enemySoldierPrefab = soldierPrefab;
+            // --- Enemy prefabs (use enemyColor for procedural fallback) ---
+            enemySoldierPrefab = CreateUnitPrefab(
+                soldierEnemyPrefab, "EnemySoldierPrefab", enemyColor, 1f,
+                soldierHP, soldierAttackDamage, soldierAttackRange,
+                soldierAttackInterval, soldierResourceCost);
 
-            Debug.Log("Created 3 unit type prefabs: Soldier, Ogre, Ninja");
+            enemyOgrePrefab = CreateUnitPrefab(
+                ogreEnemyPrefab, "EnemyOgrePrefab", enemyColor, ogreModelScale,
+                ogreHP, ogreAttackDamage, ogreAttackRange,
+                ogreAttackInterval, ogreResourceCost);
+
+            enemyNinjaPrefab = CreateUnitPrefab(
+                ninjaEnemyPrefab, "EnemyNinjaPrefab", enemyColor, ninjaModelScale,
+                ninjaHP, ninjaAttackDamage, ninjaAttackRange,
+                ninjaAttackInterval, ninjaResourceCost);
+
+            Debug.Log("Created 6 unit prefabs: 3 player + 3 enemy");
         }
 
         /// <summary>
@@ -379,6 +399,7 @@ namespace ClockworkGrid
             soldierStats.unitColor = playerColor;
             soldierStats.modelScale = 1f;
             soldierStats.unitPrefab = soldierPrefab;
+            soldierStats.enemyPrefab = enemySoldierPrefab;
             allStats.Add(soldierStats);
 
             // Ogre Stats (Epic)
@@ -395,6 +416,7 @@ namespace ClockworkGrid
             ogreStats.unitColor = ogreColor;
             ogreStats.modelScale = ogreModelScale;
             ogreStats.unitPrefab = ogrePrefab;
+            ogreStats.enemyPrefab = enemyOgrePrefab;
             allStats.Add(ogreStats);
 
             // Ninja Stats (Rare)
@@ -411,6 +433,7 @@ namespace ClockworkGrid
             ninjaStats.unitColor = ninjaColor;
             ninjaStats.modelScale = ninjaModelScale;
             ninjaStats.unitPrefab = ninjaPrefab;
+            ninjaStats.enemyPrefab = enemyNinjaPrefab;
             allStats.Add(ninjaStats);
 
             // Pass rarity weights from inspector

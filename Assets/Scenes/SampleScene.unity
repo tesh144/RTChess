@@ -170,11 +170,41 @@ MonoBehaviour:
   gridHeight: 11
   cellSize: 1
   baseIntervalDuration: 1
+  soldierPrefabOverride: {fileID: 0}
+  soldierRarityWeight: 60
   soldierHP: 10
   soldierAttackDamage: 3
   soldierAttackRange: 1
   soldierAttackInterval: 2
   soldierResourceCost: 3
+  soldierRevealRadius: 1
+  ogrePrefabOverride: {fileID: 0}
+  ogreRarityWeight: 20
+  ogreHP: 20
+  ogreAttackDamage: 5
+  ogreAttackRange: 2
+  ogreAttackInterval: 4
+  ogreResourceCost: 6
+  ogreRevealRadius: 1
+  ogreModelScale: 1.3
+  ogreColor: {r: 0.8, g: 0.4, b: 1, a: 1}
+  ninjaPrefabOverride: {fileID: 0}
+  ninjaRarityWeight: 40
+  ninjaHP: 5
+  ninjaAttackDamage: 1
+  ninjaAttackRange: 1
+  ninjaAttackInterval: 1
+  ninjaResourceCost: 4
+  ninjaRevealRadius: 2
+  ninjaModelScale: 0.8
+  ninjaColor: {r: 1, g: 0.3, b: 0.3, a: 1}
+  intervalsPerWave: 20
+  baseEnemyCount: 2
+  enemyScaling: 1.2
+  maxWaves: 20
+  baseDowntime: 10
+  minDowntime: 5
+  downtimeDecreaseWave: 10
   resourceNodeHP: 10
   resourceTokensPerHit: 1
   resourceBonusTokens: 3
@@ -188,7 +218,7 @@ MonoBehaviour:
   enemyColor: {r: 1, g: 0.3, b: 0.3, a: 1}
   resourceColor: {r: 0.2, g: 0.85, b: 0.4, a: 1}
   cameraHeight: 12
-  cameraTiltAngle: 15
+  cameraTiltAngle: 90
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

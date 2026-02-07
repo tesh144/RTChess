@@ -52,7 +52,8 @@ namespace ClockworkGrid
         public float modelScale = 1f; // Visual scale multiplier
 
         [Header("References")]
-        public GameObject unitPrefab; // Prefab to spawn
+        public GameObject unitPrefab; // Player prefab to spawn
+        public GameObject enemyPrefab; // Enemy prefab to spawn (falls back to unitPrefab if null)
 
         /// <summary>
         /// Get rarity weight for draw probability
