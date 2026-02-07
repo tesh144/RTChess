@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 namespace ClockworkGrid
 {
@@ -128,6 +129,9 @@ namespace ClockworkGrid
 
         private void OnIntervalTick(int intervalCount)
         {
+            // Visual feedback: Squish animation on every interval tick (helps debugging)
+            StartCoroutine(SquishAnimation());
+
             // Debug logging
             Debug.Log($"[Unit {gameObject.name}] OnIntervalTick called - Interval: {intervalCount}, Multiplier: {attackIntervalMultiplier}, Team: {team}");
 
@@ -149,6 +153,56 @@ namespace ClockworkGrid
             Debug.Log($"[Unit {gameObject.name}] Rotating and attacking!");
             Rotate();
             TryAttack();
+        }
+
+        /// <summary>
+        /// Bouncy squish animation for visual feedback on interval ticks.
+        /// Helps with debugging and adds game feel.
+        /// </summary>
+        private IEnumerator SquishAnimation()
+        {
+            float duration = 0.15f;
+            float squishScale = 0.85f;
+            float bounceScale = 1.05f;
+
+            Vector3 originalScale = transform.localScale;
+
+            // Squish down
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                float t = elapsed / duration;
+                float scale = Mathf.Lerp(1f, squishScale, t);
+                transform.localScale = originalScale * scale;
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            // Bounce back up
+            elapsed = 0f;
+            while (elapsed < duration)
+            {
+                float t = elapsed / duration;
+                float scale = Mathf.Lerp(squishScale, bounceScale, t);
+                transform.localScale = originalScale * scale;
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            // Settle back to normal
+            elapsed = 0f;
+            float settleTime = duration * 0.5f;
+            while (elapsed < settleTime)
+            {
+                float t = elapsed / settleTime;
+                float scale = Mathf.Lerp(bounceScale, 1f, t);
+                transform.localScale = originalScale * scale;
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            // Ensure we end exactly at original scale
+            transform.localScale = originalScale;
         }
 
         private void TryAttack()
