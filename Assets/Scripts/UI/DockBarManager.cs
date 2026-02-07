@@ -317,7 +317,7 @@ namespace ClockworkGrid
                 // Add Image component with unit-specific color
                 Image iconImage = iconObj.AddComponent<Image>();
                 iconImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-                iconImage.color = GetUnitColorByType(unitStats.unitType.ToString());
+                iconImage.color = GetUnitColorByType(unitStats.unitType);
 
                 // Add UnitIcon component
                 icon = iconObj.AddComponent<UnitIcon>();

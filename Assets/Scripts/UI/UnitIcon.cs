@@ -53,13 +53,13 @@ namespace ClockworkGrid
             originalPosition = rectTransform.anchoredPosition;
 
             // Try to find and populate existing UI elements in prefab
-            bool foundPrefabUI = PopulatePrefabUI(stats.resourceCost, stats.unitType.ToString());
+            bool foundPrefabUI = PopulatePrefabUI(stats.resourceCost, stats.unitType);
 
             // Fallback: Create UI dynamically if prefab doesn't have elements
             if (!foundPrefabUI)
             {
-                CreateCostBadge(data.Cost);
-                CreateTypeLabel(data.Type);
+                CreateCostBadge(stats.resourceCost);
+                CreateTypeLabel(stats.unitType);
             }
         }
 
