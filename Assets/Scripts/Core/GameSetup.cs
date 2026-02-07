@@ -36,6 +36,8 @@ namespace ClockworkGrid
         [SerializeField] private int soldierAttackInterval = 2;
         [SerializeField] private int soldierResourceCost = 3;
         [SerializeField] private int soldierRevealRadius = 1;
+        [SerializeField] private float soldierModelScale = 1f;
+        [SerializeField] private Color soldierColor = new Color(0.2f, 0.5f, 1f);
 
         [Header("Ogre Stats (Epic)")]
         [SerializeField] private GameObject ogrePlayerPrefab; // Drag player prefab, or leave empty for procedural
@@ -299,7 +301,7 @@ namespace ClockworkGrid
         {
             // --- Player prefabs ---
             soldierPrefab = CreateUnitPrefab(
-                soldierPlayerPrefab, "SoldierPrefab", playerColor, 1f,
+                soldierPlayerPrefab, "SoldierPrefab", soldierColor, soldierModelScale,
                 soldierHP, soldierAttackDamage, soldierAttackRange,
                 soldierAttackInterval, soldierResourceCost);
 
@@ -315,7 +317,7 @@ namespace ClockworkGrid
 
             // --- Enemy prefabs (use enemyColor for procedural fallback) ---
             enemySoldierPrefab = CreateUnitPrefab(
-                soldierEnemyPrefab, "EnemySoldierPrefab", enemyColor, 1f,
+                soldierEnemyPrefab, "EnemySoldierPrefab", enemyColor, soldierModelScale,
                 soldierHP, soldierAttackDamage, soldierAttackRange,
                 soldierAttackInterval, soldierResourceCost);
 
@@ -400,8 +402,8 @@ namespace ClockworkGrid
             soldierStats.attackIntervalMultiplier = soldierAttackInterval;
             soldierStats.resourceCost = soldierResourceCost;
             soldierStats.revealRadius = soldierRevealRadius;
-            soldierStats.unitColor = playerColor;
-            soldierStats.modelScale = 1f;
+            soldierStats.unitColor = soldierColor;
+            soldierStats.modelScale = soldierModelScale;
             soldierStats.unitPrefab = soldierPrefab;
             soldierStats.enemyPrefab = enemySoldierPrefab;
             allStats.Add(soldierStats);
