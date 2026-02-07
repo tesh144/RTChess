@@ -26,12 +26,48 @@ namespace ClockworkGrid
         [Header("Interval Settings")]
         [SerializeField] private float baseIntervalDuration = 2.0f;
 
-        [Header("Soldier Stats")]
+        [Header("Soldier Stats (Common)")]
+        [SerializeField] private GameObject soldierPrefabOverride; // Drag a prefab here, or leave empty for procedural
+        [SerializeField] private float soldierRarityWeight = 60f;
         [SerializeField] private int soldierHP = 10;
         [SerializeField] private int soldierAttackDamage = 3;
         [SerializeField] private int soldierAttackRange = 1;
         [SerializeField] private int soldierAttackInterval = 2;
         [SerializeField] private int soldierResourceCost = 3;
+        [SerializeField] private int soldierRevealRadius = 1;
+
+        [Header("Ogre Stats (Epic)")]
+        [SerializeField] private GameObject ogrePrefabOverride; // Drag a prefab here, or leave empty for procedural
+        [SerializeField] private float ogreRarityWeight = 5f;
+        [SerializeField] private int ogreHP = 20;
+        [SerializeField] private int ogreAttackDamage = 5;
+        [SerializeField] private int ogreAttackRange = 2;
+        [SerializeField] private int ogreAttackInterval = 4;
+        [SerializeField] private int ogreResourceCost = 6;
+        [SerializeField] private int ogreRevealRadius = 1;
+        [SerializeField] private float ogreModelScale = 1.3f;
+        [SerializeField] private Color ogreColor = new Color(0.8f, 0.4f, 1f);
+
+        [Header("Ninja Stats (Rare)")]
+        [SerializeField] private GameObject ninjaPrefabOverride; // Drag a prefab here, or leave empty for procedural
+        [SerializeField] private float ninjaRarityWeight = 35f;
+        [SerializeField] private int ninjaHP = 5;
+        [SerializeField] private int ninjaAttackDamage = 1;
+        [SerializeField] private int ninjaAttackRange = 1;
+        [SerializeField] private int ninjaAttackInterval = 1;
+        [SerializeField] private int ninjaResourceCost = 4;
+        [SerializeField] private int ninjaRevealRadius = 2;
+        [SerializeField] private float ninjaModelScale = 0.8f;
+        [SerializeField] private Color ninjaColor = new Color(1f, 0.3f, 0.3f);
+
+        [Header("Wave Settings")]
+        [SerializeField] private int intervalsPerWave = 20;
+        [SerializeField] private int baseEnemyCount = 2;
+        [SerializeField] private float enemyScaling = 1.2f;
+        [SerializeField] private int maxWaves = 20;
+        [SerializeField] private float baseDowntime = 10f;
+        [SerializeField] private float minDowntime = 5f;
+        [SerializeField] private int downtimeDecreaseWave = 10;
 
         [Header("Resource Node Stats (Level 1)")]
         [SerializeField] private int resourceNodeHP = 10;
@@ -54,6 +90,8 @@ namespace ClockworkGrid
         [SerializeField] private float cameraTiltAngle = 15f;
 
         private GameObject soldierPrefab;
+        private GameObject ogrePrefab;
+        private GameObject ninjaPrefab;
         private GameObject enemySoldierPrefab;
         private GameObject resourceNodePrefab;
 
@@ -250,48 +288,70 @@ namespace ClockworkGrid
         /// </summary>
         private void SetupUnitPrefabs()
         {
-            // Create Soldier prefab (existing logic, just refactored)
-            soldierPrefab = UnitModelBuilder.CreateSoldierModel(new Color(0.2f, 0.5f, 1f)); // Blue
-            SoldierUnit soldierUnit = soldierPrefab.AddComponent<SoldierUnit>();
-            SetPrivateField(soldierUnit, "maxHP", 10);
-            SetPrivateField(soldierUnit, "attackDamage", 3);
-            SetPrivateField(soldierUnit, "attackRange", 1);
-            SetPrivateField(soldierUnit, "attackIntervalMultiplier", 2);
-            SetPrivateField(soldierUnit, "resourceCost", 3);
-            soldierPrefab.AddComponent<HPBarOverlay>();
-            soldierPrefab.SetActive(false);
-            soldierPrefab.name = "SoldierPrefab";
+            // Create Soldier prefab (use override if assigned, otherwise generate procedurally)
+            soldierPrefab = CreateUnitPrefab(
+                soldierPrefabOverride, "SoldierPrefab", playerColor, 1f,
+                soldierHP, soldierAttackDamage, soldierAttackRange,
+                soldierAttackInterval, soldierResourceCost);
 
-            // Create Ogre prefab (tank, large, slow)
-            GameObject ogrePrefab = UnitModelBuilder.CreateSoldierModel(new Color(0.8f, 0.4f, 1f)); // Purple
-            ogrePrefab.transform.localScale = Vector3.one * 1.3f; // Larger
-            SoldierUnit ogreUnit = ogrePrefab.AddComponent<SoldierUnit>();
-            SetPrivateField(ogreUnit, "maxHP", 20);
-            SetPrivateField(ogreUnit, "attackDamage", 5);
-            SetPrivateField(ogreUnit, "attackRange", 2); // Range 2!
-            SetPrivateField(ogreUnit, "attackIntervalMultiplier", 4); // Slow rotation
-            SetPrivateField(ogreUnit, "resourceCost", 6);
-            ogrePrefab.AddComponent<HPBarOverlay>();
-            ogrePrefab.SetActive(false);
-            ogrePrefab.name = "OgrePrefab";
+            // Create Ogre prefab (use override if assigned, otherwise generate procedurally)
+            ogrePrefab = CreateUnitPrefab(
+                ogrePrefabOverride, "OgrePrefab", ogreColor, ogreModelScale,
+                ogreHP, ogreAttackDamage, ogreAttackRange,
+                ogreAttackInterval, ogreResourceCost);
 
-            // Create Ninja prefab (fast, fragile, small)
-            GameObject ninjaPrefab = UnitModelBuilder.CreateSoldierModel(new Color(1f, 0.3f, 0.3f)); // Red
-            ninjaPrefab.transform.localScale = Vector3.one * 0.8f; // Smaller
-            SoldierUnit ninjaUnit = ninjaPrefab.AddComponent<SoldierUnit>();
-            SetPrivateField(ninjaUnit, "maxHP", 5);
-            SetPrivateField(ninjaUnit, "attackDamage", 1);
-            SetPrivateField(ninjaUnit, "attackRange", 1);
-            SetPrivateField(ninjaUnit, "attackIntervalMultiplier", 1); // Fast rotation!
-            SetPrivateField(ninjaUnit, "resourceCost", 4);
-            ninjaPrefab.AddComponent<HPBarOverlay>();
-            ninjaPrefab.SetActive(false);
-            ninjaPrefab.name = "NinjaPrefab";
+            // Create Ninja prefab (use override if assigned, otherwise generate procedurally)
+            ninjaPrefab = CreateUnitPrefab(
+                ninjaPrefabOverride, "NinjaPrefab", ninjaColor, ninjaModelScale,
+                ninjaHP, ninjaAttackDamage, ninjaAttackRange,
+                ninjaAttackInterval, ninjaResourceCost);
 
             // Store enemy variant (same prefabs, different team applied at spawn)
             enemySoldierPrefab = soldierPrefab;
 
             Debug.Log("Created 3 unit type prefabs: Soldier, Ogre, Ninja");
+        }
+
+        /// <summary>
+        /// Creates a unit prefab. If an override prefab is assigned, clones it and configures stats.
+        /// Otherwise, generates a procedural model from primitives.
+        /// </summary>
+        private GameObject CreateUnitPrefab(
+            GameObject overridePrefab, string prefabName, Color color, float scale,
+            int hp, int attackDamage, int attackRange, int attackInterval, int resourceCost)
+        {
+            GameObject prefab;
+
+            if (overridePrefab != null)
+            {
+                // Use the inspector-assigned prefab (clone it so we don't modify the asset)
+                prefab = Instantiate(overridePrefab);
+                prefab.transform.localScale = Vector3.one * scale;
+            }
+            else
+            {
+                // Fall back to procedural model generation
+                prefab = UnitModelBuilder.CreateSoldierModel(color);
+                prefab.transform.localScale = Vector3.one * scale;
+            }
+
+            // Add SoldierUnit component if not already present
+            SoldierUnit unit = prefab.GetComponent<SoldierUnit>();
+            if (unit == null) unit = prefab.AddComponent<SoldierUnit>();
+            SetPrivateField(unit, "maxHP", hp);
+            SetPrivateField(unit, "attackDamage", attackDamage);
+            SetPrivateField(unit, "attackRange", attackRange);
+            SetPrivateField(unit, "attackIntervalMultiplier", attackInterval);
+            SetPrivateField(unit, "resourceCost", resourceCost);
+
+            // Add HPBarOverlay if not already present
+            if (prefab.GetComponent<HPBarOverlay>() == null)
+                prefab.AddComponent<HPBarOverlay>();
+
+            prefab.SetActive(false);
+            prefab.name = prefabName;
+
+            return prefab;
         }
 
         /// <summary>
@@ -310,50 +370,53 @@ namespace ClockworkGrid
             soldierStats.unitType = UnitType.Soldier;
             soldierStats.unitName = "Soldier";
             soldierStats.rarity = Rarity.Common;
-            soldierStats.maxHP = 10;
-            soldierStats.attackDamage = 3;
-            soldierStats.attackRange = 1;
-            soldierStats.attackIntervalMultiplier = 2;
-            soldierStats.resourceCost = 3;
-            soldierStats.revealRadius = 1; // Iteration 7: Fog reveal radius
-            soldierStats.unitColor = new Color(0.2f, 0.5f, 1f); // Blue
+            soldierStats.maxHP = soldierHP;
+            soldierStats.attackDamage = soldierAttackDamage;
+            soldierStats.attackRange = soldierAttackRange;
+            soldierStats.attackIntervalMultiplier = soldierAttackInterval;
+            soldierStats.resourceCost = soldierResourceCost;
+            soldierStats.revealRadius = soldierRevealRadius;
+            soldierStats.unitColor = playerColor;
             soldierStats.modelScale = 1f;
             soldierStats.unitPrefab = soldierPrefab;
             allStats.Add(soldierStats);
 
             // Ogre Stats (Epic)
-            GameObject ogrePrefab = GameObject.Find("OgrePrefab");
             UnitStats ogreStats = ScriptableObject.CreateInstance<UnitStats>();
             ogreStats.unitType = UnitType.Ogre;
             ogreStats.unitName = "Ogre";
             ogreStats.rarity = Rarity.Epic;
-            ogreStats.maxHP = 20;
-            ogreStats.attackDamage = 5;
-            ogreStats.attackRange = 2; // Range 2!
-            ogreStats.attackIntervalMultiplier = 4;
-            ogreStats.resourceCost = 6;
-            ogreStats.revealRadius = 1; // Iteration 7: Same as Soldier
-            ogreStats.unitColor = new Color(0.8f, 0.4f, 1f); // Purple
-            ogreStats.modelScale = 1.3f;
+            ogreStats.maxHP = ogreHP;
+            ogreStats.attackDamage = ogreAttackDamage;
+            ogreStats.attackRange = ogreAttackRange;
+            ogreStats.attackIntervalMultiplier = ogreAttackInterval;
+            ogreStats.resourceCost = ogreResourceCost;
+            ogreStats.revealRadius = ogreRevealRadius;
+            ogreStats.unitColor = ogreColor;
+            ogreStats.modelScale = ogreModelScale;
             ogreStats.unitPrefab = ogrePrefab;
             allStats.Add(ogreStats);
 
             // Ninja Stats (Rare)
-            GameObject ninjaPrefab = GameObject.Find("NinjaPrefab");
             UnitStats ninjaStats = ScriptableObject.CreateInstance<UnitStats>();
             ninjaStats.unitType = UnitType.Ninja;
             ninjaStats.unitName = "Ninja";
             ninjaStats.rarity = Rarity.Rare;
-            ninjaStats.maxHP = 5;
-            ninjaStats.attackDamage = 1;
-            ninjaStats.attackRange = 1;
-            ninjaStats.attackIntervalMultiplier = 1; // Fast!
-            ninjaStats.resourceCost = 4;
-            ninjaStats.revealRadius = 2; // Iteration 7: Ninjas scout further!
-            ninjaStats.unitColor = new Color(1f, 0.3f, 0.3f); // Red
-            ninjaStats.modelScale = 0.8f;
+            ninjaStats.maxHP = ninjaHP;
+            ninjaStats.attackDamage = ninjaAttackDamage;
+            ninjaStats.attackRange = ninjaAttackRange;
+            ninjaStats.attackIntervalMultiplier = ninjaAttackInterval;
+            ninjaStats.resourceCost = ninjaResourceCost;
+            ninjaStats.revealRadius = ninjaRevealRadius;
+            ninjaStats.unitColor = ninjaColor;
+            ninjaStats.modelScale = ninjaModelScale;
             ninjaStats.unitPrefab = ninjaPrefab;
             allStats.Add(ninjaStats);
+
+            // Pass rarity weights from inspector
+            SetPrivateField(raritySystem, "commonWeight", soldierRarityWeight);
+            SetPrivateField(raritySystem, "rareWeight", ninjaRarityWeight);
+            SetPrivateField(raritySystem, "epicWeight", ogreRarityWeight);
 
             // Register with RaritySystem
             raritySystem.RegisterUnitStats(allStats);
@@ -839,7 +902,17 @@ namespace ClockworkGrid
         {
             GameObject waveObj = new GameObject("WaveManager");
             WaveManager waveManager = waveObj.AddComponent<WaveManager>();
-            waveManager.Initialize(); // Iteration 6: No longer needs enemy prefab
+
+            // Pass wave configuration from inspector
+            SetPrivateField(waveManager, "intervalsPerWave", intervalsPerWave);
+            SetPrivateField(waveManager, "baseEnemyCount", baseEnemyCount);
+            SetPrivateField(waveManager, "enemyScaling", enemyScaling);
+            SetPrivateField(waveManager, "maxWaves", maxWaves);
+            SetPrivateField(waveManager, "baseDowntime", baseDowntime);
+            SetPrivateField(waveManager, "minDowntime", minDowntime);
+            SetPrivateField(waveManager, "downtimeDecreaseWave", downtimeDecreaseWave);
+
+            waveManager.Initialize();
         }
 
         private void SetupWaveTimelineUI()

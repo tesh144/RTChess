@@ -52,6 +52,11 @@ namespace ClockworkGrid
         public bool StartDrag(UnitIcon icon, GameObject unitPrefab)
         {
             if (isDragging) return false;
+            if (unitPrefab == null)
+            {
+                Debug.LogError("StartDrag called with null unitPrefab!");
+                return false;
+            }
 
             currentDraggingIcon = icon;
             currentUnitPrefab = unitPrefab;
