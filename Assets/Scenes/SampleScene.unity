@@ -1414,18 +1414,6 @@ PrefabInstance:
       value: 12112112113
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ogreModelScale
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ninjaModelScale
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ogreAttackInterval
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.size
       value: 4
       objectReference: {fileID: 0}

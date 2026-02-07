@@ -243,6 +243,7 @@ GameObject:
   - component: {fileID: 4156511560392859076}
   - component: {fileID: 1911927038192613408}
   - component: {fileID: 4071131591278184399}
+  - component: {fileID: 7449109967649898887}
   m_Layer: 5
   m_Name: UnitIconPrefab
   m_TagString: Untagged
@@ -347,6 +348,20 @@ MonoBehaviour:
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
   m_EffectDistance: {x: 0, y: -4.35}
   m_UseGraphicAlpha: 1
+--- !u!114 &7449109967649898887
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 415459406493875654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c74e6fb34569647a888dbb1685c0d3c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoverScale: 1.2
+  characterSpriteImage: {fileID: 3030463504018244274}
 --- !u!1 &2713119081154837856
 GameObject:
   m_ObjectHideFlags: 0

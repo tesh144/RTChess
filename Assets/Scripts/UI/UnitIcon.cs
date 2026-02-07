@@ -25,6 +25,7 @@ namespace ClockworkGrid
         private GameObject typeLabel;
 
         [SerializeField] private float hoverScale = 1.2f; // Phase 2: ~20% scale up
+        [SerializeField] private Image characterSpriteImage; // Assign the CharacterSprite Image in prefab
 
         public GameObject UnitPrefab => unitPrefab;
         public UnitStats UnitStats => unitStats;
@@ -51,6 +52,12 @@ namespace ClockworkGrid
             unitPrefab = stats.unitPrefab;
             dockManager = manager;
             originalPosition = rectTransform.anchoredPosition;
+
+            // Set character sprite from UnitStats
+            if (characterSpriteImage != null && stats.iconSprite != null)
+            {
+                characterSpriteImage.sprite = stats.iconSprite;
+            }
 
             // Try to find and populate existing UI elements in prefab
             bool foundPrefabUI = PopulatePrefabUI(stats.resourceCost, stats.unitType);
@@ -83,14 +90,20 @@ namespace ClockworkGrid
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            isDragging = true;
             originalScale = rectTransform.localScale / hoverScale; // Account for hover scale
             rectTransform.localScale = originalScale;
 
+            // Capture current layout position (not the stale one from Initialize)
+            originalPosition = rectTransform.anchoredPosition;
+
             // Notify DragDropHandler to create ghost preview
-            if (DragDropHandler.Instance != null)
+            if (DragDropHandler.Instance != null && DragDropHandler.Instance.StartDrag(this, unitPrefab))
             {
-                DragDropHandler.Instance.StartDrag(this, unitPrefab);
+                isDragging = true;
+            }
+            else
+            {
+                isDragging = false;
             }
         }
 

@@ -60,7 +60,7 @@ namespace ClockworkGrid
             // HP text container (this will billboard to face camera)
             GameObject hpTextContainer = new GameObject("HPTextContainer");
             hpTextContainer.transform.SetParent(root.transform);
-            hpTextContainer.transform.localPosition = new Vector3(0f, 1.8f, 0f); // Above soldier's head
+            hpTextContainer.transform.localPosition = new Vector3(0f, 3.0f, 0f); // Above soldier's head
             hpTextContainer.AddComponent<Billboard>();
 
             // Create TextMesh for HP number
