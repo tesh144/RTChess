@@ -58,6 +58,7 @@ namespace ClockworkGrid
             SetupEnemySoldierPrefab();
             SetupResourceNodePrefab();
             SetupUI();
+            SetupDockBar();
             SetupDebugPanel();
             SetupDebugPlacer();
             SetupLighting();
@@ -265,6 +266,26 @@ namespace ClockworkGrid
             // Hook up token UI
             TokenUI tokenUI = canvasObj.AddComponent<TokenUI>();
             SetPrivateField(tokenUI, "tokenText", tokenText);
+        }
+
+        private void SetupDockBar()
+        {
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            // Create DragDropHandler singleton
+            GameObject dragHandlerObj = new GameObject("DragDropHandler");
+            dragHandlerObj.AddComponent<DragDropHandler>();
+
+            // Create DockBarManager
+            GameObject dockObj = new GameObject("DockBarManager");
+            dockObj.transform.SetParent(canvas.transform, false);
+
+            DockBarManager dockManager = dockObj.AddComponent<DockBarManager>();
+
+            // Pass soldier prefab (only unit type in Iteration 4)
+            GameObject[] unitPrefabs = new GameObject[] { soldierPrefab };
+            dockManager.Initialize(canvas, unitPrefabs);
         }
 
         private void SetupDebugPanel()

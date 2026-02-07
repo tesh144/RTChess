@@ -10,6 +10,9 @@ namespace ClockworkGrid
     /// </summary>
     public class CellDebugPlacer : MonoBehaviour
     {
+        [Header("Debug Settings")]
+        [SerializeField] private bool enableDebugPlacement = false; // Disabled by default for production
+
         [SerializeField] private GameObject soldierPrefab;
         [SerializeField] private GameObject enemySoldierPrefab;
         [SerializeField] private GameObject resourceNodePrefab;
@@ -23,17 +26,20 @@ namespace ClockworkGrid
 
         private void Update()
         {
-            // Left-click: Player soldier (costs tokens)
+            // Early exit if debug placement is disabled (dock bar is the primary placement method)
+            if (!enableDebugPlacement) return;
+
+            // Left-click: Player soldier (costs tokens) - DISABLED in production, use dock bar
             if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
             {
                 TryPlaceUnit();
             }
-            // Right-click: Resource node (free)
+            // Right-click: Resource node (free) - ENABLED for testing
             else if (Input.GetMouseButtonDown(1))
             {
                 TryPlaceResource();
             }
-            // Middle-click OR Shift+Left-click: Enemy soldier (free, for testing)
+            // Middle-click OR Shift+Left-click: Enemy soldier (free) - ENABLED for testing
             else if (Input.GetMouseButtonDown(2) || (Input.GetMouseButtonDown(0) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))))
             {
                 TryPlaceEnemyUnit();

@@ -118,6 +118,11 @@ namespace ClockworkGrid
 
         private void OnIntervalTick(int intervalCount)
         {
+            // Check for placement cooldown
+            PlacementCooldown cooldown = GetComponent<PlacementCooldown>();
+            if (cooldown != null && cooldown.IsOnCooldown)
+                return; // Skip all actions while on cooldown
+
             // Only rotate on intervals that match our multiplier
             if (intervalCount % attackIntervalMultiplier != 0) return;
 
