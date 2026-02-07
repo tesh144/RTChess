@@ -22,6 +22,7 @@ namespace ClockworkGrid
         [SerializeField] private int gridWidth = 11; // Iteration 7: Larger grid for exploration
         [SerializeField] private int gridHeight = 11;
         [SerializeField] private float cellSize = 1.5f;
+        [SerializeField] private GameObject gridTilePrefab; // Optional: Drag custom tile prefab, or leave empty for default cube
 
         [Header("Interval Settings")]
         [SerializeField] private float baseIntervalDuration = 2.0f;
@@ -121,7 +122,7 @@ namespace ClockworkGrid
         {
             SetupCamera();
             SetupGrid();
-            SetupFogOfWar();
+            // SetupFogOfWar(); // TEMPORARILY DISABLED for debugging
             SetupGridExpansion(); // Iteration 9: Grid expansion system
             SetupIntervalTimer();
             SetupTokenManager();
@@ -179,6 +180,8 @@ namespace ClockworkGrid
 
         private void SetupGrid()
         {
+            Debug.Log($"[GameSetup] SetupGrid starting with gridWidth={gridWidth}, gridHeight={gridHeight}, cellSize={cellSize}");
+
             GameObject gridObj = new GameObject("GridManager");
             GridManager gridManager = gridObj.AddComponent<GridManager>();
             gridObj.AddComponent<GridVisualizer>();
@@ -187,7 +190,55 @@ namespace ClockworkGrid
             SetPrivateField(gridManager, "gridHeight", gridHeight);
             SetPrivateField(gridManager, "cellSize", cellSize);
 
+            // Create or assign grid tile prefabs (A and B for checkerboard)
+            GameObject tilePrefabA = gridTilePrefab;
+            GameObject tilePrefabB = null; // Second prefab for checkerboard
+
+            if (tilePrefabA == null)
+            {
+                Debug.Log("[GameSetup] No grid tile prefabs assigned, creating default checkerboard (white & light gray)");
+
+                // Create white cube for A
+                tilePrefabA = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                tilePrefabA.name = "GridTileA_White";
+                MeshRenderer rendererA = tilePrefabA.GetComponent<MeshRenderer>();
+                if (rendererA != null)
+                {
+                    Material matA = new Material(Shader.Find("Standard"));
+                    matA.color = Color.white;
+                    rendererA.material = matA;
+                }
+                Collider colliderA = tilePrefabA.GetComponent<Collider>();
+                if (colliderA != null) DestroyImmediate(colliderA);
+                tilePrefabA.SetActive(false);
+
+                // Create light gray cube for B
+                tilePrefabB = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                tilePrefabB.name = "GridTileB_Gray";
+                MeshRenderer rendererB = tilePrefabB.GetComponent<MeshRenderer>();
+                if (rendererB != null)
+                {
+                    Material matB = new Material(Shader.Find("Standard"));
+                    matB.color = new Color(0.7f, 0.7f, 0.7f); // Light gray
+                    rendererB.material = matB;
+                }
+                Collider colliderB = tilePrefabB.GetComponent<Collider>();
+                if (colliderB != null) DestroyImmediate(colliderB);
+                tilePrefabB.SetActive(false);
+
+                Debug.Log("[GameSetup] Created default checkerboard tile prefabs (white & gray)");
+            }
+            else
+            {
+                Debug.Log($"[GameSetup] Using assigned grid tile prefab A: {tilePrefabA.name}");
+            }
+
+            SetPrivateField(gridManager, "gridTilePrefabA", tilePrefabA);
+            SetPrivateField(gridManager, "gridTilePrefabB", tilePrefabB);
+
+            Debug.Log($"[GameSetup] Calling InitializeGrid() now...");
             gridManager.InitializeGrid();
+            Debug.Log("[GameSetup] SetupGrid complete");
         }
 
         private void SetupFogOfWar()

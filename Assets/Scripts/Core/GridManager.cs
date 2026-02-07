@@ -18,7 +18,8 @@ namespace ClockworkGrid
         [SerializeField] private float cellSize = 1.5f;
 
         [Header("Grid Visual (Prefab-Based)")]
-        [SerializeField] private GameObject gridTilePrefab; // Assign your cube prefab here
+        [SerializeField] private GameObject gridTilePrefabA; // First tile (e.g., white squares)
+        [SerializeField] private GameObject gridTilePrefabB; // Second tile (e.g., black squares) - alternates in checkerboard pattern
         [SerializeField] private Transform gridTilesContainer; // Optional parent for organization
 
         private CellState[,] cellStates;
@@ -63,6 +64,7 @@ namespace ClockworkGrid
                 gridTilesContainer = containerObj.transform;
             }
 
+            int tilesCreated = 0;
             for (int x = 0; x < gridWidth; x++)
             {
                 for (int y = 0; y < gridHeight; y++)
@@ -70,24 +72,37 @@ namespace ClockworkGrid
                     cellStates[x, y] = CellState.Empty;
                     cellOccupants[x, y] = null;
 
+                    // Determine which prefab to use (checkerboard pattern)
+                    bool useA = (x + y) % 2 == 0;
+                    GameObject prefabToUse = useA ? gridTilePrefabA : gridTilePrefabB;
+
+                    // Fallback: if B is null, use A for both
+                    if (prefabToUse == null) prefabToUse = gridTilePrefabA;
+
                     // Instantiate grid tile prefab
-                    if (gridTilePrefab != null)
+                    if (prefabToUse != null)
                     {
                         Vector3 tilePos = GridToWorldPosition(x, y);
                         tilePos.y = 0f; // Place tiles at ground level
 
-                        GameObject tile = Instantiate(gridTilePrefab, tilePos, Quaternion.identity, gridTilesContainer);
+                        GameObject tile = Instantiate(prefabToUse, tilePos, Quaternion.identity, gridTilesContainer);
                         tile.name = $"GridTile_{x}_{y}";
 
                         // Scale tile to match cell size
                         tile.transform.localScale = new Vector3(cellSize, 0.1f, cellSize);
 
                         gridTiles[x, y] = tile;
+                        tilesCreated++;
+
+                        if (tilesCreated <= 5 || (x == gridWidth - 1 && y == gridHeight - 1))
+                        {
+                            Debug.Log($"[GridManager] Created tile at ({x},{y}), worldPos={tilePos}, prefab={(useA ? "A" : "B")}");
+                        }
                     }
                 }
             }
 
-            Debug.Log($"GridManager: Initialized {gridWidth}×{gridHeight} grid with tile prefabs");
+            Debug.Log($"[GridManager] Initialized {gridWidth}×{gridHeight} grid with {tilesCreated} tile prefabs");
         }
 
         /// <summary>
@@ -298,12 +313,19 @@ namespace ClockworkGrid
             {
                 for (int y = 0; y < gridHeight; y++)
                 {
-                    if (gridTilePrefab != null)
+                    // Determine which prefab to use (checkerboard pattern)
+                    bool useA = (x + y) % 2 == 0;
+                    GameObject prefabToUse = useA ? gridTilePrefabA : gridTilePrefabB;
+
+                    // Fallback: if B is null, use A for both
+                    if (prefabToUse == null) prefabToUse = gridTilePrefabA;
+
+                    if (prefabToUse != null)
                     {
                         Vector3 tilePos = GridToWorldPosition(x, y);
                         tilePos.y = 0f;
 
-                        GameObject tile = Instantiate(gridTilePrefab, tilePos, Quaternion.identity, gridTilesContainer);
+                        GameObject tile = Instantiate(prefabToUse, tilePos, Quaternion.identity, gridTilesContainer);
                         tile.name = $"GridTile_{x}_{y}";
                         tile.transform.localScale = new Vector3(cellSize, 0.1f, cellSize);
 

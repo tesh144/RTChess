@@ -41,6 +41,11 @@ namespace ClockworkGrid
 
         private void OnRenderObject()
         {
+            // Disabled: Using prefab-based grid tiles instead of GL rendering
+            return;
+
+            // LEGACY CODE BELOW (kept for reference, but disabled)
+            #pragma warning disable CS0162 // Unreachable code detected
             if (grid == null || lineMaterial == null) return;
 
             lineMaterial.SetPass(0);
