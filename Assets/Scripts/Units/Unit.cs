@@ -32,8 +32,9 @@ namespace ClockworkGrid
         private int currentHP;
         private bool isDestroyed = false;
 
-        // HP bar references
-        private Transform hpBarFill;
+        // HP text references
+        private TextMesh hpTextMesh;
+        private TextMesh hpTextShadow;
         private Renderer[] renderers;
         private Color[] originalColors;
         private float damageFlashTimer;
@@ -72,10 +73,10 @@ namespace ClockworkGrid
                 IntervalTimer.Instance.OnIntervalTick += OnIntervalTick;
             }
 
-            // Find HP bar and cache renderers
-            FindHPBar();
+            // Find HP text and cache renderers
+            FindHPText();
             CacheRenderers();
-            UpdateHPBar();
+            UpdateHPText();
         }
 
         protected virtual void OnDestroy()
@@ -264,7 +265,7 @@ namespace ClockworkGrid
 
             // Visual feedback
             FlashRed();
-            UpdateHPBar();
+            UpdateHPText();
 
             Debug.Log($"{team} unit took {actualDamage} damage! HP: {currentHP}/{maxHP}");
 
@@ -365,16 +366,19 @@ namespace ClockworkGrid
             Destroy(vfxObj, 1f);
         }
 
-        private void FindHPBar()
+        private void FindHPText()
         {
-            // Find HP bar fill by name in children hierarchy
-            Transform[] allChildren = GetComponentsInChildren<Transform>(true);
-            foreach (Transform t in allChildren)
+            // Find HP text components by name in children hierarchy
+            TextMesh[] allTextMeshes = GetComponentsInChildren<TextMesh>(true);
+            foreach (TextMesh tm in allTextMeshes)
             {
-                if (t.name == "HPBarFill")
+                if (tm.name == "HPText")
                 {
-                    hpBarFill = t;
-                    return;
+                    hpTextMesh = tm;
+                }
+                else if (tm.name == "HPTextShadow")
+                {
+                    hpTextShadow = tm;
                 }
             }
         }
@@ -396,7 +400,7 @@ namespace ClockworkGrid
 
             foreach (Renderer r in renderers)
             {
-                if (r != null && r.name != "HPBarFill" && r.name != "HPBarBG")
+                if (r != null && r.name != "HPText" && r.name != "HPTextShadow")
                     r.material.color = Color.red;
             }
             damageFlashTimer = DamageFlashDuration;
@@ -408,33 +412,27 @@ namespace ClockworkGrid
 
             for (int i = 0; i < renderers.Length; i++)
             {
-                if (renderers[i] != null && renderers[i].name != "HPBarFill" && renderers[i].name != "HPBarBG")
+                if (renderers[i] != null && renderers[i].name != "HPText" && renderers[i].name != "HPTextShadow")
                     renderers[i].material.color = originalColors[i];
             }
         }
 
-        private void UpdateHPBar()
+        private void UpdateHPText()
         {
-            if (hpBarFill == null) return;
+            if (hpTextMesh == null) return;
 
-            float ratio = (float)currentHP / maxHP;
+            // Update both text meshes with current HP value
+            string hpString = currentHP.ToString();
+            hpTextMesh.text = hpString;
 
-            // Scale vertically (Y axis) instead of horizontally
-            Vector3 scale = hpBarFill.localScale;
-            scale.y = ratio;
-            hpBarFill.localScale = scale;
-
-            // Adjust position to shrink from top down (anchor at bottom)
-            Vector3 pos = hpBarFill.localPosition;
-            pos.y = -(1f - ratio) * 0.5f; // Move down as it shrinks to keep bottom anchored
-            hpBarFill.localPosition = pos;
-
-            // Color from green to red based on HP
-            Renderer fillRenderer = hpBarFill.GetComponent<Renderer>();
-            if (fillRenderer != null)
+            if (hpTextShadow != null)
             {
-                fillRenderer.material.color = Color.Lerp(Color.red, Color.green, ratio);
+                hpTextShadow.text = hpString;
             }
+
+            // Color from green to red based on HP ratio
+            float ratio = (float)currentHP / maxHP;
+            hpTextMesh.color = Color.Lerp(Color.red, Color.green, ratio);
         }
 
         public void Initialize(Team unitTeam, int gridX, int gridY)
