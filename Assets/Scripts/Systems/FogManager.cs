@@ -15,7 +15,7 @@ namespace ClockworkGrid
         public static FogManager Instance { get; private set; }
 
         [Header("Fog Configuration")]
-        [SerializeField] private int initialRevealRadius = 2; // Starting revealed area (2 = 5x5 for 11x11 grid, reveals center area for placement)
+        [SerializeField] private int initialRevealRadius = 1; // Starting revealed area (1 = 3x3 around center)
         [SerializeField] private Vector2Int initialRevealCenter = new Vector2Int(5, 5); // Grid center (11x11: indices 0-10, center at 5,5)
 
         // Fog state grid (true = revealed, false = fogged)
