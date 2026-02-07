@@ -45,6 +45,9 @@ namespace ClockworkGrid
                 return;
             }
             Instance = this;
+
+            // Hide UI until player places first unit and wave starts
+            gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -53,6 +56,9 @@ namespace ClockworkGrid
         /// </summary>
         public void InitializeWave(int waveNumber, string spawnCode)
         {
+            // Show UI now that wave has started
+            gameObject.SetActive(true);
+
             ClearTimeline();
 
             // IMPORTANT: Clear any placeholder/design-time children from dotContainer
