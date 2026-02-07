@@ -5,6 +5,16 @@ using UnityEngine;
 namespace ClockworkGrid
 {
     /// <summary>
+    /// Wave state machine
+    /// </summary>
+    public enum WaveState
+    {
+        Preparation,  // Downtime between waves
+        Active,       // Wave is currently spawned
+        Complete      // Wave cleared, transitioning to next
+    }
+
+    /// <summary>
     /// Wave data structure
     /// </summary>
     [System.Serializable]
@@ -37,11 +47,22 @@ namespace ClockworkGrid
         [SerializeField] private int intervalsPerWave = 20; // Wave every 20 intervals (40 seconds)
         [SerializeField] private int baseEnemyCount = 2;
         [SerializeField] private float enemyScaling = 1.2f;
+        [SerializeField] private int maxWaves = 20; // Win condition: survive 20 waves
+
+        [Header("Downtime Configuration")]
+        [SerializeField] private float baseDowntime = 10f; // Seconds between waves
+        [SerializeField] private float minDowntime = 5f; // Minimum downtime (after wave 10)
+        [SerializeField] private int downtimeDecreaseWave = 10; // Wave when downtime starts decreasing
 
         // Wave state
+        private WaveState currentState = WaveState.Preparation;
         private List<WaveData> upcomingWaves = new List<WaveData>();
         private int currentWaveIndex = 0;
         private int nextWaveInterval = 0;
+
+        // Downtime tracking
+        private float downtimeRemaining = 0f;
+        private int enemiesSpawnedThisWave = 0;
 
         // Enemy spawning
         [SerializeField] private GameObject enemySoldierPrefab;
@@ -50,12 +71,19 @@ namespace ClockworkGrid
         // Events
         public event Action<WaveData> OnWaveSpawned;
         public event Action<WaveData> OnWaveWarning; // Fired 5 intervals before wave
+        public event Action<WaveData> OnWaveComplete; // Fired when wave is cleared
         public event Action<List<WaveData>> OnWavesUpdated;
+        public event Action<WaveState> OnWaveStateChanged;
+        public event Action OnVictory; // Player wins (survived 20 waves)
+        public event Action OnDefeat; // Player loses
 
         // Public accessors
         public List<WaveData> UpcomingWaves => upcomingWaves;
         public int NextWaveInterval => nextWaveInterval;
         public int CurrentWaveNumber => currentWaveIndex;
+        public WaveState CurrentState => currentState;
+        public float DowntimeRemaining => downtimeRemaining;
+        public bool IsGameOver { get; private set; } = false;
 
         private void Awake()
         {
@@ -92,6 +120,10 @@ namespace ClockworkGrid
             {
                 IntervalTimer.Instance.OnIntervalTick += OnIntervalTick;
             }
+
+            // Start with preparation state (downtime before wave 1)
+            SetWaveState(WaveState.Preparation);
+            downtimeRemaining = CalculateDowntime(1);
         }
 
         private void OnDestroy()
@@ -102,24 +134,179 @@ namespace ClockworkGrid
             }
         }
 
-        private void OnIntervalTick(int currentInterval)
+        private void Update()
         {
-            // Check for wave warning (5 intervals before spawn)
-            if (currentInterval == nextWaveInterval - 5)
+            if (IsGameOver) return;
+
+            // Update downtime countdown
+            if (currentState == WaveState.Preparation && downtimeRemaining > 0f)
             {
-                WaveData nextWave = upcomingWaves.Count > 0 ? upcomingWaves[0] : null;
-                if (nextWave != null)
+                downtimeRemaining -= Time.deltaTime;
+
+                if (downtimeRemaining <= 0f)
                 {
-                    OnWaveWarning?.Invoke(nextWave);
-                    Debug.Log($"Wave {nextWave.WaveNumber} warning! Spawning in 5 intervals...");
+                    downtimeRemaining = 0f;
+                    // Transition to Active state and spawn wave
+                    SpawnWave();
                 }
             }
 
-            // Check for wave spawn
-            if (currentInterval >= nextWaveInterval)
+            // Check for wave completion during Active state
+            if (currentState == WaveState.Active)
             {
-                SpawnWave();
+                if (AreAllEnemiesDead())
+                {
+                    OnWaveCleared();
+                }
             }
+
+            // Check win/lose conditions
+            CheckGameOverConditions();
+        }
+
+        /// <summary>
+        /// Set wave state and fire event
+        /// </summary>
+        private void SetWaveState(WaveState newState)
+        {
+            if (currentState != newState)
+            {
+                currentState = newState;
+                OnWaveStateChanged?.Invoke(newState);
+                Debug.Log($"Wave state changed to: {newState}");
+            }
+        }
+
+        /// <summary>
+        /// Calculate downtime for a wave (decreases after wave 10)
+        /// </summary>
+        private float CalculateDowntime(int waveNumber)
+        {
+            if (waveNumber >= downtimeDecreaseWave)
+            {
+                return minDowntime;
+            }
+            return baseDowntime;
+        }
+
+        /// <summary>
+        /// Check if all enemies have been cleared
+        /// </summary>
+        private bool AreAllEnemiesDead()
+        {
+            if (GridManager.Instance == null) return false;
+
+            // Count enemy units on grid
+            int enemyCount = 0;
+            for (int x = 0; x < GridManager.Instance.Width; x++)
+            {
+                for (int y = 0; y < GridManager.Instance.Height; y++)
+                {
+                    if (GridManager.Instance.GetCellState(x, y) == CellState.EnemyUnit)
+                    {
+                        enemyCount++;
+                    }
+                }
+            }
+
+            return enemyCount == 0 && enemiesSpawnedThisWave > 0;
+        }
+
+        /// <summary>
+        /// Called when a wave is cleared
+        /// </summary>
+        private void OnWaveCleared()
+        {
+            if (currentState != WaveState.Active) return;
+
+            Debug.Log($"Wave {currentWaveIndex} cleared!");
+
+            // Fire completion event
+            WaveData completedWave = new WaveData(currentWaveIndex, 0, enemiesSpawnedThisWave, "Cleared");
+            OnWaveComplete?.Invoke(completedWave);
+
+            // Transition to Complete state
+            SetWaveState(WaveState.Complete);
+
+            // Check for victory
+            if (currentWaveIndex >= maxWaves)
+            {
+                TriggerVictory();
+                return;
+            }
+
+            // Start downtime for next wave
+            SetWaveState(WaveState.Preparation);
+            downtimeRemaining = CalculateDowntime(currentWaveIndex + 1);
+        }
+
+        /// <summary>
+        /// Check for game over conditions (win/lose)
+        /// </summary>
+        private void CheckGameOverConditions()
+        {
+            if (IsGameOver) return;
+
+            // Check lose condition: no units on grid, no units in hand, can't afford to draw
+            if (currentState == WaveState.Active)
+            {
+                int playerUnits = CountPlayerUnits();
+                int handSize = HandManager.Instance != null ? HandManager.Instance.GetHandSize() : 0;
+                int drawCost = HandManager.Instance != null ? HandManager.Instance.CalculateDrawCost() : 999;
+                int tokens = ResourceTokenManager.Instance != null ? ResourceTokenManager.Instance.CurrentTokens : 0;
+
+                if (playerUnits == 0 && handSize == 0 && tokens < drawCost)
+                {
+                    TriggerDefeat();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Count player units on the grid
+        /// </summary>
+        private int CountPlayerUnits()
+        {
+            if (GridManager.Instance == null) return 0;
+
+            int count = 0;
+            for (int x = 0; x < GridManager.Instance.Width; x++)
+            {
+                for (int y = 0; y < GridManager.Instance.Height; y++)
+                {
+                    if (GridManager.Instance.GetCellState(x, y) == CellState.PlayerUnit)
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Trigger victory state
+        /// </summary>
+        private void TriggerVictory()
+        {
+            IsGameOver = true;
+            Debug.Log("VICTORY! Player survived 20 waves!");
+            OnVictory?.Invoke();
+        }
+
+        /// <summary>
+        /// Trigger defeat state
+        /// </summary>
+        private void TriggerDefeat()
+        {
+            IsGameOver = true;
+            Debug.Log("DEFEAT! No units, no hand, no tokens!");
+            OnDefeat?.Invoke();
+        }
+
+        private void OnIntervalTick(int currentInterval)
+        {
+            // Wave spawning is now handled by Update() based on downtime countdown
+            // OnIntervalTick is kept for future use if needed
         }
 
         /// <summary>
@@ -165,7 +352,7 @@ namespace ClockworkGrid
         /// </summary>
         private void SpawnWave()
         {
-            if (upcomingWaves.Count == 0) return;
+            if (upcomingWaves.Count == 0 || IsGameOver) return;
 
             WaveData currentWave = upcomingWaves[0];
             upcomingWaves.RemoveAt(0);
@@ -173,8 +360,12 @@ namespace ClockworkGrid
 
             Debug.Log($"Spawning Wave {currentWave.WaveNumber}: {currentWave.EnemyCount} enemies ({currentWave.WaveType})");
 
-            // Spawn enemies
-            SpawnEnemies(currentWave.EnemyCount);
+            // Transition to Active state
+            SetWaveState(WaveState.Active);
+
+            // Spawn enemies and track count
+            int spawned = SpawnEnemies(currentWave.EnemyCount);
+            enemiesSpawnedThisWave = spawned;
 
             // Fire event
             OnWaveSpawned?.Invoke(currentWave);
@@ -197,12 +388,13 @@ namespace ClockworkGrid
         /// <summary>
         /// Spawn enemies at spawn positions
         /// </summary>
-        private void SpawnEnemies(int count)
+        /// <returns>Number of enemies successfully spawned</returns>
+        private int SpawnEnemies(int count)
         {
             if (enemySoldierPrefab == null || GridManager.Instance == null)
             {
                 Debug.LogWarning("Cannot spawn enemies: missing prefab or GridManager");
-                return;
+                return 0;
             }
 
             List<Vector2Int> availablePositions = new List<Vector2Int>(spawnPositions);
@@ -235,6 +427,7 @@ namespace ClockworkGrid
             }
 
             Debug.Log($"Successfully spawned {spawned}/{count} enemies");
+            return spawned;
         }
 
         /// <summary>

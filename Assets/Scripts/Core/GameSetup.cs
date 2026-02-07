@@ -61,6 +61,8 @@ namespace ClockworkGrid
             SetupWaveManager();
             SetupUI();
             SetupDockBar();
+            SetupWaveTimelineUI();
+            SetupGameOverManager();
             SetupDebugPanel();
             SetupDebugMenu();
             SetupDebugPlacer();
@@ -671,6 +673,34 @@ namespace ClockworkGrid
             GameObject waveObj = new GameObject("WaveManager");
             WaveManager waveManager = waveObj.AddComponent<WaveManager>();
             waveManager.Initialize(enemySoldierPrefab);
+        }
+
+        private void SetupWaveTimelineUI()
+        {
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas == null)
+            {
+                Debug.LogWarning("No Canvas found for WaveTimelineUI");
+                return;
+            }
+
+            GameObject timelineObj = new GameObject("WaveTimelineUI");
+            WaveTimelineUI timelineUI = timelineObj.AddComponent<WaveTimelineUI>();
+            timelineUI.Initialize(canvas);
+        }
+
+        private void SetupGameOverManager()
+        {
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas == null)
+            {
+                Debug.LogWarning("No Canvas found for GameOverManager");
+                return;
+            }
+
+            GameObject gameOverObj = new GameObject("GameOverManager");
+            GameOverManager gameOverManager = gameOverObj.AddComponent<GameOverManager>();
+            gameOverManager.Initialize(canvas);
         }
 
         private void SetupLighting()
