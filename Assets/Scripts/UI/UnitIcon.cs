@@ -15,7 +15,7 @@ namespace ClockworkGrid
         IPointerEnterHandler, IPointerExitHandler
     {
         private GameObject unitPrefab;
-        private UnitData unitData;
+        private UnitStats unitStats;
         private DockBarManager dockManager;
         private RectTransform rectTransform;
         private Vector3 originalScale;
@@ -27,7 +27,7 @@ namespace ClockworkGrid
         [SerializeField] private float hoverScale = 1.2f; // Phase 2: ~20% scale up
 
         public GameObject UnitPrefab => unitPrefab;
-        public UnitData UnitData => unitData;
+        public UnitStats UnitStats => unitStats;
 
         private void Awake()
         {
@@ -43,23 +43,23 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Initialize with UnitData (Phase 2 addition)
+        /// Initialize with UnitStats (Phase 2 addition)
         /// </summary>
-        public void Initialize(UnitData data, DockBarManager manager)
+        public void Initialize(UnitStats stats, DockBarManager manager)
         {
-            unitData = data;
-            unitPrefab = data.Prefab;
+            unitStats = stats;
+            unitPrefab = stats.unitPrefab;
             dockManager = manager;
             originalPosition = rectTransform.anchoredPosition;
 
             // Try to find and populate existing UI elements in prefab
-            bool foundPrefabUI = PopulatePrefabUI(data.Cost, data.Type);
+            bool foundPrefabUI = PopulatePrefabUI(stats.resourceCost, stats.unitType);
 
             // Fallback: Create UI dynamically if prefab doesn't have elements
             if (!foundPrefabUI)
             {
-                CreateCostBadge(data.Cost);
-                CreateTypeLabel(data.Type);
+                CreateCostBadge(stats.resourceCost);
+                CreateTypeLabel(stats.unitType);
             }
         }
 

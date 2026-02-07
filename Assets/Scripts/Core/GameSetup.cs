@@ -136,9 +136,8 @@ namespace ClockworkGrid
             SetupTokenManager();
             SetupUnitPrefabs(); // Iteration 6: Create all unit prefabs
             SetupResourceNodePrefabs(); // Iteration 8: Create all 3 resource levels
-            SetupResourceSpawner(); // Iteration 8: Initialize spawning system
-            SetupRaritySystem(); // Iteration 6: Must be before WaveManager/HandManager
-            SetupWaveManager();
+            SetupRaritySystem(); // Iteration 6: Must be before WaveManager
+            SetupWaveManager(); // Iteration 10: Handles ALL spawning (enemies + resources)
             SetupUI();
             SetupDockBar();
             // SetupWaveTimelineUI(); // REMOVED: Timeline UI now manually created in Unity Editor scene
@@ -295,41 +294,8 @@ namespace ClockworkGrid
             return prefab;
         }
 
-        /// <summary>
-        /// Iteration 8: Initialize Resource Spawner system.
-        /// </summary>
-        private void SetupResourceSpawner()
-        {
-            GameObject spawnerObj = new GameObject("ResourceSpawner");
-            ResourceSpawner spawner = spawnerObj.AddComponent<ResourceSpawner>();
-
-            // Set spawn interval (every 10 intervals = 20 seconds)
-            SetPrivateField(spawner, "spawnIntervalCount", 10);
-
-            // Set node caps
-            SetPrivateField(spawner, "maxTotalNodes", 5);
-            SetPrivateField(spawner, "maxLevel2Nodes", 2);
-            SetPrivateField(spawner, "maxLevel3Nodes", 1);
-
-            // Set probabilities (60/35/5 distribution)
-            SetPrivateField(spawner, "level1Probability", 60f);
-            SetPrivateField(spawner, "level2Probability", 35f);
-            SetPrivateField(spawner, "level3Probability", 5f);
-
-            // Set spawn preferences
-            SetPrivateField(spawner, "preferFoggedSpawns", true);
-            SetPrivateField(spawner, "foggedSpawnWeight", 70f);
-
-            // Assign prefabs
-            SetPrivateField(spawner, "level1Prefab", level1ResourcePrefab);
-            SetPrivateField(spawner, "level2Prefab", level2ResourcePrefab);
-            SetPrivateField(spawner, "level3Prefab", level3ResourcePrefab);
-
-            // Initialize spawner (spawns initial resource in revealed area)
-            spawner.Initialize();
-
-            Debug.Log("ResourceSpawner initialized: Spawns every 10 intervals, max 5 nodes (L2 max: 2, L3 max: 1)");
-        }
+        // REMOVED: SetupResourceSpawner() - Replaced by WaveManager (Iteration 10)
+        // WaveManager now handles ALL spawning via wave entries
 
         /// <summary>
         /// Iteration 6: Create all three unit type prefabs (Soldier, Ogre, Ninja)
@@ -512,8 +478,8 @@ namespace ClockworkGrid
 
         private void SetupDockBar()
         {
-            // DockBarManager, HandManager, and DragDropHandler should be manually created in Unity Editor!
-            // This method just finds them and initializes them if needed
+            // DockBarManager and DragDropHandler should be manually created in Unity Editor!
+            // Iteration 10: HandManager removed - DockBarManager is now self-sufficient
 
             // Find DragDropHandler (should exist as standalone GameObject)
             DragDropHandler dragHandler = FindObjectOfType<DragDropHandler>();
@@ -521,20 +487,6 @@ namespace ClockworkGrid
             {
                 Debug.LogWarning("DragDropHandler not found in scene. Please create it manually.");
             }
-
-            // Find HandManager (should exist as standalone GameObject)
-            HandManager handManager = FindObjectOfType<HandManager>();
-            if (handManager == null)
-            {
-                Debug.LogWarning("HandManager not found in scene. Please create it manually.");
-                return;
-            }
-
-            // Initialize HandManager
-            handManager.Initialize(); // Iteration 6: Uses RaritySystem
-
-            // Give player starting hand (3 Soldiers - Phase 2 spec)
-            handManager.GiveStartingHand();
 
             // Find DockBarManager (should exist under UICanvas)
             DockBarManager dockManager = FindObjectOfType<DockBarManager>();
@@ -547,7 +499,7 @@ namespace ClockworkGrid
             Canvas canvas = FindObjectOfType<Canvas>();
             if (canvas != null)
             {
-                dockManager.Initialize(canvas, handManager);
+                dockManager.Initialize(canvas);
             }
 
             Debug.Log("SetupDockBar: Found and initialized dock bar components");

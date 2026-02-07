@@ -53,16 +53,12 @@ namespace ClockworkGrid
             CacheRenderers();
             UpdateHPText();
 
-            // Register with spawner (Iteration 8)
-            if (ResourceSpawner.Instance != null)
-            {
-                ResourceSpawner.Instance.RegisterNode(this);
-            }
+            // Note: Registration removed - WaveManager handles spawning now (Iteration 10)
         }
 
         /// <summary>
         /// Initialize multi-cell resource (Iteration 8).
-        /// Called by ResourceSpawner when spawning.
+        /// Called by WaveManager when spawning.
         /// </summary>
         public void Initialize(Vector2Int size)
         {
@@ -142,11 +138,7 @@ namespace ClockworkGrid
 
             isDestroyed = true;
 
-            // Unregister from spawner (Iteration 8)
-            if (ResourceSpawner.Instance != null)
-            {
-                ResourceSpawner.Instance.UnregisterNode(this);
-            }
+            // Note: Unregistration removed - WaveManager handles spawning now (Iteration 10)
 
             // Remove from grid (Iteration 8: Free all occupied cells)
             if (GridManager.Instance != null)

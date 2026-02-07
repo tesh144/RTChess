@@ -47,7 +47,7 @@ MonoBehaviour:
   gridWidth: 11
   gridHeight: 11
   cellSize: 1.5
-  baseIntervalDuration: 1
+  baseIntervalDuration: 2
   soldierPlayerPrefab: {fileID: 6974813962620877057, guid: 4b782cfc9fe18410e9900051ea2f39d4, type: 3}
   soldierEnemyPrefab: {fileID: 1174396167649158818, guid: 8e21f175452cc4678816fc825c4c8ca7, type: 3}
   soldierRarityWeight: 60
@@ -64,7 +64,7 @@ MonoBehaviour:
   ogreHP: 20
   ogreAttackDamage: 5
   ogreAttackRange: 2
-  ogreAttackInterval: 4
+  ogreAttackInterval: 3
   ogreResourceCost: 6
   ogreRevealRadius: 1
   ogreModelScale: 1
@@ -72,23 +72,23 @@ MonoBehaviour:
   ninjaEnemyPrefab: {fileID: 8139704103507337014, guid: 8e5b38abe23fc4709ae6d3344eca3864, type: 3}
   ninjaRarityWeight: 35
   ninjaHP: 5
-  ninjaAttackDamage: 1
+  ninjaAttackDamage: 2
   ninjaAttackRange: 1
   ninjaAttackInterval: 1
   ninjaResourceCost: 4
   ninjaRevealRadius: 2
   ninjaModelScale: 1
   waveSequence:
-  - spawnType: 1
-    enemySoldierCount: 2
-    enemyNinjaCount: 2
-    enemyOgreCount: 2
+  - spawnType: 0
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
     resourceNodeCount: 0
     resourceNodeLevel: 1
     bossCount: 1
     bossHP: 30
     bossDamage: 5
-  - spawnType: 1
+  - spawnType: 0
     enemySoldierCount: 0
     enemyNinjaCount: 0
     enemyOgreCount: 0
