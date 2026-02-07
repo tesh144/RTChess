@@ -1,27 +1,32 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 namespace ClockworkGrid
 {
     /// <summary>
     /// Represents a draggable unit icon in the dock bar.
     /// Each icon is a consumable instance of a unit.
+    /// Shows cost badge and hover magnification (macOS dock style).
     /// </summary>
     public class UnitIcon : MonoBehaviour,
         IBeginDragHandler, IDragHandler, IEndDragHandler,
         IPointerEnterHandler, IPointerExitHandler
     {
         private GameObject unitPrefab;
+        private UnitData unitData;
         private DockBarManager dockManager;
         private RectTransform rectTransform;
         private Vector3 originalScale;
         private Vector2 originalPosition;
         private bool isDragging = false;
+        private GameObject costBadge;
 
-        [SerializeField] private float hoverScale = 1.3f;
+        [SerializeField] private float hoverScale = 1.2f; // Phase 2: ~20% scale up
 
         public GameObject UnitPrefab => unitPrefab;
+        public UnitData UnitData => unitData;
 
         private void Awake()
         {
@@ -34,6 +39,20 @@ namespace ClockworkGrid
             unitPrefab = prefab;
             dockManager = manager;
             originalPosition = rectTransform.anchoredPosition;
+        }
+
+        /// <summary>
+        /// Initialize with UnitData (Phase 2 addition)
+        /// </summary>
+        public void Initialize(UnitData data, DockBarManager manager)
+        {
+            unitData = data;
+            unitPrefab = data.Prefab;
+            dockManager = manager;
+            originalPosition = rectTransform.anchoredPosition;
+
+            // Create cost badge
+            CreateCostBadge(data.Cost);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -95,6 +114,43 @@ namespace ClockworkGrid
             // TODO Phase 4: Implement smooth snap-back animation
             rectTransform.anchoredPosition = originalPosition;
             rectTransform.localScale = originalScale;
+        }
+
+        /// <summary>
+        /// Create cost badge (dark circle with cost number)
+        /// </summary>
+        private void CreateCostBadge(int cost)
+        {
+            // Badge container (positioned below icon)
+            costBadge = new GameObject("CostBadge");
+            RectTransform badgeRect = costBadge.AddComponent<RectTransform>();
+            badgeRect.SetParent(transform, false);
+            badgeRect.anchorMin = new Vector2(0.5f, 0f);
+            badgeRect.anchorMax = new Vector2(0.5f, 0f);
+            badgeRect.pivot = new Vector2(0.5f, 1f);
+            badgeRect.anchoredPosition = new Vector2(0f, -5f); // Just below icon
+            badgeRect.sizeDelta = new Vector2(25f, 25f); // Small dark circle
+
+            // Dark circle background
+            Image badgeBg = costBadge.AddComponent<Image>();
+            badgeBg.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            badgeBg.color = new Color(0.1f, 0.1f, 0.1f, 0.9f); // Dark semi-transparent
+            badgeBg.type = Image.Type.Sliced;
+
+            // Cost text
+            GameObject textObj = new GameObject("CostText");
+            RectTransform textRect = textObj.AddComponent<RectTransform>();
+            textRect.SetParent(badgeRect, false);
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+
+            TextMeshProUGUI costText = textObj.AddComponent<TextMeshProUGUI>();
+            costText.text = cost.ToString();
+            costText.fontSize = 14;
+            costText.color = Color.white;
+            costText.alignment = TextAlignmentOptions.Center;
+            costText.fontStyle = FontStyles.Bold;
         }
     }
 }

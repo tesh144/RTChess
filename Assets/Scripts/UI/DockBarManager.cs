@@ -22,9 +22,8 @@ namespace ClockworkGrid
         private List<UnitIcon> unitIcons = new List<UnitIcon>();
         private GameObject[] availableUnitPrefabs;
 
-        // Draw cost configuration
-        [SerializeField] private int baseDealCost = 3;
-        private int drawCount = 0;
+        // HandManager integration (Phase 2)
+        private HandManager handManager;
 
         // Singleton pattern
         public static DockBarManager Instance { get; private set; }
@@ -40,11 +39,11 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Initialize the dock bar with UI hierarchy and unit prefabs
+        /// Initialize the dock bar with UI hierarchy and HandManager
         /// </summary>
-        public void Initialize(Canvas canvas, GameObject[] unitPrefabs)
+        public void Initialize(Canvas canvas, HandManager manager)
         {
-            availableUnitPrefabs = unitPrefabs;
+            handManager = manager;
             CreateDockBarUI(canvas);
             UpdateDealButtonDisplay();
 
@@ -53,6 +52,14 @@ namespace ClockworkGrid
             {
                 ResourceTokenManager.Instance.OnTokensChanged += OnTokensChanged;
             }
+
+            // Subscribe to hand changes to update UI
+            if (handManager != null)
+            {
+                handManager.OnHandChanged += OnHandChanged;
+                // Display starting hand
+                OnHandChanged();
+            }
         }
 
         private void OnDestroy()
@@ -60,6 +67,11 @@ namespace ClockworkGrid
             if (ResourceTokenManager.Instance != null)
             {
                 ResourceTokenManager.Instance.OnTokensChanged -= OnTokensChanged;
+            }
+
+            if (handManager != null)
+            {
+                handManager.OnHandChanged -= OnHandChanged;
             }
         }
 
@@ -146,12 +158,13 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Calculate the current deal cost based on draw count
-        /// Linear escalation: 3, 4, 5, 6, 7...
+        /// Calculate the current deal cost (delegates to HandManager)
         /// </summary>
         public int CalculateDealCost()
         {
-            return baseDealCost + drawCount;
+            if (handManager != null)
+                return handManager.CalculateDrawCost();
+            return 3; // Fallback
         }
 
         /// <summary>
@@ -159,27 +172,14 @@ namespace ClockworkGrid
         /// </summary>
         public void OnDealButtonClicked()
         {
-            int cost = CalculateDealCost();
+            if (handManager == null) return;
 
-            // Check if player has enough tokens
-            if (!ResourceTokenManager.Instance.HasEnoughTokens(cost))
+            // Try to draw a unit (HandManager handles cost check and token spending)
+            bool success = handManager.DrawUnit();
+
+            if (!success)
             {
-                Debug.Log($"Not enough tokens! Need {cost}, have {ResourceTokenManager.Instance.CurrentTokens}");
                 // TODO: Show error feedback (button shake, sound)
-                return;
-            }
-
-            // Spend tokens
-            ResourceTokenManager.Instance.SpendTokens(cost);
-
-            // Increment draw count AFTER spending
-            drawCount++;
-
-            // Add random unit to dock (for now, just pick first prefab - only Soldiers in Iteration 4)
-            if (availableUnitPrefabs != null && availableUnitPrefabs.Length > 0)
-            {
-                int randomIndex = Random.Range(0, availableUnitPrefabs.Length);
-                AddUnitToDock(availableUnitPrefabs[randomIndex]);
             }
 
             // Update button display
@@ -187,9 +187,9 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Add a new unit icon to the dock
+        /// Add a new unit icon to the dock (using UnitData)
         /// </summary>
-        public void AddUnitToDock(GameObject unitPrefab)
+        public void AddUnitToDock(UnitData unitData)
         {
             // Create new unit icon
             GameObject iconObj = new GameObject($"UnitIcon_{unitIcons.Count}");
@@ -197,13 +197,14 @@ namespace ClockworkGrid
             iconRect.SetParent(dockIconsPanel, false);
             iconRect.sizeDelta = new Vector2(70f, 70f);
 
-            // Add Image component (placeholder for now)
+            // Add Image component with unit-specific color
             Image iconImage = iconObj.AddComponent<Image>();
-            iconImage.color = GetUnitColor(unitPrefab);
+            iconImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            iconImage.color = GetUnitColorByType(unitData.Type);
 
-            // Add UnitIcon component (will be created in Phase 3)
+            // Add UnitIcon component
             UnitIcon icon = iconObj.AddComponent<UnitIcon>();
-            icon.Initialize(unitPrefab, this);
+            icon.Initialize(unitData, this);
 
             unitIcons.Add(icon);
 
@@ -211,6 +212,29 @@ namespace ClockworkGrid
             UpdateLayoutSpacing();
 
             // TODO: Animate icon sliding in from right
+        }
+
+        /// <summary>
+        /// Called when the hand changes (unit added or removed)
+        /// </summary>
+        private void OnHandChanged()
+        {
+            if (handManager == null) return;
+
+            // Clear current icons
+            foreach (UnitIcon icon in unitIcons)
+            {
+                if (icon != null && icon.gameObject != null)
+                    Destroy(icon.gameObject);
+            }
+            unitIcons.Clear();
+
+            // Rebuild from current hand
+            List<UnitData> hand = handManager.GetHand();
+            foreach (UnitData unitData in hand)
+            {
+                AddUnitToDock(unitData);
+            }
         }
 
         /// <summary>
@@ -273,16 +297,21 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Extract color from unit prefab for icon display
+        /// Get color for unit type (Phase 2 spec)
         /// </summary>
-        private Color GetUnitColor(GameObject unitPrefab)
+        private Color GetUnitColorByType(UnitType type)
         {
-            Renderer renderer = unitPrefab.GetComponentInChildren<Renderer>();
-            if (renderer != null && renderer.sharedMaterial != null)
+            switch (type)
             {
-                return renderer.sharedMaterial.color;
+                case UnitType.Soldier:
+                    return new Color(0.3f, 0.5f, 1f); // Blue
+                case UnitType.Ninja:
+                    return new Color(0.3f, 1f, 0.5f); // Green
+                case UnitType.Ogre:
+                    return new Color(1f, 0.3f, 0.3f); // Red
+                default:
+                    return Color.white;
             }
-            return Color.white;
         }
 
         private T CreateUIObject<T>(string name, Transform parent) where T : Component

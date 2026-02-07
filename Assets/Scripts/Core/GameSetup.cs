@@ -291,15 +291,20 @@ namespace ClockworkGrid
             GameObject dragHandlerObj = new GameObject("DragDropHandler");
             dragHandlerObj.AddComponent<DragDropHandler>();
 
+            // Create HandManager (Phase 2)
+            GameObject handObj = new GameObject("HandManager");
+            HandManager handManager = handObj.AddComponent<HandManager>();
+            handManager.Initialize(soldierPrefab, soldierPrefab, soldierPrefab); // TODO: Add Ninja and Ogre prefabs
+
+            // Give player starting hand (3 Soldiers - Phase 2 spec)
+            handManager.GiveStartingHand();
+
             // Create DockBarManager
             GameObject dockObj = new GameObject("DockBarManager");
             dockObj.transform.SetParent(canvas.transform, false);
 
             DockBarManager dockManager = dockObj.AddComponent<DockBarManager>();
-
-            // Pass soldier prefab (only unit type in Iteration 4)
-            GameObject[] unitPrefabs = new GameObject[] { soldierPrefab };
-            dockManager.Initialize(canvas, unitPrefabs);
+            dockManager.Initialize(canvas, handManager);
         }
 
         private void SetupDebugPanel()
