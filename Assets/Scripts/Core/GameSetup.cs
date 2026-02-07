@@ -67,6 +67,7 @@ namespace ClockworkGrid
             SetupCamera();
             SetupGrid();
             SetupFogOfWar();
+            SetupGridExpansion(); // Iteration 9: Grid expansion system
             SetupIntervalTimer();
             SetupTokenManager();
             SetupUnitPrefabs(); // Iteration 6: Create all unit prefabs
@@ -889,6 +890,20 @@ namespace ClockworkGrid
 
             // Ambient light
             RenderSettings.ambientLight = new Color(0.3f, 0.3f, 0.4f);
+        }
+
+        /// <summary>
+        /// Iteration 9: Initialize grid expansion system.
+        /// </summary>
+        private void SetupGridExpansion()
+        {
+            GameObject expansionObj = new GameObject("GridExpansionManager");
+            GridExpansionManager expansion = expansionObj.AddComponent<GridExpansionManager>();
+
+            // Initialize with skipTutorial = true for now (can add tutorial later)
+            expansion.Initialize(skipTutorial: true);
+
+            Debug.Log("GridExpansionManager initialized");
         }
 
         /// <summary>

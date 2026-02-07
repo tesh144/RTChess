@@ -127,5 +127,107 @@ namespace ClockworkGrid
             cellStates[gridX, gridY] = CellState.Empty;
             cellOccupants[gridX, gridY] = null;
         }
+
+        /// <summary>
+        /// Resize grid to new dimensions (Iteration 9: Grid Expansion).
+        /// Preserves existing cells by centering them in the new grid.
+        /// </summary>
+        public void ResizeGrid(Vector2Int newSize)
+        {
+            if (newSize.x <= 0 || newSize.y <= 0)
+            {
+                Debug.LogWarning($"Invalid grid size: {newSize}");
+                return;
+            }
+
+            Debug.Log($"Resizing grid from {gridWidth}×{gridHeight} to {newSize.x}×{newSize.y}");
+
+            // Create new arrays
+            CellState[,] newCellStates = new CellState[newSize.x, newSize.y];
+            GameObject[,] newCellOccupants = new GameObject[newSize.x, newSize.y];
+
+            // Initialize all new cells as empty
+            for (int x = 0; x < newSize.x; x++)
+            {
+                for (int y = 0; y < newSize.y; y++)
+                {
+                    newCellStates[x, y] = CellState.Empty;
+                    newCellOccupants[x, y] = null;
+                }
+            }
+
+            // Copy existing cells (centered expansion)
+            if (cellStates != null)
+            {
+                int offsetX = (newSize.x - gridWidth) / 2;
+                int offsetY = (newSize.y - gridHeight) / 2;
+
+                for (int x = 0; x < gridWidth; x++)
+                {
+                    for (int y = 0; y < gridHeight; y++)
+                    {
+                        int newX = x + offsetX;
+                        int newY = y + offsetY;
+
+                        if (newX >= 0 && newX < newSize.x && newY >= 0 && newY < newSize.y)
+                        {
+                            newCellStates[newX, newY] = cellStates[x, y];
+                            newCellOccupants[newX, newY] = cellOccupants[x, y];
+
+                            // Update unit/resource grid positions
+                            if (cellOccupants[x, y] != null)
+                            {
+                                Unit unit = cellOccupants[x, y].GetComponent<Unit>();
+                                if (unit != null)
+                                {
+                                    unit.GridX = newX;
+                                    unit.GridY = newY;
+                                }
+
+                                ResourceNode resource = cellOccupants[x, y].GetComponent<ResourceNode>();
+                                if (resource != null)
+                                {
+                                    resource.GridX = newX;
+                                    resource.GridY = newY;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Update world positions of all units/resources
+                UpdateAllWorldPositions();
+            }
+
+            // Update grid dimensions
+            gridWidth = newSize.x;
+            gridHeight = newSize.y;
+            cellStates = newCellStates;
+            cellOccupants = newCellOccupants;
+
+            Debug.Log($"Grid resized successfully to {gridWidth}×{gridHeight}");
+        }
+
+        /// <summary>
+        /// Update world positions of all units and resources after grid resize.
+        /// </summary>
+        private void UpdateAllWorldPositions()
+        {
+            if (cellOccupants == null) return;
+
+            for (int x = 0; x < gridWidth; x++)
+            {
+                for (int y = 0; y < gridHeight; y++)
+                {
+                    GameObject occupant = cellOccupants[x, y];
+                    if (occupant != null)
+                    {
+                        // Recalculate world position with new grid size
+                        Vector3 newWorldPos = GridToWorldPosition(x, y);
+                        occupant.transform.position = newWorldPos;
+                    }
+                }
+            }
+        }
     }
 }
