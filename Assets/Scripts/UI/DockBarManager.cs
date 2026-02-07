@@ -110,6 +110,9 @@ namespace ClockworkGrid
             // Use assigned container for icons
             dockIconsPanel = dockIconsContainer.GetComponent<RectTransform>();
 
+            // Clear any pre-existing mock-up cards from editor
+            ClearDockContainerChildren();
+
             // Ensure HorizontalLayoutGroup exists
             layoutGroup = dockIconsContainer.GetComponent<HorizontalLayoutGroup>();
             if (layoutGroup == null)
@@ -417,6 +420,23 @@ namespace ClockworkGrid
         private void OnTokensChanged(int newTotal)
         {
             UpdateDealButtonDisplay();
+        }
+
+        /// <summary>
+        /// Clear pre-existing children from dock container (mock-up cards from editor)
+        /// </summary>
+        private void ClearDockContainerChildren()
+        {
+            if (dockIconsContainer == null) return;
+
+            // Destroy all children (these are editor mock-ups, not runtime cards)
+            for (int i = dockIconsContainer.childCount - 1; i >= 0; i--)
+            {
+                Transform child = dockIconsContainer.GetChild(i);
+                Destroy(child.gameObject);
+            }
+
+            Debug.Log($"DockBarManager: Cleared {dockIconsContainer.childCount} mock-up cards from dock");
         }
 
         /// <summary>

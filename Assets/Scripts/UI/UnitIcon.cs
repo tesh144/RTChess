@@ -52,11 +52,15 @@ namespace ClockworkGrid
             dockManager = manager;
             originalPosition = rectTransform.anchoredPosition;
 
-            // Create cost badge
-            CreateCostBadge(data.Cost);
+            // Try to find and populate existing UI elements in prefab
+            bool foundPrefabUI = PopulatePrefabUI(data.Cost, data.Type);
 
-            // Create type label (Bug fix: show unit type)
-            CreateTypeLabel(data.Type);
+            // Fallback: Create UI dynamically if prefab doesn't have elements
+            if (!foundPrefabUI)
+            {
+                CreateCostBadge(data.Cost);
+                CreateTypeLabel(data.Type);
+            }
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -118,6 +122,41 @@ namespace ClockworkGrid
             // TODO Phase 4: Implement smooth snap-back animation
             rectTransform.anchoredPosition = originalPosition;
             rectTransform.localScale = originalScale;
+        }
+
+        /// <summary>
+        /// Try to populate existing UI elements in the prefab.
+        /// Searches for TextMeshProUGUI components with specific names.
+        /// Returns true if prefab UI was found and populated.
+        /// </summary>
+        private bool PopulatePrefabUI(int cost, UnitType type)
+        {
+            bool foundCost = false;
+            bool foundName = false;
+
+            // Search all TextMeshProUGUI components in children
+            TextMeshProUGUI[] textComponents = GetComponentsInChildren<TextMeshProUGUI>(true);
+
+            foreach (TextMeshProUGUI textComp in textComponents)
+            {
+                string objName = textComp.gameObject.name.ToLower();
+
+                // Look for cost/number display
+                if (objName.Contains("cost") || objName.Contains("number") || objName.Contains("price"))
+                {
+                    textComp.text = cost.ToString();
+                    foundCost = true;
+                }
+                // Look for name/type display
+                else if (objName.Contains("name") || objName.Contains("type") || objName.Contains("label"))
+                {
+                    textComp.text = type.ToString();
+                    foundName = true;
+                }
+            }
+
+            // Only return true if we found both elements
+            return foundCost && foundName;
         }
 
         /// <summary>
