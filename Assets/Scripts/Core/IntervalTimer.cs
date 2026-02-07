@@ -10,6 +10,7 @@ namespace ClockworkGrid
 
         private float timer;
         private int currentInterval;
+        private bool isPaused = false; // Iteration 9: Pause during grid expansion
 
         public static IntervalTimer Instance { get; private set; }
 
@@ -34,6 +35,8 @@ namespace ClockworkGrid
 
         private void Update()
         {
+            if (isPaused) return; // Iteration 9: Don't tick while paused
+
             timer += Time.deltaTime;
 
             if (timer >= baseIntervalDuration)
@@ -43,5 +46,28 @@ namespace ClockworkGrid
                 OnIntervalTick?.Invoke(currentInterval);
             }
         }
+
+        /// <summary>
+        /// Pause the interval timer (Iteration 9: for grid expansion).
+        /// </summary>
+        public void Pause()
+        {
+            isPaused = true;
+            Debug.Log("IntervalTimer paused");
+        }
+
+        /// <summary>
+        /// Resume the interval timer.
+        /// </summary>
+        public void Resume()
+        {
+            isPaused = false;
+            Debug.Log("IntervalTimer resumed");
+        }
+
+        /// <summary>
+        /// Check if timer is currently paused.
+        /// </summary>
+        public bool IsPaused => isPaused;
     }
 }

@@ -166,16 +166,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 793e74b31dfc149289d6e0275ec9395f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridWidth: 4
-  gridHeight: 4
-  cellSize: 1.5
-  baseIntervalDuration: 2
+  gridWidth: 11
+  gridHeight: 11
+  cellSize: 1
+  baseIntervalDuration: 1
   soldierHP: 10
   soldierAttackDamage: 3
   soldierAttackRange: 1
   soldierAttackInterval: 2
   soldierResourceCost: 3
+  resourceNodeHP: 10
+  resourceTokensPerHit: 1
+  resourceBonusTokens: 3
+  level2HP: 20
+  level2TokensPerHit: 1
+  level2BonusTokens: 6
+  level3HP: 50
+  level3TokensPerHit: 2
+  level3BonusTokens: 9
   playerColor: {r: 0.2, g: 0.5, b: 1, a: 1}
+  enemyColor: {r: 1, g: 0.3, b: 0.3, a: 1}
+  resourceColor: {r: 0.2, g: 0.85, b: 0.4, a: 1}
   cameraHeight: 12
   cameraTiltAngle: 15
 --- !u!1660057539 &9223372036854775807

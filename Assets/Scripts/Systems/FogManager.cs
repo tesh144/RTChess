@@ -174,5 +174,66 @@ namespace ClockworkGrid
 
             return (float)revealedCount / totalCells * 100f;
         }
+
+        /// <summary>
+        /// Expand fog to match new grid size (Iteration 9: Grid Expansion).
+        /// Preserves existing revealed state, new cells start fogged.
+        /// </summary>
+        public void ExpandFog(Vector2Int newSize)
+        {
+            if (newSize.x <= 0 || newSize.y <= 0)
+            {
+                Debug.LogWarning($"Invalid fog size: {newSize}");
+                return;
+            }
+
+            Debug.Log($"Expanding fog from {gridWidth}×{gridHeight} to {newSize.x}×{newSize.y}");
+
+            // Create new fog array
+            bool[,] newRevealedCells = new bool[newSize.x, newSize.y];
+
+            // Initialize all new cells as fogged
+            for (int x = 0; x < newSize.x; x++)
+            {
+                for (int y = 0; y < newSize.y; y++)
+                {
+                    newRevealedCells[x, y] = false;
+                }
+            }
+
+            // Copy existing revealed state (centered expansion)
+            if (revealedCells != null)
+            {
+                int offsetX = (newSize.x - gridWidth) / 2;
+                int offsetY = (newSize.y - gridHeight) / 2;
+
+                for (int x = 0; x < gridWidth; x++)
+                {
+                    for (int y = 0; y < gridHeight; y++)
+                    {
+                        int newX = x + offsetX;
+                        int newY = y + offsetY;
+
+                        if (newX >= 0 && newX < newSize.x && newY >= 0 && newY < newSize.y)
+                        {
+                            newRevealedCells[newX, newY] = revealedCells[x, y];
+                        }
+                    }
+                }
+            }
+
+            // Update fog dimensions
+            gridWidth = newSize.x;
+            gridHeight = newSize.y;
+            revealedCells = newRevealedCells;
+
+            // Notify FogGridVisualizer to create fog overlays for new cells
+            if (FogGridVisualizer.Instance != null)
+            {
+                FogGridVisualizer.Instance.RefreshFogOverlays();
+            }
+
+            Debug.Log($"Fog expanded successfully to {gridWidth}×{gridHeight}");
+        }
     }
 }

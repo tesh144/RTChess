@@ -10,6 +10,9 @@ namespace ClockworkGrid
     /// </summary>
     public class FogGridVisualizer : MonoBehaviour
     {
+        // Singleton
+        public static FogGridVisualizer Instance { get; private set; }
+
         [Header("Fog Visual Settings")]
         [SerializeField] private float fadeOutDuration = 0.3f;
         [SerializeField] private float fogOpacity = 0.85f;
@@ -20,6 +23,16 @@ namespace ClockworkGrid
 
         private GridManager gridManager;
         private FogManager fogManager;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
 
         public void Initialize(GridManager grid, FogManager fog)
         {
@@ -147,6 +160,28 @@ namespace ClockworkGrid
         public bool HasFogVisual(int x, int y)
         {
             return fogVisuals.ContainsKey(new Vector2Int(x, y));
+        }
+
+        /// <summary>
+        /// Refresh fog overlays after grid expansion (Iteration 9).
+        /// Destroys old fog visuals and creates new ones for the expanded grid.
+        /// </summary>
+        public void RefreshFogOverlays()
+        {
+            // Destroy all existing fog visuals
+            foreach (var kvp in fogVisuals)
+            {
+                if (kvp.Value != null && kvp.Value.gameObject != null)
+                {
+                    Destroy(kvp.Value.gameObject);
+                }
+            }
+            fogVisuals.Clear();
+
+            // Recreate fog overlays for all fogged cells
+            CreateFogOverlays();
+
+            Debug.Log($"FogGridVisualizer refreshed: {gridManager.Width}x{gridManager.Height} fog overlays recreated");
         }
     }
 }
