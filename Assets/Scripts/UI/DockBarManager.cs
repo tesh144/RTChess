@@ -60,6 +60,16 @@ namespace ClockworkGrid
             gameObject.SetActive(false);
         }
 
+        private void Start()
+        {
+            // Extra safety check to ensure dock bar is hidden at game start
+            // This overrides any scene-level active state
+            if (!WaveManager.Instance?.HasWaveStarted ?? true)
+            {
+                gameObject.SetActive(false);
+            }
+        }
+
         /// <summary>
         /// Initialize the dock bar with UI hierarchy (Iteration 10: No HandManager)
         /// </summary>

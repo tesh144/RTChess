@@ -64,6 +64,16 @@ namespace ClockworkGrid
             gameObject.SetActive(false);
         }
 
+        private void Start()
+        {
+            // Extra safety check to ensure UI is hidden at game start
+            // This overrides any scene-level active state
+            if (!WaveManager.Instance?.HasWaveStarted ?? true)
+            {
+                gameObject.SetActive(false);
+            }
+        }
+
         /// <summary>
         /// Show countdown UI when player places first unit with slide-down animation.
         /// </summary>
