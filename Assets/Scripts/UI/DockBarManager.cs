@@ -245,6 +245,13 @@ namespace ClockworkGrid
             if (unitIcons.Contains(icon))
             {
                 unitIcons.Remove(icon);
+
+                // Remove from HandManager (Phase 3 fix)
+                if (handManager != null && icon.UnitData != null)
+                {
+                    handManager.RemoveFromHand(icon.UnitData);
+                }
+
                 Destroy(icon.gameObject);
                 UpdateLayoutSpacing();
             }
