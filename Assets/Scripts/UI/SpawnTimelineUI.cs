@@ -30,12 +30,19 @@ namespace ClockworkGrid
         [SerializeField] private Color resourceColor = new Color(0.25f, 0.85f, 0.31f); // #40D850 green
         [SerializeField] private Color emptyColor = new Color(0.5f, 0.5f, 0.5f); // Gray
 
+        [Header("Animation Settings")]
+        [SerializeField] private bool enableSlideAnimation = true;
+        [SerializeField] private float slideDownDistance = 100f; // Distance to slide from
+        [SerializeField] private float slideDownDuration = 0.5f; // Animation duration
+
         // State
         private List<GameObject> spawnDots = new List<GameObject>();
         private List<Image> connectionLines = new List<Image>();
         private int currentDotIndex = 0;
         private string currentSpawnCode;
         private Coroutine pulseCoroutine;
+        private RectTransform rectTransform;
+        private Vector2 originalAnchoredPosition;
 
         private void Awake()
         {
@@ -46,12 +53,19 @@ namespace ClockworkGrid
             }
             Instance = this;
 
+            // Cache RectTransform and original position for animation
+            rectTransform = GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                originalAnchoredPosition = rectTransform.anchoredPosition;
+            }
+
             // Hide UI until player places first unit and wave starts
             gameObject.SetActive(false);
         }
 
         /// <summary>
-        /// Show countdown UI when player places first unit.
+        /// Show countdown UI when player places first unit with slide-down animation.
         /// </summary>
         public void ShowCountdown(int startingCount)
         {
@@ -62,6 +76,12 @@ namespace ClockworkGrid
                 waveNumberText.text = startingCount.ToString();
                 waveNumberText.fontSize = 72; // Large countdown number
                 waveNumberText.color = Color.yellow;
+            }
+
+            // Trigger slide-down animation
+            if (enableSlideAnimation && rectTransform != null)
+            {
+                StartCoroutine(SlideDownAnimation());
             }
         }
 
@@ -74,6 +94,36 @@ namespace ClockworkGrid
             {
                 waveNumberText.text = remaining.ToString();
             }
+        }
+
+        /// <summary>
+        /// Animate panel sliding down from above the screen.
+        /// </summary>
+        private IEnumerator SlideDownAnimation()
+        {
+            if (rectTransform == null) yield break;
+
+            // Start position (above screen)
+            Vector2 startPos = originalAnchoredPosition + new Vector2(0, slideDownDistance);
+            Vector2 endPos = originalAnchoredPosition;
+
+            rectTransform.anchoredPosition = startPos;
+
+            float elapsed = 0f;
+            while (elapsed < slideDownDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / slideDownDuration;
+
+                // Smooth ease-out curve
+                float smoothT = 1f - Mathf.Pow(1f - t, 3f);
+
+                rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, smoothT);
+                yield return null;
+            }
+
+            // Ensure final position is exact
+            rectTransform.anchoredPosition = endPos;
         }
 
         /// <summary>
