@@ -370,6 +370,12 @@ namespace ClockworkGrid
 
             Debug.Log($"{team} unit destroyed at ({GridX}, {GridY})");
 
+            // Notify WaveManager if this was a player unit (for lose condition tracking)
+            if (team == Team.Player && WaveManager.Instance != null)
+            {
+                WaveManager.Instance.OnPlayerUnitDestroyed();
+            }
+
             // Remove from grid
             if (GridManager.Instance != null)
             {

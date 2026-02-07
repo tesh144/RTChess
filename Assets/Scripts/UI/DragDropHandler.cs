@@ -127,6 +127,12 @@ namespace ClockworkGrid
             // Register with grid
             GridManager.Instance.PlaceUnit(targetGridX, targetGridY, unitObj, CellState.PlayerUnit);
 
+            // Notify WaveManager that player placed a unit (for lose condition tracking)
+            if (WaveManager.Instance != null)
+            {
+                WaveManager.Instance.OnPlayerUnitPlaced();
+            }
+
             // Trigger wave start on first player unit placement
             if (WaveManager.Instance != null && !WaveManager.Instance.HasWaveStarted)
             {

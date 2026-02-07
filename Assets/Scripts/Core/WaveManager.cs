@@ -76,6 +76,7 @@ namespace ClockworkGrid
         private bool sequenceComplete = false;
         private bool gameOver = false;
         private bool hasWaveStarted = false; // Wave doesn't start until player places first unit
+        private int playerUnitCount = 0; // Cached count to avoid O(N²) grid iteration
 
         // Spawn positions (edges of grid)
         private List<Vector2Int> spawnPositions = new List<Vector2Int>();
@@ -662,23 +663,8 @@ namespace ClockworkGrid
         {
             if (gameOver) return;
 
-            // Check if player has any units on grid
-            bool hasUnitsOnGrid = false;
-            if (GridManager.Instance != null)
-            {
-                for (int x = 0; x < GridManager.Instance.Width; x++)
-                {
-                    for (int y = 0; y < GridManager.Instance.Height; y++)
-                    {
-                        if (GridManager.Instance.GetCellState(x, y) == CellState.PlayerUnit)
-                        {
-                            hasUnitsOnGrid = true;
-                            break;
-                        }
-                    }
-                    if (hasUnitsOnGrid) break;
-                }
-            }
+            // Use cached player unit count instead of iterating grid (performance optimization)
+            bool hasUnitsOnGrid = playerUnitCount > 0;
 
             // Check if player has units in hand
             bool hasUnitsInHand = false;
@@ -751,6 +737,23 @@ namespace ClockworkGrid
         public bool IsGameOver => gameOver;
         public bool HasWaveStarted => hasWaveStarted;
         public bool InPeacePeriod => inPeacePeriod;
+
+        /// <summary>
+        /// Notify WaveManager that a player unit was placed (for lose condition tracking).
+        /// </summary>
+        public void OnPlayerUnitPlaced()
+        {
+            playerUnitCount++;
+        }
+
+        /// <summary>
+        /// Notify WaveManager that a player unit was destroyed (for lose condition tracking).
+        /// </summary>
+        public void OnPlayerUnitDestroyed()
+        {
+            playerUnitCount--;
+            if (playerUnitCount < 0) playerUnitCount = 0; // Safety check
+        }
 
         /// <summary>
         /// Get the current wave code character being executed.

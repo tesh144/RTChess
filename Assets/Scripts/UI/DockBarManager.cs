@@ -328,7 +328,7 @@ namespace ClockworkGrid
             if (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost))
             {
                 Debug.Log($"Failed to draw unit - not enough tokens (need {cost})");
-                // TODO: Show error feedback (button shake, sound)
+                ShowErrorFeedback($"Not Enough Tokens! ({cost} needed)");
                 return;
             }
 
@@ -469,6 +469,39 @@ namespace ClockworkGrid
         private void OnTokensChanged(int newTotal)
         {
             UpdateDealButtonDisplay();
+        }
+
+        /// <summary>
+        /// Show error feedback when draw fails (e.g., not enough tokens).
+        /// </summary>
+        private void ShowErrorFeedback(string message)
+        {
+            if (drawButtonText != null)
+            {
+                StartCoroutine(FlashErrorText(message));
+            }
+        }
+
+        /// <summary>
+        /// Flash error message on draw button temporarily.
+        /// </summary>
+        private System.Collections.IEnumerator FlashErrorText(string errorMessage)
+        {
+            if (drawButtonText == null) yield break;
+
+            // Store original text and color
+            string originalText = drawButtonText.text;
+            Color originalColor = drawButtonText.color;
+
+            // Show error in red
+            drawButtonText.text = errorMessage;
+            drawButtonText.color = Color.red;
+
+            yield return new WaitForSeconds(1.5f);
+
+            // Restore original
+            drawButtonText.text = originalText;
+            drawButtonText.color = originalColor;
         }
 
         /// <summary>
