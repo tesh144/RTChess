@@ -464,7 +464,7 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Initialize the timeline UI (called once at wave start).
-        /// Also shows the dock bar with animation after countdown completes.
+        /// Also shows the tick counter after countdown completes.
         /// </summary>
         private void InitializeTimelineUI()
         {
@@ -475,10 +475,10 @@ namespace ClockworkGrid
                 SpawnTimelineUI.Instance.InitializeWave(currentWaveNumber + 1, spawnCode);
             }
 
-            // Show dock bar after countdown completes
-            if (DockBarManager.Instance != null)
+            // Show tick counter after countdown completes (dock bar stays visible throughout)
+            if (IntervalUI.Instance != null)
             {
-                DockBarManager.Instance.ShowWithAnimation();
+                IntervalUI.Instance.ShowTickCounter();
             }
         }
 

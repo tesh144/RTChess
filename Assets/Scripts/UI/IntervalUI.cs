@@ -10,8 +10,49 @@ namespace ClockworkGrid
     /// </summary>
     public class IntervalUI : MonoBehaviour
     {
+        // Singleton
+        public static IntervalUI Instance { get; private set; }
+
+        [Header("UI References")]
+        [SerializeField] private GameObject tickCounterHolder; // The tick counter panel/GameObject to show/hide
         [SerializeField] private TextMeshProUGUI intervalText;
         [SerializeField] private Image verticalBar;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
+
+        private void Start()
+        {
+            // Hide tick counter at runtime start (allows UI to stay visible in Editor for design work)
+            // Only activates after player places first unit and wave starts
+            if (tickCounterHolder != null && (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted))
+            {
+                Debug.Log("[IntervalUI] Hiding tick counter at start");
+                tickCounterHolder.SetActive(false);
+            }
+            else if (tickCounterHolder == null)
+            {
+                Debug.LogError("[IntervalUI] tickCounterHolder is not assigned! Please assign it in the Inspector.");
+            }
+        }
+
+        /// <summary>
+        /// Show the tick counter when wave starts.
+        /// </summary>
+        public void ShowTickCounter()
+        {
+            if (tickCounterHolder != null)
+            {
+                tickCounterHolder.SetActive(true);
+            }
+        }
 
         private void Update()
         {
