@@ -5,6 +5,16 @@ using UnityEngine;
 namespace ClockworkGrid
 {
     /// <summary>
+    /// Wave state for backward compatibility with ResourceSpawner.
+    /// </summary>
+    public enum WaveState
+    {
+        Preparation,  // Downtime/breathing room
+        Active,       // Wave is currently executing
+        Complete      // Wave finished
+    }
+
+    /// <summary>
     /// Spawn type for each interval in the wave sequence.
     /// </summary>
     public enum SpawnType
@@ -83,6 +93,7 @@ namespace ClockworkGrid
         [SerializeField] private GameObject resourceNodePrefab;
 
         // State
+        private WaveState currentState = WaveState.Preparation;
         private int currentWaveIndex = -1; // -1 = not started, increments each interval
         private int delayTicksRemaining;
         private bool sequenceComplete = false;
@@ -192,6 +203,9 @@ namespace ClockworkGrid
                 CompleteSequence();
                 return;
             }
+
+            // Set state to Active when executing wave entries
+            currentState = WaveState.Active;
 
             // Execute current wave entry
             ExecuteWaveEntry(currentWaveIndex);
@@ -503,6 +517,7 @@ namespace ClockworkGrid
         /// </summary>
         private void CompleteSequence()
         {
+            currentState = WaveState.Complete;
             sequenceComplete = true;
             gameOver = true;
 
@@ -587,6 +602,7 @@ namespace ClockworkGrid
         }
 
         // Public accessors for UI/other systems
+        public WaveState CurrentState => currentState;
         public int CurrentWaveIndex => currentWaveIndex;
         public int TotalWaveEntries => waveSequence.Length;
         public bool IsSequenceComplete => sequenceComplete;
