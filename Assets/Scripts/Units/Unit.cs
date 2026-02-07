@@ -418,9 +418,16 @@ namespace ClockworkGrid
             if (hpBarFill == null) return;
 
             float ratio = (float)currentHP / maxHP;
+
+            // Scale vertically (Y axis) instead of horizontally
             Vector3 scale = hpBarFill.localScale;
-            scale.x = ratio;
+            scale.y = ratio;
             hpBarFill.localScale = scale;
+
+            // Adjust position to shrink from top down (anchor at bottom)
+            Vector3 pos = hpBarFill.localPosition;
+            pos.y = -(1f - ratio) * 0.5f; // Move down as it shrinks to keep bottom anchored
+            hpBarFill.localPosition = pos;
 
             // Color from green to red based on HP
             Renderer fillRenderer = hpBarFill.GetComponent<Renderer>();

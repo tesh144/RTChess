@@ -57,21 +57,27 @@ namespace ClockworkGrid
 
         private static void CreateHPBar(GameObject root)
         {
-            // HP bar background
+            // HP bar container (this will billboard to face camera)
+            GameObject hpBarContainer = new GameObject("HPBarContainer");
+            hpBarContainer.transform.SetParent(root.transform);
+            hpBarContainer.transform.localPosition = new Vector3(0.5f, 0.8f, 0f); // Offset to the right
+            hpBarContainer.AddComponent<Billboard>();
+
+            // HP bar background (vertical bar)
             GameObject hpBarBG = GameObject.CreatePrimitive(PrimitiveType.Cube);
             hpBarBG.name = "HPBarBG";
-            hpBarBG.transform.SetParent(root.transform);
-            hpBarBG.transform.localPosition = new Vector3(0f, 1.2f, 0f);
-            hpBarBG.transform.localScale = new Vector3(0.6f, 0.08f, 0.05f);
+            hpBarBG.transform.SetParent(hpBarContainer.transform);
+            hpBarBG.transform.localPosition = Vector3.zero;
+            hpBarBG.transform.localScale = new Vector3(0.08f, 0.6f, 0.05f); // Thin and tall (vertical)
             SetColor(hpBarBG, new Color(0.2f, 0.2f, 0.2f));
             RemoveCollider(hpBarBG);
 
-            // HP bar fill (starts full)
+            // HP bar fill (starts full, anchored at bottom)
             GameObject hpBarFill = GameObject.CreatePrimitive(PrimitiveType.Cube);
             hpBarFill.name = "HPBarFill";
             hpBarFill.transform.SetParent(hpBarBG.transform);
-            hpBarFill.transform.localPosition = new Vector3(0f, 0f, 0.01f);
-            hpBarFill.transform.localScale = new Vector3(1f, 0.8f, 1.2f);
+            hpBarFill.transform.localPosition = new Vector3(0f, 0f, 0.01f); // Slightly forward
+            hpBarFill.transform.localScale = new Vector3(0.8f, 1f, 1.2f); // Full height initially
             SetColor(hpBarFill, Color.green);
             RemoveCollider(hpBarFill);
         }
