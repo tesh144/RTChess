@@ -247,23 +247,71 @@ namespace ClockworkGrid
             intervalTextRect.anchoredPosition = new Vector2(0, 5f);
             intervalTextRect.sizeDelta = new Vector2(0, 30f);
 
-            // Token counter (top-right corner)
-            GameObject tokenObj = new GameObject("TokenText");
-            tokenObj.transform.SetParent(canvasObj.transform, false);
+            // TOKEN DISPLAY (top-right corner, Phase 6 redesign)
+            // Container with background
+            GameObject tokenContainerObj = new GameObject("TokenContainer");
+            tokenContainerObj.transform.SetParent(canvasObj.transform, false);
 
-            TextMeshProUGUI tokenText = tokenObj.AddComponent<TextMeshProUGUI>();
-            tokenText.text = "Tokens: 0";
-            tokenText.fontSize = 28;
-            tokenText.color = new Color(1f, 0.9f, 0.2f);
-            tokenText.alignment = TextAlignmentOptions.TopRight;
+            RectTransform tokenContainer = tokenContainerObj.AddComponent<RectTransform>();
+            tokenContainer.anchorMin = new Vector2(1, 1);
+            tokenContainer.anchorMax = new Vector2(1, 1);
+            tokenContainer.pivot = new Vector2(1, 1);
+            tokenContainer.anchoredPosition = new Vector2(-20, -20);
+            tokenContainer.sizeDelta = new Vector2(140f, 60f);
+
+            // Background panel
+            Image containerBg = tokenContainerObj.AddComponent<Image>();
+            containerBg.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            containerBg.color = new Color(0.15f, 0.15f, 0.2f, 0.9f); // Dark purple-gray
+
+            // Token icon (circular coin)
+            GameObject iconObj = new GameObject("TokenIcon");
+            iconObj.transform.SetParent(tokenContainerObj.transform, false);
+
+            RectTransform iconRect = iconObj.AddComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0, 0.5f);
+            iconRect.anchorMax = new Vector2(0, 0.5f);
+            iconRect.pivot = new Vector2(0, 0.5f);
+            iconRect.anchoredPosition = new Vector2(15f, 0f);
+            iconRect.sizeDelta = new Vector2(40f, 40f);
+
+            Image tokenIcon = iconObj.AddComponent<Image>();
+            tokenIcon.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            tokenIcon.color = new Color(1f, 0.9f, 0.2f); // Gold
+            tokenIcon.type = Image.Type.Filled;
+            tokenIcon.fillMethod = Image.FillMethod.Radial360;
+            tokenIcon.fillOrigin = (int)Image.Origin360.Top;
+
+            // Inner circle (creates coin effect)
+            GameObject innerCircleObj = new GameObject("InnerCircle");
+            innerCircleObj.transform.SetParent(iconObj.transform, false);
+
+            RectTransform innerRect = innerCircleObj.AddComponent<RectTransform>();
+            innerRect.anchorMin = Vector2.zero;
+            innerRect.anchorMax = Vector2.one;
+            innerRect.sizeDelta = new Vector2(-10f, -10f); // Inset by 5px on each side
+
+            Image innerCircle = innerCircleObj.AddComponent<Image>();
+            innerCircle.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            innerCircle.color = new Color(0.8f, 0.7f, 0.1f); // Darker gold
+
+            // Token count text
+            GameObject tokenTextObj = new GameObject("TokenText");
+            tokenTextObj.transform.SetParent(tokenContainerObj.transform, false);
+
+            TextMeshProUGUI tokenText = tokenTextObj.AddComponent<TextMeshProUGUI>();
+            tokenText.text = "10";
+            tokenText.fontSize = 36;
+            tokenText.color = new Color(1f, 0.95f, 0.8f); // Light cream
+            tokenText.alignment = TextAlignmentOptions.MidlineRight;
             tokenText.fontStyle = FontStyles.Bold;
 
-            RectTransform tokenRect = tokenObj.GetComponent<RectTransform>();
-            tokenRect.anchorMin = new Vector2(1, 1);
-            tokenRect.anchorMax = new Vector2(1, 1);
-            tokenRect.pivot = new Vector2(1, 1);
-            tokenRect.anchoredPosition = new Vector2(-20, -20);
-            tokenRect.sizeDelta = new Vector2(300, 50);
+            RectTransform tokenTextRect = tokenTextObj.GetComponent<RectTransform>();
+            tokenTextRect.anchorMin = new Vector2(0.4f, 0);
+            tokenTextRect.anchorMax = new Vector2(1f, 1f);
+            tokenTextRect.pivot = new Vector2(1, 0.5f);
+            tokenTextRect.anchoredPosition = new Vector2(-10f, 0f);
+            tokenTextRect.sizeDelta = Vector2.zero;
 
             // WAVE TIMELINE (top-center, below token counter)
             GameObject timelineContainerObj = new GameObject("WaveTimelineContainer");
@@ -354,9 +402,11 @@ namespace ClockworkGrid
             SetPrivateField(intervalUI, "intervalText", intervalText);
             SetPrivateField(intervalUI, "verticalBar", fillImage);
 
-            // Hook up token UI
+            // Hook up token UI (Phase 6)
             TokenUI tokenUI = canvasObj.AddComponent<TokenUI>();
             SetPrivateField(tokenUI, "tokenText", tokenText);
+            SetPrivateField(tokenUI, "tokenIcon", tokenIcon);
+            SetPrivateField(tokenUI, "container", tokenContainer);
         }
 
         private void SetupDockBar()
