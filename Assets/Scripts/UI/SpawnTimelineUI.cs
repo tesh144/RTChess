@@ -45,6 +45,35 @@ namespace ClockworkGrid
                 return;
             }
             Instance = this;
+
+            // Hide UI until player places first unit and wave starts
+            gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Show countdown UI when player places first unit.
+        /// </summary>
+        public void ShowCountdown(int startingCount)
+        {
+            gameObject.SetActive(true);
+
+            if (waveNumberText != null)
+            {
+                waveNumberText.text = startingCount.ToString();
+                waveNumberText.fontSize = 72; // Large countdown number
+                waveNumberText.color = Color.yellow;
+            }
+        }
+
+        /// <summary>
+        /// Update countdown display each tick.
+        /// </summary>
+        public void UpdateCountdown(int remaining)
+        {
+            if (waveNumberText != null && remaining > 0)
+            {
+                waveNumberText.text = remaining.ToString();
+            }
         }
 
         /// <summary>
@@ -53,6 +82,9 @@ namespace ClockworkGrid
         /// </summary>
         public void InitializeWave(int waveNumber, string spawnCode)
         {
+            // UI already shown during countdown
+            gameObject.SetActive(true);
+
             ClearTimeline();
 
             // IMPORTANT: Clear any placeholder/design-time children from dotContainer

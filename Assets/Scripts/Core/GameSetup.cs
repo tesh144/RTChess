@@ -63,26 +63,11 @@ namespace ClockworkGrid
         [SerializeField] private float ninjaModelScale = 0.8f;
 
         [Header("Wave Sequence - Iteration 10")]
-        [Tooltip("Each entry = 1 interval tick. 0=Nothing, 1=Enemies, 2=Resources, 3=Boss. Edit this array to design your wave pattern!")]
-        [SerializeField] private WaveEntry[] waveSequence = new WaveEntry[]
-        {
-            // Default 15-entry test sequence
-            new WaveEntry { spawnType = SpawnType.Nothing },
-            new WaveEntry { spawnType = SpawnType.Nothing },
-            new WaveEntry { spawnType = SpawnType.Resources, resourceNodeCount = 2, resourceNodeLevel = 1 },
-            new WaveEntry { spawnType = SpawnType.Nothing },
-            new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 2 },
-            new WaveEntry { spawnType = SpawnType.Nothing },
-            new WaveEntry { spawnType = SpawnType.Nothing },
-            new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 1, enemyNinjaCount = 1 },
-            new WaveEntry { spawnType = SpawnType.Nothing },
-            new WaveEntry { spawnType = SpawnType.Resources, resourceNodeCount = 1, resourceNodeLevel = 1 },
-            new WaveEntry { spawnType = SpawnType.Nothing },
-            new WaveEntry { spawnType = SpawnType.Nothing },
-            new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 3 },
-            new WaveEntry { spawnType = SpawnType.Nothing },
-            new WaveEntry { spawnType = SpawnType.Boss, bossCount = 1, bossHP = 30, bossDamage = 5 }
-        };
+        [Tooltip("Wave sequence string: 0=Nothing, 1=Soldier, 2=Resource, 3=Ogre. Example: '1012103'")]
+        [SerializeField] private string waveSequence = "0020100100200103";
+
+        [Tooltip("Ticks between wave advances (4 for 4-sided game = 1 wave per full round)")]
+        [SerializeField] private int ticksPerWaveAdvance = 4;
 
         [Header("Resource Nodes")]
         [SerializeField] private GameObject resourceNodeLevel1Prefab; // Drag prefab, or leave empty for procedural
@@ -576,9 +561,9 @@ namespace ClockworkGrid
             waveManager.waveSequence = waveSequence;
             SetPrivateField(waveManager, "resourceNodePrefab", resourceNodePrefab);
 
-            waveManager.Initialize();
+            waveManager.Initialize(ticksPerWaveAdvance);
 
-            Debug.Log($"SetupWaveManager: Initialized WaveManager with {waveSequence.Length} wave entries");
+            Debug.Log($"SetupWaveManager: Initialized WaveManager with {waveSequence.Length} wave entries, {ticksPerWaveAdvance} ticks per advance");
         }
 
         // SetupWaveTimelineUI() REMOVED: Timeline UI is now manually created in Unity Editor

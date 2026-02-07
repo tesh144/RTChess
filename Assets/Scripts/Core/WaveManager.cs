@@ -25,38 +25,7 @@ namespace ClockworkGrid
         Boss = 3        // High-value/boss enemy units spawn
     }
 
-    /// <summary>
-    /// Configuration for one interval in the wave sequence.
-    /// Each entry defines what spawns during that interval tick.
-    /// </summary>
-    [System.Serializable]
-    public class WaveEntry
-    {
-        [Tooltip("What spawns this interval (0=Nothing, 1=Enemies, 2=Resources, 3=Boss)")]
-        public SpawnType spawnType = SpawnType.Nothing;
-
-        [Header("Enemies (Type 1) Config")]
-        [Tooltip("Number of Soldier units to spawn")]
-        public int enemySoldierCount = 0;
-        [Tooltip("Number of Ninja units to spawn")]
-        public int enemyNinjaCount = 0;
-        [Tooltip("Number of Ogre units to spawn")]
-        public int enemyOgreCount = 0;
-
-        [Header("Resources (Type 2) Config")]
-        [Tooltip("Number of resource nodes to spawn")]
-        public int resourceNodeCount = 0;
-        [Tooltip("Resource node level (1, 2, or 3)")]
-        public int resourceNodeLevel = 1;
-
-        [Header("Boss (Type 3) Config")]
-        [Tooltip("Number of boss units to spawn")]
-        public int bossCount = 1;
-        [Tooltip("Boss HP value")]
-        public int bossHP = 30;
-        [Tooltip("Boss damage value")]
-        public int bossDamage = 5;
-    }
+    // WaveEntry class removed - using string-based wave sequence now (Iteration 10)
 
     /// <summary>
     /// Wave data for backward compatibility with existing systems (e.g., GridExpansionManager).
@@ -82,12 +51,14 @@ namespace ClockworkGrid
         public static WaveManager Instance { get; private set; }
 
         [Header("=== WAVE SEQUENCE ===")]
-        [Tooltip("Each entry = 1 interval tick. 0=Nothing, 1=Enemies, 2=Resources, 3=Boss. Click + to add more intervals.")]
-        public WaveEntry[] waveSequence;
+        [Tooltip("Wave sequence string: 0=Nothing, 1=Soldier, 2=Resource, 3=Ogre. Example: '1012103'")]
+        public string waveSequence = "1012103";
 
         [Header("Timing")]
         [Tooltip("Number of interval ticks before starting the wave sequence (breathing room for player)")]
         [SerializeField] private int startDelayTicks = 0; // Start immediately
+        [Tooltip("Ticks between wave advances (4 for 4-sided game)")]
+        [SerializeField] private int ticksPerWaveAdvance = 4;
 
         [Header("Prefab References")]
         [SerializeField] private GameObject resourceNodePrefab;
@@ -96,6 +67,7 @@ namespace ClockworkGrid
         private WaveState currentState = WaveState.Preparation;
         private int currentWaveIndex = -1; // -1 = not started, increments each interval
         private int delayTicksRemaining;
+        private int ticksSinceLastAdvance = 0; // Counter for wave advance timing
         private bool sequenceComplete = false;
         private bool gameOver = false;
         private bool hasWaveStarted = false; // Wave doesn't start until player places first unit
@@ -123,12 +95,14 @@ namespace ClockworkGrid
         /// <summary>
         /// Initialize wave system (called by GameSetup).
         /// </summary>
-        public void Initialize()
+        public void Initialize(int ticksPerAdvance = 4)
         {
             InitializeSpawnPositions();
 
+            ticksPerWaveAdvance = ticksPerAdvance;
             delayTicksRemaining = startDelayTicks;
             currentWaveIndex = -1;
+            ticksSinceLastAdvance = 0;
             sequenceComplete = false;
             gameOver = false;
 
@@ -138,7 +112,7 @@ namespace ClockworkGrid
                 IntervalTimer.Instance.OnIntervalTick += OnIntervalTick;
             }
 
-            Debug.Log($"WaveManager initialized with {waveSequence.Length} wave entries, {startDelayTicks} tick delay");
+            Debug.Log($"WaveManager initialized with {waveSequence.Length} wave entries, {startDelayTicks} tick delay, {ticksPerWaveAdvance} ticks per advance");
         }
 
         private void OnDestroy()
@@ -210,7 +184,26 @@ namespace ClockworkGrid
                     return;
                 }
 
-                // Advance to next wave entry
+                // Increment tick counter
+                ticksSinceLastAdvance++;
+                Debug.Log($"[WaveManager] Tick counter: {ticksSinceLastAdvance}/{ticksPerWaveAdvance}");
+
+                // Update countdown UI during grace period
+                if (SpawnTimelineUI.Instance != null && currentWaveIndex == -1)
+                {
+                    int remaining = ticksPerWaveAdvance - ticksSinceLastAdvance;
+                    SpawnTimelineUI.Instance.UpdateCountdown(remaining);
+                }
+
+                // Only advance wave every N ticks (for 4-sided game, N=4)
+                if (ticksSinceLastAdvance < ticksPerWaveAdvance)
+                {
+                    Debug.Log($"[WaveManager] Waiting for wave advance ({ticksSinceLastAdvance}/{ticksPerWaveAdvance} ticks)");
+                    return;
+                }
+
+                // Reset counter and advance to next wave entry
+                ticksSinceLastAdvance = 0;
                 currentWaveIndex++;
                 Debug.Log($"[WaveManager] Advanced to wave index: {currentWaveIndex}/{waveSequence.Length}");
 
@@ -260,65 +253,54 @@ namespace ClockworkGrid
         /// </summary>
         private void ExecuteWaveEntry(int index)
         {
-            WaveEntry entry = waveSequence[index];
-
-            Debug.Log($"WaveManager: Executing entry {index}/{waveSequence.Length - 1} - Type: {entry.spawnType}");
-
-            switch (entry.spawnType)
+            if (index < 0 || index >= waveSequence.Length)
             {
-                case SpawnType.Nothing:
-                    // Do nothing this interval
+                Debug.LogError($"WaveManager: Invalid wave index {index}");
+                return;
+            }
+
+            char code = waveSequence[index];
+            Debug.Log($"WaveManager: Executing entry {index}/{waveSequence.Length - 1} - Code: '{code}'");
+
+            SpawnType spawnType = SpawnType.Nothing;
+
+            switch (code)
+            {
+                case '0':
+                    // Do nothing this wave tick
+                    spawnType = SpawnType.Nothing;
                     break;
 
-                case SpawnType.Enemies:
-                    SpawnEnemies(entry);
+                case '1':
+                    // Spawn 2 soldiers
+                    SpawnEnemyUnit(UnitType.Soldier, 2);
+                    spawnType = SpawnType.Enemies;
                     break;
 
-                case SpawnType.Resources:
-                    SpawnResources(entry);
+                case '2':
+                    // Spawn 1 resource node
+                    SpawnResourceNodes(1);
+                    spawnType = SpawnType.Resources;
                     break;
 
-                case SpawnType.Boss:
-                    SpawnBoss(entry);
+                case '3':
+                    // Spawn 1 ogre (boss/strong unit)
+                    SpawnEnemyUnit(UnitType.Ogre, 1);
+                    spawnType = SpawnType.Boss;
+                    break;
+
+                default:
+                    Debug.LogWarning($"WaveManager: Unknown wave code '{code}' at index {index}");
                     break;
             }
 
-            OnWaveEntryExecuted?.Invoke(index, entry.spawnType);
+            OnWaveEntryExecuted?.Invoke(index, spawnType);
 
             // Fire backward-compatibility event for systems like GridExpansionManager
             OnWaveComplete?.Invoke(new WaveData(index + 1));
         }
 
-        /// <summary>
-        /// Spawn enemy units based on entry configuration.
-        /// </summary>
-        private void SpawnEnemies(WaveEntry entry)
-        {
-            int totalSpawned = 0;
-
-            // Spawn soldiers
-            for (int i = 0; i < entry.enemySoldierCount; i++)
-            {
-                if (SpawnSingleEnemy(UnitType.Soldier))
-                    totalSpawned++;
-            }
-
-            // Spawn ninjas
-            for (int i = 0; i < entry.enemyNinjaCount; i++)
-            {
-                if (SpawnSingleEnemy(UnitType.Ninja))
-                    totalSpawned++;
-            }
-
-            // Spawn ogres
-            for (int i = 0; i < entry.enemyOgreCount; i++)
-            {
-                if (SpawnSingleEnemy(UnitType.Ogre))
-                    totalSpawned++;
-            }
-
-            Debug.Log($"WaveManager: Spawned {totalSpawned} enemies (S:{entry.enemySoldierCount} N:{entry.enemyNinjaCount} O:{entry.enemyOgreCount})");
-        }
+        // SpawnEnemies(WaveEntry) removed - using SpawnEnemyUnit(UnitType, int) instead (Iteration 10)
 
         /// <summary>
         /// Spawn a single enemy unit at a random spawn position.
@@ -370,27 +352,7 @@ namespace ClockworkGrid
             return true;
         }
 
-        /// <summary>
-        /// Spawn resource nodes based on entry configuration.
-        /// </summary>
-        private void SpawnResources(WaveEntry entry)
-        {
-            if (resourceNodePrefab == null)
-            {
-                Debug.LogWarning("WaveManager: No resource node prefab assigned");
-                return;
-            }
-
-            int spawned = 0;
-
-            for (int i = 0; i < entry.resourceNodeCount; i++)
-            {
-                if (SpawnSingleResource(entry.resourceNodeLevel))
-                    spawned++;
-            }
-
-            Debug.Log($"WaveManager: Spawned {spawned}/{entry.resourceNodeCount} resource nodes (Level {entry.resourceNodeLevel})");
-        }
+        // SpawnResources(WaveEntry) removed - using SpawnResourceNodes(int) instead (Iteration 10)
 
         /// <summary>
         /// Spawn a single resource node at a random spawn position.
@@ -429,21 +391,7 @@ namespace ClockworkGrid
             return true;
         }
 
-        /// <summary>
-        /// Spawn boss enemies based on entry configuration.
-        /// </summary>
-        private void SpawnBoss(WaveEntry entry)
-        {
-            int spawned = 0;
-
-            for (int i = 0; i < entry.bossCount; i++)
-            {
-                if (SpawnSingleBoss(entry.bossHP, entry.bossDamage))
-                    spawned++;
-            }
-
-            Debug.Log($"WaveManager: Spawned {spawned}/{entry.bossCount} bosses (HP:{entry.bossHP} DMG:{entry.bossDamage})");
-        }
+        // SpawnBoss(WaveEntry) removed - bosses now spawn via SpawnEnemyUnit(UnitType.Ogre, count) (Iteration 10)
 
         /// <summary>
         /// Spawn a single boss unit with custom stats.
@@ -533,26 +481,45 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Convert WaveEntry array to spawn code format (for timeline UI compatibility).
+        /// Helper: Spawn multiple enemy units of a specific type.
+        /// </summary>
+        private void SpawnEnemyUnit(UnitType type, int count)
+        {
+            int spawned = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (SpawnSingleEnemy(type))
+                    spawned++;
+            }
+            Debug.Log($"WaveManager: Spawned {spawned}/{count} {type} enemies");
+        }
+
+        /// <summary>
+        /// Helper: Spawn multiple resource nodes.
+        /// </summary>
+        private void SpawnResourceNodes(int count)
+        {
+            if (resourceNodePrefab == null)
+            {
+                Debug.LogWarning("WaveManager: No resource node prefab assigned");
+                return;
+            }
+
+            int spawned = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (SpawnSingleResource(1)) // Level 1 resources
+                    spawned++;
+            }
+            Debug.Log($"WaveManager: Spawned {spawned}/{count} resource nodes");
+        }
+
+        /// <summary>
+        /// Return wave sequence string directly (already in spawn code format).
         /// </summary>
         private string ConvertSequenceToSpawnCode()
         {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-            foreach (WaveEntry entry in waveSequence)
-            {
-                char code = '0';
-                switch (entry.spawnType)
-                {
-                    case SpawnType.Nothing: code = '0'; break;
-                    case SpawnType.Enemies: code = '1'; break;
-                    case SpawnType.Resources: code = '2'; break;
-                    case SpawnType.Boss: code = '3'; break;
-                }
-                sb.Append(code);
-            }
-
-            return sb.ToString();
+            return waveSequence;
         }
 
         /// <summary>
@@ -657,6 +624,12 @@ namespace ClockworkGrid
 
             hasWaveStarted = true;
             Debug.Log("WaveManager: Wave started by player placing first unit!");
+
+            // Show countdown UI
+            if (SpawnTimelineUI.Instance != null)
+            {
+                SpawnTimelineUI.Instance.ShowCountdown(ticksPerWaveAdvance);
+            }
         }
 
         // Public accessors for UI/other systems
@@ -668,13 +641,13 @@ namespace ClockworkGrid
         public bool HasWaveStarted => hasWaveStarted;
 
         /// <summary>
-        /// Get the current wave entry being executed.
+        /// Get the current wave code character being executed.
         /// </summary>
-        public WaveEntry GetCurrentEntry()
+        public char GetCurrentCode()
         {
             if (currentWaveIndex >= 0 && currentWaveIndex < waveSequence.Length)
                 return waveSequence[currentWaveIndex];
-            return null;
+            return '0';
         }
     }
 }
