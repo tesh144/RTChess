@@ -61,8 +61,19 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            // NOTE: Dock bar should be visible at start so player can see cards and place first unit
-            // No hiding logic needed here - dock bar stays visible throughout
+            // Hide ONLY the gatcha button at start (dock bar with cards stays visible)
+            // Gatcha button appears after wave starts
+            if (gatchaButtonHolder != null && (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted))
+            {
+                Debug.Log("[DockBarManager] Hiding gatcha button holder at start");
+                gatchaButtonHolder.SetActive(false);
+            }
+            else if (gatchaButtonHolder == null)
+            {
+                Debug.LogError("[DockBarManager] gatchaButtonHolder is not assigned! Please assign it in the Inspector.");
+            }
+
+            // Dock bar holder stays visible throughout (or assign nothing if entire dock bar is one object)
         }
 
         /// <summary>
