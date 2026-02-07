@@ -96,6 +96,7 @@ namespace ClockworkGrid
 
         // Enemy spawning
         [SerializeField] private GameObject enemySoldierPrefab;
+        [SerializeField] private GameObject resourceNodePrefab;
         private List<Vector2Int> spawnPositions = new List<Vector2Int>();
 
         // Events
@@ -634,25 +635,29 @@ namespace ClockworkGrid
 
             Vector2Int pos = availablePositions[UnityEngine.Random.Range(0, availablePositions.Count)];
 
-            // Get resource node prefab from RaritySystem
-            if (RaritySystem.Instance == null || RaritySystem.Instance.resourceNodePrefab == null)
+            // Check if resource node prefab is available
+            if (resourceNodePrefab == null)
             {
-                Debug.LogWarning("No resource node prefab available");
+                Debug.LogWarning("No resource node prefab assigned to WaveManager");
                 return false;
             }
 
             // Spawn resource node
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(pos.x, pos.y);
-            GameObject nodeObj = Instantiate(RaritySystem.Instance.resourceNodePrefab, worldPos, Quaternion.identity);
+            GameObject nodeObj = Instantiate(resourceNodePrefab, worldPos, Quaternion.identity);
             nodeObj.SetActive(true);
 
             ResourceNode node = nodeObj.GetComponent<ResourceNode>();
             if (node != null)
             {
-                node.Initialize(pos.x, pos.y);
+                // Set grid position
+                node.GridX = pos.x;
+                node.GridY = pos.y;
+                // Initialize with size (1x1 for basic resource)
+                node.Initialize(new Vector2Int(1, 1));
             }
 
-            GridManager.Instance.PlaceUnit(pos.x, pos.y, nodeObj, CellState.ResourceNode);
+            GridManager.Instance.PlaceUnit(pos.x, pos.y, nodeObj, CellState.Resource);
             return true;
         }
 
