@@ -86,6 +86,87 @@ namespace ClockworkGrid
             if (intervalCount % attackIntervalMultiplier != 0) return;
 
             Rotate();
+            TryAttack();
+        }
+
+        private void TryAttack()
+        {
+            if (GridManager.Instance == null) return;
+
+            currentFacing.ToGridOffset(out int dx, out int dy);
+
+            // Check cells from range 1 to attackRange in facing direction
+            for (int r = 1; r <= attackRange; r++)
+            {
+                int targetX = GridX + dx * r;
+                int targetY = GridY + dy * r;
+
+                CellState targetState = GridManager.Instance.GetCellState(targetX, targetY);
+
+                if (targetState == CellState.Resource)
+                {
+                    AttackResource(targetX, targetY);
+                    return;
+                }
+
+                // Stop at first occupied cell (can't attack through units)
+                if (targetState != CellState.Empty)
+                    return;
+            }
+        }
+
+        private void AttackResource(int targetX, int targetY)
+        {
+            GameObject targetObj = GridManager.Instance.GetCellOccupant(targetX, targetY);
+            if (targetObj == null) return;
+
+            ResourceNode node = targetObj.GetComponent<ResourceNode>();
+            if (node == null) return;
+
+            int tokensEarned = node.TakeDamage(attackDamage);
+
+            // Grant tokens to player
+            if (team == Team.Player && tokensEarned > 0 && ResourceTokenManager.Instance != null)
+            {
+                Vector3 nodePos = GridManager.Instance.GridToWorldPosition(targetX, targetY);
+                ResourceTokenManager.Instance.AddTokens(tokensEarned, nodePos);
+            }
+
+            // Spawn attack VFX
+            SpawnAttackEffect(targetX, targetY);
+        }
+
+        private void SpawnAttackEffect(int targetX, int targetY)
+        {
+            Vector3 targetPos = GridManager.Instance.GridToWorldPosition(targetX, targetY);
+            Vector3 myPos = transform.position;
+            Vector3 midPoint = Vector3.Lerp(myPos, targetPos, 0.6f) + Vector3.up * 0.5f;
+
+            GameObject vfxObj = new GameObject("AttackVFX");
+            vfxObj.transform.position = midPoint;
+
+            ParticleSystem ps = vfxObj.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.duration = 0.2f;
+            main.startLifetime = 0.3f;
+            main.startSpeed = 2f;
+            main.startSize = 0.08f;
+            main.startColor = Color.yellow;
+            main.maxParticles = 8;
+            main.loop = false;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+            var emission = ps.emission;
+            emission.rateOverTime = 0;
+            emission.SetBursts(new ParticleSystem.Burst[] {
+                new ParticleSystem.Burst(0f, 8)
+            });
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.1f;
+
+            Destroy(vfxObj, 1f);
         }
 
         private void Rotate()

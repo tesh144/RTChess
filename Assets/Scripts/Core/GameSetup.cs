@@ -5,14 +5,15 @@ using TMPro;
 namespace ClockworkGrid
 {
     /// <summary>
-    /// Bootstraps the entire Iteration 1 scene from scratch.
+    /// Bootstraps the entire scene from scratch.
     /// Attach this to an empty GameObject in the scene. On Play, it creates:
     /// - Grid manager + visualizer
     /// - Interval timer
+    /// - Resource token manager
     /// - Camera (top-down orthographic)
-    /// - UI canvas with interval counter
-    /// - Debug placer for click-to-spawn
-    /// - Soldier prefab template
+    /// - UI canvas with interval counter and token display
+    /// - Debug placer for click-to-spawn units and resources
+    /// - Soldier and resource node prefab templates
     /// </summary>
     public class GameSetup : MonoBehaviour
     {
@@ -31,19 +32,28 @@ namespace ClockworkGrid
         [SerializeField] private int soldierAttackInterval = 2;
         [SerializeField] private int soldierResourceCost = 3;
 
+        [Header("Resource Node Stats (Level 1)")]
+        [SerializeField] private int resourceNodeHP = 10;
+        [SerializeField] private int resourceTokensPerHit = 1;
+        [SerializeField] private int resourceBonusTokens = 3;
+
         [Header("Visual Settings")]
         [SerializeField] private Color playerColor = new Color(0.2f, 0.5f, 1f);
+        [SerializeField] private Color resourceColor = new Color(0.2f, 0.85f, 0.4f);
         [SerializeField] private float cameraHeight = 12f;
         [SerializeField] private float cameraTiltAngle = 15f;
 
         private GameObject soldierPrefab;
+        private GameObject resourceNodePrefab;
 
         private void Awake()
         {
             SetupCamera();
             SetupGrid();
             SetupIntervalTimer();
+            SetupTokenManager();
             SetupSoldierPrefab();
+            SetupResourceNodePrefab();
             SetupUI();
             SetupDebugPlacer();
             SetupLighting();
@@ -76,8 +86,6 @@ namespace ClockworkGrid
             float horizontalOffset = cameraHeight * Mathf.Sin(tiltRad);
 
             camObj.transform.position = new Vector3(0f, verticalOffset, -horizontalOffset);
-            camObj.transform.rotation = Quaternion.Euler(cameraTiltAngle > 0 ? 90f - (90f - cameraTiltAngle) : 90f, 0f, 0f);
-            // Simpler: look at center
             camObj.transform.LookAt(Vector3.zero, Vector3.up);
         }
 
@@ -87,13 +95,10 @@ namespace ClockworkGrid
             GridManager gridManager = gridObj.AddComponent<GridManager>();
             gridObj.AddComponent<GridVisualizer>();
 
-            // Configure via serialized fields using reflection (since we can't set SerializeField directly)
-            // Instead, we use a helper method approach
             SetPrivateField(gridManager, "gridWidth", gridWidth);
             SetPrivateField(gridManager, "gridHeight", gridHeight);
             SetPrivateField(gridManager, "cellSize", cellSize);
 
-            // Initialize grid after setting field values
             gridManager.InitializeGrid();
         }
 
@@ -104,13 +109,17 @@ namespace ClockworkGrid
             SetPrivateField(timer, "baseIntervalDuration", baseIntervalDuration);
         }
 
+        private void SetupTokenManager()
+        {
+            GameObject tokenObj = new GameObject("ResourceTokenManager");
+            tokenObj.AddComponent<ResourceTokenManager>();
+        }
+
         private void SetupSoldierPrefab()
         {
-            // Create a template soldier that we'll use as a prefab substitute
             soldierPrefab = UnitModelBuilder.CreateSoldierModel(playerColor);
             SoldierUnit soldierUnit = soldierPrefab.AddComponent<SoldierUnit>();
 
-            // Set stats via reflection
             SetPrivateField(soldierUnit, "hp", soldierHP);
             SetPrivateField(soldierUnit, "attackDamage", soldierAttackDamage);
             SetPrivateField(soldierUnit, "attackRange", soldierAttackRange);
@@ -119,6 +128,26 @@ namespace ClockworkGrid
 
             soldierPrefab.SetActive(false);
             soldierPrefab.name = "SoldierPrefab";
+        }
+
+        private void SetupResourceNodePrefab()
+        {
+            resourceNodePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(
+                resourceColor,
+                out Transform hpBarFill,
+                out Transform hpBarBg
+            );
+
+            ResourceNode node = resourceNodePrefab.AddComponent<ResourceNode>();
+            SetPrivateField(node, "maxHP", resourceNodeHP);
+            SetPrivateField(node, "level", 1);
+            SetPrivateField(node, "tokensPerHit", resourceTokensPerHit);
+            SetPrivateField(node, "bonusTokens", resourceBonusTokens);
+
+            // HP bar is found by name ("HPBarFill") in ResourceNode.Start()
+
+            resourceNodePrefab.SetActive(false);
+            resourceNodePrefab.name = "ResourceNodePrefab";
         }
 
         private void SetupUI()
@@ -176,12 +205,30 @@ namespace ClockworkGrid
             fillRect.offsetMin = Vector2.zero;
             fillRect.offsetMax = Vector2.zero;
 
+            // Token counter (top-right corner)
+            GameObject tokenObj = new GameObject("TokenText");
+            tokenObj.transform.SetParent(canvasObj.transform, false);
+
+            TextMeshProUGUI tokenText = tokenObj.AddComponent<TextMeshProUGUI>();
+            tokenText.text = "Tokens: 0";
+            tokenText.fontSize = 28;
+            tokenText.color = new Color(1f, 0.9f, 0.2f);
+            tokenText.alignment = TextAlignmentOptions.TopRight;
+            tokenText.fontStyle = FontStyles.Bold;
+
+            RectTransform tokenRect = tokenObj.GetComponent<RectTransform>();
+            tokenRect.anchorMin = new Vector2(1, 1);
+            tokenRect.anchorMax = new Vector2(1, 1);
+            tokenRect.pivot = new Vector2(1, 1);
+            tokenRect.anchoredPosition = new Vector2(-20, -20);
+            tokenRect.sizeDelta = new Vector2(300, 50);
+
             // Instructions text (bottom-center)
             GameObject instructionsObj = new GameObject("InstructionsText");
             instructionsObj.transform.SetParent(canvasObj.transform, false);
 
             TextMeshProUGUI instructions = instructionsObj.AddComponent<TextMeshProUGUI>();
-            instructions.text = "Click any cell to place a Soldier";
+            instructions.text = "Left-click: Place Soldier  |  Right-click: Place Resource";
             instructions.fontSize = 18;
             instructions.color = new Color(1f, 1f, 1f, 0.6f);
             instructions.alignment = TextAlignmentOptions.Bottom;
@@ -191,12 +238,16 @@ namespace ClockworkGrid
             instrRect.anchorMax = new Vector2(0.5f, 0);
             instrRect.pivot = new Vector2(0.5f, 0);
             instrRect.anchoredPosition = new Vector2(0, 20);
-            instrRect.sizeDelta = new Vector2(400, 40);
+            instrRect.sizeDelta = new Vector2(500, 40);
 
             // Hook up IntervalUI
             IntervalUI intervalUI = canvasObj.AddComponent<IntervalUI>();
             SetPrivateField(intervalUI, "intervalText", text);
             SetPrivateField(intervalUI, "progressBar", fillImage);
+
+            // Hook up token UI
+            TokenUI tokenUI = canvasObj.AddComponent<TokenUI>();
+            SetPrivateField(tokenUI, "tokenText", tokenText);
         }
 
         private void SetupDebugPlacer()
@@ -204,6 +255,7 @@ namespace ClockworkGrid
             GameObject placerObj = new GameObject("DebugPlacer");
             CellDebugPlacer placer = placerObj.AddComponent<CellDebugPlacer>();
             SetPrivateField(placer, "soldierPrefab", soldierPrefab);
+            SetPrivateField(placer, "resourceNodePrefab", resourceNodePrefab);
         }
 
         private void SetupLighting()

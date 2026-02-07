@@ -38,5 +38,21 @@ namespace ClockworkGrid
         {
             return (float)facing;
         }
+
+        /// <summary>
+        /// Returns the grid coordinate offset (dx, dy) for this facing direction.
+        /// North = +Z = (0, +1), East = +X = (+1, 0), etc.
+        /// </summary>
+        public static void ToGridOffset(this Facing facing, out int dx, out int dy)
+        {
+            switch (facing)
+            {
+                case Facing.North: dx = 0; dy = 1; break;
+                case Facing.East:  dx = 1; dy = 0; break;
+                case Facing.South: dx = 0; dy = -1; break;
+                case Facing.West:  dx = -1; dy = 0; break;
+                default: dx = 0; dy = 0; break;
+            }
+        }
     }
 }
