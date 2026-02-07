@@ -16,6 +16,9 @@ namespace ClockworkGrid
         // Singleton
         public static SpawnTimelineUI Instance { get; private set; }
 
+        [Header("Prefab References")]
+        [SerializeField] private GameObject nodePointPrefab; // Custom timeline dot prefab with toggle children
+
         [Header("UI References (Assign in Inspector)")]
         [SerializeField] private TextMeshProUGUI waveNumberText;
         [SerializeField] private Transform dotContainer;
@@ -78,18 +81,39 @@ namespace ClockworkGrid
             {
                 char code = spawnCode[i];
 
-                // Create dot
-                GameObject dotObj = new GameObject($"Dot_{i}_{code}");
-                dotObj.transform.SetParent(dotContainer, false);
+                GameObject dotObj;
 
-                RectTransform dotRect = dotObj.AddComponent<RectTransform>();
-                dotRect.anchorMin = new Vector2(0.5f, 0.5f);
-                dotRect.anchorMax = new Vector2(0.5f, 0.5f);
-                dotRect.pivot = new Vector2(0.5f, 0.5f);
-                dotRect.anchoredPosition = new Vector2(startOffset + i * dotSpacing, 0);
+                // Use prefab if assigned, otherwise create runtime UI
+                if (nodePointPrefab != null)
+                {
+                    // Instantiate custom prefab
+                    dotObj = Instantiate(nodePointPrefab, dotContainer, false);
+                    dotObj.name = $"Dot_{i}_{code}";
 
-                Image dotImage = dotObj.AddComponent<Image>();
-                ConfigureDot(dotImage, code);
+                    RectTransform dotRect = dotObj.GetComponent<RectTransform>();
+                    if (dotRect != null)
+                    {
+                        dotRect.anchoredPosition = new Vector2(startOffset + i * dotSpacing, 0);
+                    }
+
+                    // Toggle correct child based on code
+                    ToggleDotChildren(dotObj, code);
+                }
+                else
+                {
+                    // Fallback: Create runtime UI (legacy behavior)
+                    dotObj = new GameObject($"Dot_{i}_{code}");
+                    dotObj.transform.SetParent(dotContainer, false);
+
+                    RectTransform dotRect = dotObj.AddComponent<RectTransform>();
+                    dotRect.anchorMin = new Vector2(0.5f, 0.5f);
+                    dotRect.anchorMax = new Vector2(0.5f, 0.5f);
+                    dotRect.pivot = new Vector2(0.5f, 0.5f);
+                    dotRect.anchoredPosition = new Vector2(startOffset + i * dotSpacing, 0);
+
+                    Image dotImage = dotObj.AddComponent<Image>();
+                    ConfigureDot(dotImage, code);
+                }
 
                 spawnDots.Add(dotObj);
 
@@ -151,6 +175,35 @@ namespace ClockworkGrid
                 dotImage.color = enemyColor;
                 rect.sizeDelta = Vector2.one * 40f;
                 dotImage.sprite = CreateCircleSprite();
+            }
+        }
+
+        /// <summary>
+        /// Toggle correct child in nodePointPrefab based on spawn code.
+        /// Prefab should have children: Blank (0), Enemy (1), Resource (2), Boss (3)
+        /// </summary>
+        private void ToggleDotChildren(GameObject dotObj, char code)
+        {
+            // Deactivate all children first
+            for (int i = 0; i < dotObj.transform.childCount; i++)
+            {
+                dotObj.transform.GetChild(i).gameObject.SetActive(false);
+            }
+
+            // Activate correct child based on code
+            int childIndex = -1;
+            if (code == '0') childIndex = 0; // Blank
+            else if (code == '1') childIndex = 1; // Enemy
+            else if (code == '2') childIndex = 2; // Resource
+            else if (code == '3') childIndex = 3; // Boss
+
+            if (childIndex >= 0 && childIndex < dotObj.transform.childCount)
+            {
+                dotObj.transform.GetChild(childIndex).gameObject.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning($"SpawnTimelineUI: NodePointPrefab missing child at index {childIndex} for code '{code}'");
             }
         }
 

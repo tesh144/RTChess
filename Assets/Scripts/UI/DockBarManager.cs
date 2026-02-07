@@ -12,6 +12,9 @@ namespace ClockworkGrid
     /// </summary>
     public class DockBarManager : MonoBehaviour
     {
+        [Header("Prefab References")]
+        [SerializeField] private GameObject unitIconPrefab; // Custom card design prefab
+
         [Header("Editor UI References (Optional - assign to use existing UI)")]
         [SerializeField] private Transform dockIconsContainer; // Parent for red card holders
         [SerializeField] private Button drawButton; // White button on the right
@@ -275,21 +278,41 @@ namespace ClockworkGrid
         /// </summary>
         public void AddUnitToDock(UnitData unitData)
         {
-            // Create new unit icon
-            GameObject iconObj = new GameObject($"UnitIcon_{unitIcons.Count}");
-            RectTransform iconRect = iconObj.AddComponent<RectTransform>();
-            iconRect.SetParent(dockIconsPanel, false);
-            iconRect.sizeDelta = new Vector2(70f, 70f);
+            GameObject iconObj;
+            UnitIcon icon;
 
-            // Add Image component with unit-specific color
-            Image iconImage = iconObj.AddComponent<Image>();
-            iconImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-            iconImage.color = GetUnitColorByType(unitData.Type);
+            // Use prefab if assigned, otherwise create runtime UI
+            if (unitIconPrefab != null)
+            {
+                // Instantiate custom prefab
+                iconObj = Instantiate(unitIconPrefab, dockIconsPanel, false);
+                iconObj.name = $"UnitIcon_{unitIcons.Count}";
 
-            // Add UnitIcon component
-            UnitIcon icon = iconObj.AddComponent<UnitIcon>();
+                // Get or add UnitIcon component
+                icon = iconObj.GetComponent<UnitIcon>();
+                if (icon == null)
+                {
+                    icon = iconObj.AddComponent<UnitIcon>();
+                }
+            }
+            else
+            {
+                // Fallback: Create runtime UI (legacy behavior)
+                iconObj = new GameObject($"UnitIcon_{unitIcons.Count}");
+                RectTransform iconRect = iconObj.AddComponent<RectTransform>();
+                iconRect.SetParent(dockIconsPanel, false);
+                iconRect.sizeDelta = new Vector2(70f, 70f);
+
+                // Add Image component with unit-specific color
+                Image iconImage = iconObj.AddComponent<Image>();
+                iconImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+                iconImage.color = GetUnitColorByType(unitData.Type);
+
+                // Add UnitIcon component
+                icon = iconObj.AddComponent<UnitIcon>();
+            }
+
             icon.Initialize(unitData, this);
-
             unitIcons.Add(icon);
 
             // Update spacing
