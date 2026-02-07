@@ -13,8 +13,8 @@ namespace ClockworkGrid
     public class GridManager : MonoBehaviour
     {
         [Header("Grid Settings")]
-        [SerializeField] private int gridWidth = 4;
-        [SerializeField] private int gridHeight = 4;
+        [SerializeField] private int gridWidth = 11;
+        [SerializeField] private int gridHeight = 11;
         [SerializeField] private float cellSize = 1.5f;
 
         [Header("Grid Visual (Prefab-Based)")]
