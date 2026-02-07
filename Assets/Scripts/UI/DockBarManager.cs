@@ -17,6 +17,7 @@ namespace ClockworkGrid
 
         [Header("Editor UI References (Optional - assign to use existing UI)")]
         [SerializeField] private GameObject dockBarHolder; // The dock bar panel/GameObject to show/hide
+        [SerializeField] private GameObject gatchaButtonHolder; // The gatcha/draw button container to show/hide
         [SerializeField] private Transform dockIconsContainer; // Parent for red card holders
         [SerializeField] private Button drawButton; // White button on the right
         [SerializeField] private TextMeshProUGUI drawButtonText; // Text on draw button
@@ -60,16 +61,27 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            // Hide dock bar UI container at runtime start (allows UI to stay visible in Editor for design work)
+            // Hide dock bar UI containers at runtime start (allows UI to stay visible in Editor for design work)
             // Only activates after countdown completes
-            if (dockBarHolder != null && (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted))
+            if (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted)
             {
-                Debug.Log("[DockBarManager] Hiding dock bar holder at start");
-                dockBarHolder.SetActive(false);
+                if (dockBarHolder != null)
+                {
+                    Debug.Log("[DockBarManager] Hiding dock bar holder at start");
+                    dockBarHolder.SetActive(false);
+                }
+
+                if (gatchaButtonHolder != null)
+                {
+                    Debug.Log("[DockBarManager] Hiding gatcha button holder at start");
+                    gatchaButtonHolder.SetActive(false);
+                }
             }
-            else if (dockBarHolder == null)
+
+            // Warn if neither is assigned
+            if (dockBarHolder == null && gatchaButtonHolder == null)
             {
-                Debug.LogError("[DockBarManager] dockBarHolder is not assigned! Please assign it in the Inspector.");
+                Debug.LogError("[DockBarManager] Neither dockBarHolder nor gatchaButtonHolder is assigned! Please assign at least one in the Inspector.");
             }
         }
 
@@ -125,9 +137,15 @@ namespace ClockworkGrid
         /// </summary>
         public void ShowWithAnimation()
         {
+            // Show both holders if assigned
             if (dockBarHolder != null)
             {
                 dockBarHolder.SetActive(true);
+            }
+
+            if (gatchaButtonHolder != null)
+            {
+                gatchaButtonHolder.SetActive(true);
             }
 
             if (enableSlideAnimation && dockBarContainer != null)
