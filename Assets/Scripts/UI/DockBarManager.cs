@@ -16,6 +16,7 @@ namespace ClockworkGrid
         [SerializeField] private GameObject unitIconPrefab; // Custom card design prefab
 
         [Header("Editor UI References (Optional - assign to use existing UI)")]
+        [SerializeField] private GameObject uiContainer; // The UI panel/GameObject to show/hide
         [SerializeField] private Transform dockIconsContainer; // Parent for red card holders
         [SerializeField] private Button drawButton; // White button on the right
         [SerializeField] private TextMeshProUGUI drawButtonText; // Text on draw button
@@ -59,11 +60,16 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            // Hide dock bar at runtime start (allows UI to stay visible in Editor for design work)
+            // Hide dock bar UI container at runtime start (allows UI to stay visible in Editor for design work)
             // Only activates after countdown completes
-            if (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted)
+            if (uiContainer != null && (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted))
             {
-                gameObject.SetActive(false);
+                Debug.Log("[DockBarManager] Hiding UI container at start");
+                uiContainer.SetActive(false);
+            }
+            else if (uiContainer == null)
+            {
+                Debug.LogError("[DockBarManager] uiContainer is not assigned! Please assign it in the Inspector.");
             }
         }
 
@@ -119,7 +125,10 @@ namespace ClockworkGrid
         /// </summary>
         public void ShowWithAnimation()
         {
-            gameObject.SetActive(true);
+            if (uiContainer != null)
+            {
+                uiContainer.SetActive(true);
+            }
 
             if (enableSlideAnimation && dockBarContainer != null)
             {
