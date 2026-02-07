@@ -84,6 +84,9 @@ namespace ClockworkGrid
             new WaveEntry { spawnType = SpawnType.Boss, bossCount = 1, bossHP = 30, bossDamage = 5 }
         };
 
+        [Tooltip("Ticks between wave advances (4 for 4-sided game = 1 wave per full round)")]
+        [SerializeField] private int ticksPerWaveAdvance = 4;
+
         [Header("Resource Nodes")]
         [SerializeField] private GameObject resourceNodeLevel1Prefab; // Drag prefab, or leave empty for procedural
         [SerializeField] private int level1HP = 10;
@@ -576,9 +579,9 @@ namespace ClockworkGrid
             waveManager.waveSequence = waveSequence;
             SetPrivateField(waveManager, "resourceNodePrefab", resourceNodePrefab);
 
-            waveManager.Initialize();
+            waveManager.Initialize(ticksPerWaveAdvance);
 
-            Debug.Log($"SetupWaveManager: Initialized WaveManager with {waveSequence.Length} wave entries");
+            Debug.Log($"SetupWaveManager: Initialized WaveManager with {waveSequence.Length} wave entries, {ticksPerWaveAdvance} ticks per advance");
         }
 
         // SetupWaveTimelineUI() REMOVED: Timeline UI is now manually created in Unity Editor

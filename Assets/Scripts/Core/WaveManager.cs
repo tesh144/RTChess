@@ -88,6 +88,8 @@ namespace ClockworkGrid
         [Header("Timing")]
         [Tooltip("Number of interval ticks before starting the wave sequence (breathing room for player)")]
         [SerializeField] private int startDelayTicks = 0; // Start immediately
+        [Tooltip("Ticks between wave advances (4 for 4-sided game)")]
+        [SerializeField] private int ticksPerWaveAdvance = 4;
 
         [Header("Prefab References")]
         [SerializeField] private GameObject resourceNodePrefab;
@@ -96,6 +98,7 @@ namespace ClockworkGrid
         private WaveState currentState = WaveState.Preparation;
         private int currentWaveIndex = -1; // -1 = not started, increments each interval
         private int delayTicksRemaining;
+        private int ticksSinceLastAdvance = 0; // Counter for wave advance timing
         private bool sequenceComplete = false;
         private bool gameOver = false;
         private bool hasWaveStarted = false; // Wave doesn't start until player places first unit
@@ -123,12 +126,14 @@ namespace ClockworkGrid
         /// <summary>
         /// Initialize wave system (called by GameSetup).
         /// </summary>
-        public void Initialize()
+        public void Initialize(int ticksPerAdvance = 4)
         {
             InitializeSpawnPositions();
 
+            ticksPerWaveAdvance = ticksPerAdvance;
             delayTicksRemaining = startDelayTicks;
             currentWaveIndex = -1;
+            ticksSinceLastAdvance = 0;
             sequenceComplete = false;
             gameOver = false;
 
@@ -138,7 +143,7 @@ namespace ClockworkGrid
                 IntervalTimer.Instance.OnIntervalTick += OnIntervalTick;
             }
 
-            Debug.Log($"WaveManager initialized with {waveSequence.Length} wave entries, {startDelayTicks} tick delay");
+            Debug.Log($"WaveManager initialized with {waveSequence.Length} wave entries, {startDelayTicks} tick delay, {ticksPerWaveAdvance} ticks per advance");
         }
 
         private void OnDestroy()
@@ -210,7 +215,19 @@ namespace ClockworkGrid
                     return;
                 }
 
-                // Advance to next wave entry
+                // Increment tick counter
+                ticksSinceLastAdvance++;
+                Debug.Log($"[WaveManager] Tick counter: {ticksSinceLastAdvance}/{ticksPerWaveAdvance}");
+
+                // Only advance wave every N ticks (for 4-sided game, N=4)
+                if (ticksSinceLastAdvance < ticksPerWaveAdvance)
+                {
+                    Debug.Log($"[WaveManager] Waiting for wave advance ({ticksSinceLastAdvance}/{ticksPerWaveAdvance} ticks)");
+                    return;
+                }
+
+                // Reset counter and advance to next wave entry
+                ticksSinceLastAdvance = 0;
                 currentWaveIndex++;
                 Debug.Log($"[WaveManager] Advanced to wave index: {currentWaveIndex}/{waveSequence.Length}");
 
