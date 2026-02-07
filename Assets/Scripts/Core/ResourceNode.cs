@@ -27,8 +27,9 @@ namespace ClockworkGrid
         public int MaxHP => maxHP;
         public bool IsDestroyed => isDestroyed;
 
-        // HP bar references (found by name in children)
-        private Transform hpBarFill;
+        // HP text references (found by name in children)
+        private TextMesh hpTextMesh;
+        private TextMesh hpTextShadow;
 
         // Hit flash state
         private Renderer[] renderers;
@@ -43,21 +44,24 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            FindHPBar();
+            FindHPText();
             CacheRenderers();
-            UpdateHPBar();
+            UpdateHPText();
         }
 
-        private void FindHPBar()
+        private void FindHPText()
         {
-            // Find HP bar fill by name in children hierarchy
-            Transform[] allChildren = GetComponentsInChildren<Transform>(true);
-            foreach (Transform t in allChildren)
+            // Find HP text components by name in children hierarchy
+            TextMesh[] allTextMeshes = GetComponentsInChildren<TextMesh>(true);
+            foreach (TextMesh tm in allTextMeshes)
             {
-                if (t.name == "HPBarFill")
+                if (tm.name == "HPText")
                 {
-                    hpBarFill = t;
-                    return;
+                    hpTextMesh = tm;
+                }
+                else if (tm.name == "HPTextShadow")
+                {
+                    hpTextShadow = tm;
                 }
             }
         }
@@ -100,7 +104,7 @@ namespace ClockworkGrid
 
             // Visual feedback
             FlashWhite();
-            UpdateHPBar();
+            UpdateHPText();
 
             if (currentHP <= 0)
             {
@@ -167,7 +171,7 @@ namespace ClockworkGrid
 
             foreach (Renderer r in renderers)
             {
-                if (r != null)
+                if (r != null && r.name != "HPText" && r.name != "HPTextShadow")
                     r.material.color = Color.white;
             }
             flashTimer = FlashDuration;
@@ -179,26 +183,27 @@ namespace ClockworkGrid
 
             for (int i = 0; i < renderers.Length; i++)
             {
-                if (renderers[i] != null)
+                if (renderers[i] != null && renderers[i].name != "HPText" && renderers[i].name != "HPTextShadow")
                     renderers[i].material.color = originalColors[i];
             }
         }
 
-        private void UpdateHPBar()
+        private void UpdateHPText()
         {
-            if (hpBarFill == null) return;
+            if (hpTextMesh == null) return;
 
-            float ratio = (float)currentHP / maxHP;
-            Vector3 scale = hpBarFill.localScale;
-            scale.x = ratio;
-            hpBarFill.localScale = scale;
+            // Update both text meshes with current HP value
+            string hpString = currentHP.ToString();
+            hpTextMesh.text = hpString;
 
-            // Shift color from green to red as HP decreases
-            Renderer fillRenderer = hpBarFill.GetComponent<Renderer>();
-            if (fillRenderer != null)
+            if (hpTextShadow != null)
             {
-                fillRenderer.material.color = Color.Lerp(Color.red, new Color(0.2f, 0.9f, 0.3f), ratio);
+                hpTextShadow.text = hpString;
             }
+
+            // Color from green to red based on HP ratio
+            float ratio = (float)currentHP / maxHP;
+            hpTextMesh.color = Color.Lerp(Color.red, new Color(0.2f, 0.9f, 0.3f), ratio);
         }
     }
 }

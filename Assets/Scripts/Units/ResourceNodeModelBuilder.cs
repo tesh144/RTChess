@@ -9,7 +9,7 @@ namespace ClockworkGrid
     /// </summary>
     public static class ResourceNodeModelBuilder
     {
-        public static GameObject CreateResourceNodeModel(Color nodeColor, out Transform hpBarFill, out Transform hpBarBg)
+        public static GameObject CreateResourceNodeModel(Color nodeColor)
         {
             GameObject root = new GameObject("ResourceNodeModel");
 
@@ -44,8 +44,8 @@ namespace ClockworkGrid
             basePlate.transform.localScale = new Vector3(0.5f, 0.05f, 0.5f);
             SetColor(basePlate, DarkenColor(nodeColor, 0.4f));
 
-            // World-space HP bar
-            CreateHPBar(root, out hpBarFill, out hpBarBg);
+            // Add HP text above node
+            CreateHPText(root);
 
             // Remove colliders from visual parts
             RemoveCollider(crystal);
@@ -56,34 +56,43 @@ namespace ClockworkGrid
             return root;
         }
 
-        private static void CreateHPBar(GameObject parent, out Transform fill, out Transform bg)
+        private static void CreateHPText(GameObject root)
         {
-            float barWidth = 0.8f;
-            float barHeight = 0.08f;
-            float barY = 1.2f;
+            // HP text container (this will billboard to face camera)
+            GameObject hpTextContainer = new GameObject("HPTextContainer");
+            hpTextContainer.transform.SetParent(root.transform);
+            hpTextContainer.transform.localPosition = new Vector3(0f, 1.2f, 0f); // Top center above node
+            hpTextContainer.AddComponent<Billboard>();
 
-            // Background (dark)
-            GameObject bgObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            bgObj.name = "HPBarBG";
-            bgObj.transform.SetParent(parent.transform);
-            bgObj.transform.localPosition = new Vector3(0f, barY, 0f);
-            bgObj.transform.localScale = new Vector3(barWidth + 0.04f, barHeight + 0.02f, 0.02f);
-            SetColor(bgObj, new Color(0.1f, 0.1f, 0.1f, 0.9f));
-            RemoveCollider(bgObj);
-            bg = bgObj.transform;
+            // Create TextMesh for HP number
+            GameObject hpTextObj = new GameObject("HPText");
+            hpTextObj.transform.SetParent(hpTextContainer.transform);
+            hpTextObj.transform.localPosition = Vector3.zero;
+            hpTextObj.transform.localRotation = Quaternion.identity;
 
-            // Fill (green)
-            GameObject fillObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            fillObj.name = "HPBarFill";
-            fillObj.transform.SetParent(bgObj.transform);
-            fillObj.transform.localPosition = Vector3.zero;
-            fillObj.transform.localScale = new Vector3(1f, 1f, 1f);
-            SetColor(fillObj, new Color(0.2f, 0.9f, 0.3f));
-            RemoveCollider(fillObj);
-            fill = fillObj.transform;
+            TextMesh textMesh = hpTextObj.AddComponent<TextMesh>();
+            textMesh.text = "10";
+            textMesh.characterSize = 0.1f;
+            textMesh.fontSize = 48;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.color = Color.white;
+            textMesh.fontStyle = FontStyle.Bold;
 
-            // Add billboard behavior so HP bar always faces camera
-            bgObj.AddComponent<BillboardY>();
+            // Add black outline by creating a slightly offset shadow text
+            GameObject shadowObj = new GameObject("HPTextShadow");
+            shadowObj.transform.SetParent(hpTextContainer.transform);
+            shadowObj.transform.localPosition = new Vector3(0.02f, -0.02f, 0.01f);
+            shadowObj.transform.localRotation = Quaternion.identity;
+
+            TextMesh shadowMesh = shadowObj.AddComponent<TextMesh>();
+            shadowMesh.text = "10";
+            shadowMesh.characterSize = 0.1f;
+            shadowMesh.fontSize = 48;
+            shadowMesh.anchor = TextAnchor.MiddleCenter;
+            shadowMesh.alignment = TextAlignment.Center;
+            shadowMesh.color = Color.black;
+            shadowMesh.fontStyle = FontStyle.Bold;
         }
 
         private static void SetColor(GameObject obj, Color color)

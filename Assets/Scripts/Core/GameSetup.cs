@@ -153,11 +153,7 @@ namespace ClockworkGrid
 
         private void SetupResourceNodePrefab()
         {
-            resourceNodePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(
-                resourceColor,
-                out Transform hpBarFill,
-                out Transform hpBarBg
-            );
+            resourceNodePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(resourceColor);
 
             ResourceNode node = resourceNodePrefab.AddComponent<ResourceNode>();
             SetPrivateField(node, "maxHP", resourceNodeHP);
@@ -165,7 +161,7 @@ namespace ClockworkGrid
             SetPrivateField(node, "tokensPerHit", resourceTokensPerHit);
             SetPrivateField(node, "bonusTokens", resourceBonusTokens);
 
-            // HP bar is found by name ("HPBarFill") in ResourceNode.Start()
+            // HP text is found by name ("HPText") in ResourceNode.Start()
 
             resourceNodePrefab.SetActive(false);
             resourceNodePrefab.name = "ResourceNodePrefab";

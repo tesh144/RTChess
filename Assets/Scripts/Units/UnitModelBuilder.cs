@@ -71,7 +71,7 @@ namespace ClockworkGrid
 
             TextMesh textMesh = hpTextObj.AddComponent<TextMesh>();
             textMesh.text = "10";
-            textMesh.characterSize = 0.15f;
+            textMesh.characterSize = 0.1f;
             textMesh.fontSize = 48;
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.alignment = TextAlignment.Center;
@@ -86,7 +86,7 @@ namespace ClockworkGrid
 
             TextMesh shadowMesh = shadowObj.AddComponent<TextMesh>();
             shadowMesh.text = "10";
-            shadowMesh.characterSize = 0.15f;
+            shadowMesh.characterSize = 0.1f;
             shadowMesh.fontSize = 48;
             shadowMesh.anchor = TextAnchor.MiddleCenter;
             shadowMesh.alignment = TextAlignment.Center;
