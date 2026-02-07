@@ -85,11 +85,11 @@ MonoBehaviour:
   baseDowntime: 10
   minDowntime: 5
   downtimeDecreaseWave: 10
-  resourceNodeLevel1Prefab: {fileID: 3466083495638642607, guid: 7a5dd10ad177c42d58d7e627eaf00b09, type: 3}
+  resourceNodeLevel1Prefab: {fileID: 3376462439609532193, guid: 846954e0d358a4a5081e890670494b00, type: 3}
   level1HP: 10
   level1TokensPerHit: 1
   level1BonusTokens: 3
-  resourceNodeLevel2Prefab: {fileID: 3466083495638642607, guid: 7a5dd10ad177c42d58d7e627eaf00b09, type: 3}
+  resourceNodeLevel2Prefab: {fileID: 2247713723973092092, guid: 65c7ae2b3c8884d84be92cb5e639f953, type: 3}
   level2HP: 20
   level2TokensPerHit: 1
   level2BonusTokens: 6
