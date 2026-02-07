@@ -144,38 +144,32 @@ namespace ClockworkGrid
 
         private void SetupCamera()
         {
-            // Remove any existing camera
-            Camera existingCam = Camera.main;
-            if (existingCam != null)
+            // Find existing camera in scene instead of creating one
+            Camera cam = Camera.main;
+            if (cam == null)
             {
-                DestroyImmediate(existingCam.gameObject);
+                Debug.LogError("[GameSetup] No camera found in scene! Please add a Camera to the scene and tag it as 'MainCamera'.");
+                return;
             }
 
-            GameObject camObj = new GameObject("Main Camera");
-            camObj.tag = "MainCamera";
-            Camera cam = camObj.AddComponent<Camera>();
-            camObj.AddComponent<AudioListener>();
+            Debug.Log($"[GameSetup] Found camera: {cam.gameObject.name}");
 
-            cam.orthographic = true;
-            cam.orthographicSize = cameraOrthoSize;
-            cam.nearClipPlane = 0.1f;
-            cam.farClipPlane = 50f;
-            cam.backgroundColor = new Color(0.08f, 0.08f, 0.12f);
-            cam.clearFlags = CameraClearFlags.SolidColor;
+            // Add CameraPan component if not already present
+            CameraPan pan = cam.GetComponent<CameraPan>();
+            if (pan == null)
+            {
+                pan = cam.gameObject.AddComponent<CameraPan>();
+                SetPrivateField(pan, "panSpeed", cameraPanSpeed);
+                Debug.Log("[GameSetup] Added CameraPan component to camera");
+            }
+            else
+            {
+                Debug.Log("[GameSetup] Camera already has CameraPan component");
+            }
 
-            // Set rotation from inspector
-            Quaternion rot = Quaternion.Euler(cameraRotation);
-            camObj.transform.rotation = rot;
-
-            // Auto-center camera on grid origin (0,0,0)
-            // For ortho camera, position along the forward axis doesn't affect view size,
-            // but we need enough distance so nothing clips the near plane.
-            Vector3 forward = rot * Vector3.forward;
-            camObj.transform.position = -forward * 20f;
-
-            // Add camera pan controller
-            CameraPan pan = camObj.AddComponent<CameraPan>();
-            SetPrivateField(pan, "panSpeed", cameraPanSpeed);
+            // Note: Camera settings (orthographic, size, rotation, position, etc.) should be
+            // configured directly in the Unity Inspector on the Camera GameObject in the scene.
+            // This allows full control without needing to restart the game.
         }
 
         private void SetupGrid()
