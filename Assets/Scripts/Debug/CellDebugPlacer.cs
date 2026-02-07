@@ -4,12 +4,14 @@ namespace ClockworkGrid
 {
     /// <summary>
     /// Temporary debug script:
-    /// Left-click empty cell to spawn a Soldier.
-    /// Right-click empty cell to spawn a Level 1 Resource Node.
+    /// Left-click: Place player Soldier (costs 3 tokens)
+    /// Right-click: Place Level 1 Resource Node (free)
+    /// Middle-click OR Shift+Left-click: Place enemy Soldier (free, for testing)
     /// </summary>
     public class CellDebugPlacer : MonoBehaviour
     {
         [SerializeField] private GameObject soldierPrefab;
+        [SerializeField] private GameObject enemySoldierPrefab;
         [SerializeField] private GameObject resourceNodePrefab;
 
         private Camera mainCam;
@@ -21,13 +23,20 @@ namespace ClockworkGrid
 
         private void Update()
         {
-            if (Input.GetMouseButtonDown(0))
+            // Left-click: Player soldier (costs tokens)
+            if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
             {
                 TryPlaceUnit();
             }
-            if (Input.GetMouseButtonDown(1))
+            // Right-click: Resource node (free)
+            else if (Input.GetMouseButtonDown(1))
             {
                 TryPlaceResource();
+            }
+            // Middle-click OR Shift+Left-click: Enemy soldier (free, for testing)
+            else if (Input.GetMouseButtonDown(2) || (Input.GetMouseButtonDown(0) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))))
+            {
+                TryPlaceEnemyUnit();
             }
         }
 
@@ -101,6 +110,26 @@ namespace ClockworkGrid
             }
 
             GridManager.Instance.PlaceUnit(gridX, gridY, nodeObj, CellState.Resource);
+        }
+
+        private void TryPlaceEnemyUnit()
+        {
+            if (enemySoldierPrefab == null) return;
+            if (!TryGetGridCell(out int gridX, out int gridY)) return;
+
+            // Enemy placement is free (for testing)
+            Vector3 worldPos = GridManager.Instance.GridToWorldPosition(gridX, gridY);
+            GameObject unitObj = Instantiate(enemySoldierPrefab, worldPos, Quaternion.identity);
+            unitObj.SetActive(true);
+
+            Unit unit = unitObj.GetComponent<Unit>();
+            if (unit != null)
+            {
+                unit.Initialize(Team.Enemy, gridX, gridY);
+            }
+
+            GridManager.Instance.PlaceUnit(gridX, gridY, unitObj, CellState.EnemyUnit);
+            Debug.Log($"Placed enemy unit at ({gridX}, {gridY})");
         }
     }
 }

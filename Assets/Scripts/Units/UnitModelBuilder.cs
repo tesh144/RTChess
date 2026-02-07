@@ -49,7 +49,31 @@ namespace ClockworkGrid
             RemoveCollider(arrowHead);
             RemoveCollider(shield);
 
+            // Add HP bar above unit
+            CreateHPBar(root);
+
             return root;
+        }
+
+        private static void CreateHPBar(GameObject root)
+        {
+            // HP bar background
+            GameObject hpBarBG = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            hpBarBG.name = "HPBarBG";
+            hpBarBG.transform.SetParent(root.transform);
+            hpBarBG.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+            hpBarBG.transform.localScale = new Vector3(0.6f, 0.08f, 0.05f);
+            SetColor(hpBarBG, new Color(0.2f, 0.2f, 0.2f));
+            RemoveCollider(hpBarBG);
+
+            // HP bar fill (starts full)
+            GameObject hpBarFill = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            hpBarFill.name = "HPBarFill";
+            hpBarFill.transform.SetParent(hpBarBG.transform);
+            hpBarFill.transform.localPosition = new Vector3(0f, 0f, 0.01f);
+            hpBarFill.transform.localScale = new Vector3(1f, 0.8f, 1.2f);
+            SetColor(hpBarFill, Color.green);
+            RemoveCollider(hpBarFill);
         }
 
         private static void SetColor(GameObject obj, Color color)

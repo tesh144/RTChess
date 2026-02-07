@@ -6,7 +6,7 @@ namespace ClockworkGrid
     /// A harvestable resource node on the grid.
     /// Does not rotate. Grants tokens when attacked by player units.
     /// </summary>
-    public class ResourceNode : MonoBehaviour
+    public class ResourceNode : MonoBehaviour, IDamageable
     {
         [Header("Resource Stats")]
         [SerializeField] private int maxHP = 10;
@@ -15,13 +15,17 @@ namespace ClockworkGrid
         [SerializeField] private int bonusTokens = 3;
 
         private int currentHP;
+        private bool isDestroyed = false;
 
         // Grid position
         public int GridX { get; set; }
         public int GridY { get; set; }
         public int Level => level;
+
+        // IDamageable implementation
         public int CurrentHP => currentHP;
         public int MaxHP => maxHP;
+        public bool IsDestroyed => isDestroyed;
 
         // HP bar references (found by name in children)
         private Transform hpBarFill;
@@ -110,6 +114,10 @@ namespace ClockworkGrid
 
         private void OnDestroyed()
         {
+            if (isDestroyed) return;
+
+            isDestroyed = true;
+
             // Remove from grid
             if (GridManager.Instance != null)
             {

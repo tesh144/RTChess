@@ -39,11 +39,13 @@ namespace ClockworkGrid
 
         [Header("Visual Settings")]
         [SerializeField] private Color playerColor = new Color(0.2f, 0.5f, 1f);
+        [SerializeField] private Color enemyColor = new Color(1f, 0.3f, 0.3f);
         [SerializeField] private Color resourceColor = new Color(0.2f, 0.85f, 0.4f);
         [SerializeField] private float cameraHeight = 12f;
         [SerializeField] private float cameraTiltAngle = 15f;
 
         private GameObject soldierPrefab;
+        private GameObject enemySoldierPrefab;
         private GameObject resourceNodePrefab;
 
         private void Awake()
@@ -53,6 +55,7 @@ namespace ClockworkGrid
             SetupIntervalTimer();
             SetupTokenManager();
             SetupSoldierPrefab();
+            SetupEnemySoldierPrefab();
             SetupResourceNodePrefab();
             SetupUI();
             SetupDebugPanel();
@@ -121,14 +124,31 @@ namespace ClockworkGrid
             soldierPrefab = UnitModelBuilder.CreateSoldierModel(playerColor);
             SoldierUnit soldierUnit = soldierPrefab.AddComponent<SoldierUnit>();
 
-            SetPrivateField(soldierUnit, "hp", soldierHP);
+            SetPrivateField(soldierUnit, "maxHP", soldierHP);
             SetPrivateField(soldierUnit, "attackDamage", soldierAttackDamage);
             SetPrivateField(soldierUnit, "attackRange", soldierAttackRange);
             SetPrivateField(soldierUnit, "attackIntervalMultiplier", soldierAttackInterval);
             SetPrivateField(soldierUnit, "resourceCost", soldierResourceCost);
+            SetPrivateField(soldierUnit, "team", Team.Player);
 
             soldierPrefab.SetActive(false);
             soldierPrefab.name = "SoldierPrefab";
+        }
+
+        private void SetupEnemySoldierPrefab()
+        {
+            enemySoldierPrefab = UnitModelBuilder.CreateSoldierModel(enemyColor);
+            SoldierUnit enemyUnit = enemySoldierPrefab.AddComponent<SoldierUnit>();
+
+            SetPrivateField(enemyUnit, "maxHP", soldierHP);
+            SetPrivateField(enemyUnit, "attackDamage", soldierAttackDamage);
+            SetPrivateField(enemyUnit, "attackRange", soldierAttackRange);
+            SetPrivateField(enemyUnit, "attackIntervalMultiplier", soldierAttackInterval);
+            SetPrivateField(enemyUnit, "resourceCost", soldierResourceCost);
+            SetPrivateField(enemyUnit, "team", Team.Enemy);
+
+            enemySoldierPrefab.SetActive(false);
+            enemySoldierPrefab.name = "EnemySoldierPrefab";
         }
 
         private void SetupResourceNodePrefab()
@@ -229,8 +249,8 @@ namespace ClockworkGrid
             instructionsObj.transform.SetParent(canvasObj.transform, false);
 
             TextMeshProUGUI instructions = instructionsObj.AddComponent<TextMeshProUGUI>();
-            instructions.text = "Left-click: Place Soldier (costs 3 tokens)  |  Right-click: Place Resource";
-            instructions.fontSize = 18;
+            instructions.text = "Left-click: Player Soldier (3 tokens)  |  Right-click: Resource  |  Middle/Shift+Left: Enemy Soldier";
+            instructions.fontSize = 16;
             instructions.color = new Color(1f, 1f, 1f, 0.6f);
             instructions.alignment = TextAlignmentOptions.Bottom;
 
@@ -454,6 +474,7 @@ namespace ClockworkGrid
             GameObject placerObj = new GameObject("DebugPlacer");
             CellDebugPlacer placer = placerObj.AddComponent<CellDebugPlacer>();
             SetPrivateField(placer, "soldierPrefab", soldierPrefab);
+            SetPrivateField(placer, "enemySoldierPrefab", enemySoldierPrefab);
             SetPrivateField(placer, "resourceNodePrefab", resourceNodePrefab);
         }
 
