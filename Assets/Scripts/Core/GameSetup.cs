@@ -120,8 +120,9 @@ namespace ClockworkGrid
         private void Awake()
         {
             SetupCamera();
-            SetupGrid();
-            // SetupFogOfWar(); // TEMPORARILY DISABLED — will rework fog system
+            SetupFogManager(); // Phase 1: Create FogManager singleton (before grid)
+            SetupGrid();       // Grid subscribes to FogManager.OnCellRevealed
+            InitializeFog();   // Phase 2: Initialize fog + initial reveals (after grid)
             SetupGridExpansion(); // Iteration 9: Grid expansion system
             SetupIntervalTimer();
             SetupTokenManager();
@@ -173,18 +174,22 @@ namespace ClockworkGrid
         {
             Debug.Log($"[GameSetup] SetupGrid starting with gridWidth={gridWidth}, gridHeight={gridHeight}, cellSize={cellSize}");
 
-            // Find existing GridManager in scene (tile prefabs are assigned on it via Inspector)
-            GridManager gridManager = FindObjectOfType<GridManager>();
+            // Find existing GridManager in scene — including disabled components
+            // so we preserve Inspector-assigned tile prefabs
+            GridManager gridManager = FindObjectOfType<GridManager>(true);
             if (gridManager != null)
             {
+                // Ensure the component and its GameObject are enabled
+                gridManager.gameObject.SetActive(true);
+                gridManager.enabled = true;
                 Debug.Log($"[GameSetup] Found existing GridManager in scene: {gridManager.gameObject.name}");
             }
             else
             {
-                // No GridManager in scene — create one (will use default tiles)
+                // No GridManager in scene at all — create one (will use default tiles)
                 GameObject gridObj = new GameObject("GridManager");
                 gridManager = gridObj.AddComponent<GridManager>();
-                Debug.Log("[GameSetup] Created new GridManager programmatically");
+                Debug.Log("[GameSetup] Created new GridManager programmatically (no scene GridManager found)");
             }
 
             // Apply grid dimensions from GameSetup
@@ -209,21 +214,30 @@ namespace ClockworkGrid
             Debug.Log("[GameSetup] SetupGrid complete");
         }
 
-        private void SetupFogOfWar()
+        /// <summary>
+        /// Phase 1: Create FogManager singleton so GridManager can subscribe to events.
+        /// Must be called BEFORE SetupGrid().
+        /// </summary>
+        private void SetupFogManager()
         {
-            // Create FogManager (Iteration 7: simplified fog system)
-            GameObject fogManagerObj = new GameObject("FogManager");
-            FogManager fogManager = fogManagerObj.AddComponent<FogManager>();
-
-            // Create FogGridVisualizer for fog overlay visuals
-            GameObject fogVisualizerObj = new GameObject("FogGridVisualizer");
-            FogGridVisualizer fogVisualizer = fogVisualizerObj.AddComponent<FogGridVisualizer>();
-
-            // Initialize both systems
-            if (GridManager.Instance != null)
+            if (FogManager.Instance == null)
             {
-                fogManager.Initialize(GridManager.Instance.Width, GridManager.Instance.Height);
-                fogVisualizer.Initialize(GridManager.Instance, fogManager);
+                GameObject fogManagerObj = new GameObject("FogManager");
+                fogManagerObj.AddComponent<FogManager>();
+                Debug.Log("[GameSetup] Created FogManager singleton");
+            }
+        }
+
+        /// <summary>
+        /// Phase 2: Initialize fog with grid dimensions and trigger initial reveals.
+        /// Must be called AFTER SetupGrid() so tiles exist and are subscribed to events.
+        /// </summary>
+        private void InitializeFog()
+        {
+            if (FogManager.Instance != null && GridManager.Instance != null)
+            {
+                FogManager.Instance.Initialize(GridManager.Instance.Width, GridManager.Instance.Height);
+                Debug.Log("[GameSetup] Fog initialized with grid dimensions");
             }
         }
 
