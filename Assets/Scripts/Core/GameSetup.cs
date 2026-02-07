@@ -606,17 +606,56 @@ namespace ClockworkGrid
             GameObject waveObj = new GameObject("WaveManager");
             WaveManager waveManager = waveObj.AddComponent<WaveManager>();
 
-            // Pass wave configuration from inspector
-            SetPrivateField(waveManager, "intervalsPerWave", intervalsPerWave);
-            SetPrivateField(waveManager, "baseEnemyCount", baseEnemyCount);
-            SetPrivateField(waveManager, "enemyScaling", enemyScaling);
-            SetPrivateField(waveManager, "maxWaves", maxWaves);
-            SetPrivateField(waveManager, "baseDowntime", baseDowntime);
-            SetPrivateField(waveManager, "minDowntime", minDowntime);
-            SetPrivateField(waveManager, "downtimeDecreaseWave", downtimeDecreaseWave);
+            // Create a default test wave sequence (15 entries)
+            WaveEntry[] defaultSequence = new WaveEntry[]
+            {
+                // Entry 0-1: Nothing (breathing room)
+                new WaveEntry { spawnType = SpawnType.Nothing },
+                new WaveEntry { spawnType = SpawnType.Nothing },
+
+                // Entry 2: Resources
+                new WaveEntry { spawnType = SpawnType.Resources, resourceNodeCount = 2, resourceNodeLevel = 1 },
+
+                // Entry 3: Nothing
+                new WaveEntry { spawnType = SpawnType.Nothing },
+
+                // Entry 4: Enemies (2 soldiers)
+                new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 2 },
+
+                // Entry 5-6: Nothing
+                new WaveEntry { spawnType = SpawnType.Nothing },
+                new WaveEntry { spawnType = SpawnType.Nothing },
+
+                // Entry 7: Enemies (1 soldier, 1 ninja)
+                new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 1, enemyNinjaCount = 1 },
+
+                // Entry 8: Nothing
+                new WaveEntry { spawnType = SpawnType.Nothing },
+
+                // Entry 9: Resources
+                new WaveEntry { spawnType = SpawnType.Resources, resourceNodeCount = 1, resourceNodeLevel = 1 },
+
+                // Entry 10-11: Nothing
+                new WaveEntry { spawnType = SpawnType.Nothing },
+                new WaveEntry { spawnType = SpawnType.Nothing },
+
+                // Entry 12: Enemies (3 soldiers)
+                new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 3 },
+
+                // Entry 13: Nothing
+                new WaveEntry { spawnType = SpawnType.Nothing },
+
+                // Entry 14: Boss (1 boss, 30 HP, 5 damage)
+                new WaveEntry { spawnType = SpawnType.Boss, bossCount = 1, bossHP = 30, bossDamage = 5 }
+            };
+
+            // Assign wave sequence and resource prefab
+            waveManager.waveSequence = defaultSequence;
             SetPrivateField(waveManager, "resourceNodePrefab", resourceNodePrefab);
 
             waveManager.Initialize();
+
+            Debug.Log($"SetupWaveManager: Created WaveManager with {defaultSequence.Length} wave entries");
         }
 
         // SetupWaveTimelineUI() REMOVED: Timeline UI is now manually created in Unity Editor
