@@ -371,10 +371,17 @@ namespace ClockworkGrid
 
             Debug.Log($"{team} unit destroyed at ({GridX}, {GridY})");
 
-            // Notify WaveManager if this was a player unit (for lose condition tracking)
-            if (team == Team.Player && WaveManager.Instance != null)
+            // Notify WaveManager for tracking
+            if (WaveManager.Instance != null)
             {
-                WaveManager.Instance.OnPlayerUnitDestroyed();
+                if (team == Team.Player)
+                {
+                    WaveManager.Instance.OnPlayerUnitDestroyed();
+                }
+                else if (team == Team.Enemy)
+                {
+                    WaveManager.Instance.OnEnemyUnitDestroyed();
+                }
             }
 
             // Grant kill reward tokens when an enemy unit is killed

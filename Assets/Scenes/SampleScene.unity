@@ -1419,19 +1419,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[0]
-      value: 10120321112
+      value: 12121121112
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[1]
-      value: 10120321112
+      value: 12121121112
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[2]
-      value: 10120321112
+      value: 12121121112
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[3]
-      value: 10120321112
+      value: 12121121112
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequence.Array.data[0].spawnType
@@ -1636,7 +1636,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9218407696684505593, guid: f605eb6ec8e794527ab85039928f1788, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 33.66
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9218407696684505593, guid: f605eb6ec8e794527ab85039928f1788, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -1659,6 +1659,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 898176248449032296, guid: 8f2195a104bf243b5ad7a840c149aebe, type: 3}
+      propertyPath: m_BackGroundColor.b
+      value: 0.8867924
+      objectReference: {fileID: 0}
+    - target: {fileID: 898176248449032296, guid: 8f2195a104bf243b5ad7a840c149aebe, type: 3}
+      propertyPath: m_BackGroundColor.g
+      value: 0.8867924
+      objectReference: {fileID: 0}
+    - target: {fileID: 898176248449032296, guid: 8f2195a104bf243b5ad7a840c149aebe, type: 3}
+      propertyPath: m_BackGroundColor.r
+      value: 0.8867924
+      objectReference: {fileID: 0}
     - target: {fileID: 2862063219117132221, guid: 8f2195a104bf243b5ad7a840c149aebe, type: 3}
       propertyPath: m_LocalPosition.x
       value: -788.6531

@@ -77,6 +77,8 @@ namespace ClockworkGrid
         private bool gameOver = false;
         private bool hasWaveStarted = false; // Wave doesn't start until player places first unit
         private int playerUnitCount = 0; // Cached count to avoid O(N²) grid iteration
+        private int enemyUnitCount = 0; // Track living enemies for wave completion
+        private bool allEnemiesSpawned = false; // True when wave sequence has finished spawning
 
         // Events
         public event Action<int, SpawnType> OnWaveEntryExecuted; // (index, spawnType)
@@ -111,6 +113,8 @@ namespace ClockworkGrid
             inPeacePeriod = false;
             sequenceComplete = false;
             gameOver = false;
+            enemyUnitCount = 0;
+            allEnemiesSpawned = false;
 
             // Subscribe to interval timer
             if (IntervalTimer.Instance != null)
@@ -190,6 +194,7 @@ namespace ClockworkGrid
                         currentWaveNumber++;
                         currentWaveIndex = -1; // Reset for new wave
                         ticksSinceLastAdvance = 0;
+                        allEnemiesSpawned = false;
 
                         Debug.Log($"WaveManager: Peace period over, starting Wave {currentWaveNumber + 1}");
 
@@ -226,11 +231,13 @@ namespace ClockworkGrid
                 string currentSeq = GetCurrentWaveSequence();
                 Debug.Log($"[WaveManager] Advanced to wave index: {currentWaveIndex}/{currentSeq.Length}");
 
-                // Check if current wave is complete
+                // Check if all entries in current wave have been spawned
                 if (currentWaveIndex >= currentSeq.Length)
                 {
-                    Debug.Log($"[WaveManager] Wave {currentWaveNumber + 1} complete!");
-                    CompleteCurrentWave();
+                    Debug.Log($"[WaveManager] Wave {currentWaveNumber + 1} - all entries spawned, {enemyUnitCount} enemies remaining");
+                    allEnemiesSpawned = true;
+                    CheckWaveComplete();
+                    CheckLoseCondition();
                     return;
                 }
 
@@ -712,6 +719,7 @@ namespace ClockworkGrid
             }
 
             GridManager.Instance.PlaceUnit(pos.x, pos.y, enemyObj, CellState.EnemyUnit);
+            enemyUnitCount++;
             return true;
         }
 
@@ -966,7 +974,6 @@ namespace ClockworkGrid
         public int CurrentWaveIndex => currentWaveIndex;
         public int CurrentWaveNumber => currentWaveNumber + 1; // +1 for display (1-indexed)
         public int TotalWaves => waveSequences.Count;
-        public int TotalWaveEntries => GetCurrentWaveSequence().Length;
         public bool IsSequenceComplete => sequenceComplete;
         public bool IsGameOver => gameOver;
         public bool HasWaveStarted => hasWaveStarted;
@@ -987,6 +994,34 @@ namespace ClockworkGrid
         {
             playerUnitCount--;
             if (playerUnitCount < 0) playerUnitCount = 0; // Safety check
+        }
+
+        /// <summary>
+        /// Notify WaveManager that an enemy unit was destroyed (for wave completion tracking).
+        /// </summary>
+        public void OnEnemyUnitDestroyed()
+        {
+            enemyUnitCount--;
+            if (enemyUnitCount < 0) enemyUnitCount = 0;
+
+            Debug.Log($"[WaveManager] Enemy destroyed. {enemyUnitCount} enemies remaining. allSpawned={allEnemiesSpawned}");
+
+            CheckWaveComplete();
+        }
+
+        /// <summary>
+        /// Check if the current wave is complete (all enemies spawned AND all enemies defeated).
+        /// </summary>
+        private void CheckWaveComplete()
+        {
+            if (gameOver || !allEnemiesSpawned) return;
+
+            if (enemyUnitCount <= 0)
+            {
+                Debug.Log($"[WaveManager] Wave {currentWaveNumber + 1} complete - all enemies defeated!");
+                allEnemiesSpawned = false; // Reset for next wave
+                CompleteCurrentWave();
+            }
         }
 
         /// <summary>

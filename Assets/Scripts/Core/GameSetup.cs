@@ -173,6 +173,11 @@ namespace ClockworkGrid
                 Debug.Log("[GameSetup] Added CameraController to camera");
             }
 
+            // Apply gradient background (gray→white vertical gradient)
+            GradientBackground gradient = cam.GetComponent<GradientBackground>();
+            if (gradient == null)
+                gradient = cam.gameObject.AddComponent<GradientBackground>();
+
             Debug.Log($"[GameSetup] Camera ready: {cam.gameObject.name}");
         }
 
