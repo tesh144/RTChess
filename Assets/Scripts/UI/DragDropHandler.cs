@@ -110,7 +110,7 @@ namespace ClockworkGrid
 
             // Valid placement - spawn unit (FREE, no token cost!)
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(targetGridX, targetGridY);
-            GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, Quaternion.identity);
+            GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, currentUnitPrefab.transform.rotation);
             unitObj.SetActive(true);
 
             // Initialize unit with UnitStats (Iteration 6)

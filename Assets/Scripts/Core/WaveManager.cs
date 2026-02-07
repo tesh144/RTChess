@@ -434,9 +434,9 @@ namespace ClockworkGrid
                     continue;
                 }
 
-                // Spawn enemy
+                // Spawn enemy (preserve prefab rotation for custom models)
                 Vector3 worldPos = GridManager.Instance.GridToWorldPosition(pos.x, pos.y);
-                GameObject enemyObj = Instantiate(prefabToSpawn, worldPos, Quaternion.identity);
+                GameObject enemyObj = Instantiate(prefabToSpawn, worldPos, prefabToSpawn.transform.rotation);
                 enemyObj.SetActive(true);
 
                 Unit unit = enemyObj.GetComponent<Unit>();

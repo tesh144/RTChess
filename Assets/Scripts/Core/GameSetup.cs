@@ -346,7 +346,11 @@ namespace ClockworkGrid
             {
                 // Use the inspector-assigned prefab (clone it so we don't modify the asset)
                 prefab = Instantiate(overridePrefab);
-                prefab.transform.localScale = Vector3.one * scale;
+                // Preserve the prefab's original scale and multiply by inspector scale factor
+                // (FBX models often have scale 100 baked in)
+                prefab.transform.localScale = overridePrefab.transform.localScale * scale;
+                // Reset position (will be set when spawning)
+                prefab.transform.localPosition = Vector3.zero;
             }
             else
             {
