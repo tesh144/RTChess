@@ -1006,6 +1006,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1ee8bc1672f2d45b8a00cc75d4fa9e83, type: 3}
       insertIndex: -1
       addedObject: {fileID: 629456888549173462}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1ee8bc1672f2d45b8a00cc75d4fa9e83, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6191557888859789260}
   m_SourcePrefab: {fileID: 100100000, guid: 1ee8bc1672f2d45b8a00cc75d4fa9e83, type: 3}
 --- !u!4 &299944542035751116 stripped
 Transform:
@@ -1035,3 +1038,16 @@ RotationConstraint:
   m_Active: 1
   m_IsLocked: 0
   m_Sources: []
+--- !u!114 &6191557888859789260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1108533482850347638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b248d961295f4f07b6e09b3707f296c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldEulerRotation: {x: -90, y: 0, z: 0}

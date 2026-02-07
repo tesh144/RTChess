@@ -107,5 +107,26 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2826554574235222834, guid: 0a952b697fd5f4a19a28a5f976af2e82, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1700556708906714163}
   m_SourcePrefab: {fileID: 100100000, guid: 0a952b697fd5f4a19a28a5f976af2e82, type: 3}
+--- !u!1 &4823489729639532669 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2826554574235222834, guid: 0a952b697fd5f4a19a28a5f976af2e82, type: 3}
+  m_PrefabInstance: {fileID: 7334545418713500495}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1700556708906714163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4823489729639532669}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b248d961295f4f07b6e09b3707f296c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldEulerRotation: {x: -90, y: 0, z: 0}
