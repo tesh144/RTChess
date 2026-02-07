@@ -75,6 +75,11 @@ namespace ClockworkGrid
             if (IntervalTimer.Instance != null)
             {
                 IntervalTimer.Instance.OnIntervalTick += OnIntervalTick;
+                Debug.Log($"[Unit {gameObject.name}] Subscribed to IntervalTimer in Start()");
+            }
+            else
+            {
+                Debug.LogError($"[Unit {gameObject.name}] IntervalTimer.Instance is NULL in Start()!");
             }
 
             // Find HP text and cache renderers
@@ -123,14 +128,25 @@ namespace ClockworkGrid
 
         private void OnIntervalTick(int intervalCount)
         {
+            // Debug logging
+            Debug.Log($"[Unit {gameObject.name}] OnIntervalTick called - Interval: {intervalCount}, Multiplier: {attackIntervalMultiplier}, Team: {team}");
+
             // Check for placement cooldown
             PlacementCooldown cooldown = GetComponent<PlacementCooldown>();
             if (cooldown != null && cooldown.IsOnCooldown)
+            {
+                Debug.Log($"[Unit {gameObject.name}] Skipping - on cooldown");
                 return; // Skip all actions while on cooldown
+            }
 
             // Only rotate on intervals that match our multiplier
-            if (intervalCount % attackIntervalMultiplier != 0) return;
+            if (intervalCount % attackIntervalMultiplier != 0)
+            {
+                Debug.Log($"[Unit {gameObject.name}] Skipping - interval mismatch ({intervalCount} % {attackIntervalMultiplier} = {intervalCount % attackIntervalMultiplier})");
+                return;
+            }
 
+            Debug.Log($"[Unit {gameObject.name}] Rotating and attacking!");
             Rotate();
             TryAttack();
         }
@@ -521,6 +537,14 @@ namespace ClockworkGrid
             if (FogManager.Instance != null)
             {
                 FogManager.Instance.RevealRadius(gridX, gridY, RevealRadius);
+            }
+
+            // Re-subscribe to interval timer (in case Initialize is called after Start)
+            if (IntervalTimer.Instance != null)
+            {
+                IntervalTimer.Instance.OnIntervalTick -= OnIntervalTick; // Remove any existing subscription
+                IntervalTimer.Instance.OnIntervalTick += OnIntervalTick; // Add fresh subscription
+                Debug.Log($"[Unit {gameObject.name}] Re-subscribed to IntervalTimer in Initialize()");
             }
 
             Debug.Log($"Initialized {unitTeam} {stats.unitName}: HP={maxHP}, Damage={attackDamage}, Range={attackRange}, Interval={attackIntervalMultiplier}, RevealRadius={RevealRadius}");
