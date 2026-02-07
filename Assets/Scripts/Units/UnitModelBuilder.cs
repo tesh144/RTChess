@@ -99,7 +99,14 @@ namespace ClockworkGrid
             Renderer renderer = obj.GetComponent<Renderer>();
             if (renderer != null)
             {
-                renderer.material = new Material(Shader.Find("Standard"));
+                // Use Unlit/Color shader which is guaranteed to have _Color property
+                Shader shader = Shader.Find("Unlit/Color");
+                if (shader == null)
+                {
+                    shader = Shader.Find("Standard"); // Fallback
+                }
+
+                renderer.material = new Material(shader);
                 renderer.material.color = color;
             }
         }

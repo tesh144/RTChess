@@ -281,7 +281,10 @@ namespace ClockworkGrid
 
             for (int i = 0; i < spawnDots.Count; i++)
             {
+                if (spawnDots[i] == null) continue; // Skip null entries
+
                 Image dotImage = spawnDots[i].GetComponent<Image>();
+                if (dotImage == null) continue; // Skip if no Image component
 
                 if (i == currentDotIndex)
                 {
