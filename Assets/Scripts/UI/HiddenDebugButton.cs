@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 namespace ClockworkGrid
 {
     /// <summary>
-    /// Invisible button in the top-right corner.
+    /// Invisible button in the top-left corner.
     /// Tap 5 times to reveal the debug panel.
     /// </summary>
     public class HiddenDebugButton : MonoBehaviour, IPointerClickHandler

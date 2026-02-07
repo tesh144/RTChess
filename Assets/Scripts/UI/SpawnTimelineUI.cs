@@ -55,6 +55,16 @@ namespace ClockworkGrid
         {
             ClearTimeline();
 
+            // IMPORTANT: Clear any placeholder/design-time children from dotContainer
+            // This removes manually-placed dots from the Unity scene
+            if (dotContainer != null)
+            {
+                foreach (Transform child in dotContainer)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+
             if (string.IsNullOrEmpty(spawnCode))
             {
                 Debug.LogWarning("SpawnTimelineUI: Empty spawn code");
@@ -117,24 +127,24 @@ namespace ClockworkGrid
 
                 spawnDots.Add(dotObj);
 
-                // Create connecting line (except after last dot)
-                if (i < spawnCode.Length - 1)
-                {
-                    GameObject lineObj = new GameObject($"Line_{i}");
-                    lineObj.transform.SetParent(dotContainer, false);
-
-                    RectTransform lineRect = lineObj.AddComponent<RectTransform>();
-                    lineRect.anchorMin = new Vector2(0.5f, 0.5f);
-                    lineRect.anchorMax = new Vector2(0.5f, 0.5f);
-                    lineRect.pivot = new Vector2(0.5f, 0.5f);
-                    lineRect.sizeDelta = new Vector2(dotSpacing, lineWidth);
-                    lineRect.anchoredPosition = new Vector2(startOffset + i * dotSpacing + dotSpacing / 2, 0);
-
-                    Image lineImage = lineObj.AddComponent<Image>();
-                    lineImage.color = GetColorForCode(code);
-
-                    connectionLines.Add(lineImage);
-                }
+                // REMOVED: Connecting lines between dots (user wants dots only)
+                // if (i < spawnCode.Length - 1)
+                // {
+                //     GameObject lineObj = new GameObject($"Line_{i}");
+                //     lineObj.transform.SetParent(dotContainer, false);
+                //
+                //     RectTransform lineRect = lineObj.AddComponent<RectTransform>();
+                //     lineRect.anchorMin = new Vector2(0.5f, 0.5f);
+                //     lineRect.anchorMax = new Vector2(0.5f, 0.5f);
+                //     lineRect.pivot = new Vector2(0.5f, 0.5f);
+                //     lineRect.sizeDelta = new Vector2(dotSpacing, lineWidth);
+                //     lineRect.anchoredPosition = new Vector2(startOffset + i * dotSpacing + dotSpacing / 2, 0);
+                //
+                //     Image lineImage = lineObj.AddComponent<Image>();
+                //     lineImage.color = GetColorForCode(code);
+                //
+                //     connectionLines.Add(lineImage);
+                // }
             }
 
             currentDotIndex = 0;
@@ -296,22 +306,22 @@ namespace ClockworkGrid
                 }
             }
 
-            // Fade completed lines to 40% opacity
-            for (int i = 0; i < connectionLines.Count; i++)
-            {
-                if (i < currentDotIndex)
-                {
-                    Color c = connectionLines[i].color;
-                    c.a = 0.4f;
-                    connectionLines[i].color = c;
-                }
-                else
-                {
-                    Color c = connectionLines[i].color;
-                    c.a = 1f;
-                    connectionLines[i].color = c;
-                }
-            }
+            // REMOVED: Line opacity updates (no lines created)
+            // for (int i = 0; i < connectionLines.Count; i++)
+            // {
+            //     if (i < currentDotIndex)
+            //     {
+            //         Color c = connectionLines[i].color;
+            //         c.a = 0.4f;
+            //         connectionLines[i].color = c;
+            //     }
+            //     else
+            //     {
+            //         Color c = connectionLines[i].color;
+            //         c.a = 1f;
+            //         connectionLines[i].color = c;
+            //     }
+            // }
         }
 
         /// <summary>

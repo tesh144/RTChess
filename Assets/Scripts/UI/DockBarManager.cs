@@ -463,5 +463,23 @@ namespace ClockworkGrid
             obj.transform.SetParent(parent, false);
             return obj.AddComponent<T>();
         }
+
+        /// <summary>
+        /// Get the current number of units in the dock/hand.
+        /// Used by WaveManager for lose condition checking.
+        /// </summary>
+        public int GetUnitCount()
+        {
+            return unitIcons.Count;
+        }
+
+        /// <summary>
+        /// Get the current draw cost.
+        /// Used by WaveManager for lose condition checking.
+        /// </summary>
+        public int GetCurrentDrawCost()
+        {
+            return CalculateDealCost();
+        }
     }
 }

@@ -47,7 +47,7 @@ MonoBehaviour:
   gridWidth: 11
   gridHeight: 11
   cellSize: 1.5
-  baseIntervalDuration: 2
+  baseIntervalDuration: 1
   soldierPlayerPrefab: {fileID: 6974813962620877057, guid: 4b782cfc9fe18410e9900051ea2f39d4, type: 3}
   soldierEnemyPrefab: {fileID: 1174396167649158818, guid: 8e21f175452cc4678816fc825c4c8ca7, type: 3}
   soldierRarityWeight: 60
