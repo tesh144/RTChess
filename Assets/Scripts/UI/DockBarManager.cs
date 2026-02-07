@@ -282,19 +282,30 @@ namespace ClockworkGrid
             bool canAfford = ResourceTokenManager.Instance != null &&
                            ResourceTokenManager.Instance.HasEnoughTokens(cost);
 
+            // Bug fix: Check if hand is full
+            bool handFull = handManager != null && handManager.GetHandSize() >= 10;
+
             // Update button text
             TextMeshProUGUI buttonText = dealButtonObj.GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
             {
-                buttonText.text = $"Draw:\n{cost}T";
-                buttonText.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
+                if (handFull)
+                {
+                    buttonText.text = "Hand\nFull!";
+                    buttonText.color = new Color(1f, 0.5f, 0f); // Orange for hand full
+                }
+                else
+                {
+                    buttonText.text = $"Draw:\n{cost}T";
+                    buttonText.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
+                }
             }
 
-            // Update button state
+            // Update button state (disabled if can't afford OR hand is full)
             Button button = dealButtonObj.GetComponent<Button>();
             if (button != null)
             {
-                button.interactable = canAfford;
+                button.interactable = canAfford && !handFull;
             }
         }
 

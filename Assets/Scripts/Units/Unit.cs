@@ -35,6 +35,8 @@ namespace ClockworkGrid
         // HP text references
         private TextMesh hpTextMesh;
         private TextMesh hpTextShadow;
+        private TextMesh typeTextMesh;
+        private TextMesh typeTextShadow;
         private Renderer[] renderers;
         private Color[] originalColors;
         private float damageFlashTimer;
@@ -52,6 +54,7 @@ namespace ClockworkGrid
         public int AttackRange => attackRange;
         public int AttackIntervalMultiplier => attackIntervalMultiplier;
         public int ResourceCost => resourceCost;
+        public int RevealRadius { get; private set; } = 1; // Fog reveal radius (Iteration 7)
 
         // Rotation animation state
         private bool isRotating;
@@ -75,6 +78,7 @@ namespace ClockworkGrid
 
             // Find HP text and cache renderers
             FindHPText();
+            FindTypeText();
             CacheRenderers();
             UpdateHPText();
         }
@@ -388,6 +392,23 @@ namespace ClockworkGrid
             }
         }
 
+        private void FindTypeText()
+        {
+            // Find type text components by name in children hierarchy
+            TextMesh[] allTextMeshes = GetComponentsInChildren<TextMesh>(true);
+            foreach (TextMesh tm in allTextMeshes)
+            {
+                if (tm.name == "TypeText")
+                {
+                    typeTextMesh = tm;
+                }
+                else if (tm.name == "TypeTextShadow")
+                {
+                    typeTextShadow = tm;
+                }
+            }
+        }
+
         private void CacheRenderers()
         {
             renderers = GetComponentsInChildren<Renderer>();
@@ -460,6 +481,7 @@ namespace ClockworkGrid
             attackRange = stats.attackRange;
             attackIntervalMultiplier = stats.attackIntervalMultiplier;
             resourceCost = stats.resourceCost;
+            RevealRadius = stats.revealRadius;
 
             // Reset HP to new max
             currentHP = maxHP;
@@ -477,13 +499,30 @@ namespace ClockworkGrid
                 transform.localScale = Vector3.one * stats.modelScale;
             }
 
-            // Apply color
-            ApplyColor(stats.unitColor);
+            // Apply color based on team (Bug fix: enemies were using player colors)
+            Color teamColor = (unitTeam == Team.Player) ? stats.unitColor : new Color(1f, 0.3f, 0.3f); // Red for enemies
+            ApplyColor(teamColor);
 
             // Update HP text
             UpdateHPText();
 
-            Debug.Log($"Initialized {stats.unitName}: HP={maxHP}, Damage={attackDamage}, Range={attackRange}, Interval={attackIntervalMultiplier}");
+            // Create type label if not found (Bug fix: show unit type on board)
+            if (typeTextMesh == null)
+            {
+                CreateTypeLabel(stats.unitType, stats.unitName);
+            }
+            else
+            {
+                UpdateTypeText(stats.unitType, stats.unitName);
+            }
+
+            // Reveal fog around unit (Iteration 7)
+            if (FogManager.Instance != null)
+            {
+                FogManager.Instance.RevealRadius(gridX, gridY, RevealRadius);
+            }
+
+            Debug.Log($"Initialized {unitTeam} {stats.unitName}: HP={maxHP}, Damage={attackDamage}, Range={attackRange}, Interval={attackIntervalMultiplier}, RevealRadius={RevealRadius}");
         }
 
         /// <summary>
@@ -511,6 +550,67 @@ namespace ClockworkGrid
                 {
                     originalColors[i] = color;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Create type label text above unit (Bug fix: show unit type)
+        /// </summary>
+        private void CreateTypeLabel(UnitType unitType, string unitName)
+        {
+            // Create shadow text first (behind main text)
+            GameObject shadowObj = new GameObject("TypeTextShadow");
+            shadowObj.transform.SetParent(transform, false);
+            shadowObj.transform.localPosition = new Vector3(0.02f, 0.85f, -0.02f); // Slightly offset
+            shadowObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Face up for top-down camera
+
+            typeTextShadow = shadowObj.AddComponent<TextMesh>();
+            typeTextShadow.text = unitType.ToString();
+            typeTextShadow.characterSize = 0.08f;
+            typeTextShadow.fontSize = 20;
+            typeTextShadow.anchor = TextAnchor.MiddleCenter;
+            typeTextShadow.alignment = TextAlignment.Center;
+            typeTextShadow.color = Color.black;
+
+            MeshRenderer shadowRenderer = shadowObj.GetComponent<MeshRenderer>();
+            if (shadowRenderer != null)
+            {
+                shadowRenderer.sortingOrder = 0;
+            }
+
+            // Create main text
+            GameObject textObj = new GameObject("TypeText");
+            textObj.transform.SetParent(transform, false);
+            textObj.transform.localPosition = new Vector3(0f, 0.85f, 0f); // Above unit
+            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Face up for top-down camera
+
+            typeTextMesh = textObj.AddComponent<TextMesh>();
+            typeTextMesh.text = unitType.ToString();
+            typeTextMesh.characterSize = 0.08f;
+            typeTextMesh.fontSize = 20;
+            typeTextMesh.anchor = TextAnchor.MiddleCenter;
+            typeTextMesh.alignment = TextAlignment.Center;
+            typeTextMesh.color = Color.white;
+
+            MeshRenderer textRenderer = textObj.GetComponent<MeshRenderer>();
+            if (textRenderer != null)
+            {
+                textRenderer.sortingOrder = 1;
+            }
+        }
+
+        /// <summary>
+        /// Update type text for an existing label
+        /// </summary>
+        private void UpdateTypeText(UnitType unitType, string unitName)
+        {
+            if (typeTextMesh != null)
+            {
+                typeTextMesh.text = unitType.ToString();
+            }
+            if (typeTextShadow != null)
+            {
+                typeTextShadow.text = unitType.ToString();
             }
         }
     }

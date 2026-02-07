@@ -40,6 +40,9 @@ namespace ClockworkGrid
         [SerializeField] private int baseDealCost = 2; // Phase 2 spec: starts at 2
         private int drawCount = 0;
 
+        [Header("Hand Limits")]
+        [SerializeField] private int maxHandSize = 10; // Maximum cards in hand
+
         // Events
         public event Action OnHandChanged;
 
@@ -75,6 +78,13 @@ namespace ClockworkGrid
         /// </summary>
         public bool DrawUnit()
         {
+            // Check hand size limit (Bug fix: prevent unlimited cards)
+            if (hand.Count >= maxHandSize)
+            {
+                Debug.Log($"Hand is full! Cannot draw more than {maxHandSize} cards.");
+                return false;
+            }
+
             int cost = CalculateDrawCost();
 
             // Check affordability

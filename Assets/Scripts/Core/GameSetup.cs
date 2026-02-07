@@ -19,8 +19,8 @@ namespace ClockworkGrid
     public class GameSetup : MonoBehaviour
     {
         [Header("Grid Settings")]
-        [SerializeField] private int gridWidth = 4;
-        [SerializeField] private int gridHeight = 4;
+        [SerializeField] private int gridWidth = 11; // Iteration 7: Larger grid for exploration
+        [SerializeField] private int gridHeight = 11;
         [SerializeField] private float cellSize = 1.5f;
 
         [Header("Interval Settings")]
@@ -115,13 +115,19 @@ namespace ClockworkGrid
 
         private void SetupFogOfWar()
         {
-            GameObject fogObj = new GameObject("FogOfWar");
-            FogOfWar fogOfWar = fogObj.AddComponent<FogOfWar>();
+            // Create FogManager (Iteration 7: simplified fog system)
+            GameObject fogManagerObj = new GameObject("FogManager");
+            FogManager fogManager = fogManagerObj.AddComponent<FogManager>();
 
-            // Initialize with grid manager (Phase 7)
+            // Create FogGridVisualizer for fog overlay visuals
+            GameObject fogVisualizerObj = new GameObject("FogGridVisualizer");
+            FogGridVisualizer fogVisualizer = fogVisualizerObj.AddComponent<FogGridVisualizer>();
+
+            // Initialize both systems
             if (GridManager.Instance != null)
             {
-                fogOfWar.Initialize(GridManager.Instance);
+                fogManager.Initialize(GridManager.Instance.Width, GridManager.Instance.Height);
+                fogVisualizer.Initialize(GridManager.Instance, fogManager);
             }
         }
 
@@ -228,6 +234,7 @@ namespace ClockworkGrid
             soldierStats.attackRange = 1;
             soldierStats.attackIntervalMultiplier = 2;
             soldierStats.resourceCost = 3;
+            soldierStats.revealRadius = 1; // Iteration 7: Fog reveal radius
             soldierStats.unitColor = new Color(0.2f, 0.5f, 1f); // Blue
             soldierStats.modelScale = 1f;
             soldierStats.unitPrefab = soldierPrefab;
@@ -244,6 +251,7 @@ namespace ClockworkGrid
             ogreStats.attackRange = 2; // Range 2!
             ogreStats.attackIntervalMultiplier = 4;
             ogreStats.resourceCost = 6;
+            ogreStats.revealRadius = 1; // Iteration 7: Same as Soldier
             ogreStats.unitColor = new Color(0.8f, 0.4f, 1f); // Purple
             ogreStats.modelScale = 1.3f;
             ogreStats.unitPrefab = ogrePrefab;
@@ -260,6 +268,7 @@ namespace ClockworkGrid
             ninjaStats.attackRange = 1;
             ninjaStats.attackIntervalMultiplier = 1; // Fast!
             ninjaStats.resourceCost = 4;
+            ninjaStats.revealRadius = 2; // Iteration 7: Ninjas scout further!
             ninjaStats.unitColor = new Color(1f, 0.3f, 0.3f); // Red
             ninjaStats.modelScale = 0.8f;
             ninjaStats.unitPrefab = ninjaPrefab;

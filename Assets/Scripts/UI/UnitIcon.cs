@@ -22,6 +22,7 @@ namespace ClockworkGrid
         private Vector2 originalPosition;
         private bool isDragging = false;
         private GameObject costBadge;
+        private GameObject typeLabel;
 
         [SerializeField] private float hoverScale = 1.2f; // Phase 2: ~20% scale up
 
@@ -53,6 +54,9 @@ namespace ClockworkGrid
 
             // Create cost badge
             CreateCostBadge(data.Cost);
+
+            // Create type label (Bug fix: show unit type)
+            CreateTypeLabel(data.Type);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -151,6 +155,35 @@ namespace ClockworkGrid
             costText.color = Color.white;
             costText.alignment = TextAlignmentOptions.Center;
             costText.fontStyle = FontStyles.Bold;
+        }
+
+        /// <summary>
+        /// Create type label (positioned above icon)
+        /// </summary>
+        private void CreateTypeLabel(UnitType type)
+        {
+            // Label container (positioned above icon)
+            typeLabel = new GameObject("TypeLabel");
+            RectTransform labelRect = typeLabel.AddComponent<RectTransform>();
+            labelRect.SetParent(transform, false);
+            labelRect.anchorMin = new Vector2(0.5f, 1f);
+            labelRect.anchorMax = new Vector2(0.5f, 1f);
+            labelRect.pivot = new Vector2(0.5f, 0f);
+            labelRect.anchoredPosition = new Vector2(0f, 5f); // Just above icon
+            labelRect.sizeDelta = new Vector2(70f, 20f);
+
+            // Type text
+            TextMeshProUGUI typeText = typeLabel.AddComponent<TextMeshProUGUI>();
+            typeText.text = type.ToString(); // "Soldier", "Ogre", or "Ninja"
+            typeText.fontSize = 12;
+            typeText.color = Color.white;
+            typeText.alignment = TextAlignmentOptions.Center;
+            typeText.fontStyle = FontStyles.Bold;
+
+            // Add shadow for readability
+            typeText.enableAutoSizing = false;
+            typeText.outlineWidth = 0.2f;
+            typeText.outlineColor = Color.black;
         }
     }
 }

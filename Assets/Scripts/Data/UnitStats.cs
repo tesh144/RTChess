@@ -43,6 +43,9 @@ namespace ClockworkGrid
         [Header("Economy")]
         public int resourceCost = 3; // Currently unused (placement is free)
 
+        [Header("Fog of War - Iteration 7")]
+        public int revealRadius = 1; // Cells revealed around unit when placed (Soldier: 1, Ninja: 2, Ogre: 1)
+
         [Header("Visuals")]
         public Color unitColor = Color.blue;
         public Sprite iconSprite; // Icon for dock bar

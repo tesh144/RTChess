@@ -102,10 +102,10 @@ namespace ClockworkGrid
             // Define spawn positions (right side of grid for now)
             if (GridManager.Instance != null)
             {
-                int gridWidth = 4; // TODO: Get from GridManager
-                int gridHeight = 4;
+                int gridWidth = GridManager.Instance.Width;
+                int gridHeight = GridManager.Instance.Height;
 
-                // Spawn on right edge
+                // Spawn on right edge (all cells on rightmost column)
                 for (int y = 0; y < gridHeight; y++)
                 {
                     spawnPositions.Add(new Vector2Int(gridWidth - 1, y));

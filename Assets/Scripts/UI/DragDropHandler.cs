@@ -236,6 +236,10 @@ namespace ClockworkGrid
             if (!GridManager.Instance.WorldToGridPosition(worldPos, out gridX, out gridY))
                 return false;
 
+            // Check if cell is revealed (Iteration 7: Fog of War)
+            if (FogManager.Instance != null && !FogManager.Instance.IsCellRevealed(gridX, gridY))
+                return false;
+
             // Check if cell is empty
             return GridManager.Instance.IsCellEmpty(gridX, gridY);
         }
