@@ -72,14 +72,17 @@ namespace ClockworkGrid
         [SerializeField] private int downtimeDecreaseWave = 10;
 
         [Header("Resource Nodes")]
+        [SerializeField] private GameObject resourceNodeLevel1Prefab; // Drag prefab, or leave empty for procedural
         [SerializeField] private int level1HP = 10;
         [SerializeField] private int level1TokensPerHit = 1;
         [SerializeField] private int level1BonusTokens = 3;
         [Space(5)]
+        [SerializeField] private GameObject resourceNodeLevel2Prefab; // Drag prefab, or leave empty for procedural
         [SerializeField] private int level2HP = 20;
         [SerializeField] private int level2TokensPerHit = 1;
         [SerializeField] private int level2BonusTokens = 6;
         [Space(5)]
+        [SerializeField] private GameObject resourceNodeLevel3Prefab; // Drag prefab, or leave empty for procedural
         [SerializeField] private int level3HP = 50;
         [SerializeField] private int level3TokensPerHit = 2;
         [SerializeField] private int level3BonusTokens = 9;
@@ -221,47 +224,62 @@ namespace ClockworkGrid
         private void SetupResourceNodePrefabs()
         {
             // Level 1: 1x1 (small, green)
-            level1ResourcePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(new Color(0.2f, 0.85f, 0.4f)); // Green
-            ResourceNode node1 = level1ResourcePrefab.AddComponent<ResourceNode>();
-            SetPrivateField(node1, "maxHP", level1HP);
-            SetPrivateField(node1, "level", 1);
-            SetPrivateField(node1, "tokensPerHit", level1TokensPerHit);
-            SetPrivateField(node1, "bonusTokens", level1BonusTokens);
-            SetPrivateField(node1, "gridSize", new Vector2Int(1, 1));
-            level1ResourcePrefab.AddComponent<HPBarOverlay>();
-            level1ResourcePrefab.SetActive(false);
-            level1ResourcePrefab.name = "ResourceNode_Level1";
+            level1ResourcePrefab = CreateResourceNodePrefab(
+                resourceNodeLevel1Prefab, "ResourceNode_Level1",
+                new Color(0.2f, 0.85f, 0.4f), 1f,
+                1, level1HP, level1TokensPerHit, level1BonusTokens, new Vector2Int(1, 1));
 
             // Level 2: 2x1 (medium, yellow-green, larger scale)
-            level2ResourcePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(new Color(0.6f, 0.9f, 0.3f)); // Yellow-green
-            level2ResourcePrefab.transform.localScale = Vector3.one * 1.5f; // Larger
-            ResourceNode node2 = level2ResourcePrefab.AddComponent<ResourceNode>();
-            SetPrivateField(node2, "maxHP", level2HP);
-            SetPrivateField(node2, "level", 2);
-            SetPrivateField(node2, "tokensPerHit", level2TokensPerHit);
-            SetPrivateField(node2, "bonusTokens", level2BonusTokens);
-            SetPrivateField(node2, "gridSize", new Vector2Int(2, 1)); // Horizontal by default, can be rotated
-            level2ResourcePrefab.AddComponent<HPBarOverlay>();
-            level2ResourcePrefab.SetActive(false);
-            level2ResourcePrefab.name = "ResourceNode_Level2";
+            level2ResourcePrefab = CreateResourceNodePrefab(
+                resourceNodeLevel2Prefab, "ResourceNode_Level2",
+                new Color(0.6f, 0.9f, 0.3f), 1.5f,
+                2, level2HP, level2TokensPerHit, level2BonusTokens, new Vector2Int(2, 1));
 
             // Level 3: 2x2 (large, blue-green, much larger scale)
-            level3ResourcePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(new Color(0.2f, 0.7f, 0.9f)); // Blue-green
-            level3ResourcePrefab.transform.localScale = Vector3.one * 2.0f; // Much larger
-            ResourceNode node3 = level3ResourcePrefab.AddComponent<ResourceNode>();
-            SetPrivateField(node3, "maxHP", level3HP);
-            SetPrivateField(node3, "level", 3);
-            SetPrivateField(node3, "tokensPerHit", level3TokensPerHit);
-            SetPrivateField(node3, "bonusTokens", level3BonusTokens);
-            SetPrivateField(node3, "gridSize", new Vector2Int(2, 2));
-            level3ResourcePrefab.AddComponent<HPBarOverlay>();
-            level3ResourcePrefab.SetActive(false);
-            level3ResourcePrefab.name = "ResourceNode_Level3";
+            level3ResourcePrefab = CreateResourceNodePrefab(
+                resourceNodeLevel3Prefab, "ResourceNode_Level3",
+                new Color(0.2f, 0.7f, 0.9f), 2.0f,
+                3, level3HP, level3TokensPerHit, level3BonusTokens, new Vector2Int(2, 2));
 
             // Keep legacy reference for backward compatibility
             resourceNodePrefab = level1ResourcePrefab;
 
             Debug.Log("Created 3 resource node levels: L1 (1x1), L2 (2x1), L3 (2x2)");
+        }
+
+        private GameObject CreateResourceNodePrefab(
+            GameObject overridePrefab, string prefabName, Color color, float scale,
+            int level, int hp, int tokensPerHit, int bonusTokens, Vector2Int gridSize)
+        {
+            GameObject prefab;
+
+            if (overridePrefab != null)
+            {
+                prefab = Instantiate(overridePrefab);
+                prefab.transform.localScale = overridePrefab.transform.localScale * scale;
+                prefab.transform.localPosition = Vector3.zero;
+            }
+            else
+            {
+                prefab = ResourceNodeModelBuilder.CreateResourceNodeModel(color);
+                prefab.transform.localScale = Vector3.one * scale;
+            }
+
+            ResourceNode node = prefab.GetComponent<ResourceNode>();
+            if (node == null) node = prefab.AddComponent<ResourceNode>();
+            SetPrivateField(node, "maxHP", hp);
+            SetPrivateField(node, "level", level);
+            SetPrivateField(node, "tokensPerHit", tokensPerHit);
+            SetPrivateField(node, "bonusTokens", bonusTokens);
+            SetPrivateField(node, "gridSize", gridSize);
+
+            if (prefab.GetComponent<HPBarOverlay>() == null)
+                prefab.AddComponent<HPBarOverlay>();
+
+            prefab.SetActive(false);
+            prefab.name = prefabName;
+
+            return prefab;
         }
 
         /// <summary>
