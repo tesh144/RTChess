@@ -66,9 +66,9 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            // Extra safety check to ensure UI is hidden at game start
-            // This overrides any scene-level active state
-            if (!WaveManager.Instance?.HasWaveStarted ?? true)
+            // Force hide UI at runtime start (allows UI to stay visible in Editor for design)
+            // Only show UI after player places first unit
+            if (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted)
             {
                 gameObject.SetActive(false);
             }

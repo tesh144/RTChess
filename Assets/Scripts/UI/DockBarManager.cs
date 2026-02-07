@@ -62,9 +62,9 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            // Extra safety check to ensure dock bar is hidden at game start
-            // This overrides any scene-level active state
-            if (!WaveManager.Instance?.HasWaveStarted ?? true)
+            // Force hide dock bar at runtime start (allows UI to stay visible in Editor for design)
+            // Only show UI after countdown completes
+            if (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted)
             {
                 gameObject.SetActive(false);
             }
