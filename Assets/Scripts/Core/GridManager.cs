@@ -22,6 +22,9 @@ namespace ClockworkGrid
         [SerializeField] private GameObject gridTilePrefabB; // Second tile (e.g., black squares) - alternates in checkerboard pattern
         [SerializeField] private Transform gridTilesContainer; // Optional parent for organization
 
+        [Header("Tile Fog")]
+        [SerializeField] private float fogDropDistance = 1.5f; // How far tiles drop when fogged
+
         private CellState[,] cellStates;
         private GameObject[,] cellOccupants;
         private GameObject[,] gridTiles; // Store instantiated tile prefabs
@@ -97,10 +100,21 @@ namespace ClockworkGrid
                         // Use prefab's natural proportions — scale uniformly by cellSize
                         tile.transform.localScale = Vector3.one * cellSize;
 
+                        // Attach fog component — tile starts fogged (lowered + faded)
+                        TileFog tileFog = tile.AddComponent<TileFog>();
+                        tileFog.InitializeFog(-cellSize / 2f, fogDropDistance);
+
                         gridTiles[x, y] = tile;
                         tilesCreated++;
                     }
                 }
+            }
+
+            // Subscribe to FogManager reveal events
+            if (FogManager.Instance != null)
+            {
+                FogManager.Instance.OnCellRevealed -= OnFogCellRevealed; // Avoid double-subscribe
+                FogManager.Instance.OnCellRevealed += OnFogCellRevealed;
             }
 
             Debug.Log($"[GridManager] Initialized {gridWidth}x{gridHeight} grid with {tilesCreated} tiles (prefabA={(gridTilePrefabA != null ? gridTilePrefabA.name : "null")}, prefabB={(gridTilePrefabB != null ? gridTilePrefabB.name : "null")})");
@@ -202,6 +216,35 @@ namespace ClockworkGrid
             if (!IsValidCell(gridX, gridY)) return null;
             if (gridTiles == null) return null;
             return gridTiles[gridX, gridY];
+        }
+
+        /// <summary>
+        /// Reveal a tile's fog (tween it up to normal position).
+        /// Called by FogManager when cells are revealed.
+        /// </summary>
+        public void RevealTile(int gridX, int gridY, bool immediate = false)
+        {
+            if (!IsValidCell(gridX, gridY)) return;
+            if (gridTiles == null) return;
+
+            GameObject tile = gridTiles[gridX, gridY];
+            if (tile == null) return;
+
+            TileFog tileFog = tile.GetComponent<TileFog>();
+            if (tileFog == null) return;
+
+            if (immediate)
+                tileFog.RevealImmediate();
+            else
+                tileFog.Reveal();
+        }
+
+        /// <summary>
+        /// Handler for FogManager.OnCellRevealed event.
+        /// </summary>
+        private void OnFogCellRevealed(int x, int y)
+        {
+            RevealTile(x, y);
         }
 
         public bool PlaceUnit(int gridX, int gridY, GameObject unit, CellState state)
@@ -369,6 +412,16 @@ namespace ClockworkGrid
                         tile.SetActive(true);
                         // Use prefab's natural proportions — scale uniformly by cellSize
                         tile.transform.localScale = Vector3.one * cellSize;
+
+                        // Attach fog component
+                        TileFog tileFog = tile.AddComponent<TileFog>();
+                        tileFog.InitializeFog(-cellSize / 2f, fogDropDistance);
+
+                        // If FogManager knows this cell is revealed, reveal immediately
+                        if (FogManager.Instance != null && FogManager.Instance.IsCellRevealed(x, y))
+                        {
+                            tileFog.RevealImmediate();
+                        }
 
                         gridTiles[x, y] = tile;
                     }
