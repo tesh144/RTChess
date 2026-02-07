@@ -493,12 +493,6 @@ namespace ClockworkGrid
             currentFacing = Facing.North;
             transform.rotation = Quaternion.Euler(0f, 0f, 0f);
 
-            // Apply visual scale
-            if (stats.modelScale != 1f)
-            {
-                transform.localScale = Vector3.one * stats.modelScale;
-            }
-
             // Apply color based on team (Bug fix: enemies were using player colors)
             Color teamColor = (unitTeam == Team.Player) ? stats.unitColor : new Color(1f, 0.3f, 0.3f); // Red for enemies
             ApplyColor(teamColor);
