@@ -170,6 +170,14 @@ namespace ClockworkGrid
 
         private void SetupUI()
         {
+            // Create EventSystem for UI input (required for button clicks)
+            if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            {
+                GameObject eventSystemObj = new GameObject("EventSystem");
+                eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                eventSystemObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            }
+
             // Create canvas
             GameObject canvasObj = new GameObject("UICanvas");
             Canvas canvas = canvasObj.AddComponent<Canvas>();
