@@ -49,6 +49,20 @@ namespace ClockworkGrid
     }
 
     /// <summary>
+    /// Wave data for backward compatibility with existing systems (e.g., GridExpansionManager).
+    /// </summary>
+    [System.Serializable]
+    public class WaveData
+    {
+        public int WaveNumber;
+
+        public WaveData(int waveNumber)
+        {
+            WaveNumber = waveNumber;
+        }
+    }
+
+    /// <summary>
     /// Data-driven wave system manager.
     /// Executes a designer-defined sequence of spawn events, one per interval tick.
     /// </summary>
@@ -79,6 +93,7 @@ namespace ClockworkGrid
 
         // Events
         public event Action<int, SpawnType> OnWaveEntryExecuted; // (index, spawnType)
+        public event Action<WaveData> OnWaveComplete; // For backward compatibility
         public event Action OnSequenceComplete;
         public event Action OnVictory;
         public event Action OnDefeat;
@@ -217,6 +232,9 @@ namespace ClockworkGrid
             }
 
             OnWaveEntryExecuted?.Invoke(index, entry.spawnType);
+
+            // Fire backward-compatibility event for systems like GridExpansionManager
+            OnWaveComplete?.Invoke(new WaveData(index + 1));
         }
 
         /// <summary>
