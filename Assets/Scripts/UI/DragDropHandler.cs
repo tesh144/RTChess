@@ -115,9 +115,9 @@ namespace ClockworkGrid
 
             // Initialize unit with UnitStats (Iteration 6)
             Unit unit = unitObj.GetComponent<Unit>();
-            if (unit != null && currentDraggingIcon != null && currentDraggingIcon.UnitData != null)
+            if (unit != null && currentDraggingIcon != null && currentDraggingIcon.UnitStats != null)
             {
-                unit.Initialize(Team.Player, targetGridX, targetGridY, currentDraggingIcon.UnitData.Stats);
+                unit.Initialize(Team.Player, targetGridX, targetGridY, currentDraggingIcon.UnitStats);
             }
 
             // Add placement cooldown component

@@ -275,8 +275,7 @@ namespace ClockworkGrid
                 UnitStats drawnStats = RaritySystem.Instance.DrawRandomUnit();
                 if (drawnStats != null)
                 {
-                    UnitData unitData = new UnitData(drawnStats);
-                    AddUnitToDock(unitData);
+                    AddUnitToDock(drawnStats);
                     Debug.Log($"Drew {drawnStats.unitName} ({drawnStats.rarity}) - Cost was {cost}T");
                 }
             }
@@ -286,9 +285,9 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Add a new unit icon to the dock (using UnitData)
+        /// Add a new unit icon to the dock (using UnitStats)
         /// </summary>
-        public void AddUnitToDock(UnitData unitData)
+        public void AddUnitToDock(UnitStats unitStats)
         {
             GameObject iconObj;
             UnitIcon icon;
@@ -318,13 +317,13 @@ namespace ClockworkGrid
                 // Add Image component with unit-specific color
                 Image iconImage = iconObj.AddComponent<Image>();
                 iconImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-                iconImage.color = GetUnitColorByType(unitData.Type);
+                iconImage.color = GetUnitColorByType(unitStats.unitType.ToString());
 
                 // Add UnitIcon component
                 icon = iconObj.AddComponent<UnitIcon>();
             }
 
-            icon.Initialize(unitData, this);
+            icon.Initialize(unitStats, this);
             unitIcons.Add(icon);
 
             // Update spacing
@@ -452,15 +451,6 @@ namespace ClockworkGrid
         public int GetUnitCount()
         {
             return unitIcons.Count;
-        }
-
-        /// <summary>
-        /// Get the current draw cost.
-        /// Used by WaveManager for lose condition checking.
-        /// </summary>
-        public int GetCurrentDrawCost()
-        {
-            return CalculateDealCost();
         }
     }
 }
