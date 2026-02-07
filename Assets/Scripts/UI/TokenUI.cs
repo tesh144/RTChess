@@ -16,8 +16,13 @@ namespace ClockworkGrid
             if (ResourceTokenManager.Instance != null)
             {
                 ResourceTokenManager.Instance.OnTokensChanged += UpdateDisplay;
+                // Display current token count immediately
+                UpdateDisplay(ResourceTokenManager.Instance.CurrentTokens);
             }
-            UpdateDisplay(0);
+            else
+            {
+                UpdateDisplay(0);
+            }
         }
 
         private void OnDestroy()
