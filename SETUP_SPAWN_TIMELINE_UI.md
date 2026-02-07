@@ -38,7 +38,7 @@ In the Hierarchy, find the `UICanvas` GameObject (it should already exist from G
 
 ### 4. Create Wave Title Text
 
-1. **Right-click** `SpawnTimelineContainer` → **UI** → **Text**
+1. **Right-click** `SpawnTimelineContainer` → **UI** → **Text - TextMeshPro**
 2. **Name it:** `WaveNumberText`
 3. **Configure:**
    - **Text:** "WAVE 1" (placeholder)
@@ -60,26 +60,12 @@ In the Hierarchy, find the `UICanvas` GameObject (it should already exist from G
    - **Width:** 600
    - **Height:** 30
 
-### 6. Create Countdown Text
-
-1. **Right-click** `SpawnTimelineContainer` → **UI** → **Text**
-2. **Name it:** `CountdownText`
-3. **Configure:**
-   - **Text:** "Next spawn: 4 ticks" (placeholder)
-   - **Font:** Regular, 18pt
-   - **Color:** White
-   - **Alignment:** Center
-   - **Anchors:** Stretch bottom 30%
-     - Anchor Min: (0, 0)
-     - Anchor Max: (1, 0.3)
-
-### 7. Add SpawnTimelineUI Component
+### 6. Add SpawnTimelineUI Component
 
 1. **Select** `SpawnTimelineContainer` in Hierarchy
 2. **Add Component:** `SpawnTimelineUI`
 3. **Assign References in Inspector:**
    - **Wave Number Text:** Drag `WaveNumberText` here
-   - **Countdown Text:** Drag `CountdownText` here
    - **Dot Container:** Drag `DotContainer` here
 4. **Visual Settings (Optional):**
    - Dot Spacing: 60 (default)
@@ -100,9 +86,8 @@ UICanvas
 ├── TokenContainer (existing)
 ├── DockBarManager (existing)
 └── SpawnTimelineContainer ✨ NEW
-    ├── WaveNumberText
-    ├── DotContainer (dots and lines spawn here at runtime)
-    └── CountdownText
+    ├── WaveNumberText (TextMeshPro)
+    └── DotContainer (dots and lines spawn here at runtime)
 ```
 
 ---
@@ -114,6 +99,7 @@ UICanvas
 3. The WaveManager should automatically call `SpawnTimelineUI.Instance.InitializeWave()` when a wave starts
 4. Dots and connecting lines will appear dynamically in the `DotContainer`
 5. The active dot will pulse, completed dots fade to 50% opacity
+6. Peace period shows grayed message: "Peace Period - X ticks until Wave Y"
 
 ---
 
@@ -133,7 +119,7 @@ UICanvas
 - Empty Color: Gray "nothing" ticks
 
 ### Font Style
-- Change font on `WaveNumberText` and `CountdownText`
+- Change font on `WaveNumberText` (TextMeshPro font asset)
 - Adjust sizes, bold/italic, etc.
 
 ---
@@ -146,7 +132,6 @@ The WaveManager will automatically find and control the timeline:
 // WaveManager calls these methods automatically:
 SpawnTimelineUI.Instance.InitializeWave(waveNumber, "10102");
 SpawnTimelineUI.Instance.AdvanceDot(); // Each spawn event
-SpawnTimelineUI.Instance.UpdateCountdown(ticksRemaining);
 SpawnTimelineUI.Instance.ShowPeacePeriod(ticks, nextWave, nextCode);
 ```
 

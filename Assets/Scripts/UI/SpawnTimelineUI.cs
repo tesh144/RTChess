@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -16,8 +17,7 @@ namespace ClockworkGrid
         public static SpawnTimelineUI Instance { get; private set; }
 
         [Header("UI References (Assign in Inspector)")]
-        [SerializeField] private Text waveNumberText;
-        [SerializeField] private Text countdownText;
+        [SerializeField] private TextMeshProUGUI waveNumberText;
         [SerializeField] private Transform dotContainer;
 
         [Header("Visual Settings")]
@@ -65,7 +65,7 @@ namespace ClockworkGrid
             {
                 waveNumberText.text = $"WAVE {waveNumber}";
                 waveNumberText.fontSize = 36;
-                waveNumberText.fontStyle = FontStyle.Bold;
+                waveNumberText.fontStyle = FontStyles.Bold;
                 waveNumberText.color = enemyColor;
             }
 
@@ -287,17 +287,6 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Update countdown text showing ticks until next spawn.
-        /// </summary>
-        public void UpdateCountdown(int ticksUntilNextSpawn)
-        {
-            if (countdownText != null)
-            {
-                countdownText.text = $"Next spawn: {ticksUntilNextSpawn} ticks";
-            }
-        }
-
-        /// <summary>
         /// Show peace period UI with grayed-out next wave preview.
         /// </summary>
         public void ShowPeacePeriod(int ticksRemaining, int nextWaveNumber, string nextSpawnCode)
@@ -306,13 +295,8 @@ namespace ClockworkGrid
 
             if (waveNumberText != null)
             {
-                waveNumberText.text = "Peace Period";
+                waveNumberText.text = $"Peace Period - {ticksRemaining} ticks until Wave {nextWaveNumber}";
                 waveNumberText.color = Color.white;
-            }
-
-            if (countdownText != null)
-            {
-                countdownText.text = $"{ticksRemaining} ticks until Wave {nextWaveNumber}";
             }
         }
 

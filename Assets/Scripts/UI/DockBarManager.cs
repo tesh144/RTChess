@@ -8,10 +8,19 @@ namespace ClockworkGrid
     /// <summary>
     /// Manages the dock bar UI at the bottom of the screen.
     /// Handles drawing units into the dock and removing them when placed.
+    /// Iteration 11: Now supports editor-created UI elements
     /// </summary>
     public class DockBarManager : MonoBehaviour
     {
-        // UI References
+        [Header("Editor UI References (Optional - assign to use existing UI)")]
+        [SerializeField] private Transform dockIconsContainer; // Parent for red card holders
+        [SerializeField] private Button drawButton; // White button on the right
+        [SerializeField] private TextMeshProUGUI drawButtonText; // Text on draw button
+
+        [Header("Runtime Creation Settings (if no UI references assigned)")]
+        [SerializeField] private bool createUIAtRuntime = false;
+
+        // UI References (assigned from editor OR created at runtime)
         private RectTransform dockBarContainer;
         private Image backgroundImage;
         private RectTransform dockIconsPanel;
@@ -22,7 +31,7 @@ namespace ClockworkGrid
         private List<UnitIcon> unitIcons = new List<UnitIcon>();
         private GameObject[] availableUnitPrefabs;
 
-        // HandManager integration (Phase 2)
+        // HandManager integration
         private HandManager handManager;
 
         // Singleton pattern
@@ -44,7 +53,22 @@ namespace ClockworkGrid
         public void Initialize(Canvas canvas, HandManager manager)
         {
             handManager = manager;
-            CreateDockBarUI(canvas);
+
+            // Use editor UI if assigned, otherwise create at runtime
+            if (dockIconsContainer != null && drawButton != null)
+            {
+                SetupEditorUI();
+            }
+            else if (createUIAtRuntime)
+            {
+                CreateDockBarUI(canvas);
+            }
+            else
+            {
+                Debug.LogError("DockBarManager: No UI references assigned and createUIAtRuntime is false!");
+                return;
+            }
+
             UpdateDealButtonDisplay();
 
             // Subscribe to token changes to update button state
@@ -75,6 +99,63 @@ namespace ClockworkGrid
             }
         }
 
+        /// <summary>
+        /// Setup using editor-created UI elements
+        /// </summary>
+        private void SetupEditorUI()
+        {
+            // Use assigned container for icons
+            dockIconsPanel = dockIconsContainer.GetComponent<RectTransform>();
+
+            // Ensure HorizontalLayoutGroup exists
+            layoutGroup = dockIconsContainer.GetComponent<HorizontalLayoutGroup>();
+            if (layoutGroup == null)
+            {
+                layoutGroup = dockIconsContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
+                layoutGroup.spacing = 10f;
+                layoutGroup.padding = new RectOffset(10, 10, 10, 10);
+                layoutGroup.childAlignment = TextAnchor.MiddleCenter;
+                layoutGroup.childControlWidth = false;
+                layoutGroup.childControlHeight = false;
+                layoutGroup.childForceExpandWidth = false;
+                layoutGroup.childForceExpandHeight = false;
+            }
+
+            // Setup draw button
+            if (drawButton != null)
+            {
+                drawButton.onClick.AddListener(OnDealButtonClicked);
+
+                // Find or create button text
+                if (drawButtonText == null)
+                {
+                    drawButtonText = drawButton.GetComponentInChildren<TextMeshProUGUI>();
+                }
+
+                if (drawButtonText == null)
+                {
+                    // Create text if it doesn't exist
+                    GameObject textObj = new GameObject("ButtonText");
+                    RectTransform textRect = textObj.AddComponent<RectTransform>();
+                    textRect.SetParent(drawButton.transform, false);
+                    textRect.anchorMin = Vector2.zero;
+                    textRect.anchorMax = Vector2.one;
+                    textRect.sizeDelta = Vector2.zero;
+
+                    drawButtonText = textObj.AddComponent<TextMeshProUGUI>();
+                    drawButtonText.fontSize = 20;
+                    drawButtonText.color = Color.white;
+                    drawButtonText.alignment = TextAlignmentOptions.Center;
+                    drawButtonText.fontStyle = FontStyles.Bold;
+                }
+            }
+
+            Debug.Log("DockBarManager: Using editor-created UI elements");
+        }
+
+        /// <summary>
+        /// Create UI at runtime (legacy mode)
+        /// </summary>
         private void CreateDockBarUI(Canvas canvas)
         {
             // Create main container
@@ -111,6 +192,8 @@ namespace ClockworkGrid
 
             // Create Deal button on the right
             CreateDealButton();
+
+            Debug.Log("DockBarManager: Created UI at runtime");
         }
 
         private void CreateDealButton()
@@ -149,12 +232,12 @@ namespace ClockworkGrid
             textRect.sizeDelta = Vector2.zero;
             textRect.anchoredPosition = Vector2.zero;
 
-            TextMeshProUGUI text = textObj.AddComponent<TextMeshProUGUI>();
-            text.text = "Draw:\n3T";
-            text.fontSize = 20;
-            text.color = Color.white;
-            text.alignment = TextAlignmentOptions.Center;
-            text.fontStyle = FontStyles.Bold;
+            drawButtonText = textObj.AddComponent<TextMeshProUGUI>();
+            drawButtonText.text = "Draw:\n3T";
+            drawButtonText.fontSize = 20;
+            drawButtonText.color = Color.white;
+            drawButtonText.alignment = TextAlignmentOptions.Center;
+            drawButtonText.fontStyle = FontStyles.Bold;
         }
 
         /// <summary>
@@ -180,6 +263,7 @@ namespace ClockworkGrid
             if (!success)
             {
                 // TODO: Show error feedback (button shake, sound)
+                Debug.Log("Failed to draw unit - check tokens or hand size");
             }
 
             // Update button display
@@ -246,7 +330,7 @@ namespace ClockworkGrid
             {
                 unitIcons.Remove(icon);
 
-                // Remove from HandManager (Phase 3 fix)
+                // Remove from HandManager
                 if (handManager != null && icon.UnitData != null)
                 {
                     handManager.RemoveFromHand(icon.UnitData);
@@ -262,6 +346,8 @@ namespace ClockworkGrid
         /// </summary>
         private void UpdateLayoutSpacing()
         {
+            if (layoutGroup == null) return;
+
             int count = unitIcons.Count;
             if (count <= 5)
                 layoutGroup.spacing = 10f;
@@ -276,37 +362,33 @@ namespace ClockworkGrid
         /// </summary>
         private void UpdateDealButtonDisplay()
         {
-            if (dealButtonObj == null) return;
+            // Use assigned button or created button
+            Button button = drawButton != null ? drawButton : (dealButtonObj != null ? dealButtonObj.GetComponent<Button>() : null);
+            TextMeshProUGUI buttonText = drawButtonText;
+
+            if (button == null || buttonText == null) return;
 
             int cost = CalculateDealCost();
             bool canAfford = ResourceTokenManager.Instance != null &&
                            ResourceTokenManager.Instance.HasEnoughTokens(cost);
 
-            // Bug fix: Check if hand is full
+            // Check if hand is full
             bool handFull = handManager != null && handManager.GetHandSize() >= 10;
 
             // Update button text
-            TextMeshProUGUI buttonText = dealButtonObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (buttonText != null)
+            if (handFull)
             {
-                if (handFull)
-                {
-                    buttonText.text = "Hand\nFull!";
-                    buttonText.color = new Color(1f, 0.5f, 0f); // Orange for hand full
-                }
-                else
-                {
-                    buttonText.text = $"Draw:\n{cost}T";
-                    buttonText.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
-                }
+                buttonText.text = "Hand\nFull!";
+                buttonText.color = new Color(1f, 0.5f, 0f); // Orange for hand full
+            }
+            else
+            {
+                buttonText.text = $"Draw:\n{cost}T";
+                buttonText.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
             }
 
             // Update button state (disabled if can't afford OR hand is full)
-            Button button = dealButtonObj.GetComponent<Button>();
-            if (button != null)
-            {
-                button.interactable = canAfford && !handFull;
-            }
+            button.interactable = canAfford && !handFull;
         }
 
         private void OnTokensChanged(int newTotal)
@@ -315,7 +397,7 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Get color for unit type (Phase 2 spec)
+        /// Get color for unit type
         /// </summary>
         private Color GetUnitColorByType(UnitType type)
         {
