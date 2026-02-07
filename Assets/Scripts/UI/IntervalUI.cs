@@ -5,25 +5,28 @@ using TMPro;
 namespace ClockworkGrid
 {
     /// <summary>
-    /// Displays interval counter and a progress bar for the current interval.
+    /// Displays a vertical interval timer bar on the left edge of the screen.
+    /// Fills upward over the interval duration.
     /// </summary>
     public class IntervalUI : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI intervalText;
-        [SerializeField] private Image progressBar;
+        [SerializeField] private Image verticalBar;
 
         private void Update()
         {
             if (IntervalTimer.Instance == null) return;
 
+            // Update interval count text (optional, small number at top)
             if (intervalText != null)
             {
-                intervalText.text = $"Interval: {IntervalTimer.Instance.CurrentInterval}";
+                intervalText.text = IntervalTimer.Instance.CurrentInterval.ToString();
             }
 
-            if (progressBar != null)
+            // Update vertical fill bar (fills upward)
+            if (verticalBar != null)
             {
-                progressBar.fillAmount = IntervalTimer.Instance.IntervalProgress;
+                verticalBar.fillAmount = IntervalTimer.Instance.IntervalProgress;
             }
         }
     }

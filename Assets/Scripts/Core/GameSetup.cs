@@ -187,50 +187,53 @@ namespace ClockworkGrid
             canvasObj.AddComponent<CanvasScaler>();
             canvasObj.AddComponent<GraphicRaycaster>();
 
-            // Interval text (top-left corner)
-            GameObject textObj = new GameObject("IntervalText");
-            textObj.transform.SetParent(canvasObj.transform, false);
+            // VERTICAL INTERVAL TIMER BAR (left edge)
+            // Background strip
+            GameObject intervalBarBg = new GameObject("IntervalBarBackground");
+            intervalBarBg.transform.SetParent(canvasObj.transform, false);
+            Image barBgImage = intervalBarBg.AddComponent<Image>();
+            barBgImage.color = new Color(0.1f, 0.1f, 0.1f, 0.7f);
 
-            TextMeshProUGUI text = textObj.AddComponent<TextMeshProUGUI>();
-            text.text = "Interval: 0";
-            text.fontSize = 24;
-            text.color = Color.white;
-            text.alignment = TextAlignmentOptions.TopLeft;
+            RectTransform barBgRect = intervalBarBg.GetComponent<RectTransform>();
+            barBgRect.anchorMin = new Vector2(0, 0);
+            barBgRect.anchorMax = new Vector2(0, 1);
+            barBgRect.pivot = new Vector2(0, 0.5f);
+            barBgRect.anchoredPosition = new Vector2(0, 0);
+            barBgRect.sizeDelta = new Vector2(25f, -40f); // 25px wide, 20px padding top/bottom
 
-            RectTransform textRect = textObj.GetComponent<RectTransform>();
-            textRect.anchorMin = new Vector2(0, 1);
-            textRect.anchorMax = new Vector2(0, 1);
-            textRect.pivot = new Vector2(0, 1);
-            textRect.anchoredPosition = new Vector2(20, -20);
-            textRect.sizeDelta = new Vector2(300, 50);
-
-            // Progress bar background
-            GameObject progressBg = new GameObject("ProgressBarBG");
-            progressBg.transform.SetParent(canvasObj.transform, false);
-            Image bgImage = progressBg.AddComponent<Image>();
-            bgImage.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
-
-            RectTransform bgRect = progressBg.GetComponent<RectTransform>();
-            bgRect.anchorMin = new Vector2(0, 1);
-            bgRect.anchorMax = new Vector2(0, 1);
-            bgRect.pivot = new Vector2(0, 1);
-            bgRect.anchoredPosition = new Vector2(20, -60);
-            bgRect.sizeDelta = new Vector2(200, 10);
-
-            // Progress bar fill
-            GameObject progressFill = new GameObject("ProgressBarFill");
-            progressFill.transform.SetParent(progressBg.transform, false);
-            Image fillImage = progressFill.AddComponent<Image>();
-            fillImage.color = new Color(0.3f, 0.8f, 1f, 0.9f);
+            // Vertical fill bar (fills upward)
+            GameObject intervalBarFill = new GameObject("IntervalBarFill");
+            intervalBarFill.transform.SetParent(intervalBarBg.transform, false);
+            Image fillImage = intervalBarFill.AddComponent<Image>();
+            fillImage.color = new Color(0f, 0.83f, 1f, 0.95f); // Bright cyan #00D4FF
             fillImage.type = Image.Type.Filled;
-            fillImage.fillMethod = Image.FillMethod.Horizontal;
+            fillImage.fillMethod = Image.FillMethod.Vertical;
+            fillImage.fillOrigin = (int)Image.OriginVertical.Bottom; // Fill from bottom upward
 
-            RectTransform fillRect = progressFill.GetComponent<RectTransform>();
+            RectTransform fillRect = intervalBarFill.GetComponent<RectTransform>();
             fillRect.anchorMin = Vector2.zero;
             fillRect.anchorMax = Vector2.one;
             fillRect.sizeDelta = Vector2.zero;
             fillRect.offsetMin = Vector2.zero;
             fillRect.offsetMax = Vector2.zero;
+
+            // Interval count number (small, at top of bar)
+            GameObject intervalTextObj = new GameObject("IntervalText");
+            intervalTextObj.transform.SetParent(intervalBarBg.transform, false);
+
+            TextMeshProUGUI intervalText = intervalTextObj.AddComponent<TextMeshProUGUI>();
+            intervalText.text = "0";
+            intervalText.fontSize = 16;
+            intervalText.color = Color.white;
+            intervalText.alignment = TextAlignmentOptions.Center;
+            intervalText.fontStyle = FontStyles.Bold;
+
+            RectTransform intervalTextRect = intervalTextObj.GetComponent<RectTransform>();
+            intervalTextRect.anchorMin = new Vector2(0, 1);
+            intervalTextRect.anchorMax = new Vector2(1, 1);
+            intervalTextRect.pivot = new Vector2(0.5f, 1);
+            intervalTextRect.anchoredPosition = new Vector2(0, 5f);
+            intervalTextRect.sizeDelta = new Vector2(0, 30f);
 
             // Token counter (top-right corner)
             GameObject tokenObj = new GameObject("TokenText");
@@ -269,8 +272,8 @@ namespace ClockworkGrid
 
             // Hook up IntervalUI
             IntervalUI intervalUI = canvasObj.AddComponent<IntervalUI>();
-            SetPrivateField(intervalUI, "intervalText", text);
-            SetPrivateField(intervalUI, "progressBar", fillImage);
+            SetPrivateField(intervalUI, "intervalText", intervalText);
+            SetPrivateField(intervalUI, "verticalBar", fillImage);
 
             // Hook up token UI
             TokenUI tokenUI = canvasObj.AddComponent<TokenUI>();
