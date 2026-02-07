@@ -35,7 +35,11 @@ namespace ClockworkGrid
 
         private void Update()
         {
-            if (isPaused) return; // Iteration 9: Don't tick while paused
+            if (isPaused)
+            {
+                Debug.Log("[IntervalTimer] PAUSED - not ticking");
+                return;
+            }
 
             timer += Time.deltaTime;
 
@@ -43,7 +47,20 @@ namespace ClockworkGrid
             {
                 timer -= baseIntervalDuration;
                 currentInterval++;
-                OnIntervalTick?.Invoke(currentInterval);
+
+                // Debug: Count how many subscribers are listening
+                int subscriberCount = OnIntervalTick != null ? OnIntervalTick.GetInvocationList().Length : 0;
+                Debug.Log($"[IntervalTimer] *** FIRING INTERVAL {currentInterval} *** Subscribers: {subscriberCount}");
+
+                try
+                {
+                    OnIntervalTick?.Invoke(currentInterval);
+                    Debug.Log($"[IntervalTimer] Interval {currentInterval} event completed successfully");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[IntervalTimer] EXCEPTION during interval tick: {e.Message}\n{e.StackTrace}");
+                }
             }
         }
 

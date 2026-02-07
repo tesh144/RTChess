@@ -184,44 +184,67 @@ namespace ClockworkGrid
         /// </summary>
         private void OnIntervalTick(int intervalCount)
         {
-            if (gameOver || sequenceComplete) return;
+            Debug.Log($"[WaveManager] OnIntervalTick STARTED - Interval: {intervalCount}");
 
-            // Handle start delay
-            if (delayTicksRemaining > 0)
+            try
             {
-                delayTicksRemaining--;
-                Debug.Log($"WaveManager: Delay tick {startDelayTicks - delayTicksRemaining}/{startDelayTicks}");
-                return;
+                if (gameOver || sequenceComplete)
+                {
+                    Debug.Log($"[WaveManager] Skipping - gameOver: {gameOver}, sequenceComplete: {sequenceComplete}");
+                    return;
+                }
+
+                // Handle start delay
+                if (delayTicksRemaining > 0)
+                {
+                    delayTicksRemaining--;
+                    Debug.Log($"WaveManager: Delay tick {startDelayTicks - delayTicksRemaining}/{startDelayTicks}");
+                    return;
+                }
+
+                // Advance to next wave entry
+                currentWaveIndex++;
+                Debug.Log($"[WaveManager] Advanced to wave index: {currentWaveIndex}/{waveSequence.Length}");
+
+                // Check if sequence is complete
+                if (currentWaveIndex >= waveSequence.Length)
+                {
+                    Debug.Log($"[WaveManager] Sequence complete!");
+                    CompleteSequence();
+                    return;
+                }
+
+                // Set state to Active when executing wave entries
+                currentState = WaveState.Active;
+
+                // Execute current wave entry
+                Debug.Log($"[WaveManager] About to execute wave entry {currentWaveIndex}");
+                ExecuteWaveEntry(currentWaveIndex);
+                Debug.Log($"[WaveManager] Wave entry {currentWaveIndex} executed successfully");
+
+                // Update timeline UI (initialize on first entry, then just advance)
+                if (currentWaveIndex == 0)
+                {
+                    Debug.Log($"[WaveManager] Initializing timeline UI");
+                    InitializeTimelineUI();
+                }
+                else
+                {
+                    Debug.Log($"[WaveManager] Advancing timeline UI");
+                    AdvanceTimelineUI();
+                }
+
+                // Check lose condition after each interval
+                Debug.Log($"[WaveManager] Checking lose condition");
+                CheckLoseCondition();
+
+                Debug.Log($"[WaveManager] OnIntervalTick COMPLETED successfully");
             }
-
-            // Advance to next wave entry
-            currentWaveIndex++;
-
-            // Check if sequence is complete
-            if (currentWaveIndex >= waveSequence.Length)
+            catch (Exception e)
             {
-                CompleteSequence();
-                return;
+                Debug.LogError($"[WaveManager] EXCEPTION in OnIntervalTick: {e.Message}\n{e.StackTrace}");
+                throw; // Re-throw to prevent silent failures
             }
-
-            // Set state to Active when executing wave entries
-            currentState = WaveState.Active;
-
-            // Execute current wave entry
-            ExecuteWaveEntry(currentWaveIndex);
-
-            // Update timeline UI (initialize on first entry, then just advance)
-            if (currentWaveIndex == 0)
-            {
-                InitializeTimelineUI();
-            }
-            else
-            {
-                AdvanceTimelineUI();
-            }
-
-            // Check lose condition after each interval
-            CheckLoseCondition();
         }
 
         /// <summary>
