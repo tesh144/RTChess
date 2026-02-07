@@ -60,6 +60,7 @@ namespace ClockworkGrid
             SetupUI();
             SetupDockBar();
             SetupDebugPanel();
+            SetupDebugMenu();
             SetupDebugPlacer();
             SetupLighting();
         }
@@ -492,6 +493,18 @@ namespace ClockworkGrid
             textRect.sizeDelta = Vector2.zero;
 
             return btn;
+        }
+
+        private void SetupDebugMenu()
+        {
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            GameObject debugMenuObj = new GameObject("DebugMenu");
+            debugMenuObj.transform.SetParent(canvas.transform, false);
+
+            DebugMenu debugMenu = debugMenuObj.AddComponent<DebugMenu>();
+            debugMenu.Initialize(canvas);
         }
 
         private void SetupDebugPlacer()

@@ -24,6 +24,14 @@ namespace ClockworkGrid
             mainCam = Camera.main;
         }
 
+        /// <summary>
+        /// Called by DebugMenu to toggle debug placement mode
+        /// </summary>
+        public void SetDebugMode(bool enabled)
+        {
+            enableDebugPlacement = enabled;
+        }
+
         private void Update()
         {
             // Early exit if debug placement is disabled (dock bar is the primary placement method)
