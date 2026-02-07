@@ -20,17 +20,21 @@ namespace ClockworkGrid
 
         // Arc line rendering
         private LineRenderer arcLine;
-        private int arcSegments = 20; // Number of points in the arc
-        private float arcHeight = 2f; // Height of the arc
+        private int arcSegments = 30; // Number of points in the arc
+        private float arcHeight = 4f; // Height of the arc
         private Material arcMaterial;
         private float animationSpeed = 2f; // Speed of dot animation
+
+        // Canvas info (cached on drag start for correct UI→world conversion)
+        private Canvas iconCanvas;
+        private Camera canvasCamera;
 
         // Grid cell highlight
         private GameObject cellHighlight;
         private MeshRenderer cellHighlightRenderer;
 
         // Colors
-        private Color validColor = new Color(0.3f, 1f, 0.3f, 0.6f);
+        private Color validColor = new Color(1f, 1f, 1f, 0.6f);
         private Color invalidColor = new Color(1f, 0.3f, 0.3f, 0.6f);
 
         private void Awake()
@@ -44,8 +48,8 @@ namespace ClockworkGrid
 
             // Create line renderer for arcing trajectory
             arcLine = gameObject.AddComponent<LineRenderer>();
-            arcLine.startWidth = 0.08f;
-            arcLine.endWidth = 0.08f;
+            arcLine.startWidth = 0.25f;
+            arcLine.endWidth = 0.15f;
 
             // Create animated dotted line material
             arcMaterial = new Material(Shader.Find("Sprites/Default"));
@@ -110,6 +114,12 @@ namespace ClockworkGrid
             currentDraggingIcon = icon;
             currentUnitPrefab = unitPrefab;
             isDragging = true;
+            isValidPlacement = false; // Reset - must hover a valid cell to place
+
+            // Cache canvas info for correct UI-to-screen conversion
+            iconCanvas = icon.GetComponentInParent<Canvas>();
+            canvasCamera = (iconCanvas != null && iconCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
+                ? iconCanvas.worldCamera : null;
 
             arcLine.enabled = true;
             cellHighlight.SetActive(true);
@@ -139,6 +149,11 @@ namespace ClockworkGrid
 
                 // Update arc line
                 UpdateArcLine(cellCenter);
+            }
+            else
+            {
+                // Mouse is off-screen or raycast failed - not a valid placement
+                isValidPlacement = false;
             }
         }
 
@@ -236,10 +251,29 @@ namespace ClockworkGrid
             Camera cam = Camera.main;
             if (cam == null) return;
 
-            // Start point: dock icon position in world space
-            Vector3 iconScreenPos = RectTransformUtility.WorldToScreenPoint(cam, currentDraggingIcon.transform.position);
+            // Get icon's screen position correctly based on canvas render mode
+            // For Overlay canvas: transform.position IS screen pixels
+            // For Camera/World canvas: need WorldToScreenPoint with canvas camera
+            Vector2 iconScreenPos;
+            if (iconCanvas != null && iconCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
+                Vector3 pos = currentDraggingIcon.transform.position;
+                iconScreenPos = new Vector2(pos.x, pos.y);
+            }
+            else
+            {
+                iconScreenPos = RectTransformUtility.WorldToScreenPoint(
+                    canvasCamera ?? cam, currentDraggingIcon.transform.position);
+            }
+
+            // Project icon screen position onto the ground plane to get world-space start
             Ray iconRay = cam.ScreenPointToRay(iconScreenPos);
-            Vector3 startPos = iconRay.GetPoint(10f);
+            Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+            Vector3 startPos;
+            if (groundPlane.Raycast(iconRay, out float dist))
+                startPos = iconRay.GetPoint(dist);
+            else
+                startPos = iconRay.GetPoint(10f); // fallback
 
             // End point: target cell center
             Vector3 endPos = targetPos;

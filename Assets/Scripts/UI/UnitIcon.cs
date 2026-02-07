@@ -83,14 +83,20 @@ namespace ClockworkGrid
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            isDragging = true;
             originalScale = rectTransform.localScale / hoverScale; // Account for hover scale
             rectTransform.localScale = originalScale;
 
+            // Capture current layout position (not the stale one from Initialize)
+            originalPosition = rectTransform.anchoredPosition;
+
             // Notify DragDropHandler to create ghost preview
-            if (DragDropHandler.Instance != null)
+            if (DragDropHandler.Instance != null && DragDropHandler.Instance.StartDrag(this, unitPrefab))
             {
-                DragDropHandler.Instance.StartDrag(this, unitPrefab);
+                isDragging = true;
+            }
+            else
+            {
+                isDragging = false;
             }
         }
 
