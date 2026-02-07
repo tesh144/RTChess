@@ -19,10 +19,9 @@ namespace ClockworkGrid
     public class GameSetup : MonoBehaviour
     {
         [Header("Grid Settings")]
-        [SerializeField] private int gridWidth = 11; // Iteration 7: Larger grid for exploration
-        [SerializeField] private int gridHeight = 11;
+        [SerializeField] private int gridWidth = 50;
+        [SerializeField] private int gridHeight = 50;
         [SerializeField] private float cellSize = 1.5f;
-        [SerializeField] private GameObject gridTilePrefab; // Optional: Drag custom tile prefab, or leave empty for default cube
 
         [Header("Interval Settings")]
         [SerializeField] private float baseIntervalDuration = 2.0f;
@@ -97,9 +96,9 @@ namespace ClockworkGrid
         [SerializeField] private Color enemyColor = new Color(1f, 0.3f, 0.3f);
         [SerializeField] private Color resourceColor = new Color(0.2f, 0.85f, 0.4f);
         [SerializeField] private float unitHPOverlayScale = 1.5f; // Scale of HP bar + text above units
-        [SerializeField] private Vector3 cameraRotation = new Vector3(51.15f, 42.7f, 0f);
-        [SerializeField] private float cameraOrthoSize = 8.8f;
-        [SerializeField] private float cameraPanSpeed = 5f;
+        [SerializeField] [HideInInspector] private Vector3 cameraRotation; // DEPRECATED: use CameraController
+        [SerializeField] [HideInInspector] private float cameraOrthoSize; // DEPRECATED: use CameraController
+        [SerializeField] [HideInInspector] private float cameraPanSpeed; // DEPRECATED: use CameraController
 
         // Player prefabs (runtime-created)
         private GameObject soldierPrefab;
@@ -122,7 +121,7 @@ namespace ClockworkGrid
         {
             SetupCamera();
             SetupGrid();
-            // SetupFogOfWar(); // TEMPORARILY DISABLED for debugging
+            // SetupFogOfWar(); // TEMPORARILY DISABLED — will rework fog system
             SetupGridExpansion(); // Iteration 9: Grid expansion system
             SetupIntervalTimer();
             SetupTokenManager();
@@ -144,7 +143,6 @@ namespace ClockworkGrid
 
         private void SetupCamera()
         {
-            // Find existing camera in scene instead of creating one
             Camera cam = Camera.main;
             if (cam == null)
             {
@@ -152,86 +150,62 @@ namespace ClockworkGrid
                 return;
             }
 
-            Debug.Log($"[GameSetup] Found camera: {cam.gameObject.name}");
-
-            // Add CameraPan component if not already present
-            CameraPan pan = cam.GetComponent<CameraPan>();
-            if (pan == null)
+            // Remove old CameraPan if present
+            CameraPan oldPan = cam.GetComponent<CameraPan>();
+            if (oldPan != null)
             {
-                pan = cam.gameObject.AddComponent<CameraPan>();
-                SetPrivateField(pan, "panSpeed", cameraPanSpeed);
-                Debug.Log("[GameSetup] Added CameraPan component to camera");
-            }
-            else
-            {
-                Debug.Log("[GameSetup] Camera already has CameraPan component");
+                DestroyImmediate(oldPan);
+                Debug.Log("[GameSetup] Removed legacy CameraPan component");
             }
 
-            // Note: Camera settings (orthographic, size, rotation, position, etc.) should be
-            // configured directly in the Unity Inspector on the Camera GameObject in the scene.
-            // This allows full control without needing to restart the game.
+            // Add CameraController if not already present
+            CameraController controller = cam.GetComponent<CameraController>();
+            if (controller == null)
+            {
+                controller = cam.gameObject.AddComponent<CameraController>();
+                Debug.Log("[GameSetup] Added CameraController to camera");
+            }
+
+            Debug.Log($"[GameSetup] Camera ready: {cam.gameObject.name}");
         }
 
         private void SetupGrid()
         {
             Debug.Log($"[GameSetup] SetupGrid starting with gridWidth={gridWidth}, gridHeight={gridHeight}, cellSize={cellSize}");
 
-            GameObject gridObj = new GameObject("GridManager");
-            GridManager gridManager = gridObj.AddComponent<GridManager>();
-            gridObj.AddComponent<GridVisualizer>();
+            // Find existing GridManager in scene (tile prefabs are assigned on it via Inspector)
+            GridManager gridManager = FindObjectOfType<GridManager>();
+            if (gridManager != null)
+            {
+                Debug.Log($"[GameSetup] Found existing GridManager in scene: {gridManager.gameObject.name}");
+            }
+            else
+            {
+                // No GridManager in scene — create one (will use default tiles)
+                GameObject gridObj = new GameObject("GridManager");
+                gridManager = gridObj.AddComponent<GridManager>();
+                Debug.Log("[GameSetup] Created new GridManager programmatically");
+            }
 
+            // Apply grid dimensions from GameSetup
             SetPrivateField(gridManager, "gridWidth", gridWidth);
             SetPrivateField(gridManager, "gridHeight", gridHeight);
             SetPrivateField(gridManager, "cellSize", cellSize);
 
-            // Create or assign grid tile prefabs (A and B for checkerboard)
-            GameObject tilePrefabA = gridTilePrefab;
-            GameObject tilePrefabB = null; // Second prefab for checkerboard
-
-            if (tilePrefabA == null)
+            // Add GridVisualizer if not already present
+            if (gridManager.GetComponent<GridVisualizer>() == null)
             {
-                Debug.Log("[GameSetup] No grid tile prefabs assigned, creating default checkerboard (white & light gray)");
-
-                // Create white cube for A
-                tilePrefabA = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                tilePrefabA.name = "GridTileA_White";
-                MeshRenderer rendererA = tilePrefabA.GetComponent<MeshRenderer>();
-                if (rendererA != null)
-                {
-                    Material matA = new Material(Shader.Find("Standard"));
-                    matA.color = Color.white;
-                    rendererA.material = matA;
-                }
-                Collider colliderA = tilePrefabA.GetComponent<Collider>();
-                if (colliderA != null) DestroyImmediate(colliderA);
-                tilePrefabA.SetActive(false);
-
-                // Create light gray cube for B
-                tilePrefabB = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                tilePrefabB.name = "GridTileB_Gray";
-                MeshRenderer rendererB = tilePrefabB.GetComponent<MeshRenderer>();
-                if (rendererB != null)
-                {
-                    Material matB = new Material(Shader.Find("Standard"));
-                    matB.color = new Color(0.7f, 0.7f, 0.7f); // Light gray
-                    rendererB.material = matB;
-                }
-                Collider colliderB = tilePrefabB.GetComponent<Collider>();
-                if (colliderB != null) DestroyImmediate(colliderB);
-                tilePrefabB.SetActive(false);
-
-                Debug.Log("[GameSetup] Created default checkerboard tile prefabs (white & gray)");
-            }
-            else
-            {
-                Debug.Log($"[GameSetup] Using assigned grid tile prefab A: {tilePrefabA.name}");
+                gridManager.gameObject.AddComponent<GridVisualizer>();
             }
 
-            SetPrivateField(gridManager, "gridTilePrefabA", tilePrefabA);
-            SetPrivateField(gridManager, "gridTilePrefabB", tilePrefabB);
-
-            Debug.Log($"[GameSetup] Calling InitializeGrid() now...");
             gridManager.InitializeGrid();
+
+            // Center camera on the grid now that it's ready
+            if (CameraController.Instance != null)
+            {
+                CameraController.Instance.CenterOnGrid();
+            }
+
             Debug.Log("[GameSetup] SetupGrid complete");
         }
 
@@ -298,7 +272,16 @@ namespace ClockworkGrid
 
         private void SpawnStartingResource()
         {
-            if (GridManager.Instance == null || level1ResourcePrefab == null) return;
+            if (GridManager.Instance == null)
+            {
+                Debug.LogError("[GameSetup] SpawnStartingResource: GridManager.Instance is null!");
+                return;
+            }
+            if (level1ResourcePrefab == null)
+            {
+                Debug.LogError("[GameSetup] SpawnStartingResource: level1ResourcePrefab is null!");
+                return;
+            }
 
             int centerX = GridManager.Instance.Width / 2;
             int centerY = GridManager.Instance.Height / 2;
@@ -316,6 +299,13 @@ namespace ClockworkGrid
             }
 
             GridManager.Instance.PlaceUnit(centerX, centerY, nodeObj, CellState.Resource);
+
+            // Reveal fog around the starting resource so the player can see it
+            if (FogManager.Instance != null)
+            {
+                FogManager.Instance.RevealRadius(centerX, centerY, 1);
+            }
+
             Debug.Log($"Spawned starting resource node at grid center ({centerX}, {centerY})");
         }
 

@@ -587,15 +587,11 @@ namespace ClockworkGrid
             // Update HP text
             UpdateHPText();
 
-            // Create type label if not found (Bug fix: show unit type on board)
-            if (typeTextMesh == null)
-            {
-                CreateTypeLabel(stats.unitType, stats.unitName);
-            }
-            else
-            {
-                UpdateTypeText(stats.unitType, stats.unitName);
-            }
+            // Type label disabled — unit type handled by prefab visuals
+            // if (typeTextMesh == null)
+            //     CreateTypeLabel(stats.unitType, stats.unitName);
+            // else
+            //     UpdateTypeText(stats.unitType, stats.unitName);
 
             // Reveal fog around unit (Iteration 7) - only player units reveal fog
             if (FogManager.Instance != null && unitTeam == Team.Player)

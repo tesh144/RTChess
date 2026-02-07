@@ -13,8 +13,8 @@ namespace ClockworkGrid
     public class GridManager : MonoBehaviour
     {
         [Header("Grid Settings")]
-        [SerializeField] private int gridWidth = 11;
-        [SerializeField] private int gridHeight = 11;
+        [SerializeField] private int gridWidth = 50;
+        [SerializeField] private int gridHeight = 50;
         [SerializeField] private float cellSize = 1.5f;
 
         [Header("Grid Visual (Prefab-Based)")]
@@ -51,6 +51,9 @@ namespace ClockworkGrid
 
         public void InitializeGrid()
         {
+            // Ensure singleton is set (GameSetup may call this before our Awake runs)
+            if (Instance == null) Instance = this;
+
             cellStates = new CellState[gridWidth, gridHeight];
             cellOccupants = new GameObject[gridWidth, gridHeight];
             gridTiles = new GameObject[gridWidth, gridHeight];
@@ -64,6 +67,9 @@ namespace ClockworkGrid
                 gridTilesContainer = containerObj.transform;
             }
 
+            // If no tile prefabs assigned in Inspector, create default cubes
+            EnsureTilePrefabs();
+
             int tilesCreated = 0;
             for (int x = 0; x < gridWidth; x++)
             {
@@ -72,37 +78,66 @@ namespace ClockworkGrid
                     cellStates[x, y] = CellState.Empty;
                     cellOccupants[x, y] = null;
 
-                    // Determine which prefab to use (checkerboard pattern)
+                    // Checkerboard pattern: alternate A and B
                     bool useA = (x + y) % 2 == 0;
                     GameObject prefabToUse = useA ? gridTilePrefabA : gridTilePrefabB;
 
                     // Fallback: if B is null, use A for both
                     if (prefabToUse == null) prefabToUse = gridTilePrefabA;
 
-                    // Instantiate grid tile prefab
                     if (prefabToUse != null)
                     {
                         Vector3 tilePos = GridToWorldPosition(x, y);
-                        tilePos.y = 0f; // Place tiles at ground level
+                        // Position tile so top surface is at Y=0 (units walk on top)
+                        tilePos.y = -cellSize / 2f;
 
                         GameObject tile = Instantiate(prefabToUse, tilePos, Quaternion.identity, gridTilesContainer);
                         tile.name = $"GridTile_{x}_{y}";
-
-                        // Scale tile to match cell size
-                        tile.transform.localScale = new Vector3(cellSize, 0.1f, cellSize);
+                        tile.SetActive(true);
+                        // Use prefab's natural proportions — scale uniformly by cellSize
+                        tile.transform.localScale = Vector3.one * cellSize;
 
                         gridTiles[x, y] = tile;
                         tilesCreated++;
-
-                        if (tilesCreated <= 5 || (x == gridWidth - 1 && y == gridHeight - 1))
-                        {
-                            Debug.Log($"[GridManager] Created tile at ({x},{y}), worldPos={tilePos}, prefab={(useA ? "A" : "B")}");
-                        }
                     }
                 }
             }
 
-            Debug.Log($"[GridManager] Initialized {gridWidth}×{gridHeight} grid with {tilesCreated} tile prefabs");
+            Debug.Log($"[GridManager] Initialized {gridWidth}x{gridHeight} grid with {tilesCreated} tiles (prefabA={(gridTilePrefabA != null ? gridTilePrefabA.name : "null")}, prefabB={(gridTilePrefabB != null ? gridTilePrefabB.name : "null")})");
+        }
+
+        /// <summary>
+        /// Creates default cube tile prefabs if none are assigned in Inspector.
+        /// </summary>
+        private void EnsureTilePrefabs()
+        {
+            if (gridTilePrefabA != null) return; // Prefabs assigned in Inspector, nothing to do
+
+            Debug.Log("[GridManager] No tile prefabs assigned, creating default white/gray cubes");
+
+            gridTilePrefabA = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            gridTilePrefabA.name = "DefaultTileA_White";
+            var rendererA = gridTilePrefabA.GetComponent<MeshRenderer>();
+            if (rendererA != null)
+            {
+                rendererA.material = new Material(Shader.Find("Standard"));
+                rendererA.material.color = Color.white;
+            }
+            var colliderA = gridTilePrefabA.GetComponent<Collider>();
+            if (colliderA != null) DestroyImmediate(colliderA);
+            gridTilePrefabA.SetActive(false);
+
+            gridTilePrefabB = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            gridTilePrefabB.name = "DefaultTileB_Gray";
+            var rendererB = gridTilePrefabB.GetComponent<MeshRenderer>();
+            if (rendererB != null)
+            {
+                rendererB.material = new Material(Shader.Find("Standard"));
+                rendererB.material.color = new Color(0.7f, 0.7f, 0.7f);
+            }
+            var colliderB = gridTilePrefabB.GetComponent<Collider>();
+            if (colliderB != null) DestroyImmediate(colliderB);
+            gridTilePrefabB.SetActive(false);
         }
 
         /// <summary>
@@ -307,6 +342,9 @@ namespace ClockworkGrid
             cellStates = newCellStates;
             cellOccupants = newCellOccupants;
 
+            // Ensure tile prefabs exist before creating new tiles
+            EnsureTilePrefabs();
+
             // Create new grid tiles
             gridTiles = new GameObject[gridWidth, gridHeight];
             for (int x = 0; x < gridWidth; x++)
@@ -323,11 +361,14 @@ namespace ClockworkGrid
                     if (prefabToUse != null)
                     {
                         Vector3 tilePos = GridToWorldPosition(x, y);
-                        tilePos.y = 0f;
+                        // Position tile so top surface is at Y=0 (units walk on top)
+                        tilePos.y = -cellSize / 2f;
 
                         GameObject tile = Instantiate(prefabToUse, tilePos, Quaternion.identity, gridTilesContainer);
                         tile.name = $"GridTile_{x}_{y}";
-                        tile.transform.localScale = new Vector3(cellSize, 0.1f, cellSize);
+                        tile.SetActive(true);
+                        // Use prefab's natural proportions — scale uniformly by cellSize
+                        tile.transform.localScale = Vector3.one * cellSize;
 
                         gridTiles[x, y] = tile;
                     }

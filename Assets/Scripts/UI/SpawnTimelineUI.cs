@@ -81,18 +81,26 @@ namespace ClockworkGrid
         /// <summary>
         /// Show countdown UI when player places first unit with slide-down animation.
         /// </summary>
-        public void ShowCountdown(int startingCount)
+        public void ShowCountdown(int waveNumber, int startingCount)
         {
+            ClearTimeline(); // Remove any dots from previous wave
+
             if (timelineHolder != null)
             {
                 timelineHolder.SetActive(true);
             }
 
+            // Hide dot container during countdown
+            if (dotContainer != null)
+            {
+                dotContainer.gameObject.SetActive(false);
+            }
+
             if (waveNumberText != null)
             {
-                waveNumberText.text = startingCount.ToString();
-                waveNumberText.fontSize = 72; // Large countdown number
-                waveNumberText.color = Color.yellow;
+                waveNumberText.text = $"WAVE {waveNumber} in... {startingCount}";
+                waveNumberText.fontSize = 48;
+                waveNumberText.color = Color.white;
             }
 
             // Trigger slide-down animation
@@ -105,11 +113,11 @@ namespace ClockworkGrid
         /// <summary>
         /// Update countdown display each tick.
         /// </summary>
-        public void UpdateCountdown(int remaining)
+        public void UpdateCountdown(int waveNumber, int remaining)
         {
             if (waveNumberText != null && remaining > 0)
             {
-                waveNumberText.text = remaining.ToString();
+                waveNumberText.text = $"WAVE {waveNumber} in... {remaining}";
             }
         }
 
@@ -150,10 +158,13 @@ namespace ClockworkGrid
         /// </summary>
         public void InitializeWave(int waveNumber, string spawnCode)
         {
-            // Don't activate here - UI should already be shown by ShowCountdown()
-            // If this gets called without ShowCountdown first, that's a bug in the flow
-
             ClearTimeline();
+
+            // Re-show dot container (hidden during countdown)
+            if (dotContainer != null)
+            {
+                dotContainer.gameObject.SetActive(true);
+            }
 
             // IMPORTANT: Clear any placeholder/design-time children from dotContainer
             // This removes manually-placed dots from the Unity scene
@@ -428,9 +439,16 @@ namespace ClockworkGrid
         {
             ClearTimeline();
 
+            // Hide dots during peace period
+            if (dotContainer != null)
+            {
+                dotContainer.gameObject.SetActive(false);
+            }
+
             if (waveNumberText != null)
             {
-                waveNumberText.text = $"Peace Period - {ticksRemaining} ticks until Wave {nextWaveNumber}";
+                waveNumberText.text = $"WAVE {nextWaveNumber} in... {ticksRemaining}";
+                waveNumberText.fontSize = 48;
                 waveNumberText.color = Color.white;
             }
         }

@@ -232,7 +232,7 @@ namespace ClockworkGrid
                         // Show countdown for next wave
                         if (SpawnTimelineUI.Instance != null)
                         {
-                            SpawnTimelineUI.Instance.ShowCountdown(ticksPerWaveAdvance);
+                            SpawnTimelineUI.Instance.ShowCountdown(currentWaveNumber + 1, ticksPerWaveAdvance);
                         }
                     }
                     return;
@@ -246,7 +246,7 @@ namespace ClockworkGrid
                 if (SpawnTimelineUI.Instance != null && currentWaveIndex == -1)
                 {
                     int remaining = ticksPerWaveAdvance - ticksSinceLastAdvance;
-                    SpawnTimelineUI.Instance.UpdateCountdown(remaining);
+                    SpawnTimelineUI.Instance.UpdateCountdown(currentWaveNumber + 1, remaining);
                 }
 
                 // Only advance wave every N ticks (for 4-sided game, N=4)
@@ -671,7 +671,7 @@ namespace ClockworkGrid
             // Show countdown UI
             if (SpawnTimelineUI.Instance != null)
             {
-                SpawnTimelineUI.Instance.ShowCountdown(ticksPerWaveAdvance);
+                SpawnTimelineUI.Instance.ShowCountdown(currentWaveNumber + 1, ticksPerWaveAdvance);
             }
         }
 

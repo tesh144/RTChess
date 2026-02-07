@@ -31,7 +31,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 468904093110581945}
-  - {fileID: 7341445537029423603}
   - {fileID: 4752414336548383132}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -108,13 +107,14 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 7341445537029423603}
   - {fileID: 3180221090086074293}
   m_Father: {fileID: 2568519363068351071}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 10}
-  m_SizeDelta: {x: -200, y: 194.0486}
+  m_AnchoredPosition: {x: 0, y: -6.5}
+  m_SizeDelta: {x: -200, y: 243.6118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8727126510797985529
 CanvasRenderer:
@@ -179,17 +179,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2760059750687562453}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2568519363068351071}
+  m_Father: {fileID: 468904093110581945}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000012398, y: -22.409206}
-  m_SizeDelta: {x: 304.2441, y: 18.4}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 4.13031, y: 5.1868}
+  m_SizeDelta: {x: -103.7157, y: -209.9074}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8619807947640572668
 CanvasRenderer:
@@ -219,7 +219,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Wave 1
+  m_text: WAVE 1
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b3ae88bf5447841a69faf61293d6b180, type: 2}
   m_sharedMaterial: {fileID: -165490512334753193, guid: b3ae88bf5447841a69faf61293d6b180, type: 2}
@@ -305,7 +305,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3180221090086074293
 RectTransform:
   m_ObjectHideFlags: 0

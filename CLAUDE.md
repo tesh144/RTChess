@@ -17,10 +17,14 @@ A Unity-based real-time chess-like strategy game with an interval-based clockwor
 ## Core Systems
 
 ### 1. Grid System (`Assets/Scripts/Core/GridManager.cs`)
-- 4x4 grid (configurable)
+- 11x11 grid (configurable via GameSetup or Inspector)
 - Cell-based state management (Empty, PlayerUnit, EnemyUnit, Resource)
 - World/grid coordinate conversion
 - Singleton pattern
+- **Tile prefabs assigned directly on GridManager Inspector** (gridTilePrefabA, gridTilePrefabB)
+- Checkerboard pattern: alternates A/B prefabs using `(x + y) % 2 == 0`
+- Falls back to default white/gray cubes if no prefabs assigned
+- GameSetup finds existing GridManager in scene (does NOT create tile prefabs)
 
 ### 2. Interval Timer (`Assets/Scripts/Core/IntervalTimer.cs`)
 - Global clock that drives all game actions

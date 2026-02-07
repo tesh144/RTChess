@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 793e74b31dfc149289d6e0275ec9395f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridWidth: 11
-  gridHeight: 11
+  gridWidth: 50
+  gridHeight: 50
   cellSize: 1.5
   baseIntervalDuration: 2
   soldierPlayerPrefab: {fileID: 6974813962620877057, guid: 4b782cfc9fe18410e9900051ea2f39d4, type: 3}

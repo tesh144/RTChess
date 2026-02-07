@@ -59,7 +59,7 @@ namespace ClockworkGrid
             int centerY = height / 2;
             RevealRadius(centerX, centerY, initialRevealRadius);
 
-            Debug.Log($"FogManager initialized: {width}x{height} grid, revealed {initialRevealRadius} radius at ({initialRevealCenter.x}, {initialRevealCenter.y})");
+            Debug.Log($"FogManager initialized: {width}x{height} grid, revealed {initialRevealRadius} radius at ({centerX}, {centerY})");
         }
 
         /// <summary>
