@@ -36,6 +36,8 @@ namespace ClockworkGrid
         [SerializeField] private int soldierAttackInterval = 2;
         [SerializeField] private int soldierResourceCost = 3;
         [SerializeField] private int soldierRevealRadius = 1;
+        [SerializeField] private float soldierModelScale = 1f;
+        [SerializeField] private Color soldierColor = new Color(0.2f, 0.5f, 1f);
 
         [Header("Ogre Stats (Epic)")]
         [SerializeField] private GameObject ogrePlayerPrefab; // Drag player prefab, or leave empty for procedural
@@ -89,8 +91,9 @@ namespace ClockworkGrid
         [SerializeField] private Color playerColor = new Color(0.2f, 0.5f, 1f);
         [SerializeField] private Color enemyColor = new Color(1f, 0.3f, 0.3f);
         [SerializeField] private Color resourceColor = new Color(0.2f, 0.85f, 0.4f);
-        [SerializeField] private float cameraHeight = 12f;
-        [SerializeField] private float cameraTiltAngle = 15f;
+        [SerializeField] private Vector3 cameraRotation = new Vector3(51.15f, 42.7f, 0f);
+        [SerializeField] private float cameraOrthoSize = 8.8f;
+        [SerializeField] private float cameraPanSpeed = 5f;
 
         // Player prefabs (runtime-created)
         private GameObject soldierPrefab;
@@ -147,19 +150,25 @@ namespace ClockworkGrid
             camObj.AddComponent<AudioListener>();
 
             cam.orthographic = true;
-            cam.orthographicSize = (gridHeight * cellSize) * 0.8f;
+            cam.orthographicSize = cameraOrthoSize;
             cam.nearClipPlane = 0.1f;
             cam.farClipPlane = 50f;
             cam.backgroundColor = new Color(0.08f, 0.08f, 0.12f);
             cam.clearFlags = CameraClearFlags.SolidColor;
 
-            // Position camera above grid looking down with slight tilt
-            float tiltRad = cameraTiltAngle * Mathf.Deg2Rad;
-            float verticalOffset = cameraHeight * Mathf.Cos(tiltRad);
-            float horizontalOffset = cameraHeight * Mathf.Sin(tiltRad);
+            // Set rotation from inspector
+            Quaternion rot = Quaternion.Euler(cameraRotation);
+            camObj.transform.rotation = rot;
 
-            camObj.transform.position = new Vector3(0f, verticalOffset, -horizontalOffset);
-            camObj.transform.LookAt(Vector3.zero, Vector3.up);
+            // Auto-center camera on grid origin (0,0,0)
+            // For ortho camera, position along the forward axis doesn't affect view size,
+            // but we need enough distance so nothing clips the near plane.
+            Vector3 forward = rot * Vector3.forward;
+            camObj.transform.position = -forward * 20f;
+
+            // Add camera pan controller
+            CameraPan pan = camObj.AddComponent<CameraPan>();
+            SetPrivateField(pan, "panSpeed", cameraPanSpeed);
         }
 
         private void SetupGrid()
@@ -299,7 +308,7 @@ namespace ClockworkGrid
         {
             // --- Player prefabs ---
             soldierPrefab = CreateUnitPrefab(
-                soldierPlayerPrefab, "SoldierPrefab", playerColor, 1f,
+                soldierPlayerPrefab, "SoldierPrefab", soldierColor, soldierModelScale,
                 soldierHP, soldierAttackDamage, soldierAttackRange,
                 soldierAttackInterval, soldierResourceCost);
 
@@ -315,7 +324,7 @@ namespace ClockworkGrid
 
             // --- Enemy prefabs (use enemyColor for procedural fallback) ---
             enemySoldierPrefab = CreateUnitPrefab(
-                soldierEnemyPrefab, "EnemySoldierPrefab", enemyColor, 1f,
+                soldierEnemyPrefab, "EnemySoldierPrefab", enemyColor, soldierModelScale,
                 soldierHP, soldierAttackDamage, soldierAttackRange,
                 soldierAttackInterval, soldierResourceCost);
 
@@ -400,8 +409,8 @@ namespace ClockworkGrid
             soldierStats.attackIntervalMultiplier = soldierAttackInterval;
             soldierStats.resourceCost = soldierResourceCost;
             soldierStats.revealRadius = soldierRevealRadius;
-            soldierStats.unitColor = playerColor;
-            soldierStats.modelScale = 1f;
+            soldierStats.unitColor = soldierColor;
+            soldierStats.modelScale = soldierModelScale;
             soldierStats.unitPrefab = soldierPrefab;
             soldierStats.enemyPrefab = enemySoldierPrefab;
             allStats.Add(soldierStats);
