@@ -55,6 +55,22 @@ namespace ClockworkGrid
             if (soldierPrefab == null) return;
             if (!TryGetGridCell(out int gridX, out int gridY)) return;
 
+            // Check if we have enough tokens
+            Unit soldierUnit = soldierPrefab.GetComponent<Unit>();
+            if (soldierUnit != null && ResourceTokenManager.Instance != null)
+            {
+                int cost = soldierUnit.ResourceCost;
+                if (!ResourceTokenManager.Instance.HasEnoughTokens(cost))
+                {
+                    Debug.Log($"Not enough tokens! Need {cost}, have {ResourceTokenManager.Instance.CurrentTokens}");
+                    return;
+                }
+
+                // Spend tokens
+                if (!ResourceTokenManager.Instance.SpendTokens(cost))
+                    return;
+            }
+
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(gridX, gridY);
             GameObject unitObj = Instantiate(soldierPrefab, worldPos, Quaternion.identity);
             unitObj.SetActive(true);

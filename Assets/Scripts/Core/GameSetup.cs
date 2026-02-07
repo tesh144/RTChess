@@ -55,6 +55,7 @@ namespace ClockworkGrid
             SetupSoldierPrefab();
             SetupResourceNodePrefab();
             SetupUI();
+            SetupDebugPanel();
             SetupDebugPlacer();
             SetupLighting();
         }
@@ -228,7 +229,7 @@ namespace ClockworkGrid
             instructionsObj.transform.SetParent(canvasObj.transform, false);
 
             TextMeshProUGUI instructions = instructionsObj.AddComponent<TextMeshProUGUI>();
-            instructions.text = "Left-click: Place Soldier  |  Right-click: Place Resource";
+            instructions.text = "Left-click: Place Soldier (costs 3 tokens)  |  Right-click: Place Resource";
             instructions.fontSize = 18;
             instructions.color = new Color(1f, 1f, 1f, 0.6f);
             instructions.alignment = TextAlignmentOptions.Bottom;
@@ -248,6 +249,204 @@ namespace ClockworkGrid
             // Hook up token UI
             TokenUI tokenUI = canvasObj.AddComponent<TokenUI>();
             SetPrivateField(tokenUI, "tokenText", tokenText);
+        }
+
+        private void SetupDebugPanel()
+        {
+            // Find the canvas (created in SetupUI)
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            // Create debug panel root (hidden by default)
+            GameObject panelRoot = new GameObject("DebugPanelRoot");
+            panelRoot.transform.SetParent(canvas.transform, false);
+
+            Image panelBg = panelRoot.AddComponent<Image>();
+            panelBg.color = new Color(0.1f, 0.1f, 0.1f, 0.95f);
+
+            RectTransform panelRect = panelRoot.GetComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRect.pivot = new Vector2(0.5f, 0.5f);
+            panelRect.anchoredPosition = Vector2.zero;
+            panelRect.sizeDelta = new Vector2(400, 350);
+
+            // Title
+            GameObject titleObj = new GameObject("Title");
+            titleObj.transform.SetParent(panelRoot.transform, false);
+            TextMeshProUGUI title = titleObj.AddComponent<TextMeshProUGUI>();
+            title.text = "DEBUG PANEL";
+            title.fontSize = 28;
+            title.color = Color.yellow;
+            title.alignment = TextAlignmentOptions.Center;
+            title.fontStyle = FontStyles.Bold;
+
+            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 1);
+            titleRect.anchorMax = new Vector2(1, 1);
+            titleRect.pivot = new Vector2(0.5f, 1);
+            titleRect.anchoredPosition = new Vector2(0, -20);
+            titleRect.sizeDelta = new Vector2(-40, 40);
+
+            // Buttons container
+            float yPos = -80;
+            float buttonHeight = 45;
+            float spacing = 10;
+
+            // Pause button
+            Button pauseBtn = CreateDebugButton(panelRoot.transform, "Pause", yPos);
+            TextMeshProUGUI pauseBtnText = pauseBtn.GetComponentInChildren<TextMeshProUGUI>();
+            yPos -= buttonHeight + spacing;
+
+            // Speed buttons row
+            GameObject speedRow = new GameObject("SpeedRow");
+            speedRow.transform.SetParent(panelRoot.transform, false);
+            RectTransform speedRowRect = speedRow.AddComponent<RectTransform>();
+            speedRowRect.anchorMin = new Vector2(0, 1);
+            speedRowRect.anchorMax = new Vector2(1, 1);
+            speedRowRect.pivot = new Vector2(0.5f, 1);
+            speedRowRect.anchoredPosition = new Vector2(0, yPos);
+            speedRowRect.sizeDelta = new Vector2(-40, buttonHeight);
+
+            Button speed1x = CreateSmallButton(speedRow.transform, "1x", 0);
+            Button speed2x = CreateSmallButton(speedRow.transform, "2x", 1);
+            Button speed4x = CreateSmallButton(speedRow.transform, "4x", 2);
+            yPos -= buttonHeight + spacing;
+
+            // Speed label
+            GameObject speedLabelObj = new GameObject("SpeedLabel");
+            speedLabelObj.transform.SetParent(panelRoot.transform, false);
+            TextMeshProUGUI speedLabel = speedLabelObj.AddComponent<TextMeshProUGUI>();
+            speedLabel.text = "Speed: 1x";
+            speedLabel.fontSize = 20;
+            speedLabel.color = Color.white;
+            speedLabel.alignment = TextAlignmentOptions.Center;
+
+            RectTransform speedLabelRect = speedLabelObj.GetComponent<RectTransform>();
+            speedLabelRect.anchorMin = new Vector2(0, 1);
+            speedLabelRect.anchorMax = new Vector2(1, 1);
+            speedLabelRect.pivot = new Vector2(0.5f, 1);
+            speedLabelRect.anchoredPosition = new Vector2(0, yPos);
+            speedLabelRect.sizeDelta = new Vector2(-40, 30);
+            yPos -= 40 + spacing;
+
+            // Add 100 Tokens button
+            Button addTokensBtn = CreateDebugButton(panelRoot.transform, "+100 Tokens", yPos);
+            yPos -= buttonHeight + spacing;
+
+            // Clear All button
+            Button clearBtn = CreateDebugButton(panelRoot.transform, "Clear All", yPos);
+
+            // Add DebugPanel component
+            DebugPanel debugPanel = canvas.gameObject.AddComponent<DebugPanel>();
+            SetPrivateField(debugPanel, "panelRoot", panelRoot);
+            SetPrivateField(debugPanel, "pauseButton", pauseBtn);
+            SetPrivateField(debugPanel, "clearAllButton", clearBtn);
+            SetPrivateField(debugPanel, "add100TokensButton", addTokensBtn);
+            SetPrivateField(debugPanel, "speed1xButton", speed1x);
+            SetPrivateField(debugPanel, "speed2xButton", speed2x);
+            SetPrivateField(debugPanel, "speed4xButton", speed4x);
+            SetPrivateField(debugPanel, "pauseButtonText", pauseBtnText);
+            SetPrivateField(debugPanel, "speedText", speedLabel);
+
+            // Create hidden tap button (top-right corner)
+            GameObject hiddenBtnObj = new GameObject("HiddenDebugButton");
+            hiddenBtnObj.transform.SetParent(canvas.transform, false);
+
+            Image hiddenImg = hiddenBtnObj.AddComponent<Image>();
+            hiddenImg.color = new Color(0, 0, 0, 0.01f); // Nearly invisible
+
+            RectTransform hiddenRect = hiddenBtnObj.GetComponent<RectTransform>();
+            hiddenRect.anchorMin = new Vector2(1, 1);
+            hiddenRect.anchorMax = new Vector2(1, 1);
+            hiddenRect.pivot = new Vector2(1, 1);
+            hiddenRect.anchoredPosition = new Vector2(-10, -10);
+            hiddenRect.sizeDelta = new Vector2(100, 100);
+
+            hiddenBtnObj.AddComponent<HiddenDebugButton>();
+        }
+
+        private Button CreateDebugButton(Transform parent, string text, float yPos)
+        {
+            GameObject btnObj = new GameObject($"Button_{text}");
+            btnObj.transform.SetParent(parent, false);
+
+            Image btnImg = btnObj.AddComponent<Image>();
+            btnImg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+
+            Button btn = btnObj.AddComponent<Button>();
+            var colors = btn.colors;
+            colors.normalColor = new Color(0.3f, 0.3f, 0.3f, 1f);
+            colors.highlightedColor = new Color(0.4f, 0.4f, 0.4f, 1f);
+            colors.pressedColor = new Color(0.2f, 0.2f, 0.2f, 1f);
+            btn.colors = colors;
+
+            RectTransform btnRect = btnObj.GetComponent<RectTransform>();
+            btnRect.anchorMin = new Vector2(0, 1);
+            btnRect.anchorMax = new Vector2(1, 1);
+            btnRect.pivot = new Vector2(0.5f, 1);
+            btnRect.anchoredPosition = new Vector2(0, yPos);
+            btnRect.sizeDelta = new Vector2(-40, 45);
+
+            // Button text
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(btnObj.transform, false);
+
+            TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = 20;
+            tmp.color = Color.white;
+            tmp.alignment = TextAlignmentOptions.Center;
+
+            RectTransform textRect = textObj.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+
+            return btn;
+        }
+
+        private Button CreateSmallButton(Transform parent, string text, int index)
+        {
+            GameObject btnObj = new GameObject($"Button_{text}");
+            btnObj.transform.SetParent(parent, false);
+
+            Image btnImg = btnObj.AddComponent<Image>();
+            btnImg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+
+            Button btn = btnObj.AddComponent<Button>();
+            var colors = btn.colors;
+            colors.normalColor = new Color(0.3f, 0.3f, 0.3f, 1f);
+            colors.highlightedColor = new Color(0.4f, 0.4f, 0.4f, 1f);
+            colors.pressedColor = new Color(0.2f, 0.2f, 0.2f, 1f);
+            btn.colors = colors;
+
+            RectTransform btnRect = btnObj.GetComponent<RectTransform>();
+            btnRect.anchorMin = new Vector2(0, 0);
+            btnRect.anchorMax = new Vector2(0, 1);
+            btnRect.pivot = new Vector2(0, 0.5f);
+
+            float width = 110;
+            float spacing = 10;
+            btnRect.anchoredPosition = new Vector2(index * (width + spacing), 0);
+            btnRect.sizeDelta = new Vector2(width, 0);
+
+            // Button text
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(btnObj.transform, false);
+
+            TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = 18;
+            tmp.color = Color.white;
+            tmp.alignment = TextAlignmentOptions.Center;
+
+            RectTransform textRect = textObj.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+
+            return btn;
         }
 
         private void SetupDebugPlacer()

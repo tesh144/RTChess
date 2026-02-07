@@ -14,6 +14,9 @@ namespace ClockworkGrid
 
         private int currentTokens;
 
+        [Header("Starting Tokens")]
+        [SerializeField] private int startingTokens = 10;
+
         public int CurrentTokens => currentTokens;
 
         /// <summary>
@@ -29,6 +32,16 @@ namespace ClockworkGrid
                 return;
             }
             Instance = this;
+        }
+
+        private void Start()
+        {
+            // Give player starting tokens
+            if (startingTokens > 0)
+            {
+                currentTokens = startingTokens;
+                OnTokensChanged?.Invoke(currentTokens);
+            }
         }
 
         public void AddTokens(int amount, Vector3? worldPosition = null)

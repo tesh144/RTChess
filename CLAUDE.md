@@ -4,7 +4,7 @@
 A Unity-based real-time chess-like strategy game with an interval-based clockwork system. Units automatically rotate and attack resources to gather tokens in a turn-based manner synchronized to a global interval timer.
 
 ## Current Status
-**Latest Iteration:** Resource System (Iteration 2)
+**Latest Iteration:** Token Economy + Debug Tools (Iteration 3)
 **Last Updated:** 2026-02-07
 
 ## Core Systems
