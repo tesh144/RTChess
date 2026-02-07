@@ -356,37 +356,50 @@ namespace ClockworkGrid
             OnWaveComplete?.Invoke(new WaveData(index + 1));
         }
 
-        // SpawnEnemies(WaveEntry) removed - using SpawnEnemyUnit(UnitType, int) instead (Iteration 10)
+        // CONSOLIDATED SPAWN LOGIC (reduces ~140 lines to ~80 lines)
+
+        /// <summary>
+        /// Generic spawn method - finds random edge spawn position and places object on grid.
+        /// Returns the spawn position if successful, null otherwise.
+        /// </summary>
+        private Vector2Int? FindRandomSpawnPosition(string debugContext)
+        {
+            if (GridManager.Instance == null)
+            {
+                Debug.LogError($"WaveManager: GridManager.Instance is null ({debugContext})");
+                return null;
+            }
+
+            // Find available spawn positions
+            List<Vector2Int> availablePositions = new List<Vector2Int>(spawnPositions);
+            availablePositions.RemoveAll(pos => !GridManager.Instance.IsCellEmpty(pos.x, pos.y));
+
+            if (availablePositions.Count == 0)
+            {
+                Debug.LogWarning($"WaveManager: No available spawn positions ({debugContext})");
+                return null;
+            }
+
+            return availablePositions[UnityEngine.Random.Range(0, availablePositions.Count)];
+        }
 
         /// <summary>
         /// Spawn a single enemy unit at a random spawn position.
         /// </summary>
         private bool SpawnSingleEnemy(UnitType type)
         {
-            if (GridManager.Instance == null)
-            {
-                Debug.LogError("WaveManager: GridManager.Instance is null");
-                return false;
-            }
             if (RaritySystem.Instance == null)
             {
                 Debug.LogError("WaveManager: RaritySystem.Instance is null");
                 return false;
             }
 
-            // Find available spawn position
-            List<Vector2Int> availablePositions = new List<Vector2Int>(spawnPositions);
-            availablePositions.RemoveAll(pos => !GridManager.Instance.IsCellEmpty(pos.x, pos.y));
+            // Find spawn position
+            Vector2Int? spawnPos = FindRandomSpawnPosition($"{type} enemy");
+            if (!spawnPos.HasValue) return false;
+            Vector2Int pos = spawnPos.Value;
 
-            if (availablePositions.Count == 0)
-            {
-                Debug.LogWarning($"WaveManager: No available spawn positions for {type}");
-                return false;
-            }
-
-            Vector2Int pos = availablePositions[UnityEngine.Random.Range(0, availablePositions.Count)];
-
-            // Get enemy stats
+            // Get enemy stats and prefab
             UnitStats enemyStats = RaritySystem.Instance.GetUnitStats(type);
             if (enemyStats == null)
             {
@@ -401,7 +414,7 @@ namespace ClockworkGrid
                 return false;
             }
 
-            // Spawn enemy
+            // Instantiate and initialize
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(pos.x, pos.y);
             GameObject enemyObj = Instantiate(prefabToSpawn, worldPos, prefabToSpawn.transform.rotation);
             enemyObj.SetActive(true);
@@ -416,28 +429,23 @@ namespace ClockworkGrid
             return true;
         }
 
-        // SpawnResources(WaveEntry) removed - using SpawnResourceNodes(int) instead (Iteration 10)
-
         /// <summary>
         /// Spawn a single resource node at a random spawn position.
         /// </summary>
         private bool SpawnSingleResource(int level)
         {
-            if (GridManager.Instance == null) return false;
-
-            // Find available spawn position
-            List<Vector2Int> availablePositions = new List<Vector2Int>(spawnPositions);
-            availablePositions.RemoveAll(pos => !GridManager.Instance.IsCellEmpty(pos.x, pos.y));
-
-            if (availablePositions.Count == 0)
+            if (resourceNodePrefab == null)
             {
-                Debug.LogWarning("WaveManager: No available spawn positions for resource");
+                Debug.LogWarning("WaveManager: No resource node prefab assigned");
                 return false;
             }
 
-            Vector2Int pos = availablePositions[UnityEngine.Random.Range(0, availablePositions.Count)];
+            // Find spawn position
+            Vector2Int? spawnPos = FindRandomSpawnPosition($"level {level} resource");
+            if (!spawnPos.HasValue) return false;
+            Vector2Int pos = spawnPos.Value;
 
-            // Spawn resource node
+            // Instantiate and initialize
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(pos.x, pos.y);
             GameObject nodeObj = Instantiate(resourceNodePrefab, worldPos, Quaternion.identity);
             nodeObj.SetActive(true);
@@ -447,76 +455,10 @@ namespace ClockworkGrid
             {
                 node.GridX = pos.x;
                 node.GridY = pos.y;
-                // Initialize with size based on level (1x1 for level 1)
-                node.Initialize(new Vector2Int(1, 1));
+                node.Initialize(new Vector2Int(1, 1)); // Level 1: 1x1
             }
 
             GridManager.Instance.PlaceUnit(pos.x, pos.y, nodeObj, CellState.Resource);
-            return true;
-        }
-
-        // SpawnBoss(WaveEntry) removed - bosses now spawn via SpawnEnemyUnit(UnitType.Ogre, count) (Iteration 10)
-
-        /// <summary>
-        /// Spawn a single boss unit with custom stats.
-        /// </summary>
-        private bool SpawnSingleBoss(int hp, int damage)
-        {
-            if (GridManager.Instance == null || RaritySystem.Instance == null)
-                return false;
-
-            // Find available spawn position
-            List<Vector2Int> availablePositions = new List<Vector2Int>(spawnPositions);
-            availablePositions.RemoveAll(pos => !GridManager.Instance.IsCellEmpty(pos.x, pos.y));
-
-            if (availablePositions.Count == 0)
-            {
-                Debug.LogWarning("WaveManager: No available spawn positions for boss");
-                return false;
-            }
-
-            Vector2Int pos = availablePositions[UnityEngine.Random.Range(0, availablePositions.Count)];
-
-            // Use Ogre as boss prefab
-            UnitStats bossStats = RaritySystem.Instance.GetUnitStats(UnitType.Ogre);
-            if (bossStats == null)
-            {
-                Debug.LogWarning("WaveManager: No Ogre stats for boss");
-                return false;
-            }
-
-            // Create custom boss stats
-            UnitStats customBossStats = ScriptableObject.CreateInstance<UnitStats>();
-            customBossStats.unitType = bossStats.unitType;
-            customBossStats.unitName = "BOSS";
-            customBossStats.rarity = Rarity.Epic;
-            customBossStats.maxHP = hp;
-            customBossStats.attackDamage = damage;
-            customBossStats.attackRange = bossStats.attackRange;
-            customBossStats.attackIntervalMultiplier = bossStats.attackIntervalMultiplier;
-            customBossStats.resourceCost = 0;
-            customBossStats.unitPrefab = bossStats.unitPrefab;
-            customBossStats.enemyPrefab = bossStats.enemyPrefab;
-
-            GameObject prefabToSpawn = customBossStats.enemyPrefab != null ? customBossStats.enemyPrefab : customBossStats.unitPrefab;
-            if (prefabToSpawn == null)
-            {
-                Debug.LogWarning("WaveManager: No boss prefab");
-                return false;
-            }
-
-            // Spawn boss
-            Vector3 worldPos = GridManager.Instance.GridToWorldPosition(pos.x, pos.y);
-            GameObject bossObj = Instantiate(prefabToSpawn, worldPos, prefabToSpawn.transform.rotation);
-            bossObj.SetActive(true);
-
-            Unit unit = bossObj.GetComponent<Unit>();
-            if (unit != null)
-            {
-                unit.Initialize(Team.Enemy, pos.x, pos.y, customBossStats);
-            }
-
-            GridManager.Instance.PlaceUnit(pos.x, pos.y, bossObj, CellState.EnemyUnit);
             return true;
         }
 

@@ -162,6 +162,9 @@ namespace ClockworkGrid
                 int offsetX = (newSize.x - gridWidth) / 2;
                 int offsetY = (newSize.y - gridHeight) / 2;
 
+                // Track which GameObjects we've already updated to avoid processing multi-cell resources multiple times
+                System.Collections.Generic.HashSet<GameObject> processedObjects = new System.Collections.Generic.HashSet<GameObject>();
+
                 for (int x = 0; x < gridWidth; x++)
                 {
                     for (int y = 0; y < gridHeight; y++)
@@ -174,21 +177,47 @@ namespace ClockworkGrid
                             newCellStates[newX, newY] = cellStates[x, y];
                             newCellOccupants[newX, newY] = cellOccupants[x, y];
 
-                            // Update unit/resource grid positions
-                            if (cellOccupants[x, y] != null)
+                            // Update unit/resource grid positions (only once per GameObject)
+                            GameObject occupant = cellOccupants[x, y];
+                            if (occupant != null && !processedObjects.Contains(occupant))
                             {
-                                Unit unit = cellOccupants[x, y].GetComponent<Unit>();
+                                processedObjects.Add(occupant);
+
+                                Unit unit = occupant.GetComponent<Unit>();
                                 if (unit != null)
                                 {
                                     unit.GridX = newX;
                                     unit.GridY = newY;
                                 }
 
-                                ResourceNode resource = cellOccupants[x, y].GetComponent<ResourceNode>();
+                                ResourceNode resource = occupant.GetComponent<ResourceNode>();
                                 if (resource != null)
                                 {
+                                    // Update anchor position (top-left corner for multi-cell resources)
                                     resource.GridX = newX;
                                     resource.GridY = newY;
+
+                                    // For multi-cell resources, copy all occupied cells to new grid
+                                    Vector2Int gridSize = resource.GridSize;
+                                    for (int dx = 0; dx < gridSize.x; dx++)
+                                    {
+                                        for (int dy = 0; dy < gridSize.y; dy++)
+                                        {
+                                            int oldCellX = x + dx;
+                                            int oldCellY = y + dy;
+                                            int newCellX = newX + dx;
+                                            int newCellY = newY + dy;
+
+                                            // Ensure all cells are within bounds and mapped correctly
+                                            if (oldCellX < gridWidth && oldCellY < gridHeight &&
+                                                newCellX >= 0 && newCellX < newSize.x &&
+                                                newCellY >= 0 && newCellY < newSize.y)
+                                            {
+                                                newCellStates[newCellX, newCellY] = cellStates[oldCellX, oldCellY];
+                                                newCellOccupants[newCellX, newCellY] = occupant;
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
