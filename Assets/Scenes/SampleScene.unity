@@ -228,110 +228,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1783687323}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &115150492
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 115150494}
-  - component: {fileID: 115150493}
-  m_Layer: 0
-  m_Name: GameSetup
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &115150493
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 115150492}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 793e74b31dfc149289d6e0275ec9395f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gridWidth: 11
-  gridHeight: 11
-  cellSize: 1.5
-  baseIntervalDuration: 2
-  soldierPlayerPrefab: {fileID: 0}
-  soldierEnemyPrefab: {fileID: 0}
-  soldierRarityWeight: 60
-  soldierHP: 10
-  soldierAttackDamage: 3
-  soldierAttackRange: 1
-  soldierAttackInterval: 2
-  soldierResourceCost: 3
-  soldierRevealRadius: 1
-  soldierModelScale: 1
-  ogrePlayerPrefab: {fileID: 0}
-  ogreEnemyPrefab: {fileID: 0}
-  ogreRarityWeight: 5
-  ogreHP: 20
-  ogreAttackDamage: 5
-  ogreAttackRange: 2
-  ogreAttackInterval: 4
-  ogreResourceCost: 6
-  ogreRevealRadius: 1
-  ogreModelScale: 1.3
-  ninjaPlayerPrefab: {fileID: 0}
-  ninjaEnemyPrefab: {fileID: 0}
-  ninjaRarityWeight: 35
-  ninjaHP: 5
-  ninjaAttackDamage: 1
-  ninjaAttackRange: 1
-  ninjaAttackInterval: 1
-  ninjaResourceCost: 4
-  ninjaRevealRadius: 2
-  ninjaModelScale: 0.8
-  intervalsPerWave: 20
-  baseEnemyCount: 2
-  enemyScaling: 1.2
-  maxWaves: 20
-  baseDowntime: 10
-  minDowntime: 5
-  downtimeDecreaseWave: 10
-  resourceNodeLevel1Prefab: {fileID: 0}
-  level1HP: 10
-  level1TokensPerHit: 1
-  level1BonusTokens: 3
-  resourceNodeLevel2Prefab: {fileID: 0}
-  level2HP: 20
-  level2TokensPerHit: 1
-  level2BonusTokens: 6
-  resourceNodeLevel3Prefab: {fileID: 0}
-  level3HP: 50
-  level3TokensPerHit: 2
-  level3BonusTokens: 9
-  playerColor: {r: 0.2, g: 0.5, b: 1, a: 1}
-  enemyColor: {r: 1, g: 0.3, b: 0.3, a: 1}
-  resourceColor: {r: 0.2, g: 0.85, b: 0.4, a: 1}
-  unitHPOverlayScale: 1.5
-  cameraRotation: {x: 51.15, y: 42.7, z: 0}
-  cameraOrthoSize: 8.8
-  cameraPanSpeed: 5
---- !u!4 &115150494
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 115150492}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 686.9594, y: 514.26776, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &157864180
 GameObject:
   m_ObjectHideFlags: 0
@@ -1066,6 +962,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50d7b61d8b7c344adb00c21dbc38565e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  unitIconPrefab: {fileID: 0}
   dockIconsContainer: {fileID: 390485712}
   drawButton: {fileID: 501985954}
   drawButtonText: {fileID: 1132470255}
@@ -8788,6 +8685,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58cc8dcd22ab34cbba93bbc5cb34dcc2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nodePointPrefab: {fileID: 0}
   waveNumberText: {fileID: 813874866}
   dotContainer: {fileID: 2069523236}
   dotSpacing: 60
@@ -9422,6 +9320,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c3f3c9145119b48a4a1e43ec26a56c43, type: 3}
+--- !u!1001 &6239809834489433996
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1477701038109240969, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_Name
+      value: GameSetup
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627732579157471975, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 686.9594
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627732579157471975, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 514.26776
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627732579157471975, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627732579157471975, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627732579157471975, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627732579157471975, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627732579157471975, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627732579157471975, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627732579157471975, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627732579157471975, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
 --- !u!1001 &8876897400369901462
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9530,4 +9485,4 @@ SceneRoots:
   - {fileID: 721835034}
   - {fileID: 1732502100}
   - {fileID: 243653002}
-  - {fileID: 115150494}
+  - {fileID: 6239809834489433996}
