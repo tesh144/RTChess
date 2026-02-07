@@ -192,6 +192,7 @@ namespace ClockworkGrid
             GameObject intervalBarBg = new GameObject("IntervalBarBackground");
             intervalBarBg.transform.SetParent(canvasObj.transform, false);
             Image barBgImage = intervalBarBg.AddComponent<Image>();
+            barBgImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
             barBgImage.color = new Color(0.1f, 0.1f, 0.1f, 0.7f);
 
             RectTransform barBgRect = intervalBarBg.GetComponent<RectTransform>();
@@ -205,6 +206,7 @@ namespace ClockworkGrid
             GameObject intervalBarFill = new GameObject("IntervalBarFill");
             intervalBarFill.transform.SetParent(intervalBarBg.transform, false);
             Image fillImage = intervalBarFill.AddComponent<Image>();
+            fillImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
             fillImage.color = new Color(0f, 0.83f, 1f, 0.95f); // Bright cyan #00D4FF
             fillImage.type = Image.Type.Filled;
             fillImage.fillMethod = Image.FillMethod.Vertical;

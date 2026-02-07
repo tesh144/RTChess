@@ -15,13 +15,7 @@ namespace ClockworkGrid
 
         private void Update()
         {
-            if (IntervalTimer.Instance == null)
-            {
-                Debug.LogWarning("IntervalTimer.Instance is null!");
-                return;
-            }
-
-            float progress = IntervalTimer.Instance.IntervalProgress;
+            if (IntervalTimer.Instance == null) return;
 
             // Update interval count text (optional, small number at top)
             if (intervalText != null)
@@ -32,17 +26,7 @@ namespace ClockworkGrid
             // Update vertical fill bar (fills upward)
             if (verticalBar != null)
             {
-                verticalBar.fillAmount = progress;
-
-                // Debug every 10 frames to avoid spam
-                if (Time.frameCount % 10 == 0)
-                {
-                    Debug.Log($"IntervalUI: progress={progress:F2}, fillAmount={verticalBar.fillAmount:F2}, interval={IntervalTimer.Instance.CurrentInterval}");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("verticalBar is null!");
+                verticalBar.fillAmount = IntervalTimer.Instance.IntervalProgress;
             }
         }
     }
