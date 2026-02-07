@@ -11,16 +11,20 @@ namespace ClockworkGrid
     public class DebugMenu : MonoBehaviour
     {
         private GameObject debugPanel;
+        private GameObject visibilityToggleButton;
         private Button toggleButton;
         private TextMeshProUGUI toggleButtonText;
         private TextMeshProUGUI instructionsText;
         private bool isDebugMode = false;
+        private bool isPanelVisible = false;
 
         public bool IsDebugModeActive => isDebugMode;
 
         public void Initialize(Canvas canvas)
         {
+            CreateVisibilityToggleButton(canvas);
             CreateDebugPanel(canvas);
+            debugPanel.SetActive(false); // Hidden by default
             UpdateUI();
         }
 
@@ -247,6 +251,49 @@ namespace ClockworkGrid
                 toggleButtonText.color = Color.white;
                 instructionsText.text = "";
             }
+        }
+
+        private void CreateVisibilityToggleButton(Canvas canvas)
+        {
+            // Small toggle button in top-left corner
+            visibilityToggleButton = new GameObject("DebugVisibilityToggle");
+            visibilityToggleButton.transform.SetParent(canvas.transform, false);
+
+            RectTransform buttonRect = visibilityToggleButton.AddComponent<RectTransform>();
+            buttonRect.anchorMin = new Vector2(0f, 1f); // Top-left
+            buttonRect.anchorMax = new Vector2(0f, 1f);
+            buttonRect.pivot = new Vector2(0f, 1f);
+            buttonRect.anchoredPosition = new Vector2(10f, -10f);
+            buttonRect.sizeDelta = new Vector2(80f, 30f);
+
+            Image buttonBg = visibilityToggleButton.AddComponent<Image>();
+            buttonBg.color = new Color(0f, 0f, 0f, 0.5f); // Semi-transparent black
+
+            Button btn = visibilityToggleButton.AddComponent<Button>();
+            btn.targetGraphic = buttonBg;
+            btn.onClick.AddListener(TogglePanelVisibility);
+
+            // Button text
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(visibilityToggleButton.transform, false);
+            RectTransform textRect = textObj.AddComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+
+            TextMeshProUGUI buttonText = textObj.AddComponent<TextMeshProUGUI>();
+            buttonText.text = "DEBUG";
+            buttonText.fontSize = 12;
+            buttonText.color = new Color(1f, 1f, 0f, 0.8f); // Yellow
+            buttonText.alignment = TextAlignmentOptions.Center;
+            buttonText.fontStyle = FontStyles.Bold;
+        }
+
+        private void TogglePanelVisibility()
+        {
+            isPanelVisible = !isPanelVisible;
+            debugPanel.SetActive(isPanelVisible);
+            Debug.Log($"Debug Panel: {(isPanelVisible ? "VISIBLE" : "HIDDEN")}");
         }
     }
 }
