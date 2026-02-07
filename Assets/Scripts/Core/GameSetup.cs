@@ -57,6 +57,7 @@ namespace ClockworkGrid
             SetupSoldierPrefab();
             SetupEnemySoldierPrefab();
             SetupResourceNodePrefab();
+            SetupWaveManager();
             SetupUI();
             SetupDockBar();
             SetupDebugPanel();
@@ -254,6 +255,73 @@ namespace ClockworkGrid
             tokenRect.pivot = new Vector2(1, 1);
             tokenRect.anchoredPosition = new Vector2(-20, -20);
             tokenRect.sizeDelta = new Vector2(300, 50);
+
+            // WAVE TIMELINE (top-center, below token counter)
+            GameObject timelineContainerObj = new GameObject("WaveTimelineContainer");
+            timelineContainerObj.transform.SetParent(canvasObj.transform, false);
+
+            RectTransform timelineContainer = timelineContainerObj.AddComponent<RectTransform>();
+            timelineContainer.anchorMin = new Vector2(0.5f, 1f);
+            timelineContainer.anchorMax = new Vector2(0.5f, 1f);
+            timelineContainer.pivot = new Vector2(0.5f, 1f);
+            timelineContainer.anchoredPosition = new Vector2(0f, -70f); // Below token text
+            timelineContainer.sizeDelta = new Vector2(600f, 80f);
+
+            // Background
+            Image timelineBg = timelineContainerObj.AddComponent<Image>();
+            timelineBg.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            timelineBg.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+
+            // Progress fill bar (shows current position in timeline)
+            GameObject progressObj = new GameObject("ProgressFill");
+            progressObj.transform.SetParent(timelineContainerObj.transform, false);
+
+            Image progressFill = progressObj.AddComponent<Image>();
+            progressFill.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            progressFill.color = new Color(0f, 0.83f, 1f, 0.5f); // Semi-transparent cyan
+            progressFill.type = Image.Type.Filled;
+            progressFill.fillMethod = Image.FillMethod.Horizontal;
+            progressFill.fillOrigin = (int)Image.OriginHorizontal.Left;
+
+            RectTransform progressRect = progressObj.GetComponent<RectTransform>();
+            progressRect.anchorMin = Vector2.zero;
+            progressRect.anchorMax = Vector2.one;
+            progressRect.sizeDelta = Vector2.zero;
+
+            // Markers panel (holds wave markers)
+            GameObject markersPanelObj = new GameObject("MarkersPanel");
+            markersPanelObj.transform.SetParent(timelineContainerObj.transform, false);
+
+            RectTransform markersPanel = markersPanelObj.AddComponent<RectTransform>();
+            markersPanel.anchorMin = Vector2.zero;
+            markersPanel.anchorMax = Vector2.one;
+            markersPanel.sizeDelta = Vector2.zero;
+
+            // Wave info text (above timeline)
+            GameObject waveInfoObj = new GameObject("WaveInfoText");
+            waveInfoObj.transform.SetParent(timelineContainerObj.transform, false);
+
+            TextMeshProUGUI waveInfoText = waveInfoObj.AddComponent<TextMeshProUGUI>();
+            waveInfoText.text = "Wave 1: 40s";
+            waveInfoText.fontSize = 18;
+            waveInfoText.color = Color.white;
+            waveInfoText.alignment = TextAlignmentOptions.Center;
+            waveInfoText.fontStyle = FontStyles.Bold;
+
+            RectTransform waveInfoRect = waveInfoObj.GetComponent<RectTransform>();
+            waveInfoRect.anchorMin = new Vector2(0f, 1f);
+            waveInfoRect.anchorMax = new Vector2(1f, 1f);
+            waveInfoRect.pivot = new Vector2(0.5f, 0f);
+            waveInfoRect.anchoredPosition = new Vector2(0f, 5f);
+            waveInfoRect.sizeDelta = new Vector2(0f, 25f);
+
+            // Add WaveTimelineUI component
+            WaveTimelineUI waveTimelineUI = canvasObj.AddComponent<WaveTimelineUI>();
+            SetPrivateField(waveTimelineUI, "timelineContainer", timelineContainer);
+            SetPrivateField(waveTimelineUI, "timelineBackground", timelineBg);
+            SetPrivateField(waveTimelineUI, "progressFill", progressFill);
+            SetPrivateField(waveTimelineUI, "markersPanel", markersPanel);
+            SetPrivateField(waveTimelineUI, "waveInfoText", waveInfoText);
 
             // Instructions text (bottom-center)
             GameObject instructionsObj = new GameObject("InstructionsText");
@@ -524,6 +592,13 @@ namespace ClockworkGrid
             SetPrivateField(placer, "soldierPrefab", soldierPrefab);
             SetPrivateField(placer, "enemySoldierPrefab", enemySoldierPrefab);
             SetPrivateField(placer, "resourceNodePrefab", resourceNodePrefab);
+        }
+
+        private void SetupWaveManager()
+        {
+            GameObject waveObj = new GameObject("WaveManager");
+            WaveManager waveManager = waveObj.AddComponent<WaveManager>();
+            waveManager.Initialize(enemySoldierPrefab);
         }
 
         private void SetupLighting()
