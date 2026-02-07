@@ -87,7 +87,7 @@ namespace ClockworkGrid
 
         [Header("Timing")]
         [Tooltip("Number of interval ticks before starting the wave sequence (breathing room for player)")]
-        [SerializeField] private int startDelayTicks = 5;
+        [SerializeField] private int startDelayTicks = 0; // Start immediately
 
         [Header("Prefab References")]
         [SerializeField] private GameObject resourceNodePrefab;
@@ -210,8 +210,15 @@ namespace ClockworkGrid
             // Execute current wave entry
             ExecuteWaveEntry(currentWaveIndex);
 
-            // Update timeline UI
-            UpdateTimelineUI();
+            // Update timeline UI (initialize on first entry, then just advance)
+            if (currentWaveIndex == 0)
+            {
+                InitializeTimelineUI();
+            }
+            else
+            {
+                AdvanceTimelineUI();
+            }
 
             // Check lose condition after each interval
             CheckLoseCondition();
@@ -471,21 +478,26 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Update the timeline UI with current progress.
+        /// Initialize the timeline UI (called once at wave start).
         /// </summary>
-        private void UpdateTimelineUI()
+        private void InitializeTimelineUI()
         {
             if (SpawnTimelineUI.Instance != null)
             {
                 // Convert wave sequence to spawn code format for existing UI
                 string spawnCode = ConvertSequenceToSpawnCode();
                 SpawnTimelineUI.Instance.InitializeWave(1, spawnCode);
+            }
+        }
 
-                // Advance to current index
-                for (int i = 0; i <= currentWaveIndex; i++)
-                {
-                    SpawnTimelineUI.Instance.AdvanceDot();
-                }
+        /// <summary>
+        /// Advance the timeline UI to the next dot.
+        /// </summary>
+        private void AdvanceTimelineUI()
+        {
+            if (SpawnTimelineUI.Instance != null)
+            {
+                SpawnTimelineUI.Instance.AdvanceDot();
             }
         }
 
