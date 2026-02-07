@@ -61,28 +61,19 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            // Hide dock bar UI containers at runtime start (allows UI to stay visible in Editor for design work)
-            // Only activates after countdown completes
-            if (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted)
+            // Hide ONLY the gatcha button at start (dock bar with cards stays visible)
+            // Gatcha button appears after wave starts
+            if (gatchaButtonHolder != null && (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted))
             {
-                if (dockBarHolder != null)
-                {
-                    Debug.Log("[DockBarManager] Hiding dock bar holder at start");
-                    dockBarHolder.SetActive(false);
-                }
-
-                if (gatchaButtonHolder != null)
-                {
-                    Debug.Log("[DockBarManager] Hiding gatcha button holder at start");
-                    gatchaButtonHolder.SetActive(false);
-                }
+                Debug.Log("[DockBarManager] Hiding gatcha button holder at start");
+                gatchaButtonHolder.SetActive(false);
+            }
+            else if (gatchaButtonHolder == null)
+            {
+                Debug.LogError("[DockBarManager] gatchaButtonHolder is not assigned! Please assign it in the Inspector.");
             }
 
-            // Warn if neither is assigned
-            if (dockBarHolder == null && gatchaButtonHolder == null)
-            {
-                Debug.LogError("[DockBarManager] Neither dockBarHolder nor gatchaButtonHolder is assigned! Please assign at least one in the Inspector.");
-            }
+            // Dock bar holder stays visible throughout (or assign nothing if entire dock bar is one object)
         }
 
         /// <summary>
@@ -121,6 +112,34 @@ namespace ClockworkGrid
             if (dockBarContainer != null)
             {
                 originalAnchoredPosition = dockBarContainer.anchoredPosition;
+            }
+
+            // Add starting soldier card to dock
+            AddStartingCard();
+        }
+
+        /// <summary>
+        /// Add a starting soldier card to the dock at game start.
+        /// </summary>
+        private void AddStartingCard()
+        {
+            if (RaritySystem.Instance != null)
+            {
+                // Get Soldier unit stats
+                UnitStats soldierStats = RaritySystem.Instance.GetUnitStats(UnitType.Soldier);
+                if (soldierStats != null)
+                {
+                    AddUnitToDock(soldierStats);
+                    Debug.Log("[DockBarManager] Added starting Soldier card to dock");
+                }
+                else
+                {
+                    Debug.LogWarning("[DockBarManager] Could not find Soldier stats for starting card");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[DockBarManager] RaritySystem.Instance is null, cannot add starting card");
             }
         }
 

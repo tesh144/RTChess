@@ -464,7 +464,7 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Initialize the timeline UI (called once at wave start).
-        /// Also shows the dock bar with animation after countdown completes.
+        /// Also shows the tick counter and gatcha button after countdown completes.
         /// </summary>
         private void InitializeTimelineUI()
         {
@@ -475,7 +475,13 @@ namespace ClockworkGrid
                 SpawnTimelineUI.Instance.InitializeWave(currentWaveNumber + 1, spawnCode);
             }
 
-            // Show dock bar after countdown completes
+            // Show tick counter after countdown completes
+            if (IntervalUI.Instance != null)
+            {
+                IntervalUI.Instance.ShowTickCounter();
+            }
+
+            // Show gatcha button after countdown completes (dock bar with cards stays visible throughout)
             if (DockBarManager.Instance != null)
             {
                 DockBarManager.Instance.ShowWithAnimation();

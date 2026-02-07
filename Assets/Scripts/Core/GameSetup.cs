@@ -515,16 +515,7 @@ namespace ClockworkGrid
             if (canvas != null)
             {
                 dockManager.Initialize(canvas);
-            }
-
-            // Give player a starting Soldier card
-            if (RaritySystem.Instance != null)
-            {
-                UnitStats soldierStats = RaritySystem.Instance.GetUnitStats(UnitType.Soldier);
-                if (soldierStats != null)
-                {
-                    dockManager.AddUnitToDock(soldierStats);
-                }
+                // Note: Initialize() now adds the starting Soldier card automatically
             }
 
             Debug.Log("SetupDockBar: Found and initialized dock bar components");
