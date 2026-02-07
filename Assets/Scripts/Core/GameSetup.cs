@@ -38,6 +38,14 @@ namespace ClockworkGrid
         [SerializeField] private int resourceTokensPerHit = 1;
         [SerializeField] private int resourceBonusTokens = 3;
 
+        [Header("Iteration 8: Multi-Level Resources")]
+        [SerializeField] private int level2HP = 20;
+        [SerializeField] private int level2TokensPerHit = 1;
+        [SerializeField] private int level2BonusTokens = 6;
+        [SerializeField] private int level3HP = 50;
+        [SerializeField] private int level3TokensPerHit = 2;
+        [SerializeField] private int level3BonusTokens = 9;
+
         [Header("Visual Settings")]
         [SerializeField] private Color playerColor = new Color(0.2f, 0.5f, 1f);
         [SerializeField] private Color enemyColor = new Color(1f, 0.3f, 0.3f);
@@ -49,6 +57,11 @@ namespace ClockworkGrid
         private GameObject enemySoldierPrefab;
         private GameObject resourceNodePrefab;
 
+        // Iteration 8: Multi-level resource prefabs
+        private GameObject level1ResourcePrefab;
+        private GameObject level2ResourcePrefab;
+        private GameObject level3ResourcePrefab;
+
         private void Awake()
         {
             SetupCamera();
@@ -57,7 +70,8 @@ namespace ClockworkGrid
             SetupIntervalTimer();
             SetupTokenManager();
             SetupUnitPrefabs(); // Iteration 6: Create all unit prefabs
-            SetupResourceNodePrefab();
+            SetupResourceNodePrefabs(); // Iteration 8: Create all 3 resource levels
+            SetupResourceSpawner(); // Iteration 8: Initialize spawning system
             SetupRaritySystem(); // Iteration 6: Must be before WaveManager/HandManager
             SetupWaveManager();
             SetupUI();
@@ -145,23 +159,89 @@ namespace ClockworkGrid
         }
 
 
-        private void SetupResourceNodePrefab()
+        /// <summary>
+        /// Iteration 8: Create all three resource node levels (1x1, 2x1, 2x2).
+        /// </summary>
+        private void SetupResourceNodePrefabs()
         {
-            resourceNodePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(resourceColor);
+            // Level 1: 1x1 (small, green)
+            level1ResourcePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(new Color(0.2f, 0.85f, 0.4f)); // Green
+            ResourceNode node1 = level1ResourcePrefab.AddComponent<ResourceNode>();
+            SetPrivateField(node1, "maxHP", resourceNodeHP);
+            SetPrivateField(node1, "level", 1);
+            SetPrivateField(node1, "tokensPerHit", resourceTokensPerHit);
+            SetPrivateField(node1, "bonusTokens", resourceBonusTokens);
+            SetPrivateField(node1, "gridSize", new Vector2Int(1, 1));
+            level1ResourcePrefab.AddComponent<HPBarOverlay>();
+            level1ResourcePrefab.SetActive(false);
+            level1ResourcePrefab.name = "ResourceNode_Level1";
 
-            ResourceNode node = resourceNodePrefab.AddComponent<ResourceNode>();
-            SetPrivateField(node, "maxHP", resourceNodeHP);
-            SetPrivateField(node, "level", 1);
-            SetPrivateField(node, "tokensPerHit", resourceTokensPerHit);
-            SetPrivateField(node, "bonusTokens", resourceBonusTokens);
+            // Level 2: 2x1 (medium, yellow-green, larger scale)
+            level2ResourcePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(new Color(0.6f, 0.9f, 0.3f)); // Yellow-green
+            level2ResourcePrefab.transform.localScale = Vector3.one * 1.5f; // Larger
+            ResourceNode node2 = level2ResourcePrefab.AddComponent<ResourceNode>();
+            SetPrivateField(node2, "maxHP", level2HP);
+            SetPrivateField(node2, "level", 2);
+            SetPrivateField(node2, "tokensPerHit", level2TokensPerHit);
+            SetPrivateField(node2, "bonusTokens", level2BonusTokens);
+            SetPrivateField(node2, "gridSize", new Vector2Int(2, 1)); // Horizontal by default, can be rotated
+            level2ResourcePrefab.AddComponent<HPBarOverlay>();
+            level2ResourcePrefab.SetActive(false);
+            level2ResourcePrefab.name = "ResourceNode_Level2";
 
-            // HP text is found by name ("HPText") in ResourceNode.Start()
+            // Level 3: 2x2 (large, blue-green, much larger scale)
+            level3ResourcePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(new Color(0.2f, 0.7f, 0.9f)); // Blue-green
+            level3ResourcePrefab.transform.localScale = Vector3.one * 2.0f; // Much larger
+            ResourceNode node3 = level3ResourcePrefab.AddComponent<ResourceNode>();
+            SetPrivateField(node3, "maxHP", level3HP);
+            SetPrivateField(node3, "level", 3);
+            SetPrivateField(node3, "tokensPerHit", level3TokensPerHit);
+            SetPrivateField(node3, "bonusTokens", level3BonusTokens);
+            SetPrivateField(node3, "gridSize", new Vector2Int(2, 2));
+            level3ResourcePrefab.AddComponent<HPBarOverlay>();
+            level3ResourcePrefab.SetActive(false);
+            level3ResourcePrefab.name = "ResourceNode_Level3";
 
-            // Add HP bar overlay (Phase 5)
-            resourceNodePrefab.AddComponent<HPBarOverlay>();
+            // Keep legacy reference for backward compatibility
+            resourceNodePrefab = level1ResourcePrefab;
 
-            resourceNodePrefab.SetActive(false);
-            resourceNodePrefab.name = "ResourceNodePrefab";
+            Debug.Log("Created 3 resource node levels: L1 (1x1), L2 (2x1), L3 (2x2)");
+        }
+
+        /// <summary>
+        /// Iteration 8: Initialize Resource Spawner system.
+        /// </summary>
+        private void SetupResourceSpawner()
+        {
+            GameObject spawnerObj = new GameObject("ResourceSpawner");
+            ResourceSpawner spawner = spawnerObj.AddComponent<ResourceSpawner>();
+
+            // Set spawn interval (every 10 intervals = 20 seconds)
+            SetPrivateField(spawner, "spawnIntervalCount", 10);
+
+            // Set node caps
+            SetPrivateField(spawner, "maxTotalNodes", 5);
+            SetPrivateField(spawner, "maxLevel2Nodes", 2);
+            SetPrivateField(spawner, "maxLevel3Nodes", 1);
+
+            // Set probabilities (60/35/5 distribution)
+            SetPrivateField(spawner, "level1Probability", 60f);
+            SetPrivateField(spawner, "level2Probability", 35f);
+            SetPrivateField(spawner, "level3Probability", 5f);
+
+            // Set spawn preferences
+            SetPrivateField(spawner, "preferFoggedSpawns", true);
+            SetPrivateField(spawner, "foggedSpawnWeight", 70f);
+
+            // Assign prefabs
+            SetPrivateField(spawner, "level1Prefab", level1ResourcePrefab);
+            SetPrivateField(spawner, "level2Prefab", level2ResourcePrefab);
+            SetPrivateField(spawner, "level3Prefab", level3ResourcePrefab);
+
+            // Initialize spawner (spawns initial resource in revealed area)
+            spawner.Initialize();
+
+            Debug.Log("ResourceSpawner initialized: Spawns every 10 intervals, max 5 nodes (L2 max: 2, L3 max: 1)");
         }
 
         /// <summary>
