@@ -37,6 +37,7 @@ namespace ClockworkGrid
         [SerializeField] private int soldierResourceCost = 3;
         [SerializeField] private int soldierRevealRadius = 1;
         [SerializeField] private float soldierModelScale = 1f;
+        [SerializeField] private Sprite soldierIconSprite;
 
         [Header("Ogre Stats (Epic)")]
         [SerializeField] private GameObject ogrePlayerPrefab; // Drag player prefab, or leave empty for procedural
@@ -49,6 +50,7 @@ namespace ClockworkGrid
         [SerializeField] private int ogreResourceCost = 6;
         [SerializeField] private int ogreRevealRadius = 1;
         [SerializeField] private float ogreModelScale = 1.3f;
+        [SerializeField] private Sprite ogreIconSprite;
 
         [Header("Ninja Stats (Rare)")]
         [SerializeField] private GameObject ninjaPlayerPrefab; // Drag player prefab, or leave empty for procedural
@@ -61,6 +63,7 @@ namespace ClockworkGrid
         [SerializeField] private int ninjaResourceCost = 4;
         [SerializeField] private int ninjaRevealRadius = 2;
         [SerializeField] private float ninjaModelScale = 0.8f;
+        [SerializeField] private Sprite ninjaIconSprite;
 
         [Header("Wave Configuration - Iteration 11")]
         [Tooltip("Ticks between wave advances (4 for 4-sided game = 1 wave per full round)")]
@@ -474,6 +477,7 @@ namespace ClockworkGrid
             soldierStats.modelScale = soldierModelScale;
             soldierStats.unitPrefab = soldierPrefab;
             soldierStats.enemyPrefab = enemySoldierPrefab;
+            soldierStats.iconSprite = soldierIconSprite;
             allStats.Add(soldierStats);
 
             // Ogre Stats (Epic)
@@ -491,6 +495,7 @@ namespace ClockworkGrid
             ogreStats.modelScale = ogreModelScale;
             ogreStats.unitPrefab = ogrePrefab;
             ogreStats.enemyPrefab = enemyOgrePrefab;
+            ogreStats.iconSprite = ogreIconSprite;
             allStats.Add(ogreStats);
 
             // Ninja Stats (Rare)
@@ -508,6 +513,7 @@ namespace ClockworkGrid
             ninjaStats.modelScale = ninjaModelScale;
             ninjaStats.unitPrefab = ninjaPrefab;
             ninjaStats.enemyPrefab = enemyNinjaPrefab;
+            ninjaStats.iconSprite = ninjaIconSprite;
             allStats.Add(ninjaStats);
 
             // Pass rarity weights from inspector

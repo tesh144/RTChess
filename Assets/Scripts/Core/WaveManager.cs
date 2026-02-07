@@ -78,9 +78,6 @@ namespace ClockworkGrid
         private bool hasWaveStarted = false; // Wave doesn't start until player places first unit
         private int playerUnitCount = 0; // Cached count to avoid O(N²) grid iteration
 
-        // Spawn positions (edges of grid)
-        private List<Vector2Int> spawnPositions = new List<Vector2Int>();
-
         // Events
         public event Action<int, SpawnType> OnWaveEntryExecuted; // (index, spawnType)
         public event Action<WaveData> OnWaveComplete; // For backward compatibility
@@ -103,8 +100,6 @@ namespace ClockworkGrid
         /// </summary>
         public void Initialize(List<string> waves, int ticksPerAdvance = 4, int peaceTicks = 8)
         {
-            InitializeSpawnPositions();
-
             waveSequences = waves;
             ticksPerWaveAdvance = ticksPerAdvance;
             peacePeriodTicks = peaceTicks;
@@ -142,37 +137,6 @@ namespace ClockworkGrid
             {
                 IntervalTimer.Instance.OnIntervalTick -= OnIntervalTick;
             }
-        }
-
-        /// <summary>
-        /// Initialize spawn positions at grid edges.
-        /// </summary>
-        private void InitializeSpawnPositions()
-        {
-            if (GridManager.Instance == null) return;
-
-            spawnPositions.Clear();
-
-            int width = GridManager.Instance.Width;
-            int height = GridManager.Instance.Height;
-
-            // Top edge
-            for (int x = 0; x < width; x++)
-                spawnPositions.Add(new Vector2Int(x, height - 1));
-
-            // Bottom edge
-            for (int x = 0; x < width; x++)
-                spawnPositions.Add(new Vector2Int(x, 0));
-
-            // Left edge (excluding corners)
-            for (int y = 1; y < height - 1; y++)
-                spawnPositions.Add(new Vector2Int(0, y));
-
-            // Right edge (excluding corners)
-            for (int y = 1; y < height - 1; y++)
-                spawnPositions.Add(new Vector2Int(width - 1, y));
-
-            Debug.Log($"WaveManager: Initialized {spawnPositions.Count} spawn positions");
         }
 
         /// <summary>
@@ -356,35 +320,357 @@ namespace ClockworkGrid
             OnWaveComplete?.Invoke(new WaveData(index + 1));
         }
 
-        // CONSOLIDATED SPAWN LOGIC (reduces ~140 lines to ~80 lines)
+        // === AI PLACEMENT PRIORITY SYSTEM ===
+
+        private static readonly Facing[] AllFacings = { Facing.North, Facing.East, Facing.South, Facing.West };
+        private const int MinResourceSpacing = 5;
 
         /// <summary>
-        /// Generic spawn method - finds random edge spawn position and places object on grid.
-        /// Returns the spawn position if successful, null otherwise.
+        /// Find the best strategic position for an enemy unit based on priority scoring.
+        /// Evaluates all revealed empty cells and returns the highest-scoring one.
         /// </summary>
-        private Vector2Int? FindRandomSpawnPosition(string debugContext)
+        private Vector2Int? FindStrategicEnemyPosition(int attackRange)
         {
-            if (GridManager.Instance == null)
+            var candidates = GetRevealedEmptyCells();
+            if (candidates.Count == 0)
             {
-                Debug.LogError($"WaveManager: GridManager.Instance is null ({debugContext})");
+                Debug.LogWarning("[AI] No revealed empty cells for enemy placement");
                 return null;
             }
 
-            // Find available spawn positions
-            List<Vector2Int> availablePositions = new List<Vector2Int>(spawnPositions);
-            availablePositions.RemoveAll(pos => !GridManager.Instance.IsCellEmpty(pos.x, pos.y));
+            float bestScore = -1f;
+            List<Vector2Int> bestPositions = new List<Vector2Int>();
 
-            if (availablePositions.Count == 0)
+            foreach (var pos in candidates)
             {
-                Debug.LogWarning($"WaveManager: No available spawn positions ({debugContext})");
-                return null;
+                float score = ScoreEnemyPosition(pos, attackRange);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestPositions.Clear();
+                    bestPositions.Add(pos);
+                }
+                else if (Mathf.Approximately(score, bestScore))
+                {
+                    bestPositions.Add(pos);
+                }
             }
 
-            return availablePositions[UnityEngine.Random.Range(0, availablePositions.Count)];
+            if (bestPositions.Count == 0) return null;
+
+            var chosen = bestPositions[UnityEngine.Random.Range(0, bestPositions.Count)];
+            Debug.Log($"[AI] Enemy placement: chose ({chosen.x},{chosen.y}) score={bestScore:F1}, candidates={candidates.Count}, ties={bestPositions.Count}");
+            return chosen;
         }
 
         /// <summary>
-        /// Spawn a single enemy unit at a random spawn position.
+        /// Score a candidate position for enemy placement.
+        /// Priorities: 1.ContestResources 2.InterceptHarvesters 3.StealHarvests 4.BlockAccess 5.AttackPlayer 6.Random
+        /// </summary>
+        private float ScoreEnemyPosition(Vector2Int pos, int attackRange)
+        {
+            if (GridManager.Instance == null) return 0f;
+
+            float totalScore = 0f;
+            int prioritiesMet = 0;
+
+            // Check all 4 facings - take the best attack score
+            float bestFacingScore = 0f;
+            int bestFacingPriorities = 0;
+            foreach (var facing in AllFacings)
+            {
+                int facingPriorities = 0;
+                float facingScore = ScoreFacingDirection(pos, facing, attackRange, ref facingPriorities);
+                if (facingScore > bestFacingScore)
+                {
+                    bestFacingScore = facingScore;
+                    bestFacingPriorities = facingPriorities;
+                }
+            }
+            totalScore += bestFacingScore;
+            prioritiesMet += bestFacingPriorities;
+
+            // Priority 4: Block resource access (adjacent to a resource node)
+            int adjResourceLevel = GetAdjacentResourceLevel(pos);
+            if (adjResourceLevel > 0)
+            {
+                float blockScore = adjResourceLevel switch { 1 => 10f, 2 => 15f, _ => 20f };
+                totalScore += blockScore;
+                prioritiesMet++;
+            }
+
+            // Base random tiebreaker for positions with no targets
+            if (totalScore == 0f)
+            {
+                totalScore = 1f + UnityEngine.Random.Range(0f, 0.5f);
+            }
+
+            // Multi-objective bonus: 1.5x if satisfying 2+ priorities
+            if (prioritiesMet >= 2)
+            {
+                totalScore *= 1.5f;
+            }
+
+            return totalScore;
+        }
+
+        /// <summary>
+        /// Score what an enemy unit would see in a specific facing direction.
+        /// </summary>
+        private float ScoreFacingDirection(Vector2Int pos, Facing facing, int attackRange, ref int prioritiesMet)
+        {
+            facing.ToGridOffset(out int dx, out int dy);
+            float score = 0f;
+
+            for (int r = 1; r <= attackRange; r++)
+            {
+                int targetX = pos.x + dx * r;
+                int targetY = pos.y + dy * r;
+
+                if (!GridManager.Instance.IsValidCell(targetX, targetY)) break;
+
+                CellState state = GridManager.Instance.GetCellState(targetX, targetY);
+
+                if (state == CellState.Resource)
+                {
+                    int level = GetResourceLevelAt(targetX, targetY);
+
+                    // Priority 1: Contest resource (player is also targeting this resource)
+                    if (IsPlayerTargetingCell(targetX, targetY))
+                    {
+                        score += level switch { 1 => 50f, 2 => 75f, _ => 100f };
+                    }
+                    else
+                    {
+                        // Priority 3: Steal harvest
+                        score += level switch { 1 => 20f, 2 => 30f, _ => 40f };
+                    }
+                    prioritiesMet++;
+                    break; // Can't see past resource
+                }
+                else if (state == CellState.PlayerUnit)
+                {
+                    // Priority 2: Intercept harvester (player unit near a resource)
+                    int nearbyResourceLevel = GetAdjacentResourceLevel(new Vector2Int(targetX, targetY));
+                    if (nearbyResourceLevel > 0)
+                    {
+                        score += nearbyResourceLevel switch { 1 => 40f, 2 => 60f, _ => 80f };
+                    }
+                    else
+                    {
+                        // Priority 5: Attack any player unit
+                        score += 15f;
+                    }
+                    prioritiesMet++;
+                    break; // Can't see past unit
+                }
+                else if (state == CellState.EnemyUnit)
+                {
+                    break; // Blocked by ally
+                }
+            }
+
+            return score;
+        }
+
+        /// <summary>
+        /// Check if any player unit on the grid is targeting a specific cell
+        /// (facing it within attack range with no obstacles between).
+        /// </summary>
+        private bool IsPlayerTargetingCell(int targetX, int targetY)
+        {
+            if (GridManager.Instance == null) return false;
+
+            int width = GridManager.Instance.Width;
+            int height = GridManager.Instance.Height;
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (GridManager.Instance.GetCellState(x, y) != CellState.PlayerUnit) continue;
+
+                    GameObject obj = GridManager.Instance.GetCellOccupant(x, y);
+                    if (obj == null) continue;
+
+                    Unit unit = obj.GetComponent<Unit>();
+                    if (unit == null || unit.Team != Team.Player) continue;
+
+                    unit.CurrentFacing.ToGridOffset(out int dx, out int dy);
+                    for (int r = 1; r <= unit.AttackRange; r++)
+                    {
+                        int checkX = x + dx * r;
+                        int checkY = y + dy * r;
+                        if (checkX == targetX && checkY == targetY) return true;
+                        // Stop if blocked by any non-empty cell
+                        if (GridManager.Instance.IsValidCell(checkX, checkY) &&
+                            GridManager.Instance.GetCellState(checkX, checkY) != CellState.Empty)
+                            break;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Get the highest resource level adjacent (4-directional) to a position.
+        /// Returns 0 if no adjacent resources.
+        /// </summary>
+        private int GetAdjacentResourceLevel(Vector2Int pos)
+        {
+            if (GridManager.Instance == null) return 0;
+
+            int maxLevel = 0;
+            int[] dxs = { 0, 0, 1, -1 };
+            int[] dys = { 1, -1, 0, 0 };
+
+            for (int i = 0; i < 4; i++)
+            {
+                int nx = pos.x + dxs[i];
+                int ny = pos.y + dys[i];
+
+                if (GridManager.Instance.IsValidCell(nx, ny) &&
+                    GridManager.Instance.GetCellState(nx, ny) == CellState.Resource)
+                {
+                    int level = GetResourceLevelAt(nx, ny);
+                    if (level > maxLevel) maxLevel = level;
+                }
+            }
+
+            return maxLevel;
+        }
+
+        /// <summary>
+        /// Get the resource level at a specific grid position.
+        /// </summary>
+        private int GetResourceLevelAt(int gridX, int gridY)
+        {
+            if (GridManager.Instance == null) return 0;
+            GameObject obj = GridManager.Instance.GetCellOccupant(gridX, gridY);
+            if (obj == null) return 0;
+            ResourceNode node = obj.GetComponent<ResourceNode>();
+            return node != null ? node.Level : 0;
+        }
+
+        /// <summary>
+        /// Get all revealed, empty cells on the grid.
+        /// </summary>
+        private List<Vector2Int> GetRevealedEmptyCells()
+        {
+            List<Vector2Int> cells = new List<Vector2Int>();
+            if (GridManager.Instance == null || FogManager.Instance == null) return cells;
+
+            int width = GridManager.Instance.Width;
+            int height = GridManager.Instance.Height;
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (GridManager.Instance.IsCellEmpty(x, y) && FogManager.Instance.IsCellRevealed(x, y))
+                    {
+                        cells.Add(new Vector2Int(x, y));
+                    }
+                }
+            }
+
+            return cells;
+        }
+
+        /// <summary>
+        /// Get all resource node positions on the grid.
+        /// </summary>
+        private List<Vector2Int> GetAllResourcePositions()
+        {
+            List<Vector2Int> positions = new List<Vector2Int>();
+            if (GridManager.Instance == null) return positions;
+
+            int width = GridManager.Instance.Width;
+            int height = GridManager.Instance.Height;
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (GridManager.Instance.GetCellState(x, y) == CellState.Resource)
+                    {
+                        positions.Add(new Vector2Int(x, y));
+                    }
+                }
+            }
+
+            return positions;
+        }
+
+        // === RESOURCE SPAWN LOGIC ===
+
+        /// <summary>
+        /// Find a spawn position for a resource node with minimum spacing from existing resources.
+        /// Spawns in revealed, empty cells. Falls back to maximum distance if spacing can't be met.
+        /// </summary>
+        private Vector2Int? FindResourceSpawnPosition()
+        {
+            var candidates = GetRevealedEmptyCells();
+            if (candidates.Count == 0)
+            {
+                Debug.LogWarning("[AI] No revealed empty cells for resource placement");
+                return null;
+            }
+
+            var existingResources = GetAllResourcePositions();
+
+            // If no existing resources, pick any revealed empty cell
+            if (existingResources.Count == 0)
+            {
+                var chosen = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+                Debug.Log($"[AI] Resource: no existing resources, chose ({chosen.x},{chosen.y})");
+                return chosen;
+            }
+
+            // Score each candidate by minimum Manhattan distance to existing resources
+            List<Vector2Int> spacedCandidates = new List<Vector2Int>();
+            Vector2Int bestFallback = candidates[0];
+            int bestFallbackDist = 0;
+
+            foreach (var pos in candidates)
+            {
+                int minDist = int.MaxValue;
+                foreach (var res in existingResources)
+                {
+                    int dist = Mathf.Abs(pos.x - res.x) + Mathf.Abs(pos.y - res.y);
+                    if (dist < minDist) minDist = dist;
+                }
+
+                if (minDist >= MinResourceSpacing)
+                {
+                    spacedCandidates.Add(pos);
+                }
+
+                if (minDist > bestFallbackDist)
+                {
+                    bestFallbackDist = minDist;
+                    bestFallback = pos;
+                }
+            }
+
+            if (spacedCandidates.Count > 0)
+            {
+                var chosen = spacedCandidates[UnityEngine.Random.Range(0, spacedCandidates.Count)];
+                Debug.Log($"[AI] Resource: chose ({chosen.x},{chosen.y}) spacing>={MinResourceSpacing}, {spacedCandidates.Count} valid candidates");
+                return chosen;
+            }
+
+            // Fallback: pick the cell farthest from any existing resource
+            Debug.Log($"[AI] Resource: fallback ({bestFallback.x},{bestFallback.y}) maxDist={bestFallbackDist}");
+            return bestFallback;
+        }
+
+        // === SPAWN METHODS ===
+
+        /// <summary>
+        /// Spawn a single enemy unit using AI placement priority system.
+        /// Falls back to random edge spawn if strategic placement fails.
         /// </summary>
         private bool SpawnSingleEnemy(UnitType type)
         {
@@ -394,11 +680,6 @@ namespace ClockworkGrid
                 return false;
             }
 
-            // Find spawn position
-            Vector2Int? spawnPos = FindRandomSpawnPosition($"{type} enemy");
-            if (!spawnPos.HasValue) return false;
-            Vector2Int pos = spawnPos.Value;
-
             // Get enemy stats and prefab
             UnitStats enemyStats = RaritySystem.Instance.GetUnitStats(type);
             if (enemyStats == null)
@@ -406,6 +687,11 @@ namespace ClockworkGrid
                 Debug.LogWarning($"WaveManager: No stats found for {type}");
                 return false;
             }
+
+            // Find strategic spawn position (AI priority system)
+            Vector2Int? spawnPos = FindStrategicEnemyPosition(enemyStats.attackRange);
+            if (!spawnPos.HasValue) return false;
+            Vector2Int pos = spawnPos.Value;
 
             GameObject prefabToSpawn = enemyStats.enemyPrefab != null ? enemyStats.enemyPrefab : enemyStats.unitPrefab;
             if (prefabToSpawn == null)
@@ -430,7 +716,7 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Spawn a single resource node at a random spawn position.
+        /// Spawn a single resource node with distance-based placement.
         /// </summary>
         private bool SpawnSingleResource(int level)
         {
@@ -440,8 +726,8 @@ namespace ClockworkGrid
                 return false;
             }
 
-            // Find spawn position
-            Vector2Int? spawnPos = FindRandomSpawnPosition($"level {level} resource");
+            // Find position with distance-based spacing
+            Vector2Int? spawnPos = FindResourceSpawnPosition();
             if (!spawnPos.HasValue) return false;
             Vector2Int pos = spawnPos.Value;
 

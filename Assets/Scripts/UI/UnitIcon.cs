@@ -25,6 +25,7 @@ namespace ClockworkGrid
         private GameObject typeLabel;
 
         [SerializeField] private float hoverScale = 1.2f; // Phase 2: ~20% scale up
+        [SerializeField] private Image characterSpriteImage; // Assign the CharacterSprite Image in prefab
 
         public GameObject UnitPrefab => unitPrefab;
         public UnitStats UnitStats => unitStats;
@@ -51,6 +52,12 @@ namespace ClockworkGrid
             unitPrefab = stats.unitPrefab;
             dockManager = manager;
             originalPosition = rectTransform.anchoredPosition;
+
+            // Set character sprite from UnitStats
+            if (characterSpriteImage != null && stats.iconSprite != null)
+            {
+                characterSpriteImage.sprite = stats.iconSprite;
+            }
 
             // Try to find and populate existing UI elements in prefab
             bool foundPrefabUI = PopulatePrefabUI(stats.resourceCost, stats.unitType);
