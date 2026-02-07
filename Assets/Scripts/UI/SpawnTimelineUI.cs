@@ -20,7 +20,7 @@ namespace ClockworkGrid
         [SerializeField] private GameObject nodePointPrefab; // Custom timeline dot prefab with toggle children
 
         [Header("UI References (Assign in Inspector)")]
-        [SerializeField] private GameObject uiContainer; // The UI panel/GameObject to show/hide
+        [SerializeField] private GameObject timelineHolder; // The timeline panel/GameObject to show/hide
         [SerializeField] private TextMeshProUGUI waveNumberText;
         [SerializeField] private Transform dotContainer;
 
@@ -67,14 +67,14 @@ namespace ClockworkGrid
         {
             // Hide UI container at runtime start (allows UI to stay visible in Editor for design work)
             // Only activates after player places first unit
-            if (uiContainer != null && (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted))
+            if (timelineHolder != null && (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted))
             {
-                Debug.Log("[SpawnTimelineUI] Hiding UI container at start");
-                uiContainer.SetActive(false);
+                Debug.Log("[SpawnTimelineUI] Hiding timeline holder at start");
+                timelineHolder.SetActive(false);
             }
-            else if (uiContainer == null)
+            else if (timelineHolder == null)
             {
-                Debug.LogError("[SpawnTimelineUI] uiContainer is not assigned! Please assign it in the Inspector.");
+                Debug.LogError("[SpawnTimelineUI] timelineHolder is not assigned! Please assign it in the Inspector.");
             }
         }
 
@@ -83,9 +83,9 @@ namespace ClockworkGrid
         /// </summary>
         public void ShowCountdown(int startingCount)
         {
-            if (uiContainer != null)
+            if (timelineHolder != null)
             {
-                uiContainer.SetActive(true);
+                timelineHolder.SetActive(true);
             }
 
             if (waveNumberText != null)

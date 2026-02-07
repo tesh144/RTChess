@@ -16,7 +16,7 @@ namespace ClockworkGrid
         [SerializeField] private GameObject unitIconPrefab; // Custom card design prefab
 
         [Header("Editor UI References (Optional - assign to use existing UI)")]
-        [SerializeField] private GameObject uiContainer; // The UI panel/GameObject to show/hide
+        [SerializeField] private GameObject dockBarHolder; // The dock bar panel/GameObject to show/hide
         [SerializeField] private Transform dockIconsContainer; // Parent for red card holders
         [SerializeField] private Button drawButton; // White button on the right
         [SerializeField] private TextMeshProUGUI drawButtonText; // Text on draw button
@@ -62,14 +62,14 @@ namespace ClockworkGrid
         {
             // Hide dock bar UI container at runtime start (allows UI to stay visible in Editor for design work)
             // Only activates after countdown completes
-            if (uiContainer != null && (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted))
+            if (dockBarHolder != null && (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted))
             {
-                Debug.Log("[DockBarManager] Hiding UI container at start");
-                uiContainer.SetActive(false);
+                Debug.Log("[DockBarManager] Hiding dock bar holder at start");
+                dockBarHolder.SetActive(false);
             }
-            else if (uiContainer == null)
+            else if (dockBarHolder == null)
             {
-                Debug.LogError("[DockBarManager] uiContainer is not assigned! Please assign it in the Inspector.");
+                Debug.LogError("[DockBarManager] dockBarHolder is not assigned! Please assign it in the Inspector.");
             }
         }
 
@@ -125,9 +125,9 @@ namespace ClockworkGrid
         /// </summary>
         public void ShowWithAnimation()
         {
-            if (uiContainer != null)
+            if (dockBarHolder != null)
             {
-                uiContainer.SetActive(true);
+                dockBarHolder.SetActive(true);
             }
 
             if (enableSlideAnimation && dockBarContainer != null)
