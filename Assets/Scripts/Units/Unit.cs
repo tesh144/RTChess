@@ -17,6 +17,7 @@ namespace ClockworkGrid
         [SerializeField] protected int attackRange = 1;
         [SerializeField] protected int attackIntervalMultiplier = 2;
         [SerializeField] protected int resourceCost = 3;
+        [SerializeField] protected int killReward = 2;
 
         [Header("Unit State")]
         [SerializeField] private Team team = Team.Player;
@@ -376,6 +377,16 @@ namespace ClockworkGrid
                 WaveManager.Instance.OnPlayerUnitDestroyed();
             }
 
+            // Grant kill reward tokens when an enemy unit is killed
+            if (team == Team.Enemy && killReward > 0 && ResourceTokenManager.Instance != null)
+            {
+                Vector3 rewardPos = GridManager.Instance != null
+                    ? GridManager.Instance.GridToWorldPosition(GridX, GridY)
+                    : transform.position;
+                ResourceTokenManager.Instance.AddTokens(killReward, rewardPos);
+                Debug.Log($"Enemy killed at ({GridX},{GridY}): awarded {killReward} tokens");
+            }
+
             // Remove from grid
             if (GridManager.Instance != null)
             {
@@ -568,6 +579,7 @@ namespace ClockworkGrid
             attackRange = stats.attackRange;
             attackIntervalMultiplier = stats.attackIntervalMultiplier;
             resourceCost = stats.resourceCost;
+            killReward = stats.killReward;
             RevealRadius = stats.revealRadius;
 
             // Reset HP to new max

@@ -42,6 +42,7 @@ namespace ClockworkGrid
 
         [Header("Economy")]
         public int resourceCost = 3; // Currently unused (placement is free)
+        public int killReward = 2; // Tokens awarded to player when this enemy unit is killed
 
         [Header("Fog of War - Iteration 7")]
         public int revealRadius = 1; // Cells revealed around unit when placed (Soldier: 1, Ninja: 2, Ogre: 1)

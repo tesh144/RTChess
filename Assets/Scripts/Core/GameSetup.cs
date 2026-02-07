@@ -35,6 +35,7 @@ namespace ClockworkGrid
         [SerializeField] private int soldierAttackRange = 1;
         [SerializeField] private int soldierAttackInterval = 2;
         [SerializeField] private int soldierResourceCost = 3;
+        [SerializeField] private int soldierKillReward = 2;
         [SerializeField] private int soldierRevealRadius = 1;
         [SerializeField] private float soldierModelScale = 1f;
         [SerializeField] private Sprite soldierIconSprite;
@@ -48,6 +49,7 @@ namespace ClockworkGrid
         [SerializeField] private int ogreAttackRange = 2;
         [SerializeField] private int ogreAttackInterval = 4;
         [SerializeField] private int ogreResourceCost = 6;
+        [SerializeField] private int ogreKillReward = 5;
         [SerializeField] private int ogreRevealRadius = 1;
         [SerializeField] private float ogreModelScale = 1.3f;
         [SerializeField] private Sprite ogreIconSprite;
@@ -61,6 +63,7 @@ namespace ClockworkGrid
         [SerializeField] private int ninjaAttackRange = 1;
         [SerializeField] private int ninjaAttackInterval = 1;
         [SerializeField] private int ninjaResourceCost = 4;
+        [SerializeField] private int ninjaKillReward = 3;
         [SerializeField] private int ninjaRevealRadius = 2;
         [SerializeField] private float ninjaModelScale = 0.8f;
         [SerializeField] private Sprite ninjaIconSprite;
@@ -472,6 +475,7 @@ namespace ClockworkGrid
             soldierStats.attackRange = soldierAttackRange;
             soldierStats.attackIntervalMultiplier = soldierAttackInterval;
             soldierStats.resourceCost = soldierResourceCost;
+            soldierStats.killReward = soldierKillReward;
             soldierStats.revealRadius = soldierRevealRadius;
             soldierStats.unitColor = playerColor;
             soldierStats.modelScale = soldierModelScale;
@@ -490,6 +494,7 @@ namespace ClockworkGrid
             ogreStats.attackRange = ogreAttackRange;
             ogreStats.attackIntervalMultiplier = ogreAttackInterval;
             ogreStats.resourceCost = ogreResourceCost;
+            ogreStats.killReward = ogreKillReward;
             ogreStats.revealRadius = ogreRevealRadius;
             ogreStats.unitColor = playerColor;
             ogreStats.modelScale = ogreModelScale;
@@ -508,6 +513,7 @@ namespace ClockworkGrid
             ninjaStats.attackRange = ninjaAttackRange;
             ninjaStats.attackIntervalMultiplier = ninjaAttackInterval;
             ninjaStats.resourceCost = ninjaResourceCost;
+            ninjaStats.killReward = ninjaKillReward;
             ninjaStats.revealRadius = ninjaRevealRadius;
             ninjaStats.unitColor = playerColor;
             ninjaStats.modelScale = ninjaModelScale;
