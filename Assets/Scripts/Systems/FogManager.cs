@@ -54,8 +54,10 @@ namespace ClockworkGrid
                 }
             }
 
-            // Reveal starting area at center
-            RevealRadius(initialRevealCenter.x, initialRevealCenter.y, initialRevealRadius);
+            // Reveal starting area at grid center (dynamically computed)
+            int centerX = width / 2;
+            int centerY = height / 2;
+            RevealRadius(centerX, centerY, initialRevealRadius);
 
             Debug.Log($"FogManager initialized: {width}x{height} grid, revealed {initialRevealRadius} radius at ({initialRevealCenter.x}, {initialRevealCenter.y})");
         }
