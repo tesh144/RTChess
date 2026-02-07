@@ -22,6 +22,8 @@ namespace ClockworkGrid
         private LineRenderer arcLine;
         private int arcSegments = 20; // Number of points in the arc
         private float arcHeight = 2f; // Height of the arc
+        private Material arcMaterial;
+        private float animationSpeed = 2f; // Speed of dot animation
 
         // Grid cell highlight
         private GameObject cellHighlight;
@@ -44,15 +46,33 @@ namespace ClockworkGrid
             arcLine = gameObject.AddComponent<LineRenderer>();
             arcLine.startWidth = 0.08f;
             arcLine.endWidth = 0.08f;
-            arcLine.material = new Material(Shader.Find("Sprites/Default"));
+
+            // Create animated dotted line material
+            arcMaterial = new Material(Shader.Find("Sprites/Default"));
+            arcMaterial.color = new Color(1f, 1f, 1f, 0.8f);
+            arcLine.material = arcMaterial;
+
             arcLine.startColor = new Color(1f, 1f, 1f, 0.8f);
             arcLine.endColor = new Color(1f, 1f, 1f, 0.8f);
             arcLine.positionCount = arcSegments;
             arcLine.enabled = false;
             arcLine.useWorldSpace = true;
 
+            // Enable texture tiling for animated effect
+            arcLine.textureMode = LineTextureMode.Tile;
+
             // Create cell highlight quad
             CreateCellHighlight();
+        }
+
+        private void Update()
+        {
+            // Animate arc line texture for moving dots effect
+            if (isDragging && arcMaterial != null)
+            {
+                float offset = Time.time * animationSpeed;
+                arcMaterial.mainTextureOffset = new Vector2(offset, 0);
+            }
         }
 
         private void CreateCellHighlight()

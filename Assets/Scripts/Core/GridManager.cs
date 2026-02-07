@@ -17,8 +17,13 @@ namespace ClockworkGrid
         [SerializeField] private int gridHeight = 4;
         [SerializeField] private float cellSize = 1.5f;
 
+        [Header("Grid Visual (Prefab-Based)")]
+        [SerializeField] private GameObject gridTilePrefab; // Assign your cube prefab here
+        [SerializeField] private Transform gridTilesContainer; // Optional parent for organization
+
         private CellState[,] cellStates;
         private GameObject[,] cellOccupants;
+        private GameObject[,] gridTiles; // Store instantiated tile prefabs
 
         public int Width => gridWidth;
         public int Height => gridHeight;
@@ -47,6 +52,16 @@ namespace ClockworkGrid
         {
             cellStates = new CellState[gridWidth, gridHeight];
             cellOccupants = new GameObject[gridWidth, gridHeight];
+            gridTiles = new GameObject[gridWidth, gridHeight];
+
+            // Create container if not assigned
+            if (gridTilesContainer == null)
+            {
+                GameObject containerObj = new GameObject("GridTiles");
+                containerObj.transform.SetParent(transform);
+                containerObj.transform.localPosition = Vector3.zero;
+                gridTilesContainer = containerObj.transform;
+            }
 
             for (int x = 0; x < gridWidth; x++)
             {
@@ -54,8 +69,25 @@ namespace ClockworkGrid
                 {
                     cellStates[x, y] = CellState.Empty;
                     cellOccupants[x, y] = null;
+
+                    // Instantiate grid tile prefab
+                    if (gridTilePrefab != null)
+                    {
+                        Vector3 tilePos = GridToWorldPosition(x, y);
+                        tilePos.y = 0f; // Place tiles at ground level
+
+                        GameObject tile = Instantiate(gridTilePrefab, tilePos, Quaternion.identity, gridTilesContainer);
+                        tile.name = $"GridTile_{x}_{y}";
+
+                        // Scale tile to match cell size
+                        tile.transform.localScale = new Vector3(cellSize, 0.1f, cellSize);
+
+                        gridTiles[x, y] = tile;
+                    }
                 }
             }
+
+            Debug.Log($"GridManager: Initialized {gridWidth}×{gridHeight} grid with tile prefabs");
         }
 
         /// <summary>
@@ -109,6 +141,17 @@ namespace ClockworkGrid
         {
             if (!IsValidCell(gridX, gridY)) return null;
             return cellOccupants[gridX, gridY];
+        }
+
+        /// <summary>
+        /// Get the visual grid tile GameObject at the specified coordinates.
+        /// Useful for applying materials, textures, or effects to specific tiles.
+        /// </summary>
+        public GameObject GetGridTile(int gridX, int gridY)
+        {
+            if (!IsValidCell(gridX, gridY)) return null;
+            if (gridTiles == null) return null;
+            return gridTiles[gridX, gridY];
         }
 
         public bool PlaceUnit(int gridX, int gridY, GameObject unit, CellState state)
@@ -228,11 +271,46 @@ namespace ClockworkGrid
                 UpdateAllWorldPositions();
             }
 
+            // Destroy old grid tiles
+            if (gridTiles != null)
+            {
+                for (int x = 0; x < gridWidth; x++)
+                {
+                    for (int y = 0; y < gridHeight; y++)
+                    {
+                        if (gridTiles[x, y] != null)
+                        {
+                            Destroy(gridTiles[x, y]);
+                        }
+                    }
+                }
+            }
+
             // Update grid dimensions
             gridWidth = newSize.x;
             gridHeight = newSize.y;
             cellStates = newCellStates;
             cellOccupants = newCellOccupants;
+
+            // Create new grid tiles
+            gridTiles = new GameObject[gridWidth, gridHeight];
+            for (int x = 0; x < gridWidth; x++)
+            {
+                for (int y = 0; y < gridHeight; y++)
+                {
+                    if (gridTilePrefab != null)
+                    {
+                        Vector3 tilePos = GridToWorldPosition(x, y);
+                        tilePos.y = 0f;
+
+                        GameObject tile = Instantiate(gridTilePrefab, tilePos, Quaternion.identity, gridTilesContainer);
+                        tile.name = $"GridTile_{x}_{y}";
+                        tile.transform.localScale = new Vector3(cellSize, 0.1f, cellSize);
+
+                        gridTiles[x, y] = tile;
+                    }
+                }
+            }
 
             Debug.Log($"Grid resized successfully to {gridWidth}×{gridHeight}");
         }
