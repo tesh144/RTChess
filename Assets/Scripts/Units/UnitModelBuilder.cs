@@ -49,37 +49,49 @@ namespace ClockworkGrid
             RemoveCollider(arrowHead);
             RemoveCollider(shield);
 
-            // Add HP bar above unit
-            CreateHPBar(root);
+            // Add HP text above unit
+            CreateHPText(root);
 
             return root;
         }
 
-        private static void CreateHPBar(GameObject root)
+        private static void CreateHPText(GameObject root)
         {
-            // HP bar container (this will billboard to face camera)
-            GameObject hpBarContainer = new GameObject("HPBarContainer");
-            hpBarContainer.transform.SetParent(root.transform);
-            hpBarContainer.transform.localPosition = new Vector3(0.5f, 0.8f, 0f); // Offset to the right
-            hpBarContainer.AddComponent<Billboard>();
+            // HP text container (this will billboard to face camera)
+            GameObject hpTextContainer = new GameObject("HPTextContainer");
+            hpTextContainer.transform.SetParent(root.transform);
+            hpTextContainer.transform.localPosition = new Vector3(0f, 1.2f, 0f); // Top center above unit
+            hpTextContainer.AddComponent<Billboard>();
 
-            // HP bar background (vertical bar)
-            GameObject hpBarBG = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            hpBarBG.name = "HPBarBG";
-            hpBarBG.transform.SetParent(hpBarContainer.transform);
-            hpBarBG.transform.localPosition = Vector3.zero;
-            hpBarBG.transform.localScale = new Vector3(0.08f, 0.6f, 0.05f); // Thin and tall (vertical)
-            SetColor(hpBarBG, new Color(0.2f, 0.2f, 0.2f));
-            RemoveCollider(hpBarBG);
+            // Create TextMesh for HP number
+            GameObject hpTextObj = new GameObject("HPText");
+            hpTextObj.transform.SetParent(hpTextContainer.transform);
+            hpTextObj.transform.localPosition = Vector3.zero;
+            hpTextObj.transform.localRotation = Quaternion.identity;
 
-            // HP bar fill (starts full, anchored at bottom)
-            GameObject hpBarFill = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            hpBarFill.name = "HPBarFill";
-            hpBarFill.transform.SetParent(hpBarBG.transform);
-            hpBarFill.transform.localPosition = new Vector3(0f, 0f, 0.01f); // Slightly forward
-            hpBarFill.transform.localScale = new Vector3(0.8f, 1f, 1.2f); // Full height initially
-            SetColor(hpBarFill, Color.green);
-            RemoveCollider(hpBarFill);
+            TextMesh textMesh = hpTextObj.AddComponent<TextMesh>();
+            textMesh.text = "10";
+            textMesh.characterSize = 0.1f;
+            textMesh.fontSize = 48;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.color = Color.white;
+            textMesh.fontStyle = FontStyle.Bold;
+
+            // Add black outline by creating a slightly offset shadow text
+            GameObject shadowObj = new GameObject("HPTextShadow");
+            shadowObj.transform.SetParent(hpTextContainer.transform);
+            shadowObj.transform.localPosition = new Vector3(0.02f, -0.02f, 0.01f);
+            shadowObj.transform.localRotation = Quaternion.identity;
+
+            TextMesh shadowMesh = shadowObj.AddComponent<TextMesh>();
+            shadowMesh.text = "10";
+            shadowMesh.characterSize = 0.1f;
+            shadowMesh.fontSize = 48;
+            shadowMesh.anchor = TextAnchor.MiddleCenter;
+            shadowMesh.alignment = TextAlignment.Center;
+            shadowMesh.color = Color.black;
+            shadowMesh.fontStyle = FontStyle.Bold;
         }
 
         private static void SetColor(GameObject obj, Color color)

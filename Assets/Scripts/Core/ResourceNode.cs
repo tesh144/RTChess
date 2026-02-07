@@ -5,6 +5,7 @@ namespace ClockworkGrid
     /// <summary>
     /// A harvestable resource node on the grid.
     /// Does not rotate. Grants tokens when attacked by player units.
+    /// Iteration 8: Supports multi-cell occupation (Level 2: 2 cells, Level 3: 4 cells)
     /// </summary>
     public class ResourceNode : MonoBehaviour, IDamageable
     {
@@ -14,21 +15,26 @@ namespace ClockworkGrid
         [SerializeField] private int tokensPerHit = 1;
         [SerializeField] private int bonusTokens = 3;
 
+        [Header("Multi-Cell Occupation - Iteration 8")]
+        [SerializeField] private Vector2Int gridSize = new Vector2Int(1, 1); // Level 1: 1x1, Level 2: 2x1, Level 3: 2x2
+
         private int currentHP;
         private bool isDestroyed = false;
 
-        // Grid position
+        // Grid position (top-left cell for multi-cell resources)
         public int GridX { get; set; }
         public int GridY { get; set; }
         public int Level => level;
+        public Vector2Int GridSize => gridSize;
 
         // IDamageable implementation
         public int CurrentHP => currentHP;
         public int MaxHP => maxHP;
         public bool IsDestroyed => isDestroyed;
 
-        // HP bar references (found by name in children)
-        private Transform hpBarFill;
+        // HP text references (found by name in children)
+        private TextMesh hpTextMesh;
+        private TextMesh hpTextShadow;
 
         // Hit flash state
         private Renderer[] renderers;
@@ -43,21 +49,39 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            FindHPBar();
+            FindHPText();
             CacheRenderers();
-            UpdateHPBar();
+            UpdateHPText();
+
+            // Register with spawner (Iteration 8)
+            if (ResourceSpawner.Instance != null)
+            {
+                ResourceSpawner.Instance.RegisterNode(this);
+            }
         }
 
-        private void FindHPBar()
+        /// <summary>
+        /// Initialize multi-cell resource (Iteration 8).
+        /// Called by ResourceSpawner when spawning.
+        /// </summary>
+        public void Initialize(Vector2Int size)
         {
-            // Find HP bar fill by name in children hierarchy
-            Transform[] allChildren = GetComponentsInChildren<Transform>(true);
-            foreach (Transform t in allChildren)
+            gridSize = size;
+        }
+
+        private void FindHPText()
+        {
+            // Find HP text components by name in children hierarchy
+            TextMesh[] allTextMeshes = GetComponentsInChildren<TextMesh>(true);
+            foreach (TextMesh tm in allTextMeshes)
             {
-                if (t.name == "HPBarFill")
+                if (tm.name == "HPText")
                 {
-                    hpBarFill = t;
-                    return;
+                    hpTextMesh = tm;
+                }
+                else if (tm.name == "HPTextShadow")
+                {
+                    hpTextShadow = tm;
                 }
             }
         }
@@ -100,7 +124,7 @@ namespace ClockworkGrid
 
             // Visual feedback
             FlashWhite();
-            UpdateHPBar();
+            UpdateHPText();
 
             if (currentHP <= 0)
             {
@@ -118,10 +142,24 @@ namespace ClockworkGrid
 
             isDestroyed = true;
 
-            // Remove from grid
+            // Unregister from spawner (Iteration 8)
+            if (ResourceSpawner.Instance != null)
+            {
+                ResourceSpawner.Instance.UnregisterNode(this);
+            }
+
+            // Remove from grid (Iteration 8: Free all occupied cells)
             if (GridManager.Instance != null)
             {
-                GridManager.Instance.RemoveUnit(GridX, GridY);
+                for (int dx = 0; dx < gridSize.x; dx++)
+                {
+                    for (int dy = 0; dy < gridSize.y; dy++)
+                    {
+                        int cellX = GridX + dx;
+                        int cellY = GridY + dy;
+                        GridManager.Instance.RemoveUnit(cellX, cellY);
+                    }
+                }
             }
 
             // Spawn destruction particles
@@ -167,7 +205,7 @@ namespace ClockworkGrid
 
             foreach (Renderer r in renderers)
             {
-                if (r != null)
+                if (r != null && r.name != "HPText" && r.name != "HPTextShadow")
                     r.material.color = Color.white;
             }
             flashTimer = FlashDuration;
@@ -179,26 +217,27 @@ namespace ClockworkGrid
 
             for (int i = 0; i < renderers.Length; i++)
             {
-                if (renderers[i] != null)
+                if (renderers[i] != null && renderers[i].name != "HPText" && renderers[i].name != "HPTextShadow")
                     renderers[i].material.color = originalColors[i];
             }
         }
 
-        private void UpdateHPBar()
+        private void UpdateHPText()
         {
-            if (hpBarFill == null) return;
+            if (hpTextMesh == null) return;
 
-            float ratio = (float)currentHP / maxHP;
-            Vector3 scale = hpBarFill.localScale;
-            scale.x = ratio;
-            hpBarFill.localScale = scale;
+            // Update both text meshes with current HP value
+            string hpString = currentHP.ToString();
+            hpTextMesh.text = hpString;
 
-            // Shift color from green to red as HP decreases
-            Renderer fillRenderer = hpBarFill.GetComponent<Renderer>();
-            if (fillRenderer != null)
+            if (hpTextShadow != null)
             {
-                fillRenderer.material.color = Color.Lerp(Color.red, new Color(0.2f, 0.9f, 0.3f), ratio);
+                hpTextShadow.text = hpString;
             }
+
+            // Color from green to red based on HP ratio
+            float ratio = (float)currentHP / maxHP;
+            hpTextMesh.color = Color.Lerp(Color.red, new Color(0.2f, 0.9f, 0.3f), ratio);
         }
     }
 }

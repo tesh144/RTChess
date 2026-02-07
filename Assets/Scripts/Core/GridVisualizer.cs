@@ -14,6 +14,10 @@ namespace ClockworkGrid
         [SerializeField] private Color gridFillColor = new Color(0.15f, 0.15f, 0.2f, 0.9f);
         [SerializeField] private float lineWidth = 0.03f;
 
+        [Header("Cell Highlights - Phase 7")]
+        [SerializeField] private Color occupiedCellColor = new Color(0.3f, 0.2f, 0.2f, 0.5f);
+        [SerializeField] private bool showCellStates = true;
+
         private Material lineMaterial;
         private GridManager grid;
 
@@ -43,10 +47,9 @@ namespace ClockworkGrid
 
             float halfCell = grid.CellSize * 0.5f;
 
-            // Draw filled cell backgrounds
+            // Draw filled cell backgrounds (Phase 7: with state-based coloring)
             GL.PushMatrix();
             GL.Begin(GL.QUADS);
-            GL.Color(gridFillColor);
 
             for (int x = 0; x < grid.Width; x++)
             {
@@ -54,6 +57,20 @@ namespace ClockworkGrid
                 {
                     Vector3 center = grid.GridToWorldPosition(x, y);
                     float yPos = -0.01f; // Slightly below ground to avoid z-fighting
+
+                    // Set color based on cell state (Phase 7)
+                    Color cellColor = gridFillColor;
+                    if (showCellStates)
+                    {
+                        CellState state = grid.GetCellState(x, y);
+                        if (state != CellState.Empty)
+                        {
+                            // Occupied cell: slight reddish tint
+                            cellColor = Color.Lerp(gridFillColor, occupiedCellColor, 0.5f);
+                        }
+                    }
+
+                    GL.Color(cellColor);
 
                     GL.Vertex3(center.x - halfCell, yPos, center.z - halfCell);
                     GL.Vertex3(center.x + halfCell, yPos, center.z - halfCell);

@@ -4,10 +4,15 @@
 A Unity-based real-time chess-like strategy game with an interval-based clockwork system. Units automatically rotate and attack resources to gather tokens in a turn-based manner synchronized to a global interval timer.
 
 ## Current Status
-**Latest Iteration:** Unit vs Unit Combat System (Iteration 3)
+**Latest Iteration:** Dock Bar & Draw System (Iteration 4)
 **Last Updated:** 2026-02-07
 
-**Key Achievement:** Full combat system with mutual damage resolution between player and enemy units.
+**Key Achievements:**
+- Card-game-style dock bar with drag-and-drop unit placement
+- Linear cost escalation for drawing units (3, 4, 5, 6...)
+- Placement is FREE (tokens spent on drawing)
+- 2-interval cooldown for placed units
+- Debug menu for testing with resource and enemy placement
 
 ## Core Systems
 
@@ -58,7 +63,9 @@ A Unity-based real-time chess-like strategy game with an interval-based clockwor
 ### 5. UI System
 - **IntervalUI**: Shows current interval and progress bar (top-left)
 - **TokenUI**: Displays token count (top-right, gold color)
-- Instructions bar (bottom-center)
+- **DockBarManager**: Bottom-center dock bar with draggable unit icons
+- **DragDropHandler**: Manages drag state, ghost preview, and placement validation
+- **DebugMenu**: Top-right debug panel for testing (toggle, token adjustment, placement controls)
 
 ### 6. Visual Systems
 - Procedural 3D models via `UnitModelBuilder` and `ResourceNodeModelBuilder`
@@ -67,16 +74,26 @@ A Unity-based real-time chess-like strategy game with an interval-based clockwor
 - Billboard floating text
 
 ## Controls
-- **Left-click**: Place Soldier unit (debug mode)
-- **Right-click**: Place Resource node (debug mode)
+
+### Normal Play
+- **Draw Button**: Click to spend tokens and draw a random unit into dock (cost: 3, 4, 5, 6...)
+- **Drag from Dock**: Drag unit icons from dock bar to grid (placement is FREE)
+- **Hover Icons**: Icons magnify 1.3x on hover (macOS dock style)
+
+### Debug Mode (Toggle via Debug Menu - Top Right)
+- **Toggle Button**: Enable/disable debug placement controls
+- **Token Adjustment**: +/-1, +/-10, +100 buttons to modify token count
+- **Right-click**: Place Resource node (free, debug only)
+- **Middle-click**: Place Enemy unit (free, debug only)
 
 ## Game Loop
-1. Place resource nodes on grid
-2. Place soldier units nearby
-3. Soldiers auto-rotate every N intervals
-4. Soldiers attack resources in facing direction
-5. Earn tokens from harvesting
-6. *(Future)* Spend tokens to place units
+1. Start with 10 tokens
+2. Click "Draw" to spend tokens (3, 4, 5...) and draw units into dock
+3. Drag units from dock to grid (placement is FREE)
+4. Placed units have 2-interval cooldown (greyed out)
+5. After cooldown, units auto-rotate and attack
+6. Earn tokens from harvesting resources
+7. Use debug menu to place resources and enemies for testing
 
 ## File Structure
 ```
@@ -97,7 +114,13 @@ Assets/
 │   │   └── ResourceNodeModelBuilder.cs
 │   ├── UI/
 │   │   ├── IntervalUI.cs         # Interval display
-│   │   └── TokenUI.cs            # Token counter
+│   │   ├── TokenUI.cs            # Token counter
+│   │   ├── DockBarManager.cs     # Dock bar controller
+│   │   ├── UnitIcon.cs           # Draggable unit icon
+│   │   ├── DragDropHandler.cs    # Drag state and ghost preview
+│   │   └── DebugMenu.cs          # Debug panel with placement controls
+│   ├── Components/
+│   │   └── PlacementCooldown.cs  # 2-interval cooldown component
 │   └── Debug/
 │       └── CellDebugPlacer.cs    # Click-to-place
 ```
@@ -109,6 +132,8 @@ Used for managers (prefix with `Instance`):
 - `GridManager.Instance`
 - `IntervalTimer.Instance`
 - `ResourceTokenManager.Instance`
+- `DragDropHandler.Instance`
+- `DockBarManager.Instance`
 
 ### Event System
 - `IntervalTimer.OnIntervalTick` - Subscribe for interval-based actions
@@ -125,11 +150,14 @@ Used for managers (prefix with `Instance`):
 - Easy to test different configurations via GameSetup inspector fields
 
 ### Next Features (Ideas)
-- [ ] Token spending for unit placement
+- [x] Token spending for unit placement (Iteration 4: Draw system)
+- [x] Unit vs Unit combat (Iteration 3)
+- [x] Dock bar with drag-and-drop (Iteration 4)
+- [x] Placement cooldown system (Iteration 4)
+- [x] Debug menu for testing (Iteration 4)
 - [ ] Enemy unit spawning/AI
-- [ ] Unit vs Unit combat
 - [ ] Movement system
-- [ ] Different unit types (archer, tank, etc.)
+- [ ] Different unit types with rarity system (Iteration 6)
 - [ ] Victory/defeat conditions
 - [ ] Wave-based enemy spawning
 - [ ] Grid size variations

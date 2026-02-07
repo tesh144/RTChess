@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 namespace ClockworkGrid
 {
@@ -18,8 +19,8 @@ namespace ClockworkGrid
     public class GameSetup : MonoBehaviour
     {
         [Header("Grid Settings")]
-        [SerializeField] private int gridWidth = 4;
-        [SerializeField] private int gridHeight = 4;
+        [SerializeField] private int gridWidth = 11; // Iteration 7: Larger grid for exploration
+        [SerializeField] private int gridHeight = 11;
         [SerializeField] private float cellSize = 1.5f;
 
         [Header("Interval Settings")]
@@ -37,6 +38,14 @@ namespace ClockworkGrid
         [SerializeField] private int resourceTokensPerHit = 1;
         [SerializeField] private int resourceBonusTokens = 3;
 
+        [Header("Iteration 8: Multi-Level Resources")]
+        [SerializeField] private int level2HP = 20;
+        [SerializeField] private int level2TokensPerHit = 1;
+        [SerializeField] private int level2BonusTokens = 6;
+        [SerializeField] private int level3HP = 50;
+        [SerializeField] private int level3TokensPerHit = 2;
+        [SerializeField] private int level3BonusTokens = 9;
+
         [Header("Visual Settings")]
         [SerializeField] private Color playerColor = new Color(0.2f, 0.5f, 1f);
         [SerializeField] private Color enemyColor = new Color(1f, 0.3f, 0.3f);
@@ -48,17 +57,29 @@ namespace ClockworkGrid
         private GameObject enemySoldierPrefab;
         private GameObject resourceNodePrefab;
 
+        // Iteration 8: Multi-level resource prefabs
+        private GameObject level1ResourcePrefab;
+        private GameObject level2ResourcePrefab;
+        private GameObject level3ResourcePrefab;
+
         private void Awake()
         {
             SetupCamera();
             SetupGrid();
+            SetupFogOfWar();
             SetupIntervalTimer();
             SetupTokenManager();
-            SetupSoldierPrefab();
-            SetupEnemySoldierPrefab();
-            SetupResourceNodePrefab();
+            SetupUnitPrefabs(); // Iteration 6: Create all unit prefabs
+            SetupResourceNodePrefabs(); // Iteration 8: Create all 3 resource levels
+            SetupResourceSpawner(); // Iteration 8: Initialize spawning system
+            SetupRaritySystem(); // Iteration 6: Must be before WaveManager/HandManager
+            SetupWaveManager();
             SetupUI();
+            SetupDockBar();
+            SetupWaveTimelineUI();
+            SetupGameOverManager();
             SetupDebugPanel();
+            SetupDebugMenu();
             SetupDebugPlacer();
             SetupLighting();
         }
@@ -106,6 +127,24 @@ namespace ClockworkGrid
             gridManager.InitializeGrid();
         }
 
+        private void SetupFogOfWar()
+        {
+            // Create FogManager (Iteration 7: simplified fog system)
+            GameObject fogManagerObj = new GameObject("FogManager");
+            FogManager fogManager = fogManagerObj.AddComponent<FogManager>();
+
+            // Create FogGridVisualizer for fog overlay visuals
+            GameObject fogVisualizerObj = new GameObject("FogGridVisualizer");
+            FogGridVisualizer fogVisualizer = fogVisualizerObj.AddComponent<FogGridVisualizer>();
+
+            // Initialize both systems
+            if (GridManager.Instance != null)
+            {
+                fogManager.Initialize(GridManager.Instance.Width, GridManager.Instance.Height);
+                fogVisualizer.Initialize(GridManager.Instance, fogManager);
+            }
+        }
+
         private void SetupIntervalTimer()
         {
             GameObject timerObj = new GameObject("IntervalTimer");
@@ -119,60 +158,218 @@ namespace ClockworkGrid
             tokenObj.AddComponent<ResourceTokenManager>();
         }
 
-        private void SetupSoldierPrefab()
+
+        /// <summary>
+        /// Iteration 8: Create all three resource node levels (1x1, 2x1, 2x2).
+        /// </summary>
+        private void SetupResourceNodePrefabs()
         {
-            soldierPrefab = UnitModelBuilder.CreateSoldierModel(playerColor);
+            // Level 1: 1x1 (small, green)
+            level1ResourcePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(new Color(0.2f, 0.85f, 0.4f)); // Green
+            ResourceNode node1 = level1ResourcePrefab.AddComponent<ResourceNode>();
+            SetPrivateField(node1, "maxHP", resourceNodeHP);
+            SetPrivateField(node1, "level", 1);
+            SetPrivateField(node1, "tokensPerHit", resourceTokensPerHit);
+            SetPrivateField(node1, "bonusTokens", resourceBonusTokens);
+            SetPrivateField(node1, "gridSize", new Vector2Int(1, 1));
+            level1ResourcePrefab.AddComponent<HPBarOverlay>();
+            level1ResourcePrefab.SetActive(false);
+            level1ResourcePrefab.name = "ResourceNode_Level1";
+
+            // Level 2: 2x1 (medium, yellow-green, larger scale)
+            level2ResourcePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(new Color(0.6f, 0.9f, 0.3f)); // Yellow-green
+            level2ResourcePrefab.transform.localScale = Vector3.one * 1.5f; // Larger
+            ResourceNode node2 = level2ResourcePrefab.AddComponent<ResourceNode>();
+            SetPrivateField(node2, "maxHP", level2HP);
+            SetPrivateField(node2, "level", 2);
+            SetPrivateField(node2, "tokensPerHit", level2TokensPerHit);
+            SetPrivateField(node2, "bonusTokens", level2BonusTokens);
+            SetPrivateField(node2, "gridSize", new Vector2Int(2, 1)); // Horizontal by default, can be rotated
+            level2ResourcePrefab.AddComponent<HPBarOverlay>();
+            level2ResourcePrefab.SetActive(false);
+            level2ResourcePrefab.name = "ResourceNode_Level2";
+
+            // Level 3: 2x2 (large, blue-green, much larger scale)
+            level3ResourcePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(new Color(0.2f, 0.7f, 0.9f)); // Blue-green
+            level3ResourcePrefab.transform.localScale = Vector3.one * 2.0f; // Much larger
+            ResourceNode node3 = level3ResourcePrefab.AddComponent<ResourceNode>();
+            SetPrivateField(node3, "maxHP", level3HP);
+            SetPrivateField(node3, "level", 3);
+            SetPrivateField(node3, "tokensPerHit", level3TokensPerHit);
+            SetPrivateField(node3, "bonusTokens", level3BonusTokens);
+            SetPrivateField(node3, "gridSize", new Vector2Int(2, 2));
+            level3ResourcePrefab.AddComponent<HPBarOverlay>();
+            level3ResourcePrefab.SetActive(false);
+            level3ResourcePrefab.name = "ResourceNode_Level3";
+
+            // Keep legacy reference for backward compatibility
+            resourceNodePrefab = level1ResourcePrefab;
+
+            Debug.Log("Created 3 resource node levels: L1 (1x1), L2 (2x1), L3 (2x2)");
+        }
+
+        /// <summary>
+        /// Iteration 8: Initialize Resource Spawner system.
+        /// </summary>
+        private void SetupResourceSpawner()
+        {
+            GameObject spawnerObj = new GameObject("ResourceSpawner");
+            ResourceSpawner spawner = spawnerObj.AddComponent<ResourceSpawner>();
+
+            // Set spawn interval (every 10 intervals = 20 seconds)
+            SetPrivateField(spawner, "spawnIntervalCount", 10);
+
+            // Set node caps
+            SetPrivateField(spawner, "maxTotalNodes", 5);
+            SetPrivateField(spawner, "maxLevel2Nodes", 2);
+            SetPrivateField(spawner, "maxLevel3Nodes", 1);
+
+            // Set probabilities (60/35/5 distribution)
+            SetPrivateField(spawner, "level1Probability", 60f);
+            SetPrivateField(spawner, "level2Probability", 35f);
+            SetPrivateField(spawner, "level3Probability", 5f);
+
+            // Set spawn preferences
+            SetPrivateField(spawner, "preferFoggedSpawns", true);
+            SetPrivateField(spawner, "foggedSpawnWeight", 70f);
+
+            // Assign prefabs
+            SetPrivateField(spawner, "level1Prefab", level1ResourcePrefab);
+            SetPrivateField(spawner, "level2Prefab", level2ResourcePrefab);
+            SetPrivateField(spawner, "level3Prefab", level3ResourcePrefab);
+
+            // Initialize spawner (spawns initial resource in revealed area)
+            spawner.Initialize();
+
+            Debug.Log("ResourceSpawner initialized: Spawns every 10 intervals, max 5 nodes (L2 max: 2, L3 max: 1)");
+        }
+
+        /// <summary>
+        /// Iteration 6: Create all three unit type prefabs (Soldier, Ogre, Ninja)
+        /// </summary>
+        private void SetupUnitPrefabs()
+        {
+            // Create Soldier prefab (existing logic, just refactored)
+            soldierPrefab = UnitModelBuilder.CreateSoldierModel(new Color(0.2f, 0.5f, 1f)); // Blue
             SoldierUnit soldierUnit = soldierPrefab.AddComponent<SoldierUnit>();
-
-            SetPrivateField(soldierUnit, "maxHP", soldierHP);
-            SetPrivateField(soldierUnit, "attackDamage", soldierAttackDamage);
-            SetPrivateField(soldierUnit, "attackRange", soldierAttackRange);
-            SetPrivateField(soldierUnit, "attackIntervalMultiplier", soldierAttackInterval);
-            SetPrivateField(soldierUnit, "resourceCost", soldierResourceCost);
-            SetPrivateField(soldierUnit, "team", Team.Player);
-
+            SetPrivateField(soldierUnit, "maxHP", 10);
+            SetPrivateField(soldierUnit, "attackDamage", 3);
+            SetPrivateField(soldierUnit, "attackRange", 1);
+            SetPrivateField(soldierUnit, "attackIntervalMultiplier", 2);
+            SetPrivateField(soldierUnit, "resourceCost", 3);
+            soldierPrefab.AddComponent<HPBarOverlay>();
             soldierPrefab.SetActive(false);
             soldierPrefab.name = "SoldierPrefab";
+
+            // Create Ogre prefab (tank, large, slow)
+            GameObject ogrePrefab = UnitModelBuilder.CreateSoldierModel(new Color(0.8f, 0.4f, 1f)); // Purple
+            ogrePrefab.transform.localScale = Vector3.one * 1.3f; // Larger
+            SoldierUnit ogreUnit = ogrePrefab.AddComponent<SoldierUnit>();
+            SetPrivateField(ogreUnit, "maxHP", 20);
+            SetPrivateField(ogreUnit, "attackDamage", 5);
+            SetPrivateField(ogreUnit, "attackRange", 2); // Range 2!
+            SetPrivateField(ogreUnit, "attackIntervalMultiplier", 4); // Slow rotation
+            SetPrivateField(ogreUnit, "resourceCost", 6);
+            ogrePrefab.AddComponent<HPBarOverlay>();
+            ogrePrefab.SetActive(false);
+            ogrePrefab.name = "OgrePrefab";
+
+            // Create Ninja prefab (fast, fragile, small)
+            GameObject ninjaPrefab = UnitModelBuilder.CreateSoldierModel(new Color(1f, 0.3f, 0.3f)); // Red
+            ninjaPrefab.transform.localScale = Vector3.one * 0.8f; // Smaller
+            SoldierUnit ninjaUnit = ninjaPrefab.AddComponent<SoldierUnit>();
+            SetPrivateField(ninjaUnit, "maxHP", 5);
+            SetPrivateField(ninjaUnit, "attackDamage", 1);
+            SetPrivateField(ninjaUnit, "attackRange", 1);
+            SetPrivateField(ninjaUnit, "attackIntervalMultiplier", 1); // Fast rotation!
+            SetPrivateField(ninjaUnit, "resourceCost", 4);
+            ninjaPrefab.AddComponent<HPBarOverlay>();
+            ninjaPrefab.SetActive(false);
+            ninjaPrefab.name = "NinjaPrefab";
+
+            // Store enemy variant (same prefabs, different team applied at spawn)
+            enemySoldierPrefab = soldierPrefab;
+
+            Debug.Log("Created 3 unit type prefabs: Soldier, Ogre, Ninja");
         }
 
-        private void SetupEnemySoldierPrefab()
+        /// <summary>
+        /// Iteration 6: Set up RaritySystem and register all unit stats
+        /// </summary>
+        private void SetupRaritySystem()
         {
-            enemySoldierPrefab = UnitModelBuilder.CreateSoldierModel(enemyColor);
-            SoldierUnit enemyUnit = enemySoldierPrefab.AddComponent<SoldierUnit>();
+            GameObject rarityObj = new GameObject("RaritySystem");
+            RaritySystem raritySystem = rarityObj.AddComponent<RaritySystem>();
 
-            SetPrivateField(enemyUnit, "maxHP", soldierHP);
-            SetPrivateField(enemyUnit, "attackDamage", soldierAttackDamage);
-            SetPrivateField(enemyUnit, "attackRange", soldierAttackRange);
-            SetPrivateField(enemyUnit, "attackIntervalMultiplier", soldierAttackInterval);
-            SetPrivateField(enemyUnit, "resourceCost", soldierResourceCost);
-            SetPrivateField(enemyUnit, "team", Team.Enemy);
+            // Create UnitStats for each unit type
+            List<UnitStats> allStats = new List<UnitStats>();
 
-            enemySoldierPrefab.SetActive(false);
-            enemySoldierPrefab.name = "EnemySoldierPrefab";
-        }
+            // Soldier Stats (Common)
+            UnitStats soldierStats = ScriptableObject.CreateInstance<UnitStats>();
+            soldierStats.unitType = UnitType.Soldier;
+            soldierStats.unitName = "Soldier";
+            soldierStats.rarity = Rarity.Common;
+            soldierStats.maxHP = 10;
+            soldierStats.attackDamage = 3;
+            soldierStats.attackRange = 1;
+            soldierStats.attackIntervalMultiplier = 2;
+            soldierStats.resourceCost = 3;
+            soldierStats.revealRadius = 1; // Iteration 7: Fog reveal radius
+            soldierStats.unitColor = new Color(0.2f, 0.5f, 1f); // Blue
+            soldierStats.modelScale = 1f;
+            soldierStats.unitPrefab = soldierPrefab;
+            allStats.Add(soldierStats);
 
-        private void SetupResourceNodePrefab()
-        {
-            resourceNodePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(
-                resourceColor,
-                out Transform hpBarFill,
-                out Transform hpBarBg
-            );
+            // Ogre Stats (Epic)
+            GameObject ogrePrefab = GameObject.Find("OgrePrefab");
+            UnitStats ogreStats = ScriptableObject.CreateInstance<UnitStats>();
+            ogreStats.unitType = UnitType.Ogre;
+            ogreStats.unitName = "Ogre";
+            ogreStats.rarity = Rarity.Epic;
+            ogreStats.maxHP = 20;
+            ogreStats.attackDamage = 5;
+            ogreStats.attackRange = 2; // Range 2!
+            ogreStats.attackIntervalMultiplier = 4;
+            ogreStats.resourceCost = 6;
+            ogreStats.revealRadius = 1; // Iteration 7: Same as Soldier
+            ogreStats.unitColor = new Color(0.8f, 0.4f, 1f); // Purple
+            ogreStats.modelScale = 1.3f;
+            ogreStats.unitPrefab = ogrePrefab;
+            allStats.Add(ogreStats);
 
-            ResourceNode node = resourceNodePrefab.AddComponent<ResourceNode>();
-            SetPrivateField(node, "maxHP", resourceNodeHP);
-            SetPrivateField(node, "level", 1);
-            SetPrivateField(node, "tokensPerHit", resourceTokensPerHit);
-            SetPrivateField(node, "bonusTokens", resourceBonusTokens);
+            // Ninja Stats (Rare)
+            GameObject ninjaPrefab = GameObject.Find("NinjaPrefab");
+            UnitStats ninjaStats = ScriptableObject.CreateInstance<UnitStats>();
+            ninjaStats.unitType = UnitType.Ninja;
+            ninjaStats.unitName = "Ninja";
+            ninjaStats.rarity = Rarity.Rare;
+            ninjaStats.maxHP = 5;
+            ninjaStats.attackDamage = 1;
+            ninjaStats.attackRange = 1;
+            ninjaStats.attackIntervalMultiplier = 1; // Fast!
+            ninjaStats.resourceCost = 4;
+            ninjaStats.revealRadius = 2; // Iteration 7: Ninjas scout further!
+            ninjaStats.unitColor = new Color(1f, 0.3f, 0.3f); // Red
+            ninjaStats.modelScale = 0.8f;
+            ninjaStats.unitPrefab = ninjaPrefab;
+            allStats.Add(ninjaStats);
 
-            // HP bar is found by name ("HPBarFill") in ResourceNode.Start()
+            // Register with RaritySystem
+            raritySystem.RegisterUnitStats(allStats);
 
-            resourceNodePrefab.SetActive(false);
-            resourceNodePrefab.name = "ResourceNodePrefab";
+            Debug.Log("RaritySystem initialized with 3 unit types");
         }
 
         private void SetupUI()
         {
+            // Create EventSystem for UI input (required for button clicks)
+            if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            {
+                GameObject eventSystemObj = new GameObject("EventSystem");
+                eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                eventSystemObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            }
+
             // Create canvas
             GameObject canvasObj = new GameObject("UICanvas");
             Canvas canvas = canvasObj.AddComponent<Canvas>();
@@ -181,68 +378,188 @@ namespace ClockworkGrid
             canvasObj.AddComponent<CanvasScaler>();
             canvasObj.AddComponent<GraphicRaycaster>();
 
-            // Interval text (top-left corner)
-            GameObject textObj = new GameObject("IntervalText");
-            textObj.transform.SetParent(canvasObj.transform, false);
+            // VERTICAL INTERVAL TIMER BAR (left edge)
+            // Background strip
+            GameObject intervalBarBg = new GameObject("IntervalBarBackground");
+            intervalBarBg.transform.SetParent(canvasObj.transform, false);
+            Image barBgImage = intervalBarBg.AddComponent<Image>();
+            barBgImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            barBgImage.color = new Color(0.1f, 0.1f, 0.1f, 0.7f);
 
-            TextMeshProUGUI text = textObj.AddComponent<TextMeshProUGUI>();
-            text.text = "Interval: 0";
-            text.fontSize = 24;
-            text.color = Color.white;
-            text.alignment = TextAlignmentOptions.TopLeft;
+            RectTransform barBgRect = intervalBarBg.GetComponent<RectTransform>();
+            barBgRect.anchorMin = new Vector2(0, 0);
+            barBgRect.anchorMax = new Vector2(0, 1);
+            barBgRect.pivot = new Vector2(0, 0.5f);
+            barBgRect.anchoredPosition = new Vector2(0, 0);
+            barBgRect.sizeDelta = new Vector2(25f, -40f); // 25px wide, 20px padding top/bottom
 
-            RectTransform textRect = textObj.GetComponent<RectTransform>();
-            textRect.anchorMin = new Vector2(0, 1);
-            textRect.anchorMax = new Vector2(0, 1);
-            textRect.pivot = new Vector2(0, 1);
-            textRect.anchoredPosition = new Vector2(20, -20);
-            textRect.sizeDelta = new Vector2(300, 50);
-
-            // Progress bar background
-            GameObject progressBg = new GameObject("ProgressBarBG");
-            progressBg.transform.SetParent(canvasObj.transform, false);
-            Image bgImage = progressBg.AddComponent<Image>();
-            bgImage.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
-
-            RectTransform bgRect = progressBg.GetComponent<RectTransform>();
-            bgRect.anchorMin = new Vector2(0, 1);
-            bgRect.anchorMax = new Vector2(0, 1);
-            bgRect.pivot = new Vector2(0, 1);
-            bgRect.anchoredPosition = new Vector2(20, -60);
-            bgRect.sizeDelta = new Vector2(200, 10);
-
-            // Progress bar fill
-            GameObject progressFill = new GameObject("ProgressBarFill");
-            progressFill.transform.SetParent(progressBg.transform, false);
-            Image fillImage = progressFill.AddComponent<Image>();
-            fillImage.color = new Color(0.3f, 0.8f, 1f, 0.9f);
+            // Vertical fill bar (fills upward)
+            GameObject intervalBarFill = new GameObject("IntervalBarFill");
+            intervalBarFill.transform.SetParent(intervalBarBg.transform, false);
+            Image fillImage = intervalBarFill.AddComponent<Image>();
+            fillImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            fillImage.color = new Color(0f, 0.83f, 1f, 0.95f); // Bright cyan #00D4FF
             fillImage.type = Image.Type.Filled;
-            fillImage.fillMethod = Image.FillMethod.Horizontal;
+            fillImage.fillMethod = Image.FillMethod.Vertical;
+            fillImage.fillOrigin = (int)Image.OriginVertical.Bottom; // Fill from bottom upward
 
-            RectTransform fillRect = progressFill.GetComponent<RectTransform>();
+            RectTransform fillRect = intervalBarFill.GetComponent<RectTransform>();
             fillRect.anchorMin = Vector2.zero;
             fillRect.anchorMax = Vector2.one;
             fillRect.sizeDelta = Vector2.zero;
             fillRect.offsetMin = Vector2.zero;
             fillRect.offsetMax = Vector2.zero;
 
-            // Token counter (top-right corner)
-            GameObject tokenObj = new GameObject("TokenText");
-            tokenObj.transform.SetParent(canvasObj.transform, false);
+            // Interval count number (small, at top of bar)
+            GameObject intervalTextObj = new GameObject("IntervalText");
+            intervalTextObj.transform.SetParent(intervalBarBg.transform, false);
 
-            TextMeshProUGUI tokenText = tokenObj.AddComponent<TextMeshProUGUI>();
-            tokenText.text = "Tokens: 0";
-            tokenText.fontSize = 28;
-            tokenText.color = new Color(1f, 0.9f, 0.2f);
-            tokenText.alignment = TextAlignmentOptions.TopRight;
+            TextMeshProUGUI intervalText = intervalTextObj.AddComponent<TextMeshProUGUI>();
+            intervalText.text = "0";
+            intervalText.fontSize = 16;
+            intervalText.color = Color.white;
+            intervalText.alignment = TextAlignmentOptions.Center;
+            intervalText.fontStyle = FontStyles.Bold;
+
+            RectTransform intervalTextRect = intervalTextObj.GetComponent<RectTransform>();
+            intervalTextRect.anchorMin = new Vector2(0, 1);
+            intervalTextRect.anchorMax = new Vector2(1, 1);
+            intervalTextRect.pivot = new Vector2(0.5f, 1);
+            intervalTextRect.anchoredPosition = new Vector2(0, 5f);
+            intervalTextRect.sizeDelta = new Vector2(0, 30f);
+
+            // TOKEN DISPLAY (top-right corner, Phase 6 redesign)
+            // Container with background
+            GameObject tokenContainerObj = new GameObject("TokenContainer");
+            tokenContainerObj.transform.SetParent(canvasObj.transform, false);
+
+            RectTransform tokenContainer = tokenContainerObj.AddComponent<RectTransform>();
+            tokenContainer.anchorMin = new Vector2(1, 1);
+            tokenContainer.anchorMax = new Vector2(1, 1);
+            tokenContainer.pivot = new Vector2(1, 1);
+            tokenContainer.anchoredPosition = new Vector2(-20, -20);
+            tokenContainer.sizeDelta = new Vector2(140f, 60f);
+
+            // Background panel
+            Image containerBg = tokenContainerObj.AddComponent<Image>();
+            containerBg.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            containerBg.color = new Color(0.15f, 0.15f, 0.2f, 0.9f); // Dark purple-gray
+
+            // Token icon (circular coin)
+            GameObject iconObj = new GameObject("TokenIcon");
+            iconObj.transform.SetParent(tokenContainerObj.transform, false);
+
+            RectTransform iconRect = iconObj.AddComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0, 0.5f);
+            iconRect.anchorMax = new Vector2(0, 0.5f);
+            iconRect.pivot = new Vector2(0, 0.5f);
+            iconRect.anchoredPosition = new Vector2(15f, 0f);
+            iconRect.sizeDelta = new Vector2(40f, 40f);
+
+            Image tokenIcon = iconObj.AddComponent<Image>();
+            tokenIcon.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            tokenIcon.color = new Color(1f, 0.9f, 0.2f); // Gold
+            tokenIcon.type = Image.Type.Filled;
+            tokenIcon.fillMethod = Image.FillMethod.Radial360;
+            tokenIcon.fillOrigin = (int)Image.Origin360.Top;
+
+            // Inner circle (creates coin effect)
+            GameObject innerCircleObj = new GameObject("InnerCircle");
+            innerCircleObj.transform.SetParent(iconObj.transform, false);
+
+            RectTransform innerRect = innerCircleObj.AddComponent<RectTransform>();
+            innerRect.anchorMin = Vector2.zero;
+            innerRect.anchorMax = Vector2.one;
+            innerRect.sizeDelta = new Vector2(-10f, -10f); // Inset by 5px on each side
+
+            Image innerCircle = innerCircleObj.AddComponent<Image>();
+            innerCircle.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            innerCircle.color = new Color(0.8f, 0.7f, 0.1f); // Darker gold
+
+            // Token count text
+            GameObject tokenTextObj = new GameObject("TokenText");
+            tokenTextObj.transform.SetParent(tokenContainerObj.transform, false);
+
+            TextMeshProUGUI tokenText = tokenTextObj.AddComponent<TextMeshProUGUI>();
+            tokenText.text = "10";
+            tokenText.fontSize = 36;
+            tokenText.color = new Color(1f, 0.95f, 0.8f); // Light cream
+            tokenText.alignment = TextAlignmentOptions.MidlineRight;
             tokenText.fontStyle = FontStyles.Bold;
 
-            RectTransform tokenRect = tokenObj.GetComponent<RectTransform>();
-            tokenRect.anchorMin = new Vector2(1, 1);
-            tokenRect.anchorMax = new Vector2(1, 1);
-            tokenRect.pivot = new Vector2(1, 1);
-            tokenRect.anchoredPosition = new Vector2(-20, -20);
-            tokenRect.sizeDelta = new Vector2(300, 50);
+            RectTransform tokenTextRect = tokenTextObj.GetComponent<RectTransform>();
+            tokenTextRect.anchorMin = new Vector2(0.4f, 0);
+            tokenTextRect.anchorMax = new Vector2(1f, 1f);
+            tokenTextRect.pivot = new Vector2(1, 0.5f);
+            tokenTextRect.anchoredPosition = new Vector2(-10f, 0f);
+            tokenTextRect.sizeDelta = Vector2.zero;
+
+            // WAVE TIMELINE (top-center, below token counter)
+            GameObject timelineContainerObj = new GameObject("WaveTimelineContainer");
+            timelineContainerObj.transform.SetParent(canvasObj.transform, false);
+
+            RectTransform timelineContainer = timelineContainerObj.AddComponent<RectTransform>();
+            timelineContainer.anchorMin = new Vector2(0.5f, 1f);
+            timelineContainer.anchorMax = new Vector2(0.5f, 1f);
+            timelineContainer.pivot = new Vector2(0.5f, 1f);
+            timelineContainer.anchoredPosition = new Vector2(0f, -70f); // Below token text
+            timelineContainer.sizeDelta = new Vector2(600f, 80f);
+
+            // Background
+            Image timelineBg = timelineContainerObj.AddComponent<Image>();
+            timelineBg.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            timelineBg.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+
+            // Progress fill bar (shows current position in timeline)
+            GameObject progressObj = new GameObject("ProgressFill");
+            progressObj.transform.SetParent(timelineContainerObj.transform, false);
+
+            Image progressFill = progressObj.AddComponent<Image>();
+            progressFill.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            progressFill.color = new Color(0f, 0.83f, 1f, 0.5f); // Semi-transparent cyan
+            progressFill.type = Image.Type.Filled;
+            progressFill.fillMethod = Image.FillMethod.Horizontal;
+            progressFill.fillOrigin = (int)Image.OriginHorizontal.Left;
+
+            RectTransform progressRect = progressObj.GetComponent<RectTransform>();
+            progressRect.anchorMin = Vector2.zero;
+            progressRect.anchorMax = Vector2.one;
+            progressRect.sizeDelta = Vector2.zero;
+
+            // Markers panel (holds wave markers)
+            GameObject markersPanelObj = new GameObject("MarkersPanel");
+            markersPanelObj.transform.SetParent(timelineContainerObj.transform, false);
+
+            RectTransform markersPanel = markersPanelObj.AddComponent<RectTransform>();
+            markersPanel.anchorMin = Vector2.zero;
+            markersPanel.anchorMax = Vector2.one;
+            markersPanel.sizeDelta = Vector2.zero;
+
+            // Wave info text (above timeline)
+            GameObject waveInfoObj = new GameObject("WaveInfoText");
+            waveInfoObj.transform.SetParent(timelineContainerObj.transform, false);
+
+            TextMeshProUGUI waveInfoText = waveInfoObj.AddComponent<TextMeshProUGUI>();
+            waveInfoText.text = "Wave 1: 40s";
+            waveInfoText.fontSize = 18;
+            waveInfoText.color = Color.white;
+            waveInfoText.alignment = TextAlignmentOptions.Center;
+            waveInfoText.fontStyle = FontStyles.Bold;
+
+            RectTransform waveInfoRect = waveInfoObj.GetComponent<RectTransform>();
+            waveInfoRect.anchorMin = new Vector2(0f, 1f);
+            waveInfoRect.anchorMax = new Vector2(1f, 1f);
+            waveInfoRect.pivot = new Vector2(0.5f, 0f);
+            waveInfoRect.anchoredPosition = new Vector2(0f, 5f);
+            waveInfoRect.sizeDelta = new Vector2(0f, 25f);
+
+            // Add WaveTimelineUI component
+            WaveTimelineUI waveTimelineUI = canvasObj.AddComponent<WaveTimelineUI>();
+            SetPrivateField(waveTimelineUI, "timelineContainer", timelineContainer);
+            SetPrivateField(waveTimelineUI, "timelineBackground", timelineBg);
+            SetPrivateField(waveTimelineUI, "progressFill", progressFill);
+            SetPrivateField(waveTimelineUI, "markersPanel", markersPanel);
+            SetPrivateField(waveTimelineUI, "waveInfoText", waveInfoText);
 
             // Instructions text (bottom-center)
             GameObject instructionsObj = new GameObject("InstructionsText");
@@ -263,12 +580,39 @@ namespace ClockworkGrid
 
             // Hook up IntervalUI
             IntervalUI intervalUI = canvasObj.AddComponent<IntervalUI>();
-            SetPrivateField(intervalUI, "intervalText", text);
-            SetPrivateField(intervalUI, "progressBar", fillImage);
+            SetPrivateField(intervalUI, "intervalText", intervalText);
+            SetPrivateField(intervalUI, "verticalBar", fillImage);
 
-            // Hook up token UI
+            // Hook up token UI (Phase 6)
             TokenUI tokenUI = canvasObj.AddComponent<TokenUI>();
             SetPrivateField(tokenUI, "tokenText", tokenText);
+            SetPrivateField(tokenUI, "tokenIcon", tokenIcon);
+            SetPrivateField(tokenUI, "container", tokenContainer);
+        }
+
+        private void SetupDockBar()
+        {
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            // Create DragDropHandler singleton
+            GameObject dragHandlerObj = new GameObject("DragDropHandler");
+            dragHandlerObj.AddComponent<DragDropHandler>();
+
+            // Create HandManager (Phase 2, updated Iteration 6)
+            GameObject handObj = new GameObject("HandManager");
+            HandManager handManager = handObj.AddComponent<HandManager>();
+            handManager.Initialize(); // Iteration 6: Uses RaritySystem
+
+            // Give player starting hand (3 Soldiers - Phase 2 spec)
+            handManager.GiveStartingHand();
+
+            // Create DockBarManager
+            GameObject dockObj = new GameObject("DockBarManager");
+            dockObj.transform.SetParent(canvas.transform, false);
+
+            DockBarManager dockManager = dockObj.AddComponent<DockBarManager>();
+            dockManager.Initialize(canvas, handManager);
         }
 
         private void SetupDebugPanel()
@@ -469,6 +813,18 @@ namespace ClockworkGrid
             return btn;
         }
 
+        private void SetupDebugMenu()
+        {
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            GameObject debugMenuObj = new GameObject("DebugMenu");
+            debugMenuObj.transform.SetParent(canvas.transform, false);
+
+            DebugMenu debugMenu = debugMenuObj.AddComponent<DebugMenu>();
+            debugMenu.Initialize(canvas);
+        }
+
         private void SetupDebugPlacer()
         {
             GameObject placerObj = new GameObject("DebugPlacer");
@@ -476,6 +832,41 @@ namespace ClockworkGrid
             SetPrivateField(placer, "soldierPrefab", soldierPrefab);
             SetPrivateField(placer, "enemySoldierPrefab", enemySoldierPrefab);
             SetPrivateField(placer, "resourceNodePrefab", resourceNodePrefab);
+        }
+
+        private void SetupWaveManager()
+        {
+            GameObject waveObj = new GameObject("WaveManager");
+            WaveManager waveManager = waveObj.AddComponent<WaveManager>();
+            waveManager.Initialize(); // Iteration 6: No longer needs enemy prefab
+        }
+
+        private void SetupWaveTimelineUI()
+        {
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas == null)
+            {
+                Debug.LogWarning("No Canvas found for WaveTimelineUI");
+                return;
+            }
+
+            GameObject timelineObj = new GameObject("WaveTimelineUI");
+            WaveTimelineUI timelineUI = timelineObj.AddComponent<WaveTimelineUI>();
+            timelineUI.Initialize(canvas);
+        }
+
+        private void SetupGameOverManager()
+        {
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas == null)
+            {
+                Debug.LogWarning("No Canvas found for GameOverManager");
+                return;
+            }
+
+            GameObject gameOverObj = new GameObject("GameOverManager");
+            GameOverManager gameOverManager = gameOverObj.AddComponent<GameOverManager>();
+            gameOverManager.Initialize(canvas);
         }
 
         private void SetupLighting()

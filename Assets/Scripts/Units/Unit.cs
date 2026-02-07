@@ -32,8 +32,11 @@ namespace ClockworkGrid
         private int currentHP;
         private bool isDestroyed = false;
 
-        // HP bar references
-        private Transform hpBarFill;
+        // HP text references
+        private TextMesh hpTextMesh;
+        private TextMesh hpTextShadow;
+        private TextMesh typeTextMesh;
+        private TextMesh typeTextShadow;
         private Renderer[] renderers;
         private Color[] originalColors;
         private float damageFlashTimer;
@@ -51,6 +54,7 @@ namespace ClockworkGrid
         public int AttackRange => attackRange;
         public int AttackIntervalMultiplier => attackIntervalMultiplier;
         public int ResourceCost => resourceCost;
+        public int RevealRadius { get; private set; } = 1; // Fog reveal radius (Iteration 7)
 
         // Rotation animation state
         private bool isRotating;
@@ -72,10 +76,11 @@ namespace ClockworkGrid
                 IntervalTimer.Instance.OnIntervalTick += OnIntervalTick;
             }
 
-            // Find HP bar and cache renderers
-            FindHPBar();
+            // Find HP text and cache renderers
+            FindHPText();
+            FindTypeText();
             CacheRenderers();
-            UpdateHPBar();
+            UpdateHPText();
         }
 
         protected virtual void OnDestroy()
@@ -117,6 +122,11 @@ namespace ClockworkGrid
 
         private void OnIntervalTick(int intervalCount)
         {
+            // Check for placement cooldown
+            PlacementCooldown cooldown = GetComponent<PlacementCooldown>();
+            if (cooldown != null && cooldown.IsOnCooldown)
+                return; // Skip all actions while on cooldown
+
             // Only rotate on intervals that match our multiplier
             if (intervalCount % attackIntervalMultiplier != 0) return;
 
@@ -264,7 +274,7 @@ namespace ClockworkGrid
 
             // Visual feedback
             FlashRed();
-            UpdateHPBar();
+            UpdateHPText();
 
             Debug.Log($"{team} unit took {actualDamage} damage! HP: {currentHP}/{maxHP}");
 
@@ -365,16 +375,36 @@ namespace ClockworkGrid
             Destroy(vfxObj, 1f);
         }
 
-        private void FindHPBar()
+        private void FindHPText()
         {
-            // Find HP bar fill by name in children hierarchy
-            Transform[] allChildren = GetComponentsInChildren<Transform>(true);
-            foreach (Transform t in allChildren)
+            // Find HP text components by name in children hierarchy
+            TextMesh[] allTextMeshes = GetComponentsInChildren<TextMesh>(true);
+            foreach (TextMesh tm in allTextMeshes)
             {
-                if (t.name == "HPBarFill")
+                if (tm.name == "HPText")
                 {
-                    hpBarFill = t;
-                    return;
+                    hpTextMesh = tm;
+                }
+                else if (tm.name == "HPTextShadow")
+                {
+                    hpTextShadow = tm;
+                }
+            }
+        }
+
+        private void FindTypeText()
+        {
+            // Find type text components by name in children hierarchy
+            TextMesh[] allTextMeshes = GetComponentsInChildren<TextMesh>(true);
+            foreach (TextMesh tm in allTextMeshes)
+            {
+                if (tm.name == "TypeText")
+                {
+                    typeTextMesh = tm;
+                }
+                else if (tm.name == "TypeTextShadow")
+                {
+                    typeTextShadow = tm;
                 }
             }
         }
@@ -396,7 +426,7 @@ namespace ClockworkGrid
 
             foreach (Renderer r in renderers)
             {
-                if (r != null && r.name != "HPBarFill" && r.name != "HPBarBG")
+                if (r != null && r.name != "HPText" && r.name != "HPTextShadow")
                     r.material.color = Color.red;
             }
             damageFlashTimer = DamageFlashDuration;
@@ -408,33 +438,27 @@ namespace ClockworkGrid
 
             for (int i = 0; i < renderers.Length; i++)
             {
-                if (renderers[i] != null && renderers[i].name != "HPBarFill" && renderers[i].name != "HPBarBG")
+                if (renderers[i] != null && renderers[i].name != "HPText" && renderers[i].name != "HPTextShadow")
                     renderers[i].material.color = originalColors[i];
             }
         }
 
-        private void UpdateHPBar()
+        private void UpdateHPText()
         {
-            if (hpBarFill == null) return;
+            if (hpTextMesh == null) return;
 
-            float ratio = (float)currentHP / maxHP;
+            // Update both text meshes with current HP value
+            string hpString = currentHP.ToString();
+            hpTextMesh.text = hpString;
 
-            // Scale vertically (Y axis) instead of horizontally
-            Vector3 scale = hpBarFill.localScale;
-            scale.y = ratio;
-            hpBarFill.localScale = scale;
-
-            // Adjust position to shrink from top down (anchor at bottom)
-            Vector3 pos = hpBarFill.localPosition;
-            pos.y = -(1f - ratio) * 0.5f; // Move down as it shrinks to keep bottom anchored
-            hpBarFill.localPosition = pos;
-
-            // Color from green to red based on HP
-            Renderer fillRenderer = hpBarFill.GetComponent<Renderer>();
-            if (fillRenderer != null)
+            if (hpTextShadow != null)
             {
-                fillRenderer.material.color = Color.Lerp(Color.red, Color.green, ratio);
+                hpTextShadow.text = hpString;
             }
+
+            // Color from green to red based on HP ratio
+            float ratio = (float)currentHP / maxHP;
+            hpTextMesh.color = Color.Lerp(Color.red, Color.green, ratio);
         }
 
         public void Initialize(Team unitTeam, int gridX, int gridY)
@@ -444,6 +468,150 @@ namespace ClockworkGrid
             GridY = gridY;
             currentFacing = Facing.North;
             transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+        }
+
+        /// <summary>
+        /// Initialize unit with UnitStats (Iteration 6)
+        /// </summary>
+        public void Initialize(Team unitTeam, int gridX, int gridY, UnitStats stats)
+        {
+            // Apply stats
+            maxHP = stats.maxHP;
+            attackDamage = stats.attackDamage;
+            attackRange = stats.attackRange;
+            attackIntervalMultiplier = stats.attackIntervalMultiplier;
+            resourceCost = stats.resourceCost;
+            RevealRadius = stats.revealRadius;
+
+            // Reset HP to new max
+            currentHP = maxHP;
+
+            // Apply team and position
+            team = unitTeam;
+            GridX = gridX;
+            GridY = gridY;
+            currentFacing = Facing.North;
+            transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
+            // Apply visual scale
+            if (stats.modelScale != 1f)
+            {
+                transform.localScale = Vector3.one * stats.modelScale;
+            }
+
+            // Apply color based on team (Bug fix: enemies were using player colors)
+            Color teamColor = (unitTeam == Team.Player) ? stats.unitColor : new Color(1f, 0.3f, 0.3f); // Red for enemies
+            ApplyColor(teamColor);
+
+            // Update HP text
+            UpdateHPText();
+
+            // Create type label if not found (Bug fix: show unit type on board)
+            if (typeTextMesh == null)
+            {
+                CreateTypeLabel(stats.unitType, stats.unitName);
+            }
+            else
+            {
+                UpdateTypeText(stats.unitType, stats.unitName);
+            }
+
+            // Reveal fog around unit (Iteration 7)
+            if (FogManager.Instance != null)
+            {
+                FogManager.Instance.RevealRadius(gridX, gridY, RevealRadius);
+            }
+
+            Debug.Log($"Initialized {unitTeam} {stats.unitName}: HP={maxHP}, Damage={attackDamage}, Range={attackRange}, Interval={attackIntervalMultiplier}, RevealRadius={RevealRadius}");
+        }
+
+        /// <summary>
+        /// Apply color to all renderers
+        /// </summary>
+        private void ApplyColor(Color color)
+        {
+            if (renderers == null || renderers.Length == 0)
+            {
+                CacheRenderers();
+            }
+
+            foreach (Renderer r in renderers)
+            {
+                if (r != null && !r.name.Contains("HPText"))
+                {
+                    r.material.color = color;
+                }
+            }
+
+            // Update cached colors
+            if (originalColors != null)
+            {
+                for (int i = 0; i < originalColors.Length; i++)
+                {
+                    originalColors[i] = color;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Create type label text above unit (Bug fix: show unit type)
+        /// </summary>
+        private void CreateTypeLabel(UnitType unitType, string unitName)
+        {
+            // Create shadow text first (behind main text)
+            GameObject shadowObj = new GameObject("TypeTextShadow");
+            shadowObj.transform.SetParent(transform, false);
+            shadowObj.transform.localPosition = new Vector3(0.02f, 0.85f, -0.02f); // Slightly offset
+            shadowObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Face up for top-down camera
+
+            typeTextShadow = shadowObj.AddComponent<TextMesh>();
+            typeTextShadow.text = unitType.ToString();
+            typeTextShadow.characterSize = 0.08f;
+            typeTextShadow.fontSize = 20;
+            typeTextShadow.anchor = TextAnchor.MiddleCenter;
+            typeTextShadow.alignment = TextAlignment.Center;
+            typeTextShadow.color = Color.black;
+
+            MeshRenderer shadowRenderer = shadowObj.GetComponent<MeshRenderer>();
+            if (shadowRenderer != null)
+            {
+                shadowRenderer.sortingOrder = 0;
+            }
+
+            // Create main text
+            GameObject textObj = new GameObject("TypeText");
+            textObj.transform.SetParent(transform, false);
+            textObj.transform.localPosition = new Vector3(0f, 0.85f, 0f); // Above unit
+            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Face up for top-down camera
+
+            typeTextMesh = textObj.AddComponent<TextMesh>();
+            typeTextMesh.text = unitType.ToString();
+            typeTextMesh.characterSize = 0.08f;
+            typeTextMesh.fontSize = 20;
+            typeTextMesh.anchor = TextAnchor.MiddleCenter;
+            typeTextMesh.alignment = TextAlignment.Center;
+            typeTextMesh.color = Color.white;
+
+            MeshRenderer textRenderer = textObj.GetComponent<MeshRenderer>();
+            if (textRenderer != null)
+            {
+                textRenderer.sortingOrder = 1;
+            }
+        }
+
+        /// <summary>
+        /// Update type text for an existing label
+        /// </summary>
+        private void UpdateTypeText(UnitType unitType, string unitName)
+        {
+            if (typeTextMesh != null)
+            {
+                typeTextMesh.text = unitType.ToString();
+            }
+            if (typeTextShadow != null)
+            {
+                typeTextShadow.text = unitType.ToString();
+            }
         }
     }
 }
