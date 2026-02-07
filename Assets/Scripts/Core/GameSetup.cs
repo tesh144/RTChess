@@ -614,6 +614,7 @@ namespace ClockworkGrid
             SetPrivateField(waveManager, "baseDowntime", baseDowntime);
             SetPrivateField(waveManager, "minDowntime", minDowntime);
             SetPrivateField(waveManager, "downtimeDecreaseWave", downtimeDecreaseWave);
+            SetPrivateField(waveManager, "resourceNodePrefab", resourceNodePrefab);
 
             waveManager.Initialize();
         }
