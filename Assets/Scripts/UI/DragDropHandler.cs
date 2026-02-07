@@ -3,7 +3,7 @@ using UnityEngine;
 namespace ClockworkGrid
 {
     /// <summary>
-    /// Singleton that manages drag state and ghost preview for unit placement.
+    /// Singleton that manages drag state with arcing line and grid cell highlighting.
     /// Handles validation, visual feedback, and final placement from dock to grid.
     /// </summary>
     public class DragDropHandler : MonoBehaviour
@@ -18,13 +18,18 @@ namespace ClockworkGrid
         private bool isValidPlacement = false;
         private int targetGridX, targetGridY;
 
-        // Ghost preview
-        private GameObject ghostPreview;
-        private LineRenderer deploymentLine;
+        // Arc line rendering
+        private LineRenderer arcLine;
+        private int arcSegments = 20; // Number of points in the arc
+        private float arcHeight = 2f; // Height of the arc
+
+        // Grid cell highlight
+        private GameObject cellHighlight;
+        private MeshRenderer cellHighlightRenderer;
 
         // Colors
-        private Color validColor = new Color(0.3f, 1f, 0.3f, 0.5f);
-        private Color invalidColor = new Color(1f, 0.3f, 0.3f, 0.5f);
+        private Color validColor = new Color(0.3f, 1f, 0.3f, 0.6f);
+        private Color invalidColor = new Color(1f, 0.3f, 0.3f, 0.6f);
 
         private void Awake()
         {
@@ -35,15 +40,39 @@ namespace ClockworkGrid
             }
             Instance = this;
 
-            // Create line renderer for deployment trajectory
-            deploymentLine = gameObject.AddComponent<LineRenderer>();
-            deploymentLine.startWidth = 0.05f;
-            deploymentLine.endWidth = 0.05f;
-            deploymentLine.material = new Material(Shader.Find("Sprites/Default"));
-            deploymentLine.startColor = new Color(1f, 1f, 1f, 0.6f);
-            deploymentLine.endColor = new Color(1f, 1f, 1f, 0.6f);
-            deploymentLine.positionCount = 2;
-            deploymentLine.enabled = false;
+            // Create line renderer for arcing trajectory
+            arcLine = gameObject.AddComponent<LineRenderer>();
+            arcLine.startWidth = 0.08f;
+            arcLine.endWidth = 0.08f;
+            arcLine.material = new Material(Shader.Find("Sprites/Default"));
+            arcLine.startColor = new Color(1f, 1f, 1f, 0.8f);
+            arcLine.endColor = new Color(1f, 1f, 1f, 0.8f);
+            arcLine.positionCount = arcSegments;
+            arcLine.enabled = false;
+            arcLine.useWorldSpace = true;
+
+            // Create cell highlight quad
+            CreateCellHighlight();
+        }
+
+        private void CreateCellHighlight()
+        {
+            cellHighlight = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            cellHighlight.name = "CellHighlight";
+            cellHighlight.transform.rotation = Quaternion.Euler(90, 0, 0); // Face up
+            cellHighlight.transform.localScale = Vector3.one; // Will be resized to cell size
+
+            // Remove collider
+            Collider collider = cellHighlight.GetComponent<Collider>();
+            if (collider != null) Destroy(collider);
+
+            // Setup material
+            cellHighlightRenderer = cellHighlight.GetComponent<MeshRenderer>();
+            Material mat = new Material(Shader.Find("Sprites/Default"));
+            mat.color = validColor;
+            cellHighlightRenderer.material = mat;
+
+            cellHighlight.SetActive(false);
         }
 
         /// <summary>
@@ -62,8 +91,8 @@ namespace ClockworkGrid
             currentUnitPrefab = unitPrefab;
             isDragging = true;
 
-            CreateGhostPreview(unitPrefab);
-            deploymentLine.enabled = true;
+            arcLine.enabled = true;
+            cellHighlight.SetActive(true);
 
             return true;
         }
@@ -78,17 +107,19 @@ namespace ClockworkGrid
             // Raycast to ground plane
             if (RaycastToGroundPlane(screenPos, out Vector3 worldPos))
             {
-                // Position ghost preview
-                ghostPreview.transform.position = worldPos;
-
-                // Validate placement
+                // Validate placement and get grid coordinates
                 bool valid = ValidatePlacement(worldPos, out targetGridX, out targetGridY);
-                UpdateGhostColor(valid);
                 isValidPlacement = valid;
-            }
 
-            // Update deployment line
-            UpdateDeploymentLine(screenPos);
+                // Snap to grid cell center
+                Vector3 cellCenter = GridManager.Instance.GridToWorldPosition(targetGridX, targetGridY);
+
+                // Update cell highlight
+                UpdateCellHighlight(cellCenter, valid);
+
+                // Update arc line
+                UpdateArcLine(cellCenter);
+            }
         }
 
         /// <summary>
@@ -102,9 +133,8 @@ namespace ClockworkGrid
             {
                 // Invalid placement - snap back to dock
                 currentDraggingIcon.SnapBackToOriginalPosition();
-                DestroyGhostPreview();
+                CleanupDragVisuals();
                 isDragging = false;
-                deploymentLine.enabled = false;
                 return;
             }
 
@@ -144,9 +174,8 @@ namespace ClockworkGrid
             DockBarManager.Instance.RemoveUnitIcon(currentDraggingIcon);
 
             // Cleanup
-            DestroyGhostPreview();
+            CleanupDragVisuals();
             isDragging = false;
-            deploymentLine.enabled = false;
         }
 
         /// <summary>
@@ -157,76 +186,32 @@ namespace ClockworkGrid
             if (!isDragging) return;
 
             currentDraggingIcon.SnapBackToOriginalPosition();
-            DestroyGhostPreview();
+            CleanupDragVisuals();
             isDragging = false;
-            deploymentLine.enabled = false;
         }
 
-        private void CreateGhostPreview(GameObject unitPrefab)
+        private void UpdateCellHighlight(Vector3 cellCenter, bool isValid)
         {
-            if (ghostPreview != null) DestroyGhostPreview();
+            if (cellHighlight == null || GridManager.Instance == null) return;
 
-            ghostPreview = Instantiate(unitPrefab);
-            ghostPreview.SetActive(true);
-            ghostPreview.name = "GhostPreview";
+            // Position at cell center, slightly above ground
+            Vector3 highlightPos = cellCenter;
+            highlightPos.y = 0.02f; // Just above ground to avoid z-fighting
 
-            // Disable all non-visual components
-            Collider[] colliders = ghostPreview.GetComponentsInChildren<Collider>();
-            foreach (Collider c in colliders) Destroy(c);
+            cellHighlight.transform.position = highlightPos;
 
-            MonoBehaviour[] scripts = ghostPreview.GetComponentsInChildren<MonoBehaviour>();
-            foreach (MonoBehaviour s in scripts)
-            {
-                if (s != null) Destroy(s);
-            }
+            // Scale to match cell size
+            float cellSize = GridManager.Instance.CellSize;
+            cellHighlight.transform.localScale = new Vector3(cellSize * 0.95f, cellSize * 0.95f, 1f);
 
-            // Make semi-transparent
-            Renderer[] renderers = ghostPreview.GetComponentsInChildren<Renderer>();
-            foreach (Renderer r in renderers)
-            {
-                if (r == null) continue;
-
-                // Create new material instance
-                Material mat = new Material(r.sharedMaterial);
-                Color c = mat.color;
-                c.a = 0.5f;
-                mat.color = c;
-                r.material = mat;
-            }
-        }
-
-        private void DestroyGhostPreview()
-        {
-            if (ghostPreview != null)
-            {
-                Destroy(ghostPreview);
-                ghostPreview = null;
-            }
-        }
-
-        private void UpdateGhostColor(bool isValid)
-        {
-            if (ghostPreview == null) return;
-
+            // Update color
             Color targetColor = isValid ? validColor : invalidColor;
-
-            Renderer[] renderers = ghostPreview.GetComponentsInChildren<Renderer>();
-            foreach (Renderer r in renderers)
-            {
-                if (r == null || r.material == null) continue;
-
-                Color c = r.material.color;
-                c.r = targetColor.r;
-                c.g = targetColor.g;
-                c.b = targetColor.b;
-                c.a = targetColor.a;
-                r.material.color = c;
-            }
+            cellHighlightRenderer.material.color = targetColor;
         }
 
-        private void UpdateDeploymentLine(Vector2 screenPos)
+        private void UpdateArcLine(Vector3 targetPos)
         {
-            if (currentDraggingIcon == null || ghostPreview == null) return;
+            if (arcLine == null || currentDraggingIcon == null) return;
 
             Camera cam = Camera.main;
             if (cam == null) return;
@@ -234,13 +219,43 @@ namespace ClockworkGrid
             // Start point: dock icon position in world space
             Vector3 iconScreenPos = RectTransformUtility.WorldToScreenPoint(cam, currentDraggingIcon.transform.position);
             Ray iconRay = cam.ScreenPointToRay(iconScreenPos);
-            Vector3 dockWorldPos = iconRay.GetPoint(10f);
+            Vector3 startPos = iconRay.GetPoint(10f);
 
-            // End point: ghost preview position
-            Vector3 cursorWorldPos = ghostPreview.transform.position;
+            // End point: target cell center
+            Vector3 endPos = targetPos;
 
-            deploymentLine.SetPosition(0, dockWorldPos);
-            deploymentLine.SetPosition(1, cursorWorldPos);
+            // Calculate arc points
+            for (int i = 0; i < arcSegments; i++)
+            {
+                float t = i / (float)(arcSegments - 1);
+                Vector3 point = CalculateArcPoint(startPos, endPos, t);
+                arcLine.SetPosition(i, point);
+            }
+        }
+
+        private Vector3 CalculateArcPoint(Vector3 start, Vector3 end, float t)
+        {
+            // Linear interpolation between start and end
+            Vector3 linearPoint = Vector3.Lerp(start, end, t);
+
+            // Add vertical arc (parabola shape)
+            float height = arcHeight * Mathf.Sin(t * Mathf.PI);
+            linearPoint.y += height;
+
+            return linearPoint;
+        }
+
+        private void CleanupDragVisuals()
+        {
+            if (arcLine != null)
+            {
+                arcLine.enabled = false;
+            }
+
+            if (cellHighlight != null)
+            {
+                cellHighlight.SetActive(false);
+            }
         }
 
         private bool ValidatePlacement(Vector3 worldPos, out int gridX, out int gridY)
