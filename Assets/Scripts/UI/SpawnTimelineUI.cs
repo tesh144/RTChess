@@ -51,12 +51,38 @@ namespace ClockworkGrid
         }
 
         /// <summary>
+        /// Show countdown UI when player places first unit.
+        /// </summary>
+        public void ShowCountdown(int startingCount)
+        {
+            gameObject.SetActive(true);
+
+            if (waveNumberText != null)
+            {
+                waveNumberText.text = startingCount.ToString();
+                waveNumberText.fontSize = 72; // Large countdown number
+                waveNumberText.color = Color.yellow;
+            }
+        }
+
+        /// <summary>
+        /// Update countdown display each tick.
+        /// </summary>
+        public void UpdateCountdown(int remaining)
+        {
+            if (waveNumberText != null && remaining > 0)
+            {
+                waveNumberText.text = remaining.ToString();
+            }
+        }
+
+        /// <summary>
         /// Initialize wave timeline with spawn code.
         /// Called by WaveManager when a wave starts.
         /// </summary>
         public void InitializeWave(int waveNumber, string spawnCode)
         {
-            // Show UI now that wave has started
+            // UI already shown during countdown
             gameObject.SetActive(true);
 
             ClearTimeline();

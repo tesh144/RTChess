@@ -219,6 +219,13 @@ namespace ClockworkGrid
                 ticksSinceLastAdvance++;
                 Debug.Log($"[WaveManager] Tick counter: {ticksSinceLastAdvance}/{ticksPerWaveAdvance}");
 
+                // Update countdown UI during grace period
+                if (SpawnTimelineUI.Instance != null && currentWaveIndex == -1)
+                {
+                    int remaining = ticksPerWaveAdvance - ticksSinceLastAdvance;
+                    SpawnTimelineUI.Instance.UpdateCountdown(remaining);
+                }
+
                 // Only advance wave every N ticks (for 4-sided game, N=4)
                 if (ticksSinceLastAdvance < ticksPerWaveAdvance)
                 {
@@ -674,6 +681,12 @@ namespace ClockworkGrid
 
             hasWaveStarted = true;
             Debug.Log("WaveManager: Wave started by player placing first unit!");
+
+            // Show countdown UI
+            if (SpawnTimelineUI.Instance != null)
+            {
+                SpawnTimelineUI.Instance.ShowCountdown(ticksPerWaveAdvance);
+            }
         }
 
         // Public accessors for UI/other systems
