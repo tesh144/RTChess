@@ -225,7 +225,7 @@ namespace ClockworkGrid
             textRect.anchoredPosition = Vector2.zero;
 
             drawButtonText = textObj.AddComponent<TextMeshProUGUI>();
-            drawButtonText.text = "Draw:\n3T";
+            drawButtonText.text = "DRAW";
             drawButtonText.fontSize = 20;
             drawButtonText.color = Color.white;
             drawButtonText.alignment = TextAlignmentOptions.Center;
@@ -389,7 +389,7 @@ namespace ClockworkGrid
             }
             else
             {
-                buttonText.text = $"Draw:\n{cost}T";
+                buttonText.text = "DRAW";
                 buttonText.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
             }
 
