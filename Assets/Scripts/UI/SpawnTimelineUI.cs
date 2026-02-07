@@ -43,6 +43,7 @@ namespace ClockworkGrid
         private Coroutine pulseCoroutine;
         private RectTransform rectTransform;
         private Vector2 originalAnchoredPosition;
+        private static Sprite cachedCircleSprite; // Cached to avoid recreating every wave
 
         private void Awake()
         {
@@ -59,15 +60,12 @@ namespace ClockworkGrid
             {
                 originalAnchoredPosition = rectTransform.anchoredPosition;
             }
-
-            // Hide UI until player places first unit and wave starts
-            gameObject.SetActive(false);
         }
 
         private void Start()
         {
-            // Force hide UI at runtime start (allows UI to stay visible in Editor for design)
-            // Only show UI after player places first unit
+            // Hide UI at runtime start (allows UI to stay visible in Editor for design work)
+            // Only activates after player places first unit
             if (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted)
             {
                 gameObject.SetActive(false);
@@ -219,25 +217,6 @@ namespace ClockworkGrid
                 }
 
                 spawnDots.Add(dotObj);
-
-                // REMOVED: Connecting lines between dots (user wants dots only)
-                // if (i < spawnCode.Length - 1)
-                // {
-                //     GameObject lineObj = new GameObject($"Line_{i}");
-                //     lineObj.transform.SetParent(dotContainer, false);
-                //
-                //     RectTransform lineRect = lineObj.AddComponent<RectTransform>();
-                //     lineRect.anchorMin = new Vector2(0.5f, 0.5f);
-                //     lineRect.anchorMax = new Vector2(0.5f, 0.5f);
-                //     lineRect.pivot = new Vector2(0.5f, 0.5f);
-                //     lineRect.sizeDelta = new Vector2(dotSpacing, lineWidth);
-                //     lineRect.anchoredPosition = new Vector2(startOffset + i * dotSpacing + dotSpacing / 2, 0);
-                //
-                //     Image lineImage = lineObj.AddComponent<Image>();
-                //     lineImage.color = GetColorForCode(code);
-                //
-                //     connectionLines.Add(lineImage);
-                // }
             }
 
             currentDotIndex = 0;
@@ -311,10 +290,14 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Create a circle sprite procedurally.
+        /// Create a circle sprite procedurally (cached to avoid allocations).
         /// </summary>
         private Sprite CreateCircleSprite()
         {
+            // Return cached sprite if already created
+            if (cachedCircleSprite != null)
+                return cachedCircleSprite;
+
             int size = 64;
             Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
             Color[] pixels = new Color[size * size];
@@ -334,7 +317,8 @@ namespace ClockworkGrid
             texture.SetPixels(pixels);
             texture.Apply();
 
-            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+            cachedCircleSprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+            return cachedCircleSprite;
         }
 
         /// <summary>
@@ -401,23 +385,6 @@ namespace ClockworkGrid
                     spawnDots[i].transform.localScale = Vector3.one;
                 }
             }
-
-            // REMOVED: Line opacity updates (no lines created)
-            // for (int i = 0; i < connectionLines.Count; i++)
-            // {
-            //     if (i < currentDotIndex)
-            //     {
-            //         Color c = connectionLines[i].color;
-            //         c.a = 0.4f;
-            //         connectionLines[i].color = c;
-            //     }
-            //     else
-            //     {
-            //         Color c = connectionLines[i].color;
-            //         c.a = 1f;
-            //         connectionLines[i].color = c;
-            //     }
-            // }
         }
 
         /// <summary>

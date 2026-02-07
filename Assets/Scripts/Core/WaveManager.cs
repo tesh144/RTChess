@@ -362,8 +362,16 @@ namespace ClockworkGrid
         /// </summary>
         private bool SpawnSingleEnemy(UnitType type)
         {
-            if (GridManager.Instance == null || RaritySystem.Instance == null)
+            if (GridManager.Instance == null)
+            {
+                Debug.LogError("WaveManager: GridManager.Instance is null");
                 return false;
+            }
+            if (RaritySystem.Instance == null)
+            {
+                Debug.LogError("WaveManager: RaritySystem.Instance is null");
+                return false;
+            }
 
             // Find available spawn position
             List<Vector2Int> availablePositions = new List<Vector2Int>(spawnPositions);

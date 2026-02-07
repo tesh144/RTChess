@@ -64,6 +64,9 @@ namespace ClockworkGrid
         private Quaternion rotationTarget;
         private float rotationElapsed;
 
+        // Cached components
+        private PlacementCooldown placementCooldown;
+
         protected virtual void Start()
         {
             // Initialize HP
@@ -135,9 +138,10 @@ namespace ClockworkGrid
             // Debug logging
             Debug.Log($"[Unit {gameObject.name}] OnIntervalTick called - Interval: {intervalCount}, Multiplier: {attackIntervalMultiplier}, Team: {team}");
 
-            // Check for placement cooldown
-            PlacementCooldown cooldown = GetComponent<PlacementCooldown>();
-            if (cooldown != null && cooldown.IsOnCooldown)
+            // Check for placement cooldown (cached for performance)
+            if (placementCooldown == null)
+                placementCooldown = GetComponent<PlacementCooldown>();
+            if (placementCooldown != null && placementCooldown.IsOnCooldown)
             {
                 Debug.Log($"[Unit {gameObject.name}] Skipping - on cooldown");
                 return; // Skip all actions while on cooldown

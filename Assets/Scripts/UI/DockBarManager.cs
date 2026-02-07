@@ -55,15 +55,12 @@ namespace ClockworkGrid
                 return;
             }
             Instance = this;
-
-            // Hide dock bar until wave countdown completes
-            gameObject.SetActive(false);
         }
 
         private void Start()
         {
-            // Force hide dock bar at runtime start (allows UI to stay visible in Editor for design)
-            // Only show UI after countdown completes
+            // Hide dock bar at runtime start (allows UI to stay visible in Editor for design work)
+            // Only activates after countdown completes
             if (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted)
             {
                 gameObject.SetActive(false);
