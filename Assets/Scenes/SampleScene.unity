@@ -246,10 +246,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   unitIconPrefab: {fileID: 415459406493875654, guid: c3f3c9145119b48a4a1e43ec26a56c43, type: 3}
+  dockBarHolder: {fileID: 977141849}
+  gatchaButtonHolder: {fileID: 1342106222}
   dockIconsContainer: {fileID: 390485712}
   drawButton: {fileID: 501985954}
   drawButtonText: {fileID: 1132470255}
   createUIAtRuntime: 0
+  enableSlideAnimation: 1
+  slideUpDistance: 150
+  slideUpDuration: 0.6
 --- !u!1 &334230921
 GameObject:
   m_ObjectHideFlags: 0
@@ -430,7 +435,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 530361307903640511, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
   m_PrefabInstance: {fileID: 8226156663477309879}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1342106222}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
@@ -585,6 +590,11 @@ MonoBehaviour:
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2568519363068351071, guid: ed53cf476a52641ce8e8e1509193b0af, type: 3}
   m_PrefabInstance: {fileID: 3784763283592544865}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &977141849 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6070282032182103525, guid: bedc2b93612c94e589f41c113d87cf35, type: 3}
+  m_PrefabInstance: {fileID: 3857397125720977480}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1023953704
 GameObject:
@@ -776,6 +786,16 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8811502177947498360, guid: f605eb6ec8e794527ab85039928f1788, type: 3}
   m_PrefabInstance: {fileID: 1913330549519304220}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1342106222 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4247668821411773139, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+  m_PrefabInstance: {fileID: 8226156663477309879}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1444892528 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 885112283407565611, guid: ed53cf476a52641ce8e8e1509193b0af, type: 3}
+  m_PrefabInstance: {fileID: 3784763283592544865}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1732502098
 GameObject:
   m_ObjectHideFlags: 0
@@ -965,6 +985,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nodePointPrefab: {fileID: 0}
+  timelineHolder: {fileID: 1444892528}
   waveNumberText: {fileID: 813874866}
   dotContainer: {fileID: 2069523236}
   dotSpacing: 60
@@ -972,6 +993,9 @@ MonoBehaviour:
   enemyColor: {r: 0.85, g: 0.25, b: 0.25, a: 1}
   resourceColor: {r: 0.25, g: 0.85, b: 0.31, a: 1}
   emptyColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  enableSlideAnimation: 1
+  slideDownDistance: 100
+  slideDownDuration: 0.5
 --- !u!224 &2069523236 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4752414336548383132, guid: ed53cf476a52641ce8e8e1509193b0af, type: 3}
@@ -1311,11 +1335,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8811502177947498360, guid: f605eb6ec8e794527ab85039928f1788, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -43.638
+      value: -43.63794
       objectReference: {fileID: 0}
     - target: {fileID: 8811502177947498360, guid: f605eb6ec8e794527ab85039928f1788, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -33.3
+      value: -33.299988
       objectReference: {fileID: 0}
     - target: {fileID: 8811502177947498360, guid: f605eb6ec8e794527ab85039928f1788, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1466,6 +1490,10 @@ PrefabInstance:
     - target: {fileID: 885112283407565611, guid: ed53cf476a52641ce8e8e1509193b0af, type: 3}
       propertyPath: m_Name
       value: Wave Timeline
+      objectReference: {fileID: 0}
+    - target: {fileID: 885112283407565611, guid: ed53cf476a52641ce8e8e1509193b0af, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2568519363068351071, guid: ed53cf476a52641ce8e8e1509193b0af, type: 3}
       propertyPath: m_Pivot.x
@@ -1744,6 +1772,10 @@ PrefabInstance:
     - target: {fileID: 4247668821411773139, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_Name
       value: GatchaButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 4247668821411773139, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
