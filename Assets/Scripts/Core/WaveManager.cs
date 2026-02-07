@@ -146,8 +146,8 @@ namespace ClockworkGrid
 
             spawnPositions.Clear();
 
-            int width = GridManager.Instance.GridWidth;
-            int height = GridManager.Instance.GridHeight;
+            int width = GridManager.Instance.Width;
+            int height = GridManager.Instance.Height;
 
             // Top edge
             for (int x = 0; x < width; x++)
@@ -532,9 +532,9 @@ namespace ClockworkGrid
             bool hasUnitsOnGrid = false;
             if (GridManager.Instance != null)
             {
-                for (int x = 0; x < GridManager.Instance.GridWidth; x++)
+                for (int x = 0; x < GridManager.Instance.Width; x++)
                 {
-                    for (int y = 0; y < GridManager.Instance.GridHeight; y++)
+                    for (int y = 0; y < GridManager.Instance.Height; y++)
                     {
                         if (GridManager.Instance.GetCellState(x, y) == CellState.PlayerUnit)
                         {
