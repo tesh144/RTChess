@@ -50,24 +50,29 @@ namespace ClockworkGrid
         // Singleton
         public static WaveManager Instance { get; private set; }
 
-        [Header("=== WAVE SEQUENCE ===")]
-        [Tooltip("Wave sequence string: 0=Nothing, 1=Soldier, 2=Resource, 3=Ogre. Example: '1012103'")]
-        public string waveSequence = "1012103";
+        [Header("=== WAVE SEQUENCES (Iteration 11) ===")]
+        [Tooltip("List of wave sequences. Each string is one wave. Format: 0=Nothing, 1=Soldier, 2=Resource, 3=Ogre")]
+        public List<string> waveSequences = new List<string> { "1012103" };
 
         [Header("Timing")]
         [Tooltip("Number of interval ticks before starting the wave sequence (breathing room for player)")]
         [SerializeField] private int startDelayTicks = 0; // Start immediately
         [Tooltip("Ticks between wave advances (4 for 4-sided game)")]
         [SerializeField] private int ticksPerWaveAdvance = 4;
+        [Tooltip("Ticks of peace period between waves")]
+        [SerializeField] private int peacePeriodTicks = 8;
 
         [Header("Prefab References")]
         [SerializeField] private GameObject resourceNodePrefab;
 
         // State
         private WaveState currentState = WaveState.Preparation;
-        private int currentWaveIndex = -1; // -1 = not started, increments each interval
+        private int currentWaveNumber = 0; // Which wave we're on (0-indexed into waveSequences list)
+        private int currentWaveIndex = -1; // -1 = not started, increments each interval within current wave
         private int delayTicksRemaining;
         private int ticksSinceLastAdvance = 0; // Counter for wave advance timing
+        private int peacePeriodTicksRemaining = 0; // Countdown for peace period between waves
+        private bool inPeacePeriod = false;
         private bool sequenceComplete = false;
         private bool gameOver = false;
         private bool hasWaveStarted = false; // Wave doesn't start until player places first unit
@@ -95,14 +100,19 @@ namespace ClockworkGrid
         /// <summary>
         /// Initialize wave system (called by GameSetup).
         /// </summary>
-        public void Initialize(int ticksPerAdvance = 4)
+        public void Initialize(List<string> waves, int ticksPerAdvance = 4, int peaceTicks = 8)
         {
             InitializeSpawnPositions();
 
+            waveSequences = waves;
             ticksPerWaveAdvance = ticksPerAdvance;
+            peacePeriodTicks = peaceTicks;
             delayTicksRemaining = startDelayTicks;
+            currentWaveNumber = 0;
             currentWaveIndex = -1;
             ticksSinceLastAdvance = 0;
+            peacePeriodTicksRemaining = 0;
+            inPeacePeriod = false;
             sequenceComplete = false;
             gameOver = false;
 
@@ -112,7 +122,17 @@ namespace ClockworkGrid
                 IntervalTimer.Instance.OnIntervalTick += OnIntervalTick;
             }
 
-            Debug.Log($"WaveManager initialized with {waveSequence.Length} wave entries, {startDelayTicks} tick delay, {ticksPerWaveAdvance} ticks per advance");
+            Debug.Log($"WaveManager initialized with {waveSequences.Count} waves, {ticksPerWaveAdvance} ticks per advance, {peacePeriodTicks} peace ticks");
+        }
+
+        /// <summary>
+        /// Get the current wave sequence string.
+        /// </summary>
+        private string GetCurrentWaveSequence()
+        {
+            if (currentWaveNumber >= 0 && currentWaveNumber < waveSequences.Count)
+                return waveSequences[currentWaveNumber];
+            return "";
         }
 
         private void OnDestroy()
@@ -184,6 +204,39 @@ namespace ClockworkGrid
                     return;
                 }
 
+                // Handle peace period between waves
+                if (inPeacePeriod)
+                {
+                    peacePeriodTicksRemaining--;
+                    Debug.Log($"WaveManager: Peace period tick remaining: {peacePeriodTicksRemaining}");
+
+                    // Update peace period UI
+                    if (SpawnTimelineUI.Instance != null && currentWaveNumber + 1 < waveSequences.Count)
+                    {
+                        string nextWaveSeq = waveSequences[currentWaveNumber + 1];
+                        SpawnTimelineUI.Instance.ShowPeacePeriod(peacePeriodTicksRemaining, currentWaveNumber + 2, nextWaveSeq);
+                    }
+
+                    // Check if peace period is over
+                    if (peacePeriodTicksRemaining <= 0)
+                    {
+                        // Start next wave
+                        inPeacePeriod = false;
+                        currentWaveNumber++;
+                        currentWaveIndex = -1; // Reset for new wave
+                        ticksSinceLastAdvance = 0;
+
+                        Debug.Log($"WaveManager: Peace period over, starting Wave {currentWaveNumber + 1}");
+
+                        // Show countdown for next wave
+                        if (SpawnTimelineUI.Instance != null)
+                        {
+                            SpawnTimelineUI.Instance.ShowCountdown(ticksPerWaveAdvance);
+                        }
+                    }
+                    return;
+                }
+
                 // Increment tick counter
                 ticksSinceLastAdvance++;
                 Debug.Log($"[WaveManager] Tick counter: {ticksSinceLastAdvance}/{ticksPerWaveAdvance}");
@@ -205,13 +258,14 @@ namespace ClockworkGrid
                 // Reset counter and advance to next wave entry
                 ticksSinceLastAdvance = 0;
                 currentWaveIndex++;
-                Debug.Log($"[WaveManager] Advanced to wave index: {currentWaveIndex}/{waveSequence.Length}");
+                string currentSeq = GetCurrentWaveSequence();
+                Debug.Log($"[WaveManager] Advanced to wave index: {currentWaveIndex}/{currentSeq.Length}");
 
-                // Check if sequence is complete
-                if (currentWaveIndex >= waveSequence.Length)
+                // Check if current wave is complete
+                if (currentWaveIndex >= currentSeq.Length)
                 {
-                    Debug.Log($"[WaveManager] Sequence complete!");
-                    CompleteSequence();
+                    Debug.Log($"[WaveManager] Wave {currentWaveNumber + 1} complete!");
+                    CompleteCurrentWave();
                     return;
                 }
 
@@ -253,14 +307,15 @@ namespace ClockworkGrid
         /// </summary>
         private void ExecuteWaveEntry(int index)
         {
-            if (index < 0 || index >= waveSequence.Length)
+            string currentSeq = GetCurrentWaveSequence();
+            if (index < 0 || index >= currentSeq.Length)
             {
                 Debug.LogError($"WaveManager: Invalid wave index {index}");
                 return;
             }
 
-            char code = waveSequence[index];
-            Debug.Log($"WaveManager: Executing entry {index}/{waveSequence.Length - 1} - Code: '{code}'");
+            char code = currentSeq[index];
+            Debug.Log($"WaveManager: Executing entry {index}/{currentSeq.Length - 1} - Code: '{code}'");
 
             SpawnType spawnType = SpawnType.Nothing;
 
@@ -515,11 +570,50 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Return wave sequence string directly (already in spawn code format).
+        /// Return current wave sequence string directly (already in spawn code format).
         /// </summary>
         private string ConvertSequenceToSpawnCode()
         {
-            return waveSequence;
+            return GetCurrentWaveSequence();
+        }
+
+        /// <summary>
+        /// Complete the current wave and either start peace period or end game.
+        /// </summary>
+        private void CompleteCurrentWave()
+        {
+            Debug.Log($"WaveManager: Wave {currentWaveNumber + 1} complete!");
+
+            // Check if there are more waves
+            if (currentWaveNumber + 1 < waveSequences.Count)
+            {
+                // Start peace period before next wave
+                StartPeacePeriod();
+            }
+            else
+            {
+                // All waves complete - VICTORY!
+                CompleteSequence();
+            }
+        }
+
+        /// <summary>
+        /// Start peace period between waves.
+        /// </summary>
+        private void StartPeacePeriod()
+        {
+            inPeacePeriod = true;
+            peacePeriodTicksRemaining = peacePeriodTicks;
+            currentState = WaveState.Preparation;
+
+            Debug.Log($"WaveManager: Starting peace period ({peacePeriodTicks} ticks) before Wave {currentWaveNumber + 2}");
+
+            // Show peace period UI
+            if (SpawnTimelineUI.Instance != null)
+            {
+                string nextWaveSeq = waveSequences[currentWaveNumber + 1];
+                SpawnTimelineUI.Instance.ShowPeacePeriod(peacePeriodTicksRemaining, currentWaveNumber + 2, nextWaveSeq);
+            }
         }
 
         /// <summary>
@@ -635,18 +729,22 @@ namespace ClockworkGrid
         // Public accessors for UI/other systems
         public WaveState CurrentState => currentState;
         public int CurrentWaveIndex => currentWaveIndex;
-        public int TotalWaveEntries => waveSequence.Length;
+        public int CurrentWaveNumber => currentWaveNumber + 1; // +1 for display (1-indexed)
+        public int TotalWaves => waveSequences.Count;
+        public int TotalWaveEntries => GetCurrentWaveSequence().Length;
         public bool IsSequenceComplete => sequenceComplete;
         public bool IsGameOver => gameOver;
         public bool HasWaveStarted => hasWaveStarted;
+        public bool InPeacePeriod => inPeacePeriod;
 
         /// <summary>
         /// Get the current wave code character being executed.
         /// </summary>
         public char GetCurrentCode()
         {
-            if (currentWaveIndex >= 0 && currentWaveIndex < waveSequence.Length)
-                return waveSequence[currentWaveIndex];
+            string currentSeq = GetCurrentWaveSequence();
+            if (currentWaveIndex >= 0 && currentWaveIndex < currentSeq.Length)
+                return currentSeq[currentWaveIndex];
             return '0';
         }
     }

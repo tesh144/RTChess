@@ -62,12 +62,18 @@ namespace ClockworkGrid
         [SerializeField] private int ninjaRevealRadius = 2;
         [SerializeField] private float ninjaModelScale = 0.8f;
 
-        [Header("Wave Sequence - Iteration 10")]
-        [Tooltip("Wave sequence string: 0=Nothing, 1=Soldier, 2=Resource, 3=Ogre. Example: '1012103'")]
-        [SerializeField] private string waveSequence = "0020100100200103";
-
+        [Header("Wave Configuration - Iteration 11")]
         [Tooltip("Ticks between wave advances (4 for 4-sided game = 1 wave per full round)")]
         [SerializeField] private int ticksPerWaveAdvance = 4;
+
+        [Tooltip("Ticks of peace period between waves (breathing room for player)")]
+        [SerializeField] private int peacePeriodTicks = 8;
+
+        [Tooltip("List of wave sequences. Click + to add more waves. Format: 0=Nothing, 1=Soldier, 2=Resource, 3=Ogre")]
+        [SerializeField] private List<string> waveSequences = new List<string>
+        {
+            "0020100100200103" // Wave 1 (default)
+        };
 
         [Header("Resource Nodes")]
         [SerializeField] private GameObject resourceNodeLevel1Prefab; // Drag prefab, or leave empty for procedural
@@ -554,16 +560,16 @@ namespace ClockworkGrid
         private void SetupWaveManager()
         {
             // Add WaveManager component to this GameObject (GameSetup)
-            // This allows waveSequence to be edited in GameSetup Inspector!
+            // This allows wave sequences to be edited in GameSetup Inspector!
             WaveManager waveManager = gameObject.AddComponent<WaveManager>();
 
-            // Pass the wave sequence from GameSetup Inspector
-            waveManager.waveSequence = waveSequence;
+            // Pass resource node prefab
             SetPrivateField(waveManager, "resourceNodePrefab", resourceNodePrefab);
 
-            waveManager.Initialize(ticksPerWaveAdvance);
+            // Initialize with wave sequences list
+            waveManager.Initialize(waveSequences, ticksPerWaveAdvance, peacePeriodTicks);
 
-            Debug.Log($"SetupWaveManager: Initialized WaveManager with {waveSequence.Length} wave entries, {ticksPerWaveAdvance} ticks per advance");
+            Debug.Log($"SetupWaveManager: Initialized WaveManager with {waveSequences.Count} waves, {ticksPerWaveAdvance} ticks per advance, {peacePeriodTicks} peace ticks");
         }
 
         // SetupWaveTimelineUI() REMOVED: Timeline UI is now manually created in Unity Editor
