@@ -52,6 +52,7 @@ namespace ClockworkGrid
         {
             SetupCamera();
             SetupGrid();
+            SetupFogOfWar();
             SetupIntervalTimer();
             SetupTokenManager();
             SetupSoldierPrefab();
@@ -107,6 +108,18 @@ namespace ClockworkGrid
             SetPrivateField(gridManager, "cellSize", cellSize);
 
             gridManager.InitializeGrid();
+        }
+
+        private void SetupFogOfWar()
+        {
+            GameObject fogObj = new GameObject("FogOfWar");
+            FogOfWar fogOfWar = fogObj.AddComponent<FogOfWar>();
+
+            // Initialize with grid manager (Phase 7)
+            if (GridManager.Instance != null)
+            {
+                fogOfWar.Initialize(GridManager.Instance);
+            }
         }
 
         private void SetupIntervalTimer()
