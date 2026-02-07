@@ -539,14 +539,6 @@ namespace ClockworkGrid
                 FogManager.Instance.RevealRadius(gridX, gridY, RevealRadius);
             }
 
-            // Re-subscribe to interval timer (in case Initialize is called after Start)
-            if (IntervalTimer.Instance != null)
-            {
-                IntervalTimer.Instance.OnIntervalTick -= OnIntervalTick; // Remove any existing subscription
-                IntervalTimer.Instance.OnIntervalTick += OnIntervalTick; // Add fresh subscription
-                Debug.Log($"[Unit {gameObject.name}] Re-subscribed to IntervalTimer in Initialize()");
-            }
-
             Debug.Log($"Initialized {unitTeam} {stats.unitName}: HP={maxHP}, Damage={attackDamage}, Range={attackRange}, Interval={attackIntervalMultiplier}, RevealRadius={RevealRadius}");
         }
 
