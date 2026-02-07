@@ -113,6 +113,34 @@ namespace ClockworkGrid
             {
                 originalAnchoredPosition = dockBarContainer.anchoredPosition;
             }
+
+            // Add starting soldier card to dock
+            AddStartingCard();
+        }
+
+        /// <summary>
+        /// Add a starting soldier card to the dock at game start.
+        /// </summary>
+        private void AddStartingCard()
+        {
+            if (RaritySystem.Instance != null)
+            {
+                // Get Soldier unit stats
+                UnitStats soldierStats = RaritySystem.Instance.GetUnitStats(UnitType.Soldier);
+                if (soldierStats != null)
+                {
+                    AddUnitToDock(soldierStats);
+                    Debug.Log("[DockBarManager] Added starting Soldier card to dock");
+                }
+                else
+                {
+                    Debug.LogWarning("[DockBarManager] Could not find Soldier stats for starting card");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[DockBarManager] RaritySystem.Instance is null, cannot add starting card");
+            }
         }
 
         private void OnDestroy()

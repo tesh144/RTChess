@@ -529,6 +529,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b90ca219165ee4dda84ca90e987be711, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &692719399 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3800718788243800804, guid: a78f97d805034470db14513532874edd, type: 3}
+  m_PrefabInstance: {fileID: 2443182379546954568}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &721835032
 GameObject:
   m_ObjectHideFlags: 0
@@ -688,6 +693,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f369b9469ad6447b09feb2da38ff5335, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  tickCounterHolder: {fileID: 692719399}
   intervalText: {fileID: 0}
   verticalBar: {fileID: 14344974}
 --- !u!1 &1035291570
