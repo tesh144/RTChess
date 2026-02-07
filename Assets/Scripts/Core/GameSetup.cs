@@ -134,6 +134,9 @@ namespace ClockworkGrid
             SetPrivateField(soldierUnit, "resourceCost", soldierResourceCost);
             SetPrivateField(soldierUnit, "team", Team.Player);
 
+            // Add HP bar overlay (Phase 5)
+            soldierPrefab.AddComponent<HPBarOverlay>();
+
             soldierPrefab.SetActive(false);
             soldierPrefab.name = "SoldierPrefab";
         }
@@ -150,6 +153,9 @@ namespace ClockworkGrid
             SetPrivateField(enemyUnit, "resourceCost", soldierResourceCost);
             SetPrivateField(enemyUnit, "team", Team.Enemy);
 
+            // Add HP bar overlay (Phase 5)
+            enemySoldierPrefab.AddComponent<HPBarOverlay>();
+
             enemySoldierPrefab.SetActive(false);
             enemySoldierPrefab.name = "EnemySoldierPrefab";
         }
@@ -165,6 +171,9 @@ namespace ClockworkGrid
             SetPrivateField(node, "bonusTokens", resourceBonusTokens);
 
             // HP text is found by name ("HPText") in ResourceNode.Start()
+
+            // Add HP bar overlay (Phase 5)
+            resourceNodePrefab.AddComponent<HPBarOverlay>();
 
             resourceNodePrefab.SetActive(false);
             resourceNodePrefab.name = "ResourceNodePrefab";
