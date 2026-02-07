@@ -62,14 +62,27 @@ namespace ClockworkGrid
         [SerializeField] private int ninjaRevealRadius = 2;
         [SerializeField] private float ninjaModelScale = 0.8f;
 
-        [Header("Wave Settings")]
-        [SerializeField] private int intervalsPerWave = 20;
-        [SerializeField] private int baseEnemyCount = 2;
-        [SerializeField] private float enemyScaling = 1.2f;
-        [SerializeField] private int maxWaves = 20;
-        [SerializeField] private float baseDowntime = 10f;
-        [SerializeField] private float minDowntime = 5f;
-        [SerializeField] private int downtimeDecreaseWave = 10;
+        [Header("Wave Sequence - Iteration 10")]
+        [Tooltip("Each entry = 1 interval tick. 0=Nothing, 1=Enemies, 2=Resources, 3=Boss. Edit this array to design your wave pattern!")]
+        [SerializeField] private WaveEntry[] waveSequence = new WaveEntry[]
+        {
+            // Default 15-entry test sequence
+            new WaveEntry { spawnType = SpawnType.Nothing },
+            new WaveEntry { spawnType = SpawnType.Nothing },
+            new WaveEntry { spawnType = SpawnType.Resources, resourceNodeCount = 2, resourceNodeLevel = 1 },
+            new WaveEntry { spawnType = SpawnType.Nothing },
+            new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 2 },
+            new WaveEntry { spawnType = SpawnType.Nothing },
+            new WaveEntry { spawnType = SpawnType.Nothing },
+            new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 1, enemyNinjaCount = 1 },
+            new WaveEntry { spawnType = SpawnType.Nothing },
+            new WaveEntry { spawnType = SpawnType.Resources, resourceNodeCount = 1, resourceNodeLevel = 1 },
+            new WaveEntry { spawnType = SpawnType.Nothing },
+            new WaveEntry { spawnType = SpawnType.Nothing },
+            new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 3 },
+            new WaveEntry { spawnType = SpawnType.Nothing },
+            new WaveEntry { spawnType = SpawnType.Boss, bossCount = 1, bossHP = 30, bossDamage = 5 }
+        };
 
         [Header("Resource Nodes")]
         [SerializeField] private GameObject resourceNodeLevel1Prefab; // Drag prefab, or leave empty for procedural
@@ -603,59 +616,17 @@ namespace ClockworkGrid
 
         private void SetupWaveManager()
         {
-            GameObject waveObj = new GameObject("WaveManager");
-            WaveManager waveManager = waveObj.AddComponent<WaveManager>();
+            // Add WaveManager component to this GameObject (GameSetup)
+            // This allows waveSequence to be edited in GameSetup Inspector!
+            WaveManager waveManager = gameObject.AddComponent<WaveManager>();
 
-            // Create a default test wave sequence (15 entries)
-            WaveEntry[] defaultSequence = new WaveEntry[]
-            {
-                // Entry 0-1: Nothing (breathing room)
-                new WaveEntry { spawnType = SpawnType.Nothing },
-                new WaveEntry { spawnType = SpawnType.Nothing },
-
-                // Entry 2: Resources
-                new WaveEntry { spawnType = SpawnType.Resources, resourceNodeCount = 2, resourceNodeLevel = 1 },
-
-                // Entry 3: Nothing
-                new WaveEntry { spawnType = SpawnType.Nothing },
-
-                // Entry 4: Enemies (2 soldiers)
-                new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 2 },
-
-                // Entry 5-6: Nothing
-                new WaveEntry { spawnType = SpawnType.Nothing },
-                new WaveEntry { spawnType = SpawnType.Nothing },
-
-                // Entry 7: Enemies (1 soldier, 1 ninja)
-                new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 1, enemyNinjaCount = 1 },
-
-                // Entry 8: Nothing
-                new WaveEntry { spawnType = SpawnType.Nothing },
-
-                // Entry 9: Resources
-                new WaveEntry { spawnType = SpawnType.Resources, resourceNodeCount = 1, resourceNodeLevel = 1 },
-
-                // Entry 10-11: Nothing
-                new WaveEntry { spawnType = SpawnType.Nothing },
-                new WaveEntry { spawnType = SpawnType.Nothing },
-
-                // Entry 12: Enemies (3 soldiers)
-                new WaveEntry { spawnType = SpawnType.Enemies, enemySoldierCount = 3 },
-
-                // Entry 13: Nothing
-                new WaveEntry { spawnType = SpawnType.Nothing },
-
-                // Entry 14: Boss (1 boss, 30 HP, 5 damage)
-                new WaveEntry { spawnType = SpawnType.Boss, bossCount = 1, bossHP = 30, bossDamage = 5 }
-            };
-
-            // Assign wave sequence and resource prefab
-            waveManager.waveSequence = defaultSequence;
+            // Pass the wave sequence from GameSetup Inspector
+            waveManager.waveSequence = waveSequence;
             SetPrivateField(waveManager, "resourceNodePrefab", resourceNodePrefab);
 
             waveManager.Initialize();
 
-            Debug.Log($"SetupWaveManager: Created WaveManager with {defaultSequence.Length} wave entries");
+            Debug.Log($"SetupWaveManager: Initialized WaveManager with {waveSequence.Length} wave entries");
         }
 
         // SetupWaveTimelineUI() REMOVED: Timeline UI is now manually created in Unity Editor
