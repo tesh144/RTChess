@@ -12,6 +12,7 @@ namespace ClockworkGrid
         [SerializeField] private float barWidth = 0.8f;
         [SerializeField] private float barHeight = 0.1f;
         [SerializeField] private float yOffset = 0.7f; // Above unit
+        [SerializeField] private float overlayScale = 1f; // Overall scale of the HP overlay
 
         [Header("Colors")]
         [SerializeField] private Color fullHealthColor = new Color(0.2f, 0.9f, 0.2f); // Bright green
@@ -26,6 +27,10 @@ namespace ClockworkGrid
 
         private Renderer fillRenderer;
         private IDamageable unit;
+
+        // HP number text
+        private TextMesh hpTextMesh;
+        private TextMesh hpTextShadow;
 
         private void Start()
         {
@@ -44,6 +49,9 @@ namespace ClockworkGrid
         {
             if (unit == null || barContainer == null) return;
 
+            // Follow unit position in world space
+            barContainer.transform.position = transform.position + Vector3.up * yOffset;
+
             UpdateHPBar();
         }
 
@@ -52,11 +60,9 @@ namespace ClockworkGrid
         /// </summary>
         private void CreateHPBar()
         {
-            // Container (positioned above unit)
+            // Container (NOT parented to unit to avoid scale inheritance from FBX models)
             barContainer = new GameObject("HPBarContainer");
-            barContainer.transform.SetParent(transform);
-            barContainer.transform.localPosition = new Vector3(0f, yOffset, 0f);
-            barContainer.transform.localRotation = Quaternion.identity;
+            barContainer.transform.position = transform.position + Vector3.up * yOffset;
 
             // Background bar (dark)
             backgroundBar = CreateBar("HPBarBackground", barWidth, barHeight);
@@ -80,7 +86,53 @@ namespace ClockworkGrid
             fillRenderer = fillBar.GetComponent<Renderer>();
 
             // Add Billboard component to make bars face camera
-            Billboard billboard = barContainer.AddComponent<Billboard>();
+            barContainer.AddComponent<Billboard>();
+
+            // Apply overall scale
+            barContainer.transform.localScale = Vector3.one * overlayScale;
+
+            // Add HP number text if the owner doesn't already have one (avoids duplicate on resource nodes)
+            bool hasExistingHPText = false;
+            TextMesh[] existingTexts = GetComponentsInChildren<TextMesh>(true);
+            foreach (TextMesh tm in existingTexts)
+            {
+                if (tm.gameObject.name == "HPText")
+                {
+                    hasExistingHPText = true;
+                    break;
+                }
+            }
+
+            if (!hasExistingHPText)
+            {
+                // Shadow text (behind main text)
+                GameObject shadowObj = new GameObject("HPOverlayTextShadow");
+                shadowObj.transform.SetParent(barContainer.transform);
+                shadowObj.transform.localPosition = new Vector3(0.02f, 0.13f, 0.01f);
+
+                hpTextShadow = shadowObj.AddComponent<TextMesh>();
+                hpTextShadow.text = "";
+                hpTextShadow.characterSize = 0.1f;
+                hpTextShadow.fontSize = 48;
+                hpTextShadow.anchor = TextAnchor.MiddleCenter;
+                hpTextShadow.alignment = TextAlignment.Center;
+                hpTextShadow.color = Color.black;
+                hpTextShadow.fontStyle = FontStyle.Bold;
+
+                // Main HP number text
+                GameObject hpTextObj = new GameObject("HPOverlayText");
+                hpTextObj.transform.SetParent(barContainer.transform);
+                hpTextObj.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+
+                hpTextMesh = hpTextObj.AddComponent<TextMesh>();
+                hpTextMesh.text = "";
+                hpTextMesh.characterSize = 0.1f;
+                hpTextMesh.fontSize = 48;
+                hpTextMesh.anchor = TextAnchor.MiddleCenter;
+                hpTextMesh.alignment = TextAlignment.Center;
+                hpTextMesh.color = Color.white;
+                hpTextMesh.fontStyle = FontStyle.Bold;
+            }
         }
 
         /// <summary>
@@ -151,6 +203,15 @@ namespace ClockworkGrid
             }
 
             fillRenderer.material.color = targetColor;
+
+            // Update HP number text
+            if (hpTextMesh != null)
+            {
+                string hpStr = unit.CurrentHP.ToString();
+                hpTextMesh.text = hpStr;
+                if (hpTextShadow != null)
+                    hpTextShadow.text = hpStr;
+            }
 
             // Hide bar if unit is destroyed
             if (unit.IsDestroyed && barContainer != null)

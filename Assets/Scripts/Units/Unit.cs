@@ -37,6 +37,7 @@ namespace ClockworkGrid
         private TextMesh hpTextShadow;
         private TextMesh typeTextMesh;
         private TextMesh typeTextShadow;
+        private GameObject typeLabelContainer;
         private Renderer[] renderers;
         private Color[] originalColors;
         private float damageFlashTimer;
@@ -307,6 +308,12 @@ namespace ClockworkGrid
                 IntervalTimer.Instance.OnIntervalTick -= OnIntervalTick;
             }
 
+            // Destroy type label (not parented to unit)
+            if (typeLabelContainer != null)
+            {
+                Destroy(typeLabelContainer);
+            }
+
             // Spawn death VFX
             SpawnDeathEffect();
 
@@ -552,16 +559,22 @@ namespace ClockworkGrid
         /// </summary>
         private void CreateTypeLabel(UnitType unitType, string unitName)
         {
+            // Create a container NOT parented to unit (avoids FBX scale inheritance)
+            typeLabelContainer = new GameObject("TypeLabelContainer");
+            typeLabelContainer.transform.position = transform.position + Vector3.up * 0.85f;
+
+            // Add billboard so labels face camera
+            typeLabelContainer.AddComponent<Billboard>();
+
             // Create shadow text first (behind main text)
             GameObject shadowObj = new GameObject("TypeTextShadow");
-            shadowObj.transform.SetParent(transform, false);
-            shadowObj.transform.localPosition = new Vector3(0.02f, 0.85f, -0.02f); // Slightly offset
-            shadowObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Face up for top-down camera
+            shadowObj.transform.SetParent(typeLabelContainer.transform, false);
+            shadowObj.transform.localPosition = new Vector3(0.02f, 0f, -0.02f);
 
             typeTextShadow = shadowObj.AddComponent<TextMesh>();
             typeTextShadow.text = unitType.ToString();
-            typeTextShadow.characterSize = 0.08f;
-            typeTextShadow.fontSize = 20;
+            typeTextShadow.characterSize = 0.1f;
+            typeTextShadow.fontSize = 36;
             typeTextShadow.anchor = TextAnchor.MiddleCenter;
             typeTextShadow.alignment = TextAlignment.Center;
             typeTextShadow.color = Color.black;
@@ -574,14 +587,13 @@ namespace ClockworkGrid
 
             // Create main text
             GameObject textObj = new GameObject("TypeText");
-            textObj.transform.SetParent(transform, false);
-            textObj.transform.localPosition = new Vector3(0f, 0.85f, 0f); // Above unit
-            textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Face up for top-down camera
+            textObj.transform.SetParent(typeLabelContainer.transform, false);
+            textObj.transform.localPosition = Vector3.zero;
 
             typeTextMesh = textObj.AddComponent<TextMesh>();
             typeTextMesh.text = unitType.ToString();
-            typeTextMesh.characterSize = 0.08f;
-            typeTextMesh.fontSize = 20;
+            typeTextMesh.characterSize = 0.1f;
+            typeTextMesh.fontSize = 36;
             typeTextMesh.anchor = TextAnchor.MiddleCenter;
             typeTextMesh.alignment = TextAlignment.Center;
             typeTextMesh.color = Color.white;

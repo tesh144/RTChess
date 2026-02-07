@@ -37,7 +37,6 @@ namespace ClockworkGrid
         [SerializeField] private int soldierResourceCost = 3;
         [SerializeField] private int soldierRevealRadius = 1;
         [SerializeField] private float soldierModelScale = 1f;
-        [SerializeField] private Color soldierColor = new Color(0.2f, 0.5f, 1f);
 
         [Header("Ogre Stats (Epic)")]
         [SerializeField] private GameObject ogrePlayerPrefab; // Drag player prefab, or leave empty for procedural
@@ -50,7 +49,6 @@ namespace ClockworkGrid
         [SerializeField] private int ogreResourceCost = 6;
         [SerializeField] private int ogreRevealRadius = 1;
         [SerializeField] private float ogreModelScale = 1.3f;
-        [SerializeField] private Color ogreColor = new Color(0.8f, 0.4f, 1f);
 
         [Header("Ninja Stats (Rare)")]
         [SerializeField] private GameObject ninjaPlayerPrefab; // Drag player prefab, or leave empty for procedural
@@ -63,7 +61,6 @@ namespace ClockworkGrid
         [SerializeField] private int ninjaResourceCost = 4;
         [SerializeField] private int ninjaRevealRadius = 2;
         [SerializeField] private float ninjaModelScale = 0.8f;
-        [SerializeField] private Color ninjaColor = new Color(1f, 0.3f, 0.3f);
 
         [Header("Wave Settings")]
         [SerializeField] private int intervalsPerWave = 20;
@@ -74,15 +71,15 @@ namespace ClockworkGrid
         [SerializeField] private float minDowntime = 5f;
         [SerializeField] private int downtimeDecreaseWave = 10;
 
-        [Header("Resource Node Stats (Level 1)")]
-        [SerializeField] private int resourceNodeHP = 10;
-        [SerializeField] private int resourceTokensPerHit = 1;
-        [SerializeField] private int resourceBonusTokens = 3;
-
-        [Header("Iteration 8: Multi-Level Resources")]
+        [Header("Resource Nodes")]
+        [SerializeField] private int level1HP = 10;
+        [SerializeField] private int level1TokensPerHit = 1;
+        [SerializeField] private int level1BonusTokens = 3;
+        [Space(5)]
         [SerializeField] private int level2HP = 20;
         [SerializeField] private int level2TokensPerHit = 1;
         [SerializeField] private int level2BonusTokens = 6;
+        [Space(5)]
         [SerializeField] private int level3HP = 50;
         [SerializeField] private int level3TokensPerHit = 2;
         [SerializeField] private int level3BonusTokens = 9;
@@ -91,6 +88,7 @@ namespace ClockworkGrid
         [SerializeField] private Color playerColor = new Color(0.2f, 0.5f, 1f);
         [SerializeField] private Color enemyColor = new Color(1f, 0.3f, 0.3f);
         [SerializeField] private Color resourceColor = new Color(0.2f, 0.85f, 0.4f);
+        [SerializeField] private float unitHPOverlayScale = 1.5f; // Scale of HP bar + text above units
         [SerializeField] private Vector3 cameraRotation = new Vector3(51.15f, 42.7f, 0f);
         [SerializeField] private float cameraOrthoSize = 8.8f;
         [SerializeField] private float cameraPanSpeed = 5f;
@@ -225,10 +223,10 @@ namespace ClockworkGrid
             // Level 1: 1x1 (small, green)
             level1ResourcePrefab = ResourceNodeModelBuilder.CreateResourceNodeModel(new Color(0.2f, 0.85f, 0.4f)); // Green
             ResourceNode node1 = level1ResourcePrefab.AddComponent<ResourceNode>();
-            SetPrivateField(node1, "maxHP", resourceNodeHP);
+            SetPrivateField(node1, "maxHP", level1HP);
             SetPrivateField(node1, "level", 1);
-            SetPrivateField(node1, "tokensPerHit", resourceTokensPerHit);
-            SetPrivateField(node1, "bonusTokens", resourceBonusTokens);
+            SetPrivateField(node1, "tokensPerHit", level1TokensPerHit);
+            SetPrivateField(node1, "bonusTokens", level1BonusTokens);
             SetPrivateField(node1, "gridSize", new Vector2Int(1, 1));
             level1ResourcePrefab.AddComponent<HPBarOverlay>();
             level1ResourcePrefab.SetActive(false);
@@ -309,17 +307,17 @@ namespace ClockworkGrid
         {
             // --- Player prefabs ---
             soldierPrefab = CreateUnitPrefab(
-                soldierPlayerPrefab, "SoldierPrefab", soldierColor, soldierModelScale,
+                soldierPlayerPrefab, "SoldierPrefab", playerColor, soldierModelScale,
                 soldierHP, soldierAttackDamage, soldierAttackRange,
                 soldierAttackInterval, soldierResourceCost);
 
             ogrePrefab = CreateUnitPrefab(
-                ogrePlayerPrefab, "OgrePrefab", ogreColor, ogreModelScale,
+                ogrePlayerPrefab, "OgrePrefab", playerColor, ogreModelScale,
                 ogreHP, ogreAttackDamage, ogreAttackRange,
                 ogreAttackInterval, ogreResourceCost);
 
             ninjaPrefab = CreateUnitPrefab(
-                ninjaPlayerPrefab, "NinjaPrefab", ninjaColor, ninjaModelScale,
+                ninjaPlayerPrefab, "NinjaPrefab", playerColor, ninjaModelScale,
                 ninjaHP, ninjaAttackDamage, ninjaAttackRange,
                 ninjaAttackInterval, ninjaResourceCost);
 
@@ -378,9 +376,10 @@ namespace ClockworkGrid
             SetPrivateField(unit, "attackIntervalMultiplier", attackInterval);
             SetPrivateField(unit, "resourceCost", resourceCost);
 
-            // Add HPBarOverlay if not already present
-            if (prefab.GetComponent<HPBarOverlay>() == null)
-                prefab.AddComponent<HPBarOverlay>();
+            // Add HPBarOverlay if not already present, and set scale
+            HPBarOverlay hpBar = prefab.GetComponent<HPBarOverlay>();
+            if (hpBar == null) hpBar = prefab.AddComponent<HPBarOverlay>();
+            SetPrivateField(hpBar, "overlayScale", unitHPOverlayScale);
 
             prefab.SetActive(false);
             prefab.name = prefabName;
@@ -410,7 +409,7 @@ namespace ClockworkGrid
             soldierStats.attackIntervalMultiplier = soldierAttackInterval;
             soldierStats.resourceCost = soldierResourceCost;
             soldierStats.revealRadius = soldierRevealRadius;
-            soldierStats.unitColor = soldierColor;
+            soldierStats.unitColor = playerColor;
             soldierStats.modelScale = soldierModelScale;
             soldierStats.unitPrefab = soldierPrefab;
             soldierStats.enemyPrefab = enemySoldierPrefab;
@@ -427,7 +426,7 @@ namespace ClockworkGrid
             ogreStats.attackIntervalMultiplier = ogreAttackInterval;
             ogreStats.resourceCost = ogreResourceCost;
             ogreStats.revealRadius = ogreRevealRadius;
-            ogreStats.unitColor = ogreColor;
+            ogreStats.unitColor = playerColor;
             ogreStats.modelScale = ogreModelScale;
             ogreStats.unitPrefab = ogrePrefab;
             ogreStats.enemyPrefab = enemyOgrePrefab;
@@ -444,7 +443,7 @@ namespace ClockworkGrid
             ninjaStats.attackIntervalMultiplier = ninjaAttackInterval;
             ninjaStats.resourceCost = ninjaResourceCost;
             ninjaStats.revealRadius = ninjaRevealRadius;
-            ninjaStats.unitColor = ninjaColor;
+            ninjaStats.unitColor = playerColor;
             ninjaStats.modelScale = ninjaModelScale;
             ninjaStats.unitPrefab = ninjaPrefab;
             ninjaStats.enemyPrefab = enemyNinjaPrefab;
