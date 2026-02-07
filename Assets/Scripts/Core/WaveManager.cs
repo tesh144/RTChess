@@ -95,9 +95,9 @@ namespace ClockworkGrid
             Instance = this;
         }
 
-        public void Initialize(GameObject enemyPrefab)
+        public void Initialize()
         {
-            enemySoldierPrefab = enemyPrefab;
+            // Iteration 6: No longer needs enemy prefab, uses RaritySystem
 
             // Define spawn positions (right side of grid for now)
             if (GridManager.Instance != null)
@@ -387,13 +387,20 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Spawn enemies at spawn positions
+        /// Iteration 6: Uses RaritySystem for varied enemy types based on wave number
         /// </summary>
         /// <returns>Number of enemies successfully spawned</returns>
         private int SpawnEnemies(int count)
         {
-            if (enemySoldierPrefab == null || GridManager.Instance == null)
+            if (GridManager.Instance == null)
             {
-                Debug.LogWarning("Cannot spawn enemies: missing prefab or GridManager");
+                Debug.LogWarning("Cannot spawn enemies: missing GridManager");
+                return 0;
+            }
+
+            if (RaritySystem.Instance == null)
+            {
+                Debug.LogWarning("Cannot spawn enemies: RaritySystem not initialized");
                 return 0;
             }
 
@@ -411,22 +418,30 @@ namespace ClockworkGrid
                 if (!GridManager.Instance.IsCellEmpty(pos.x, pos.y))
                     continue;
 
+                // Pick enemy type based on current wave number
+                UnitStats enemyStats = RaritySystem.Instance.DrawRandomEnemyUnit(currentWaveIndex);
+                if (enemyStats == null || enemyStats.unitPrefab == null)
+                {
+                    Debug.LogWarning($"Failed to get enemy stats for wave {currentWaveIndex}");
+                    continue;
+                }
+
                 // Spawn enemy
                 Vector3 worldPos = GridManager.Instance.GridToWorldPosition(pos.x, pos.y);
-                GameObject enemyObj = Instantiate(enemySoldierPrefab, worldPos, Quaternion.identity);
+                GameObject enemyObj = Instantiate(enemyStats.unitPrefab, worldPos, Quaternion.identity);
                 enemyObj.SetActive(true);
 
                 Unit unit = enemyObj.GetComponent<Unit>();
                 if (unit != null)
                 {
-                    unit.Initialize(Team.Enemy, pos.x, pos.y);
+                    unit.Initialize(Team.Enemy, pos.x, pos.y, enemyStats);
                 }
 
                 GridManager.Instance.PlaceUnit(pos.x, pos.y, enemyObj, CellState.EnemyUnit);
                 spawned++;
             }
 
-            Debug.Log($"Successfully spawned {spawned}/{count} enemies");
+            Debug.Log($"Successfully spawned {spawned}/{count} enemies for wave {currentWaveIndex}");
             return spawned;
         }
 

@@ -55,9 +55,9 @@ namespace ClockworkGrid
             SetupFogOfWar();
             SetupIntervalTimer();
             SetupTokenManager();
-            SetupSoldierPrefab();
-            SetupEnemySoldierPrefab();
+            SetupUnitPrefabs(); // Iteration 6: Create all unit prefabs
             SetupResourceNodePrefab();
+            SetupRaritySystem(); // Iteration 6: Must be before WaveManager/HandManager
             SetupWaveManager();
             SetupUI();
             SetupDockBar();
@@ -137,43 +137,6 @@ namespace ClockworkGrid
             tokenObj.AddComponent<ResourceTokenManager>();
         }
 
-        private void SetupSoldierPrefab()
-        {
-            soldierPrefab = UnitModelBuilder.CreateSoldierModel(playerColor);
-            SoldierUnit soldierUnit = soldierPrefab.AddComponent<SoldierUnit>();
-
-            SetPrivateField(soldierUnit, "maxHP", soldierHP);
-            SetPrivateField(soldierUnit, "attackDamage", soldierAttackDamage);
-            SetPrivateField(soldierUnit, "attackRange", soldierAttackRange);
-            SetPrivateField(soldierUnit, "attackIntervalMultiplier", soldierAttackInterval);
-            SetPrivateField(soldierUnit, "resourceCost", soldierResourceCost);
-            SetPrivateField(soldierUnit, "team", Team.Player);
-
-            // Add HP bar overlay (Phase 5)
-            soldierPrefab.AddComponent<HPBarOverlay>();
-
-            soldierPrefab.SetActive(false);
-            soldierPrefab.name = "SoldierPrefab";
-        }
-
-        private void SetupEnemySoldierPrefab()
-        {
-            enemySoldierPrefab = UnitModelBuilder.CreateSoldierModel(enemyColor);
-            SoldierUnit enemyUnit = enemySoldierPrefab.AddComponent<SoldierUnit>();
-
-            SetPrivateField(enemyUnit, "maxHP", soldierHP);
-            SetPrivateField(enemyUnit, "attackDamage", soldierAttackDamage);
-            SetPrivateField(enemyUnit, "attackRange", soldierAttackRange);
-            SetPrivateField(enemyUnit, "attackIntervalMultiplier", soldierAttackInterval);
-            SetPrivateField(enemyUnit, "resourceCost", soldierResourceCost);
-            SetPrivateField(enemyUnit, "team", Team.Enemy);
-
-            // Add HP bar overlay (Phase 5)
-            enemySoldierPrefab.AddComponent<HPBarOverlay>();
-
-            enemySoldierPrefab.SetActive(false);
-            enemySoldierPrefab.name = "EnemySoldierPrefab";
-        }
 
         private void SetupResourceNodePrefab()
         {
@@ -192,6 +155,119 @@ namespace ClockworkGrid
 
             resourceNodePrefab.SetActive(false);
             resourceNodePrefab.name = "ResourceNodePrefab";
+        }
+
+        /// <summary>
+        /// Iteration 6: Create all three unit type prefabs (Soldier, Ogre, Ninja)
+        /// </summary>
+        private void SetupUnitPrefabs()
+        {
+            // Create Soldier prefab (existing logic, just refactored)
+            soldierPrefab = UnitModelBuilder.CreateSoldierModel(new Color(0.2f, 0.5f, 1f)); // Blue
+            SoldierUnit soldierUnit = soldierPrefab.AddComponent<SoldierUnit>();
+            SetPrivateField(soldierUnit, "maxHP", 10);
+            SetPrivateField(soldierUnit, "attackDamage", 3);
+            SetPrivateField(soldierUnit, "attackRange", 1);
+            SetPrivateField(soldierUnit, "attackIntervalMultiplier", 2);
+            SetPrivateField(soldierUnit, "resourceCost", 3);
+            soldierPrefab.AddComponent<HPBarOverlay>();
+            soldierPrefab.SetActive(false);
+            soldierPrefab.name = "SoldierPrefab";
+
+            // Create Ogre prefab (tank, large, slow)
+            GameObject ogrePrefab = UnitModelBuilder.CreateSoldierModel(new Color(0.8f, 0.4f, 1f)); // Purple
+            ogrePrefab.transform.localScale = Vector3.one * 1.3f; // Larger
+            SoldierUnit ogreUnit = ogrePrefab.AddComponent<SoldierUnit>();
+            SetPrivateField(ogreUnit, "maxHP", 20);
+            SetPrivateField(ogreUnit, "attackDamage", 5);
+            SetPrivateField(ogreUnit, "attackRange", 2); // Range 2!
+            SetPrivateField(ogreUnit, "attackIntervalMultiplier", 4); // Slow rotation
+            SetPrivateField(ogreUnit, "resourceCost", 6);
+            ogrePrefab.AddComponent<HPBarOverlay>();
+            ogrePrefab.SetActive(false);
+            ogrePrefab.name = "OgrePrefab";
+
+            // Create Ninja prefab (fast, fragile, small)
+            GameObject ninjaPrefab = UnitModelBuilder.CreateSoldierModel(new Color(1f, 0.3f, 0.3f)); // Red
+            ninjaPrefab.transform.localScale = Vector3.one * 0.8f; // Smaller
+            SoldierUnit ninjaUnit = ninjaPrefab.AddComponent<SoldierUnit>();
+            SetPrivateField(ninjaUnit, "maxHP", 5);
+            SetPrivateField(ninjaUnit, "attackDamage", 1);
+            SetPrivateField(ninjaUnit, "attackRange", 1);
+            SetPrivateField(ninjaUnit, "attackIntervalMultiplier", 1); // Fast rotation!
+            SetPrivateField(ninjaUnit, "resourceCost", 4);
+            ninjaPrefab.AddComponent<HPBarOverlay>();
+            ninjaPrefab.SetActive(false);
+            ninjaPrefab.name = "NinjaPrefab";
+
+            // Store enemy variant (same prefabs, different team applied at spawn)
+            enemySoldierPrefab = soldierPrefab;
+
+            Debug.Log("Created 3 unit type prefabs: Soldier, Ogre, Ninja");
+        }
+
+        /// <summary>
+        /// Iteration 6: Set up RaritySystem and register all unit stats
+        /// </summary>
+        private void SetupRaritySystem()
+        {
+            GameObject rarityObj = new GameObject("RaritySystem");
+            RaritySystem raritySystem = rarityObj.AddComponent<RaritySystem>();
+
+            // Create UnitStats for each unit type
+            List<UnitStats> allStats = new List<UnitStats>();
+
+            // Soldier Stats (Common)
+            UnitStats soldierStats = ScriptableObject.CreateInstance<UnitStats>();
+            soldierStats.unitType = UnitType.Soldier;
+            soldierStats.unitName = "Soldier";
+            soldierStats.rarity = Rarity.Common;
+            soldierStats.maxHP = 10;
+            soldierStats.attackDamage = 3;
+            soldierStats.attackRange = 1;
+            soldierStats.attackIntervalMultiplier = 2;
+            soldierStats.resourceCost = 3;
+            soldierStats.unitColor = new Color(0.2f, 0.5f, 1f); // Blue
+            soldierStats.modelScale = 1f;
+            soldierStats.unitPrefab = soldierPrefab;
+            allStats.Add(soldierStats);
+
+            // Ogre Stats (Epic)
+            GameObject ogrePrefab = GameObject.Find("OgrePrefab");
+            UnitStats ogreStats = ScriptableObject.CreateInstance<UnitStats>();
+            ogreStats.unitType = UnitType.Ogre;
+            ogreStats.unitName = "Ogre";
+            ogreStats.rarity = Rarity.Epic;
+            ogreStats.maxHP = 20;
+            ogreStats.attackDamage = 5;
+            ogreStats.attackRange = 2; // Range 2!
+            ogreStats.attackIntervalMultiplier = 4;
+            ogreStats.resourceCost = 6;
+            ogreStats.unitColor = new Color(0.8f, 0.4f, 1f); // Purple
+            ogreStats.modelScale = 1.3f;
+            ogreStats.unitPrefab = ogrePrefab;
+            allStats.Add(ogreStats);
+
+            // Ninja Stats (Rare)
+            GameObject ninjaPrefab = GameObject.Find("NinjaPrefab");
+            UnitStats ninjaStats = ScriptableObject.CreateInstance<UnitStats>();
+            ninjaStats.unitType = UnitType.Ninja;
+            ninjaStats.unitName = "Ninja";
+            ninjaStats.rarity = Rarity.Rare;
+            ninjaStats.maxHP = 5;
+            ninjaStats.attackDamage = 1;
+            ninjaStats.attackRange = 1;
+            ninjaStats.attackIntervalMultiplier = 1; // Fast!
+            ninjaStats.resourceCost = 4;
+            ninjaStats.unitColor = new Color(1f, 0.3f, 0.3f); // Red
+            ninjaStats.modelScale = 0.8f;
+            ninjaStats.unitPrefab = ninjaPrefab;
+            allStats.Add(ninjaStats);
+
+            // Register with RaritySystem
+            raritySystem.RegisterUnitStats(allStats);
+
+            Debug.Log("RaritySystem initialized with 3 unit types");
         }
 
         private void SetupUI()
@@ -433,10 +509,10 @@ namespace ClockworkGrid
             GameObject dragHandlerObj = new GameObject("DragDropHandler");
             dragHandlerObj.AddComponent<DragDropHandler>();
 
-            // Create HandManager (Phase 2)
+            // Create HandManager (Phase 2, updated Iteration 6)
             GameObject handObj = new GameObject("HandManager");
             HandManager handManager = handObj.AddComponent<HandManager>();
-            handManager.Initialize(soldierPrefab, soldierPrefab, soldierPrefab); // TODO: Add Ninja and Ogre prefabs
+            handManager.Initialize(); // Iteration 6: Uses RaritySystem
 
             // Give player starting hand (3 Soldiers - Phase 2 spec)
             handManager.GiveStartingHand();
@@ -672,7 +748,7 @@ namespace ClockworkGrid
         {
             GameObject waveObj = new GameObject("WaveManager");
             WaveManager waveManager = waveObj.AddComponent<WaveManager>();
-            waveManager.Initialize(enemySoldierPrefab);
+            waveManager.Initialize(); // Iteration 6: No longer needs enemy prefab
         }
 
         private void SetupWaveTimelineUI()

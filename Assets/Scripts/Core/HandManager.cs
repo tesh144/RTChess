@@ -5,32 +5,21 @@ using UnityEngine;
 namespace ClockworkGrid
 {
     /// <summary>
-    /// Unit types available in the dock/hand system
-    /// </summary>
-    public enum UnitType
-    {
-        Soldier,
-        Ninja,
-        Ogre
-    }
-
-    /// <summary>
     /// Data for a unit in the player's hand
+    /// Iteration 6: Now uses UnitStats for full data
     /// </summary>
     [System.Serializable]
     public class UnitData
     {
-        public UnitType Type;
-        public int Cost;
-        public string DisplayName;
-        public GameObject Prefab;
+        public UnitStats Stats; // Full unit stats
+        public UnitType Type => Stats.unitType;
+        public int Cost => Stats.resourceCost;
+        public string DisplayName => Stats.unitName;
+        public GameObject Prefab => Stats.unitPrefab;
 
-        public UnitData(UnitType type, int cost, string displayName, GameObject prefab)
+        public UnitData(UnitStats stats)
         {
-            Type = type;
-            Cost = cost;
-            DisplayName = displayName;
-            Prefab = prefab;
+            Stats = stats;
         }
     }
 
@@ -51,21 +40,6 @@ namespace ClockworkGrid
         [SerializeField] private int baseDealCost = 2; // Phase 2 spec: starts at 2
         private int drawCount = 0;
 
-        [Header("Unit Prefabs")]
-        [SerializeField] private GameObject soldierPrefab;
-        [SerializeField] private GameObject ninjaPrefab;
-        [SerializeField] private GameObject ogrePrefab;
-
-        // Unit costs (from Phase 2 spec)
-        private const int SOLDIER_COST = 3;
-        private const int NINJA_COST = 4;
-        private const int OGRE_COST = 10;
-
-        // Draw probabilities (from Phase 2 spec)
-        private const float SOLDIER_WEIGHT = 0.6f; // 60%
-        private const float NINJA_WEIGHT = 0.3f;   // 30%
-        private const float OGRE_WEIGHT = 0.1f;    // 10%
-
         // Events
         public event Action OnHandChanged;
 
@@ -79,11 +53,10 @@ namespace ClockworkGrid
             Instance = this;
         }
 
-        public void Initialize(GameObject soldier, GameObject ninja, GameObject ogre)
+        public void Initialize()
         {
-            soldierPrefab = soldier;
-            ninjaPrefab = ninja;
-            ogrePrefab = ogre;
+            // Iteration 6: Now uses RaritySystem instead of direct prefab refs
+            // RaritySystem should already be initialized by GameSetup
         }
 
         /// <summary>
@@ -98,6 +71,7 @@ namespace ClockworkGrid
         /// <summary>
         /// Draw a random unit into the hand
         /// Returns true if successful, false if can't afford
+        /// Iteration 6: Uses RaritySystem for weighted random draws
         /// </summary>
         public bool DrawUnit()
         {
@@ -111,15 +85,28 @@ namespace ClockworkGrid
                 return false;
             }
 
+            // Check RaritySystem is available
+            if (RaritySystem.Instance == null)
+            {
+                Debug.LogError("RaritySystem not initialized!");
+                return false;
+            }
+
             // Spend tokens
             ResourceTokenManager.Instance.SpendTokens(cost);
 
             // Increment draw count
             drawCount++;
 
-            // Pick random unit type based on weights
-            UnitType type = PickRandomUnitType();
-            UnitData unitData = CreateUnitData(type);
+            // Draw random unit from RaritySystem
+            UnitStats drawnStats = RaritySystem.Instance.DrawRandomUnit();
+            if (drawnStats == null)
+            {
+                Debug.LogError("Failed to draw unit from RaritySystem!");
+                return false;
+            }
+
+            UnitData unitData = new UnitData(drawnStats);
 
             // Add to hand
             hand.Add(unitData);
@@ -127,7 +114,7 @@ namespace ClockworkGrid
             // Fire event
             OnHandChanged?.Invoke();
 
-            Debug.Log($"Drew {unitData.DisplayName} (cost: {unitData.Cost})");
+            Debug.Log($"Drew {unitData.DisplayName} ({drawnStats.rarity})");
             return true;
         }
 
@@ -183,50 +170,28 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Give the player starting units (for testing)
+        /// Iteration 6: Give 3 Soldiers at game start
         /// </summary>
         public void GiveStartingHand()
         {
-            // Give 3 Soldiers at game start (from Phase 2 spec)
-            for (int i = 0; i < 3; i++)
+            if (RaritySystem.Instance == null)
             {
-                UnitData soldier = CreateUnitData(UnitType.Soldier);
-                hand.Add(soldier);
+                Debug.LogError("Cannot give starting hand: RaritySystem not initialized!");
+                return;
             }
 
-            OnHandChanged?.Invoke();
-            Debug.Log("Starting hand: 3 Soldiers");
-        }
-
-        /// <summary>
-        /// Pick a random unit type based on weighted probabilities
-        /// </summary>
-        private UnitType PickRandomUnitType()
-        {
-            float roll = UnityEngine.Random.value; // 0.0 to 1.0
-
-            if (roll < SOLDIER_WEIGHT)
-                return UnitType.Soldier; // 0.0 - 0.6 (60%)
-            else if (roll < SOLDIER_WEIGHT + NINJA_WEIGHT)
-                return UnitType.Ninja; // 0.6 - 0.9 (30%)
-            else
-                return UnitType.Ogre; // 0.9 - 1.0 (10%)
-        }
-
-        /// <summary>
-        /// Create UnitData for a given type
-        /// </summary>
-        private UnitData CreateUnitData(UnitType type)
-        {
-            switch (type)
+            // Give 3 Soldiers at game start (from Phase 2 spec)
+            UnitStats soldierStats = RaritySystem.Instance.GetUnitStats(UnitType.Soldier);
+            if (soldierStats != null)
             {
-                case UnitType.Soldier:
-                    return new UnitData(UnitType.Soldier, SOLDIER_COST, "Soldier", soldierPrefab);
-                case UnitType.Ninja:
-                    return new UnitData(UnitType.Ninja, NINJA_COST, "Ninja", ninjaPrefab);
-                case UnitType.Ogre:
-                    return new UnitData(UnitType.Ogre, OGRE_COST, "Ogre", ogrePrefab);
-                default:
-                    return new UnitData(UnitType.Soldier, SOLDIER_COST, "Soldier", soldierPrefab);
+                for (int i = 0; i < 3; i++)
+                {
+                    UnitData soldier = new UnitData(soldierStats);
+                    hand.Add(soldier);
+                }
+
+                OnHandChanged?.Invoke();
+                Debug.Log("Starting hand: 3 Soldiers");
             }
         }
     }

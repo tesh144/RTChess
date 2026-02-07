@@ -448,5 +448,70 @@ namespace ClockworkGrid
             currentFacing = Facing.North;
             transform.rotation = Quaternion.Euler(0f, 0f, 0f);
         }
+
+        /// <summary>
+        /// Initialize unit with UnitStats (Iteration 6)
+        /// </summary>
+        public void Initialize(Team unitTeam, int gridX, int gridY, UnitStats stats)
+        {
+            // Apply stats
+            maxHP = stats.maxHP;
+            attackDamage = stats.attackDamage;
+            attackRange = stats.attackRange;
+            attackIntervalMultiplier = stats.attackIntervalMultiplier;
+            resourceCost = stats.resourceCost;
+
+            // Reset HP to new max
+            currentHP = maxHP;
+
+            // Apply team and position
+            team = unitTeam;
+            GridX = gridX;
+            GridY = gridY;
+            currentFacing = Facing.North;
+            transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
+            // Apply visual scale
+            if (stats.modelScale != 1f)
+            {
+                transform.localScale = Vector3.one * stats.modelScale;
+            }
+
+            // Apply color
+            ApplyColor(stats.unitColor);
+
+            // Update HP text
+            UpdateHPText();
+
+            Debug.Log($"Initialized {stats.unitName}: HP={maxHP}, Damage={attackDamage}, Range={attackRange}, Interval={attackIntervalMultiplier}");
+        }
+
+        /// <summary>
+        /// Apply color to all renderers
+        /// </summary>
+        private void ApplyColor(Color color)
+        {
+            if (renderers == null || renderers.Length == 0)
+            {
+                CacheRenderers();
+            }
+
+            foreach (Renderer r in renderers)
+            {
+                if (r != null && !r.name.Contains("HPText"))
+                {
+                    r.material.color = color;
+                }
+            }
+
+            // Update cached colors
+            if (originalColors != null)
+            {
+                for (int i = 0; i < originalColors.Length; i++)
+                {
+                    originalColors[i] = color;
+                }
+            }
+        }
     }
 }

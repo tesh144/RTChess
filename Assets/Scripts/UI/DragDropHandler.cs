@@ -108,11 +108,11 @@ namespace ClockworkGrid
             GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, Quaternion.identity);
             unitObj.SetActive(true);
 
-            // Initialize unit
+            // Initialize unit with UnitStats (Iteration 6)
             Unit unit = unitObj.GetComponent<Unit>();
-            if (unit != null)
+            if (unit != null && currentDraggingIcon != null && currentDraggingIcon.UnitData != null)
             {
-                unit.Initialize(Team.Player, targetGridX, targetGridY);
+                unit.Initialize(Team.Player, targetGridX, targetGridY, currentDraggingIcon.UnitData.Stats);
             }
 
             // Add placement cooldown component
