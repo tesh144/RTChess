@@ -420,15 +420,23 @@ namespace ClockworkGrid
 
                 // Pick enemy type based on current wave number
                 UnitStats enemyStats = RaritySystem.Instance.DrawRandomEnemyUnit(currentWaveIndex);
-                if (enemyStats == null || enemyStats.unitPrefab == null)
+                if (enemyStats == null)
                 {
                     Debug.LogWarning($"Failed to get enemy stats for wave {currentWaveIndex}");
                     continue;
                 }
 
-                // Spawn enemy
+                // Use enemy prefab if available, fall back to player prefab
+                GameObject prefabToSpawn = enemyStats.enemyPrefab != null ? enemyStats.enemyPrefab : enemyStats.unitPrefab;
+                if (prefabToSpawn == null)
+                {
+                    Debug.LogWarning($"No prefab found for enemy type {enemyStats.unitType}");
+                    continue;
+                }
+
+                // Spawn enemy (preserve prefab rotation for custom models)
                 Vector3 worldPos = GridManager.Instance.GridToWorldPosition(pos.x, pos.y);
-                GameObject enemyObj = Instantiate(enemyStats.unitPrefab, worldPos, Quaternion.identity);
+                GameObject enemyObj = Instantiate(prefabToSpawn, worldPos, prefabToSpawn.transform.rotation);
                 enemyObj.SetActive(true);
 
                 Unit unit = enemyObj.GetComponent<Unit>();

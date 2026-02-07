@@ -52,6 +52,11 @@ namespace ClockworkGrid
         public bool StartDrag(UnitIcon icon, GameObject unitPrefab)
         {
             if (isDragging) return false;
+            if (unitPrefab == null)
+            {
+                Debug.LogError("StartDrag called with null unitPrefab!");
+                return false;
+            }
 
             currentDraggingIcon = icon;
             currentUnitPrefab = unitPrefab;
@@ -105,7 +110,7 @@ namespace ClockworkGrid
 
             // Valid placement - spawn unit (FREE, no token cost!)
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(targetGridX, targetGridY);
-            GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, Quaternion.identity);
+            GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, currentUnitPrefab.transform.rotation);
             unitObj.SetActive(true);
 
             // Initialize unit with UnitStats (Iteration 6)
