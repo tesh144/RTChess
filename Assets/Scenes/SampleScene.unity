@@ -740,10 +740,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3d5a3ff7638f484eb5604fb05b2aea1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hand: []
-  baseDealCost: 2
-  drawCount: 0
-  maxHandSize: 10
 --- !u!4 &1072442782
 Transform:
   m_ObjectHideFlags: 0
@@ -1097,16 +1093,36 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: waveSequence.Array.data[0].spawnType
+      propertyPath: ogreModelScale
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: ninjaModelScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: ogreAttackInterval
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: waveSequence.Array.data[0].spawnType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequence.Array.data[1].spawnType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: waveSequence.Array.data[2].spawnType
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequence.Array.data[3].spawnType
-      value: 2
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: waveSequence.Array.data[4].spawnType
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequence.Array.data[0].enemyOgreCount
