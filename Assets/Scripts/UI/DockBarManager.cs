@@ -34,8 +34,9 @@ namespace ClockworkGrid
         private List<UnitIcon> unitIcons = new List<UnitIcon>();
         private GameObject[] availableUnitPrefabs;
 
-        // HandManager integration
-        private HandManager handManager;
+        // Draw cost tracking (Iteration 10: Self-sufficient, no HandManager)
+        private int drawCount = 0;
+        private int baseDealCost = 2;
 
         // Singleton pattern
         public static DockBarManager Instance { get; private set; }
@@ -51,12 +52,10 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Initialize the dock bar with UI hierarchy and HandManager
+        /// Initialize the dock bar with UI hierarchy (Iteration 10: No HandManager)
         /// </summary>
-        public void Initialize(Canvas canvas, HandManager manager)
+        public void Initialize(Canvas canvas)
         {
-            handManager = manager;
-
             // Use editor UI if assigned, otherwise create at runtime
             if (dockIconsContainer != null && drawButton != null)
             {
@@ -79,14 +78,6 @@ namespace ClockworkGrid
             {
                 ResourceTokenManager.Instance.OnTokensChanged += OnTokensChanged;
             }
-
-            // Subscribe to hand changes to update UI
-            if (handManager != null)
-            {
-                handManager.OnHandChanged += OnHandChanged;
-                // Display starting hand
-                OnHandChanged();
-            }
         }
 
         private void OnDestroy()
@@ -94,11 +85,6 @@ namespace ClockworkGrid
             if (ResourceTokenManager.Instance != null)
             {
                 ResourceTokenManager.Instance.OnTokensChanged -= OnTokensChanged;
-            }
-
-            if (handManager != null)
-            {
-                handManager.OnHandChanged -= OnHandChanged;
             }
         }
 
@@ -247,29 +233,52 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Calculate the current deal cost (delegates to HandManager)
+        /// Calculate the current deal cost (Iteration 10: Linear escalation)
         /// </summary>
         public int CalculateDealCost()
         {
-            if (handManager != null)
-                return handManager.CalculateDrawCost();
-            return 3; // Fallback
+            return baseDealCost + drawCount;
         }
 
         /// <summary>
-        /// Called when the Deal button is clicked
+        /// Get current draw cost (public accessor)
+        /// </summary>
+        public int GetCurrentDrawCost()
+        {
+            return CalculateDealCost();
+        }
+
+        /// <summary>
+        /// Called when the Deal button is clicked (Iteration 10: Self-sufficient)
         /// </summary>
         public void OnDealButtonClicked()
         {
-            if (handManager == null) return;
+            int cost = CalculateDealCost();
 
-            // Try to draw a unit (HandManager handles cost check and token spending)
-            bool success = handManager.DrawUnit();
-
-            if (!success)
+            // Check if player has enough tokens
+            if (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost))
             {
+                Debug.Log($"Failed to draw unit - not enough tokens (need {cost})");
                 // TODO: Show error feedback (button shake, sound)
-                Debug.Log("Failed to draw unit - check tokens or hand size");
+                return;
+            }
+
+            // Spend tokens
+            ResourceTokenManager.Instance.SpendTokens(cost);
+
+            // Increment draw count AFTER spending
+            drawCount++;
+
+            // Draw a random unit from RaritySystem
+            if (RaritySystem.Instance != null)
+            {
+                UnitStats drawnStats = RaritySystem.Instance.DrawRandomUnit();
+                if (drawnStats != null)
+                {
+                    UnitData unitData = new UnitData(drawnStats);
+                    AddUnitToDock(unitData);
+                    Debug.Log($"Drew {drawnStats.unitName} ({drawnStats.rarity}) - Cost was {cost}T");
+                }
             }
 
             // Update button display
@@ -324,28 +333,7 @@ namespace ClockworkGrid
             // TODO: Animate icon sliding in from right
         }
 
-        /// <summary>
-        /// Called when the hand changes (unit added or removed)
-        /// </summary>
-        private void OnHandChanged()
-        {
-            if (handManager == null) return;
-
-            // Clear current icons
-            foreach (UnitIcon icon in unitIcons)
-            {
-                if (icon != null && icon.gameObject != null)
-                    Destroy(icon.gameObject);
-            }
-            unitIcons.Clear();
-
-            // Rebuild from current hand
-            List<UnitData> hand = handManager.GetHand();
-            foreach (UnitData unitData in hand)
-            {
-                AddUnitToDock(unitData);
-            }
-        }
+        // REMOVED: OnHandChanged() - No longer needed (Iteration 10: Self-sufficient)
 
         /// <summary>
         /// Remove a unit icon from the dock (called after placement)
@@ -355,13 +343,6 @@ namespace ClockworkGrid
             if (unitIcons.Contains(icon))
             {
                 unitIcons.Remove(icon);
-
-                // Remove from HandManager
-                if (handManager != null && icon.UnitData != null)
-                {
-                    handManager.RemoveFromHand(icon.UnitData);
-                }
-
                 Destroy(icon.gameObject);
                 UpdateLayoutSpacing();
             }
@@ -398,8 +379,8 @@ namespace ClockworkGrid
             bool canAfford = ResourceTokenManager.Instance != null &&
                            ResourceTokenManager.Instance.HasEnoughTokens(cost);
 
-            // Check if hand is full
-            bool handFull = handManager != null && handManager.GetHandSize() >= 10;
+            // Check if hand is full (max 10 units in dock)
+            bool handFull = unitIcons.Count >= 10;
 
             // Update button text
             if (handFull)

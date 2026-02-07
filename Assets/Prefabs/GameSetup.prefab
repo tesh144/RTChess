@@ -47,7 +47,7 @@ MonoBehaviour:
   gridWidth: 11
   gridHeight: 11
   cellSize: 1.5
-  baseIntervalDuration: 1
+  baseIntervalDuration: 2
   soldierPlayerPrefab: {fileID: 6974813962620877057, guid: 4b782cfc9fe18410e9900051ea2f39d4, type: 3}
   soldierEnemyPrefab: {fileID: 1174396167649158818, guid: 8e21f175452cc4678816fc825c4c8ca7, type: 3}
   soldierRarityWeight: 60
@@ -78,13 +78,142 @@ MonoBehaviour:
   ninjaResourceCost: 4
   ninjaRevealRadius: 2
   ninjaModelScale: 0.8
-  intervalsPerWave: 20
-  baseEnemyCount: 2
-  enemyScaling: 1.2
-  maxWaves: 20
-  baseDowntime: 10
-  minDowntime: 5
-  downtimeDecreaseWave: 10
+  waveSequence:
+  - spawnType: 0
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 0
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 2
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 2
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 0
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 1
+    enemySoldierCount: 2
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 0
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 0
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 1
+    enemySoldierCount: 1
+    enemyNinjaCount: 1
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 0
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 2
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 1
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 0
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 0
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 1
+    enemySoldierCount: 3
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 0
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
+  - spawnType: 3
+    enemySoldierCount: 0
+    enemyNinjaCount: 0
+    enemyOgreCount: 0
+    resourceNodeCount: 0
+    resourceNodeLevel: 1
+    bossCount: 1
+    bossHP: 30
+    bossDamage: 5
   resourceNodeLevel1Prefab: {fileID: 3376462439609532193, guid: 846954e0d358a4a5081e890670494b00, type: 3}
   level1HP: 10
   level1TokensPerHit: 1

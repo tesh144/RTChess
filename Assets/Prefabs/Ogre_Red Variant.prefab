@@ -117,4 +117,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b248d961295f4f07b6e09b3707f296c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  worldEulerRotation: {x: -90, y: 0, z: 0}
+  worldEulerRotation: {x: 0, y: 0, z: 0}
