@@ -587,8 +587,8 @@ namespace ClockworkGrid
                 UpdateTypeText(stats.unitType, stats.unitName);
             }
 
-            // Reveal fog around unit (Iteration 7)
-            if (FogManager.Instance != null)
+            // Reveal fog around unit (Iteration 7) - only player units reveal fog
+            if (FogManager.Instance != null && unitTeam == Team.Player)
             {
                 FogManager.Instance.RevealRadius(gridX, gridY, RevealRadius);
             }

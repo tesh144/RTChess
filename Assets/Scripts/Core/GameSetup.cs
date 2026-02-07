@@ -128,6 +128,7 @@ namespace ClockworkGrid
             SetupUnitPrefabs(); // Iteration 6: Create all unit prefabs
             SetupResourceNodePrefabs(); // Iteration 8: Create all 3 resource levels
             SetupRaritySystem(); // Iteration 6: Must be before WaveManager
+            SpawnStartingResource(); // Spawn resource node at grid center before wave
             SetupWaveManager(); // Iteration 10: Handles ALL spawning (enemies + resources)
             SetupUI();
             SetupDockBar();
@@ -248,6 +249,29 @@ namespace ClockworkGrid
             resourceNodePrefab = level1ResourcePrefab;
 
             Debug.Log("Created 3 resource node levels: L1 (1x1), L2 (2x1), L3 (2x2)");
+        }
+
+        private void SpawnStartingResource()
+        {
+            if (GridManager.Instance == null || level1ResourcePrefab == null) return;
+
+            int centerX = GridManager.Instance.Width / 2;
+            int centerY = GridManager.Instance.Height / 2;
+
+            Vector3 worldPos = GridManager.Instance.GridToWorldPosition(centerX, centerY);
+            GameObject nodeObj = Instantiate(level1ResourcePrefab, worldPos, Quaternion.identity);
+            nodeObj.SetActive(true);
+
+            ResourceNode node = nodeObj.GetComponent<ResourceNode>();
+            if (node != null)
+            {
+                node.GridX = centerX;
+                node.GridY = centerY;
+                node.Initialize(new Vector2Int(1, 1));
+            }
+
+            GridManager.Instance.PlaceUnit(centerX, centerY, nodeObj, CellState.Resource);
+            Debug.Log($"Spawned starting resource node at grid center ({centerX}, {centerY})");
         }
 
         private GameObject CreateResourceNodePrefab(
@@ -491,6 +515,16 @@ namespace ClockworkGrid
             if (canvas != null)
             {
                 dockManager.Initialize(canvas);
+            }
+
+            // Give player a starting Soldier card
+            if (RaritySystem.Instance != null)
+            {
+                UnitStats soldierStats = RaritySystem.Instance.GetUnitStats(UnitType.Soldier);
+                if (soldierStats != null)
+                {
+                    dockManager.AddUnitToDock(soldierStats);
+                }
             }
 
             Debug.Log("SetupDockBar: Found and initialized dock bar components");
