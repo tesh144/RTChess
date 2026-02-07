@@ -513,6 +513,7 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Initialize the timeline UI (called once at wave start).
+        /// Also shows the dock bar with animation after countdown completes.
         /// </summary>
         private void InitializeTimelineUI()
         {
@@ -520,7 +521,13 @@ namespace ClockworkGrid
             {
                 // Convert wave sequence to spawn code format for existing UI
                 string spawnCode = ConvertSequenceToSpawnCode();
-                SpawnTimelineUI.Instance.InitializeWave(1, spawnCode);
+                SpawnTimelineUI.Instance.InitializeWave(currentWaveNumber + 1, spawnCode);
+            }
+
+            // Show dock bar after countdown completes
+            if (DockBarManager.Instance != null)
+            {
+                DockBarManager.Instance.ShowWithAnimation();
             }
         }
 

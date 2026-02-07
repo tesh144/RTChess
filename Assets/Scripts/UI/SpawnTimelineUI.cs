@@ -129,11 +129,12 @@ namespace ClockworkGrid
         /// <summary>
         /// Initialize wave timeline with spawn code.
         /// Called by WaveManager when a wave starts.
+        /// NOTE: UI should already be active from ShowCountdown() call
         /// </summary>
         public void InitializeWave(int waveNumber, string spawnCode)
         {
-            // UI already shown during countdown
-            gameObject.SetActive(true);
+            // Don't activate here - UI should already be shown by ShowCountdown()
+            // If this gets called without ShowCountdown first, that's a bug in the flow
 
             ClearTimeline();
 

@@ -23,8 +23,14 @@ namespace ClockworkGrid
         [Header("Runtime Creation Settings (if no UI references assigned)")]
         [SerializeField] private bool createUIAtRuntime = false;
 
+        [Header("Animation Settings")]
+        [SerializeField] private bool enableSlideAnimation = true;
+        [SerializeField] private float slideUpDistance = 150f; // Distance to slide from below
+        [SerializeField] private float slideUpDuration = 0.6f; // Animation duration
+
         // UI References (assigned from editor OR created at runtime)
         private RectTransform dockBarContainer;
+        private Vector2 originalAnchoredPosition;
         private Image backgroundImage;
         private RectTransform dockIconsPanel;
         private HorizontalLayoutGroup layoutGroup;
@@ -49,6 +55,9 @@ namespace ClockworkGrid
                 return;
             }
             Instance = this;
+
+            // Hide dock bar until wave countdown completes
+            gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -78,6 +87,16 @@ namespace ClockworkGrid
             {
                 ResourceTokenManager.Instance.OnTokensChanged += OnTokensChanged;
             }
+
+            // Cache RectTransform and original position for animation
+            if (dockBarContainer == null)
+            {
+                dockBarContainer = GetComponent<RectTransform>();
+            }
+            if (dockBarContainer != null)
+            {
+                originalAnchoredPosition = dockBarContainer.anchoredPosition;
+            }
         }
 
         private void OnDestroy()
@@ -86,6 +105,49 @@ namespace ClockworkGrid
             {
                 ResourceTokenManager.Instance.OnTokensChanged -= OnTokensChanged;
             }
+        }
+
+        /// <summary>
+        /// Show the dock bar with slide-up animation after countdown completes.
+        /// </summary>
+        public void ShowWithAnimation()
+        {
+            gameObject.SetActive(true);
+
+            if (enableSlideAnimation && dockBarContainer != null)
+            {
+                StartCoroutine(SlideUpAnimation());
+            }
+        }
+
+        /// <summary>
+        /// Animate dock bar sliding up from below the screen.
+        /// </summary>
+        private System.Collections.IEnumerator SlideUpAnimation()
+        {
+            if (dockBarContainer == null) yield break;
+
+            // Start position (below screen)
+            Vector2 startPos = originalAnchoredPosition - new Vector2(0, slideUpDistance);
+            Vector2 endPos = originalAnchoredPosition;
+
+            dockBarContainer.anchoredPosition = startPos;
+
+            float elapsed = 0f;
+            while (elapsed < slideUpDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / slideUpDuration;
+
+                // Smooth ease-out curve
+                float smoothT = 1f - Mathf.Pow(1f - t, 3f);
+
+                dockBarContainer.anchoredPosition = Vector2.Lerp(startPos, endPos, smoothT);
+                yield return null;
+            }
+
+            // Ensure final position is exact
+            dockBarContainer.anchoredPosition = endPos;
         }
 
         /// <summary>
