@@ -127,6 +127,13 @@ namespace ClockworkGrid
             // Register with grid
             GridManager.Instance.PlaceUnit(targetGridX, targetGridY, unitObj, CellState.PlayerUnit);
 
+            // Trigger wave start on first player unit placement
+            if (WaveManager.Instance != null && !WaveManager.Instance.HasWaveStarted)
+            {
+                WaveManager.Instance.StartWave();
+                Debug.Log("[DragDropHandler] First player unit placed - wave started!");
+            }
+
             // Remove from dock
             DockBarManager.Instance.RemoveUnitIcon(currentDraggingIcon);
 

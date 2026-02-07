@@ -98,6 +98,7 @@ namespace ClockworkGrid
         private int delayTicksRemaining;
         private bool sequenceComplete = false;
         private bool gameOver = false;
+        private bool hasWaveStarted = false; // Wave doesn't start until player places first unit
 
         // Spawn positions (edges of grid)
         private List<Vector2Int> spawnPositions = new List<Vector2Int>();
@@ -188,6 +189,13 @@ namespace ClockworkGrid
 
             try
             {
+                // Don't start wave until player places first unit
+                if (!hasWaveStarted)
+                {
+                    Debug.Log($"[WaveManager] Waiting for player to place first unit - wave not started yet");
+                    return;
+                }
+
                 if (gameOver || sequenceComplete)
                 {
                     Debug.Log($"[WaveManager] Skipping - gameOver: {gameOver}, sequenceComplete: {sequenceComplete}");
@@ -636,12 +644,28 @@ namespace ClockworkGrid
             }
         }
 
+        /// <summary>
+        /// Trigger wave start (called when player places first unit).
+        /// </summary>
+        public void StartWave()
+        {
+            if (hasWaveStarted)
+            {
+                Debug.LogWarning("WaveManager: StartWave called but wave already started!");
+                return;
+            }
+
+            hasWaveStarted = true;
+            Debug.Log("WaveManager: Wave started by player placing first unit!");
+        }
+
         // Public accessors for UI/other systems
         public WaveState CurrentState => currentState;
         public int CurrentWaveIndex => currentWaveIndex;
         public int TotalWaveEntries => waveSequence.Length;
         public bool IsSequenceComplete => sequenceComplete;
         public bool IsGameOver => gameOver;
+        public bool HasWaveStarted => hasWaveStarted;
 
         /// <summary>
         /// Get the current wave entry being executed.
