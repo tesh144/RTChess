@@ -58,6 +58,7 @@ MonoBehaviour:
   soldierResourceCost: 3
   soldierRevealRadius: 1
   soldierModelScale: 1
+  soldierIconSprite: {fileID: 21300000, guid: 44fa00cf12c8b4732afb9768afecdc13, type: 3}
   ogrePlayerPrefab: {fileID: 512660297386461547, guid: a574714abd87149ed941e99cc2d8e3b7, type: 3}
   ogreEnemyPrefab: {fileID: 8296657993349735102, guid: acf33468e1b81422883828c3a3f167df, type: 3}
   ogreRarityWeight: 5
@@ -68,6 +69,7 @@ MonoBehaviour:
   ogreResourceCost: 6
   ogreRevealRadius: 1
   ogreModelScale: 1
+  ogreIconSprite: {fileID: 21300000, guid: 7058973981e304155bac8e28ba9083fa, type: 3}
   ninjaPlayerPrefab: {fileID: 1531087478788396153, guid: 0a952b697fd5f4a19a28a5f976af2e82, type: 3}
   ninjaEnemyPrefab: {fileID: 8139704103507337014, guid: 8e5b38abe23fc4709ae6d3344eca3864, type: 3}
   ninjaRarityWeight: 35
@@ -78,142 +80,11 @@ MonoBehaviour:
   ninjaResourceCost: 4
   ninjaRevealRadius: 2
   ninjaModelScale: 1
-  waveSequence:
-  - spawnType: 0
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 0
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 2
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 2
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 0
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 1
-    enemySoldierCount: 2
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 0
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 0
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 1
-    enemySoldierCount: 1
-    enemyNinjaCount: 1
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 0
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 2
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 1
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 0
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 0
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 1
-    enemySoldierCount: 3
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 0
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
-  - spawnType: 3
-    enemySoldierCount: 0
-    enemyNinjaCount: 0
-    enemyOgreCount: 0
-    resourceNodeCount: 0
-    resourceNodeLevel: 1
-    bossCount: 1
-    bossHP: 30
-    bossDamage: 5
+  ninjaIconSprite: {fileID: 21300000, guid: a8ea82bf8ac074ad7b281dced4f4558b, type: 3}
+  ticksPerWaveAdvance: 4
+  peacePeriodTicks: 8
+  waveSequences:
+  - 0020100100200103
   resourceNodeLevel1Prefab: {fileID: 3376462439609532193, guid: 846954e0d358a4a5081e890670494b00, type: 3}
   level1HP: 10
   level1TokensPerHit: 1
