@@ -18,6 +18,13 @@ public class MusicSystem : MonoBehaviour
     private void Awake()
     {
         instance = this;
+
+        // Ensure music doesn't auto-play
+        if (source != null)
+        {
+            source.playOnAwake = false;
+            source.Stop(); // Stop if already playing
+        }
     }
 
     public void StartMusic()

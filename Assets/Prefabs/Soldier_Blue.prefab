@@ -794,7 +794,6 @@ GameObject:
   - component: {fileID: 7746284769562059707}
   - component: {fileID: 114050624225269943}
   - component: {fileID: 1489529401600264289}
-  - component: {fileID: -3033368778651648849}
   - component: {fileID: -6499992665212097235}
   m_Layer: 0
   m_Name: Soldier_Blue
@@ -859,19 +858,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &-3033368778651648849
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6974813962620877057}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d80dada096166424ab3f0836667576ba, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  clipOnEnable: {fileID: 0}
 --- !u!82 &-6499992665212097235
 AudioSource:
   m_ObjectHideFlags: 0

@@ -94,7 +94,6 @@ GameObject:
   - component: {fileID: 2194470589002632899}
   - component: {fileID: 3216159805075994371}
   - component: {fileID: 8700435082405083745}
-  - component: {fileID: -3818371954776888603}
   - component: {fileID: -380702516307329226}
   m_Layer: 0
   m_Name: Ninja_Blue
@@ -159,19 +158,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &-3818371954776888603
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1531087478788396153}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d80dada096166424ab3f0836667576ba, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  clipOnEnable: {fileID: 0}
 --- !u!82 &-380702516307329226
 AudioSource:
   m_ObjectHideFlags: 0

@@ -148,11 +148,7 @@ namespace ClockworkGrid
             SetupLighting();
             SetupSFXManager();
 
-            // Start background music if MusicSystem exists in scene
-            if (MusicSystem.instance != null)
-            {
-                MusicSystem.instance.StartMusic();
-            }
+            // Music will start when first unit is placed (see DragDropHandler.EndDrag)
         }
 
         private void SetupCamera()

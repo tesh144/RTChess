@@ -582,7 +582,6 @@ GameObject:
   - component: {fileID: 174165366095302059}
   - component: {fileID: 8293865840880832884}
   - component: {fileID: 3768950864584291422}
-  - component: {fileID: -2000478172964481008}
   - component: {fileID: -6886373340468336927}
   m_Layer: 0
   m_Name: Archer_Blue
@@ -647,19 +646,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &-2000478172964481008
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6242359067359557865}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d80dada096166424ab3f0836667576ba, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  clipOnEnable: {fileID: 0}
 --- !u!82 &-6886373340468336927
 AudioSource:
   m_ObjectHideFlags: 0
