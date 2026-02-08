@@ -17,6 +17,7 @@ namespace ClockworkGrid
         [SerializeField] protected int attackRange = 1;
         [SerializeField] protected int attackIntervalMultiplier = 2;
         [SerializeField] protected int resourceCost = 3;
+        [SerializeField] protected int killReward = 2;
 
         [Header("Unit State")]
         [SerializeField] private Team team = Team.Player;
@@ -370,10 +371,27 @@ namespace ClockworkGrid
 
             Debug.Log($"{team} unit destroyed at ({GridX}, {GridY})");
 
-            // Notify WaveManager if this was a player unit (for lose condition tracking)
-            if (team == Team.Player && WaveManager.Instance != null)
+            // Notify WaveManager for tracking
+            if (WaveManager.Instance != null)
             {
-                WaveManager.Instance.OnPlayerUnitDestroyed();
+                if (team == Team.Player)
+                {
+                    WaveManager.Instance.OnPlayerUnitDestroyed();
+                }
+                else if (team == Team.Enemy)
+                {
+                    WaveManager.Instance.OnEnemyUnitDestroyed();
+                }
+            }
+
+            // Grant kill reward tokens when an enemy unit is killed
+            if (team == Team.Enemy && killReward > 0 && ResourceTokenManager.Instance != null)
+            {
+                Vector3 rewardPos = GridManager.Instance != null
+                    ? GridManager.Instance.GridToWorldPosition(GridX, GridY)
+                    : transform.position;
+                ResourceTokenManager.Instance.AddTokens(killReward, rewardPos);
+                Debug.Log($"Enemy killed at ({GridX},{GridY}): awarded {killReward} tokens");
             }
 
             // Remove from grid
@@ -568,6 +586,7 @@ namespace ClockworkGrid
             attackRange = stats.attackRange;
             attackIntervalMultiplier = stats.attackIntervalMultiplier;
             resourceCost = stats.resourceCost;
+            killReward = stats.killReward;
             RevealRadius = stats.revealRadius;
 
             // Reset HP to new max
@@ -593,8 +612,8 @@ namespace ClockworkGrid
             // else
             //     UpdateTypeText(stats.unitType, stats.unitName);
 
-            // Reveal fog around unit (Iteration 7) - only player units reveal fog
-            if (FogManager.Instance != null && unitTeam == Team.Player)
+            // Reveal fog around unit (Iteration 7)
+            if (FogManager.Instance != null)
             {
                 FogManager.Instance.RevealRadius(gridX, gridY, RevealRadius);
             }

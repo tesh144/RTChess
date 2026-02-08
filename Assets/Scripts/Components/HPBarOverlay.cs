@@ -11,7 +11,7 @@ namespace ClockworkGrid
         [Header("HP Bar Settings")]
         [SerializeField] private float barWidth = 0.8f;
         [SerializeField] private float barHeight = 0.1f;
-        [SerializeField] private float yOffset = 0.7f; // Above unit
+        [SerializeField] private float yOffset = 1.5f; // Above unit
         [SerializeField] private float overlayScale = 1f; // Overall scale of the HP overlay
 
         [Header("Colors")]

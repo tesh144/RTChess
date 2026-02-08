@@ -26,9 +26,9 @@ namespace ClockworkGrid
         [SerializeField] private float zoomSmoothing = 8f;
 
         [Header("Auto Rotation")]
-        [SerializeField] private bool autoRotate = false;
+        [SerializeField] private bool autoRotate = true;
         [Tooltip("Degrees per second of slow rotation around the board")]
-        [SerializeField] private float autoRotateSpeed = 3f;
+        [SerializeField] private float autoRotateSpeed = 1.5f;
 
         [Header("Manual Rotation")]
         [Tooltip("Hold right-click and drag to rotate")]
@@ -64,6 +64,13 @@ namespace ClockworkGrid
         private float shakeIntensity;
         private float shakeDuration;
         private float shakeTimer;
+
+        // Rotation events for UI visibility
+        public bool IsRotating => isRightDragging;
+        public Vector3 CurrentTarget => targetPoint;
+        public float CurrentDistance => targetDistance;
+        public event System.Action OnRotationStarted;
+        public event System.Action OnRotationEnded;
 
         private void Awake()
         {
@@ -129,10 +136,12 @@ namespace ClockworkGrid
             {
                 isRightDragging = true;
                 lastMousePos = Input.mousePosition;
+                OnRotationStarted?.Invoke();
             }
             if (Input.GetMouseButtonUp(1))
             {
                 isRightDragging = false;
+                OnRotationEnded?.Invoke();
             }
             if (isRightDragging)
             {
@@ -249,6 +258,19 @@ namespace ClockworkGrid
             if (GridManager.Instance != null)
             {
                 targetPoint = GridManager.Instance.GridToWorldPosition(gridX, gridY);
+            }
+        }
+
+        /// <summary>
+        /// Quickly snap the camera focus to a grid cell (fast pan).
+        /// Zeroes out velocity for an immediate transition feel.
+        /// </summary>
+        public void SnapToCell(int gridX, int gridY)
+        {
+            if (GridManager.Instance != null)
+            {
+                targetPoint = GridManager.Instance.GridToWorldPosition(gridX, gridY);
+                targetPointVelocity = Vector3.zero; // Reset velocity for snappy movement
             }
         }
 

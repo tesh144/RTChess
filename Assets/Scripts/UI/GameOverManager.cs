@@ -211,8 +211,8 @@ namespace ClockworkGrid
             titleText.text = "VICTORY!";
             titleText.color = victoryColor;
 
-            int totalWaves = WaveManager.Instance != null ? WaveManager.Instance.TotalWaveEntries : 0;
-            messageText.text = $"You survived all {totalWaves} wave entries!";
+            int totalWaves = WaveManager.Instance != null ? WaveManager.Instance.TotalWaves : 0;
+            messageText.text = $"You defeated all {totalWaves} waves!";
 
             // Calculate and display statistics
             string stats = GenerateStatistics();
@@ -259,13 +259,13 @@ namespace ClockworkGrid
         /// </summary>
         private string GenerateStatistics()
         {
-            int wavesCompleted = WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveIndex + 1 : 0;
-            int totalWaves = WaveManager.Instance != null ? WaveManager.Instance.TotalWaveEntries : 0;
+            int wavesCompleted = WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveNumber : 0;
+            int totalWaves = WaveManager.Instance != null ? WaveManager.Instance.TotalWaves : 0;
             int currentTokens = ResourceTokenManager.Instance != null ? ResourceTokenManager.Instance.CurrentTokens : 0;
             int intervals = IntervalTimer.Instance != null ? IntervalTimer.Instance.CurrentInterval : 0;
             float timePlayed = intervals * 2f; // Each interval is 2 seconds
 
-            string stats = $"Wave Entries Completed: {wavesCompleted}/{totalWaves}\n";
+            string stats = $"Waves Completed: {wavesCompleted}/{totalWaves}\n";
             stats += $"Intervals Survived: {intervals}\n";
             stats += $"Time Played: {Mathf.FloorToInt(timePlayed / 60f)}:{(timePlayed % 60f):00}\n";
             stats += $"Tokens Remaining: {currentTokens}";

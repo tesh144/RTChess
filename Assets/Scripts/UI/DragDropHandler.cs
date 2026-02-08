@@ -37,6 +37,12 @@ namespace ClockworkGrid
         private Color validColor = new Color(1f, 1f, 1f, 0.6f);
         private Color invalidColor = new Color(1f, 0.3f, 0.3f, 0.6f);
 
+        // Camera tracking during drag
+        private Vector3 preDragCameraTarget;
+        private float preDragZoomDistance;
+        private float dragZoomAmount = 5f; // How much to zoom in during drag
+        private float dragCameraEaseSpeed = 3f; // How fast camera eases toward target
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -121,6 +127,14 @@ namespace ClockworkGrid
             canvasCamera = (iconCanvas != null && iconCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
                 ? iconCanvas.worldCamera : null;
 
+            // Save camera state before drag for tracking and zoom
+            if (CameraController.Instance != null)
+            {
+                preDragCameraTarget = CameraController.Instance.CurrentTarget;
+                preDragZoomDistance = CameraController.Instance.CurrentDistance;
+                CameraController.Instance.ZoomTo(preDragZoomDistance - dragZoomAmount);
+            }
+
             arcLine.enabled = true;
             cellHighlight.SetActive(true);
 
@@ -147,6 +161,15 @@ namespace ClockworkGrid
                 // Update cell highlight
                 UpdateCellHighlight(cellCenter, valid);
 
+                // Ease camera halfway toward hovered cell
+                if (CameraController.Instance != null)
+                {
+                    Vector3 halfTarget = Vector3.Lerp(preDragCameraTarget, cellCenter, 0.5f);
+                    Vector3 current = CameraController.Instance.CurrentTarget;
+                    Vector3 eased = Vector3.Lerp(current, halfTarget, Time.deltaTime * dragCameraEaseSpeed);
+                    CameraController.Instance.SetTarget(eased);
+                }
+
                 // Update arc line
                 UpdateArcLine(cellCenter);
             }
@@ -166,8 +189,13 @@ namespace ClockworkGrid
 
             if (!isValidPlacement)
             {
-                // Invalid placement - snap back to dock
+                // Invalid placement - snap back to dock and restore camera
                 currentDraggingIcon.SnapBackToOriginalPosition();
+                if (CameraController.Instance != null)
+                {
+                    CameraController.Instance.SetTarget(preDragCameraTarget);
+                    CameraController.Instance.ZoomTo(preDragZoomDistance);
+                }
                 CleanupDragVisuals();
                 isDragging = false;
                 return;
@@ -208,6 +236,13 @@ namespace ClockworkGrid
             // Remove from dock
             DockBarManager.Instance.RemoveUnitIcon(currentDraggingIcon);
 
+            // Quick-pan camera to the placed tile and restore zoom
+            if (CameraController.Instance != null)
+            {
+                CameraController.Instance.SnapToCell(targetGridX, targetGridY);
+                CameraController.Instance.ZoomTo(preDragZoomDistance);
+            }
+
             // Cleanup
             CleanupDragVisuals();
             isDragging = false;
@@ -221,6 +256,11 @@ namespace ClockworkGrid
             if (!isDragging) return;
 
             currentDraggingIcon.SnapBackToOriginalPosition();
+            if (CameraController.Instance != null)
+            {
+                CameraController.Instance.SetTarget(preDragCameraTarget);
+                CameraController.Instance.ZoomTo(preDragZoomDistance);
+            }
             CleanupDragVisuals();
             isDragging = false;
         }
