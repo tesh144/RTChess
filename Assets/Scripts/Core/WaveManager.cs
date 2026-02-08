@@ -750,10 +750,11 @@ namespace ClockworkGrid
             if (SFXManager.Instance != null)
                 SFXManager.Instance.PlayResourcePlacement();
 
-            // Reveal fog around resource node
+            // Reveal fog around resource node (level 2+ reveal further)
             if (FogManager.Instance != null)
             {
-                FogManager.Instance.RevealRadius(pos.x, pos.y, 1);
+                int revealRadius = level >= 2 ? 2 : 1;
+                FogManager.Instance.RevealRadius(pos.x, pos.y, revealRadius);
             }
 
             return true;
