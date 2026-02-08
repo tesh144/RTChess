@@ -71,6 +71,10 @@ namespace ClockworkGrid
         [SerializeField] private GameObject resourceNodeLevel2Prefab;
         [SerializeField] private GameObject resourceNodeLevel3Prefab;
 
+        [Header("Resource Spawn Settings")]
+        [Tooltip("Maximum distance (in cells) from player units or revealed cells for resource spawning")]
+        [SerializeField] private int resourceProximityRadius = 3;
+
         // State
         private WaveState currentState = WaveState.Preparation;
         private int currentWaveNumber = 0; // Which wave we're on (0-indexed into waveSequences list)
@@ -86,6 +90,7 @@ namespace ClockworkGrid
         private int enemyUnitCount = 0; // Track living enemies for wave completion
         private int resourceNodeCount = 0; // Track living resource nodes for wave completion
         private bool allEnemiesSpawned = false; // True when wave sequence has finished spawning
+        private bool isFirstResourceSpawn = true; // Track first resource for fog reveal logic
 
         // Events
         public event Action<int, SpawnType> OnWaveEntryExecuted; // (index, spawnType)
@@ -625,8 +630,9 @@ namespace ClockworkGrid
         // === RESOURCE SPAWN LOGIC ===
 
         /// <summary>
-        /// Find a spawn position for a resource node with minimum spacing from existing resources.
-        /// Spawns in revealed, empty cells. Falls back to maximum distance if spacing can't be met.
+        /// Find a spawn position for a resource node.
+        /// First resource: Spawns in any revealed empty cell.
+        /// Subsequent resources: Spawns within proximity radius of player units or revealed cells.
         /// </summary>
         private Vector2Int? FindResourceSpawnPosition()
         {
@@ -637,52 +643,141 @@ namespace ClockworkGrid
                 return null;
             }
 
-            var existingResources = GetAllResourcePositions();
-
-            // If no existing resources, pick any revealed empty cell
-            if (existingResources.Count == 0)
+            // First resource: use current logic (any revealed cell)
+            if (isFirstResourceSpawn)
             {
-                var chosen = candidates[UnityEngine.Random.Range(0, candidates.Count)];
-                Debug.Log($"[AI] Resource: no existing resources, chose ({chosen.x},{chosen.y})");
-                return chosen;
-            }
+                var existingResources = GetAllResourcePositions();
 
-            // Score each candidate by minimum Manhattan distance to existing resources
-            List<Vector2Int> spacedCandidates = new List<Vector2Int>();
-            Vector2Int bestFallback = candidates[0];
-            int bestFallbackDist = 0;
-
-            foreach (var pos in candidates)
-            {
-                int minDist = int.MaxValue;
-                foreach (var res in existingResources)
+                // If no existing resources, pick any revealed empty cell
+                if (existingResources.Count == 0)
                 {
-                    int dist = Mathf.Abs(pos.x - res.x) + Mathf.Abs(pos.y - res.y);
-                    if (dist < minDist) minDist = dist;
+                    var firstChosen = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+                    Debug.Log($"[AI] First Resource: no existing resources, chose ({firstChosen.x},{firstChosen.y})");
+                    return firstChosen;
                 }
 
-                if (minDist >= MinResourceSpacing)
+                // Maintain spacing for first resource if resources already exist
+                List<Vector2Int> spacedCandidates = new List<Vector2Int>();
+                Vector2Int bestFallback = candidates[0];
+                int bestFallbackDist = 0;
+
+                foreach (var pos in candidates)
                 {
-                    spacedCandidates.Add(pos);
+                    int minDist = int.MaxValue;
+                    foreach (var res in existingResources)
+                    {
+                        int dist = Mathf.Abs(pos.x - res.x) + Mathf.Abs(pos.y - res.y);
+                        if (dist < minDist) minDist = dist;
+                    }
+
+                    if (minDist >= MinResourceSpacing)
+                        spacedCandidates.Add(pos);
+
+                    if (minDist > bestFallbackDist)
+                    {
+                        bestFallbackDist = minDist;
+                        bestFallback = pos;
+                    }
                 }
 
-                if (minDist > bestFallbackDist)
-                {
-                    bestFallbackDist = minDist;
-                    bestFallback = pos;
-                }
+                var result = spacedCandidates.Count > 0
+                    ? spacedCandidates[UnityEngine.Random.Range(0, spacedCandidates.Count)]
+                    : bestFallback;
+                Debug.Log($"[AI] First Resource: chose ({result.x},{result.y})");
+                return result;
             }
 
-            if (spacedCandidates.Count > 0)
+            // Subsequent resources: spawn near player units or revealed cells
+            List<Vector2Int> proximityCandidates = FindProximityCandidates(candidates);
+
+            if (proximityCandidates.Count == 0)
             {
-                var chosen = spacedCandidates[UnityEngine.Random.Range(0, spacedCandidates.Count)];
-                Debug.Log($"[AI] Resource: chose ({chosen.x},{chosen.y}) spacing>={MinResourceSpacing}, {spacedCandidates.Count} valid candidates");
-                return chosen;
+                Debug.LogWarning("[AI] No candidates within proximity radius, falling back to any revealed cell");
+                var fallback = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+                Debug.Log($"[AI] Resource (fallback): chose ({fallback.x},{fallback.y})");
+                return fallback;
             }
 
-            // Fallback: pick the cell farthest from any existing resource
-            Debug.Log($"[AI] Resource: fallback ({bestFallback.x},{bestFallback.y}) maxDist={bestFallbackDist}");
-            return bestFallback;
+            var chosen = proximityCandidates[UnityEngine.Random.Range(0, proximityCandidates.Count)];
+            Debug.Log($"[AI] Resource (proximity): chose ({chosen.x},{chosen.y}), {proximityCandidates.Count} candidates");
+            return chosen;
+        }
+
+        /// <summary>
+        /// Find cells within proximity radius of player units (priority) or other revealed cells.
+        /// </summary>
+        private List<Vector2Int> FindProximityCandidates(List<Vector2Int> allCandidates)
+        {
+            List<Vector2Int> proximityCandidates = new List<Vector2Int>();
+
+            // Priority 1: Check proximity to player units
+            List<Vector2Int> playerUnitPositions = GetPlayerUnitPositions();
+            if (playerUnitPositions.Count > 0)
+            {
+                foreach (var candidate in allCandidates)
+                {
+                    foreach (var unitPos in playerUnitPositions)
+                    {
+                        int dist = Mathf.Abs(candidate.x - unitPos.x) + Mathf.Abs(candidate.y - unitPos.y);
+                        if (dist <= resourceProximityRadius)
+                        {
+                            proximityCandidates.Add(candidate);
+                            break; // Found one unit close enough, no need to check others
+                        }
+                    }
+                }
+
+                if (proximityCandidates.Count > 0)
+                {
+                    Debug.Log($"[AI] Found {proximityCandidates.Count} cells within {resourceProximityRadius} of player units");
+                    return proximityCandidates;
+                }
+            }
+
+            // Priority 2: If no player units, check proximity to other revealed cells
+            var allRevealedCells = GetRevealedEmptyCells();
+            foreach (var candidate in allCandidates)
+            {
+                foreach (var revealedCell in allRevealedCells)
+                {
+                    if (candidate == revealedCell) continue; // Don't compare to self
+
+                    int dist = Mathf.Abs(candidate.x - revealedCell.x) + Mathf.Abs(candidate.y - revealedCell.y);
+                    if (dist <= resourceProximityRadius)
+                    {
+                        proximityCandidates.Add(candidate);
+                        break;
+                    }
+                }
+            }
+
+            Debug.Log($"[AI] Found {proximityCandidates.Count} cells within {resourceProximityRadius} of revealed cells");
+            return proximityCandidates;
+        }
+
+        /// <summary>
+        /// Get all player unit positions on the grid.
+        /// </summary>
+        private List<Vector2Int> GetPlayerUnitPositions()
+        {
+            List<Vector2Int> positions = new List<Vector2Int>();
+            if (GridManager.Instance == null) return positions;
+
+            int width = GridManager.Instance.Width;
+            int height = GridManager.Instance.Height;
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (GridManager.Instance.GetCellState(x, y) == CellState.PlayerUnit)
+                    {
+                        positions.Add(new Vector2Int(x, y));
+                    }
+                }
+            }
+
+            return positions;
         }
 
         // === SPAWN METHODS ===
@@ -741,7 +836,8 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Spawn a single resource node with distance-based placement.
+        /// Spawn a single resource node with proximity-based placement.
+        /// First resource reveals fog radius, subsequent resources only reveal single cell.
         /// </summary>
         private bool SpawnSingleResource(int level)
         {
@@ -767,7 +863,7 @@ namespace ClockworkGrid
                 return false;
             }
 
-            // Find position with distance-based spacing
+            // Find position with proximity-based spacing
             Vector2Int? spawnPos = FindResourceSpawnPosition();
             if (!spawnPos.HasValue) return false;
             Vector2Int pos = spawnPos.Value;
@@ -799,11 +895,23 @@ namespace ClockworkGrid
             if (SFXManager.Instance != null)
                 SFXManager.Instance.PlayResourcePlacement();
 
-            // Reveal fog around resource node (level 2+ reveal further)
+            // Fog reveal logic
             if (FogManager.Instance != null)
             {
-                int revealRadius = level >= 2 ? 2 : 1;
-                FogManager.Instance.RevealRadius(pos.x, pos.y, revealRadius);
+                if (isFirstResourceSpawn)
+                {
+                    // First resource: reveal fog radius (level 2+ reveal further)
+                    int revealRadius = level >= 2 ? 2 : 1;
+                    FogManager.Instance.RevealRadius(pos.x, pos.y, revealRadius);
+                    isFirstResourceSpawn = false; // Mark first resource as spawned
+                    Debug.Log($"[WaveManager] First resource spawned with radius reveal: {revealRadius}");
+                }
+                else
+                {
+                    // Subsequent resources: only reveal single cell
+                    FogManager.Instance.RevealRadius(pos.x, pos.y, 0); // Radius 0 = single cell only
+                    Debug.Log($"[WaveManager] Subsequent resource spawned with single cell reveal");
+                }
             }
 
             return true;

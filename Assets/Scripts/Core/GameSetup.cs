@@ -78,6 +78,9 @@ namespace ClockworkGrid
         [Tooltip("Ticks of peace period between waves (breathing room for player)")]
         [SerializeField] private int peacePeriodTicks = 8;
 
+        [Tooltip("Maximum distance (in cells) from player units or revealed cells for resource spawning. First resource uses current logic.")]
+        [SerializeField] private int resourceProximityRadius = 3;
+
         [Tooltip("List of wave sequences. Click + to add more waves. Format: 0=Nothing, A=Soldier, B=Ninja, C=Ogre, S=Resource L1, M=Resource L2, L=Resource L3")]
         [SerializeField] private List<string> waveSequences = new List<string>
         {
@@ -690,15 +693,16 @@ namespace ClockworkGrid
             // This allows wave sequences to be edited in GameSetup Inspector!
             WaveManager waveManager = gameObject.AddComponent<WaveManager>();
 
-            // Pass resource node prefabs (all levels)
+            // Pass resource node prefabs (all levels) and proximity radius
             SetPrivateField(waveManager, "resourceNodePrefab", resourceNodePrefab);
             SetPrivateField(waveManager, "resourceNodeLevel2Prefab", level2ResourcePrefab);
             SetPrivateField(waveManager, "resourceNodeLevel3Prefab", level3ResourcePrefab);
+            SetPrivateField(waveManager, "resourceProximityRadius", resourceProximityRadius);
 
             // Initialize with wave sequences list
             waveManager.Initialize(waveSequences, ticksPerWaveAdvance, peacePeriodTicks);
 
-            Debug.Log($"SetupWaveManager: Initialized WaveManager with {waveSequences.Count} waves, {ticksPerWaveAdvance} ticks per advance, {peacePeriodTicks} peace ticks");
+            Debug.Log($"SetupWaveManager: Initialized WaveManager with {waveSequences.Count} waves, {ticksPerWaveAdvance} ticks per advance, {peacePeriodTicks} peace ticks, proximity radius: {resourceProximityRadius}");
         }
 
         // SetupWaveTimelineUI() REMOVED: Timeline UI is now manually created in Unity Editor
