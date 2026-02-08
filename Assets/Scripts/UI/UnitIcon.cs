@@ -23,6 +23,7 @@ namespace ClockworkGrid
         private bool isDragging = false;
         private GameObject costBadge;
         private GameObject typeLabel;
+        private TextMeshProUGUI costTextRef; // Cached reference for dynamic color updates
 
         [SerializeField] private float hoverScale = 1.2f; // Phase 2: ~20% scale up
         [SerializeField] private Image characterSpriteImage; // Assign the CharacterSprite Image in prefab
@@ -68,6 +69,35 @@ namespace ClockworkGrid
                 CreateCostBadge(stats.resourceCost);
                 CreateTypeLabel(stats.unitType);
             }
+
+            // Subscribe to token changes for cost color updates
+            if (ResourceTokenManager.Instance != null)
+            {
+                ResourceTokenManager.Instance.OnTokensChanged += OnTokensChanged;
+            }
+            UpdateCostColor();
+        }
+
+        private void OnDestroy()
+        {
+            if (ResourceTokenManager.Instance != null)
+            {
+                ResourceTokenManager.Instance.OnTokensChanged -= OnTokensChanged;
+            }
+        }
+
+        private void OnTokensChanged(int newTotal)
+        {
+            UpdateCostColor();
+        }
+
+        private void UpdateCostColor()
+        {
+            if (costTextRef == null || unitStats == null) return;
+
+            bool canAfford = ResourceTokenManager.Instance != null &&
+                             ResourceTokenManager.Instance.HasEnoughTokens(unitStats.resourceCost);
+            costTextRef.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -158,6 +188,7 @@ namespace ClockworkGrid
                 if (objName.Contains("cost") || objName.Contains("number") || objName.Contains("price"))
                 {
                     textComp.text = cost.ToString();
+                    costTextRef = textComp;
                     foundCost = true;
                 }
                 // Look for name/type display
@@ -207,6 +238,7 @@ namespace ClockworkGrid
             costText.color = Color.white;
             costText.alignment = TextAlignmentOptions.Center;
             costText.fontStyle = FontStyles.Bold;
+            costTextRef = costText;
         }
 
         /// <summary>

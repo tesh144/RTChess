@@ -21,6 +21,12 @@ namespace ClockworkGrid
         [SerializeField] private Transform dockIconsContainer; // Parent for red card holders
         [SerializeField] private Button drawButton; // White button on the right
         [SerializeField] private TextMeshProUGUI drawButtonText; // Text on draw button
+        [SerializeField] private TextMeshProUGUI costNumberText; // Cost display on gatcha button (CostNumber TMP)
+
+        [Header("Draw Cost Settings")]
+        [SerializeField] private int baseDrawCost = 6; // Starting cost for the first draw
+        [SerializeField] private int costIncrement = 1; // How much cost increases per draw
+        [SerializeField] private int costDecreaseInterval = 0; // Intervals between cost decreases (0 = disabled)
 
         [Header("Runtime Creation Settings (if no UI references assigned)")]
         [SerializeField] private bool createUIAtRuntime = false;
@@ -44,7 +50,7 @@ namespace ClockworkGrid
 
         // Draw cost tracking (Iteration 10: Self-sufficient, no HandManager)
         private int drawCount = 0;
-        private int baseDealCost = 2;
+        private int ticksSinceCostDecrease = 0;
 
         // Singleton pattern
         public static DockBarManager Instance { get; private set; }
@@ -104,6 +110,12 @@ namespace ClockworkGrid
                 ResourceTokenManager.Instance.OnTokensChanged += OnTokensChanged;
             }
 
+            // Subscribe to interval timer for cost decrease over time
+            if (costDecreaseInterval > 0 && IntervalTimer.Instance != null)
+            {
+                IntervalTimer.Instance.OnIntervalTick += OnIntervalTickCostDecrease;
+            }
+
             // Cache RectTransform and original position for animation
             if (dockBarContainer == null)
             {
@@ -148,6 +160,10 @@ namespace ClockworkGrid
             if (ResourceTokenManager.Instance != null)
             {
                 ResourceTokenManager.Instance.OnTokensChanged -= OnTokensChanged;
+            }
+            if (IntervalTimer.Instance != null)
+            {
+                IntervalTimer.Instance.OnIntervalTick -= OnIntervalTickCostDecrease;
             }
         }
 
@@ -352,7 +368,7 @@ namespace ClockworkGrid
         /// </summary>
         public int CalculateDealCost()
         {
-            return baseDealCost + drawCount;
+            return baseDrawCost + (costIncrement * drawCount);
         }
 
         /// <summary>
@@ -383,6 +399,7 @@ namespace ClockworkGrid
 
             // Increment draw count AFTER spending
             drawCount++;
+            ticksSinceCostDecrease = 0; // Reset cost-decrease timer on draw
 
             // Draw a random unit from RaritySystem
             if (RaritySystem.Instance != null)
@@ -510,11 +527,33 @@ namespace ClockworkGrid
 
             // Update button state (disabled if can't afford OR hand is full)
             button.interactable = canAfford && !handFull;
+
+            // Update cost number text on gatcha button
+            if (costNumberText != null)
+            {
+                costNumberText.text = cost.ToString();
+                costNumberText.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
+            }
         }
 
         private void OnTokensChanged(int newTotal)
         {
             UpdateDealButtonDisplay();
+        }
+
+        private void OnIntervalTickCostDecrease(int intervalCount)
+        {
+            if (costDecreaseInterval <= 0 || drawCount <= 0) return;
+
+            ticksSinceCostDecrease++;
+            if (ticksSinceCostDecrease >= costDecreaseInterval)
+            {
+                ticksSinceCostDecrease = 0;
+                drawCount--;
+                if (drawCount < 0) drawCount = 0;
+                Debug.Log($"[DockBarManager] Cost decreased by interval. drawCount={drawCount}, cost={CalculateDealCost()}");
+                UpdateDealButtonDisplay();
+            }
         }
 
         /// <summary>

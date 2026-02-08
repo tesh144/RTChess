@@ -201,7 +201,21 @@ namespace ClockworkGrid
                 return;
             }
 
-            // Valid placement - spawn unit (FREE, no token cost!)
+            // Check and spend placement cost
+            int placementCost = currentDraggingIcon.UnitStats != null ? currentDraggingIcon.UnitStats.resourceCost : 0;
+            if (placementCost > 0)
+            {
+                if (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.SpendTokens(placementCost))
+                {
+                    // Can't afford - snap back to dock
+                    currentDraggingIcon.SnapBackToOriginalPosition();
+                    CleanupDragVisuals();
+                    isDragging = false;
+                    return;
+                }
+            }
+
+            // Place unit on grid
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(targetGridX, targetGridY);
             GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, currentUnitPrefab.transform.rotation);
             unitObj.SetActive(true);
@@ -368,7 +382,18 @@ namespace ClockworkGrid
                 return false;
 
             // Check if cell is empty
-            return GridManager.Instance.IsCellEmpty(gridX, gridY);
+            if (!GridManager.Instance.IsCellEmpty(gridX, gridY))
+                return false;
+
+            // Check if player can afford placement cost
+            if (currentDraggingIcon != null && currentDraggingIcon.UnitStats != null)
+            {
+                int cost = currentDraggingIcon.UnitStats.resourceCost;
+                if (cost > 0 && (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost)))
+                    return false;
+            }
+
+            return true;
         }
 
         private bool RaycastToGroundPlane(Vector2 screenPos, out Vector3 worldPos)

@@ -222,9 +222,10 @@ namespace ClockworkGrid
 
         private void OnDestroy()
         {
-            // Clean up bar objects
+            // Clean up bar objects - hide immediately to avoid 1-frame orphan visibility
             if (barContainer != null)
             {
+                barContainer.SetActive(false);
                 Destroy(barContainer);
             }
         }

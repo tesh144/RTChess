@@ -77,29 +77,14 @@ namespace ClockworkGrid
             GameObject floatObj = new GameObject("FloatingText");
             floatObj.transform.position = worldPos + Vector3.up * 1.5f;
 
-            // Create a world-space canvas for the text
-            Canvas canvas = floatObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvas.sortingOrder = 200;
-
-            RectTransform canvasRect = floatObj.GetComponent<RectTransform>();
-            canvasRect.sizeDelta = new Vector2(2f, 0.5f);
-            canvasRect.localScale = Vector3.one * 0.02f;
-
-            GameObject textObj = new GameObject("Text");
-            textObj.transform.SetParent(floatObj.transform, false);
-
-            TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
+            // Use world-space TextMeshPro (not TextMeshProUGUI which needs a canvas)
+            TextMeshPro tmp = floatObj.AddComponent<TextMeshPro>();
             tmp.text = text;
-            tmp.fontSize = 36;
-            tmp.color = new Color(1f, 0.9f, 0.2f);
+            tmp.fontSize = 6;
+            tmp.color = new Color(1f, 0.9f, 0.2f); // Gold
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.fontStyle = FontStyles.Bold;
-
-            RectTransform textRect = textObj.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
+            tmp.sortingOrder = 200;
 
             // Add floating animation component
             FloatingTextAnimation anim = floatObj.AddComponent<FloatingTextAnimation>();
@@ -112,13 +97,13 @@ namespace ClockworkGrid
     /// </summary>
     public class FloatingTextAnimation : MonoBehaviour
     {
-        private TextMeshProUGUI textComponent;
+        private TextMeshPro textComponent;
         private float elapsed;
         private const float Duration = 1.0f;
         private const float RiseSpeed = 1.5f;
         private Vector3 startPos;
 
-        public void Initialize(TextMeshProUGUI text)
+        public void Initialize(TextMeshPro text)
         {
             textComponent = text;
             startPos = transform.position;
