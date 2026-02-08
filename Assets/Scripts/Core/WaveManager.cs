@@ -197,12 +197,6 @@ namespace ClockworkGrid
                         allEnemiesSpawned = false;
 
                         Debug.Log($"WaveManager: Peace period over, starting Wave {currentWaveNumber + 1}");
-
-                        // Show countdown for next wave
-                        if (SpawnTimelineUI.Instance != null)
-                        {
-                            SpawnTimelineUI.Instance.ShowCountdown(currentWaveNumber + 1, ticksPerWaveAdvance);
-                        }
                     }
                     return;
                 }
@@ -210,13 +204,6 @@ namespace ClockworkGrid
                 // Increment tick counter
                 ticksSinceLastAdvance++;
                 Debug.Log($"[WaveManager] Tick counter: {ticksSinceLastAdvance}/{ticksPerWaveAdvance}");
-
-                // Update countdown UI during grace period
-                if (SpawnTimelineUI.Instance != null && currentWaveIndex == -1)
-                {
-                    int remaining = ticksPerWaveAdvance - ticksSinceLastAdvance;
-                    SpawnTimelineUI.Instance.UpdateCountdown(currentWaveNumber + 1, remaining);
-                }
 
                 // Only advance wave every N ticks (for 4-sided game, N=4)
                 if (ticksSinceLastAdvance < ticksPerWaveAdvance)
@@ -299,8 +286,8 @@ namespace ClockworkGrid
                     break;
 
                 case '1':
-                    // Spawn 2 soldiers
-                    SpawnEnemyUnit(UnitType.Soldier, 2);
+                    // Spawn 1 soldier
+                    SpawnEnemyUnit(UnitType.Soldier, 1);
                     spawnType = SpawnType.Enemies;
                     break;
 
@@ -968,12 +955,6 @@ namespace ClockworkGrid
 
             hasWaveStarted = true;
             Debug.Log("WaveManager: Wave started by player placing first unit!");
-
-            // Show countdown UI
-            if (SpawnTimelineUI.Instance != null)
-            {
-                SpawnTimelineUI.Instance.ShowCountdown(currentWaveNumber + 1, ticksPerWaveAdvance);
-            }
         }
 
         // Public accessors for UI/other systems

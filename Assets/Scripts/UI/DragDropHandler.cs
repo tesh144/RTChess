@@ -40,7 +40,8 @@ namespace ClockworkGrid
         // Camera tracking during drag
         private Vector3 preDragCameraTarget;
         private float preDragZoomDistance;
-        private float dragZoomAmount = 5f; // How much to zoom in during drag
+        private bool preDragAutoRotate;
+        private float dragZoomRatio = 0.6f; // Zoom to 60% of current distance during drag
         private float dragCameraEaseSpeed = 3f; // How fast camera eases toward target
 
         private void Awake()
@@ -132,7 +133,9 @@ namespace ClockworkGrid
             {
                 preDragCameraTarget = CameraController.Instance.CurrentTarget;
                 preDragZoomDistance = CameraController.Instance.CurrentDistance;
-                CameraController.Instance.ZoomTo(preDragZoomDistance - dragZoomAmount);
+                preDragAutoRotate = CameraController.Instance.IsAutoRotating;
+                CameraController.Instance.SetAutoRotate(false);
+                CameraController.Instance.ZoomTo(preDragZoomDistance * dragZoomRatio);
             }
 
             arcLine.enabled = true;
@@ -195,6 +198,7 @@ namespace ClockworkGrid
                 {
                     CameraController.Instance.SetTarget(preDragCameraTarget);
                     CameraController.Instance.ZoomTo(preDragZoomDistance);
+                    CameraController.Instance.SetAutoRotate(preDragAutoRotate);
                 }
                 CleanupDragVisuals();
                 isDragging = false;
@@ -250,11 +254,12 @@ namespace ClockworkGrid
             // Remove from dock
             DockBarManager.Instance.RemoveUnitIcon(currentDraggingIcon);
 
-            // Quick-pan camera to the placed tile and restore zoom
+            // Quick-pan camera to the placed tile and restore zoom + rotation
             if (CameraController.Instance != null)
             {
-                CameraController.Instance.SnapToCell(targetGridX, targetGridY);
+                CameraController.Instance.FocusOnCell(targetGridX, targetGridY);
                 CameraController.Instance.ZoomTo(preDragZoomDistance);
+                CameraController.Instance.SetAutoRotate(preDragAutoRotate);
             }
 
             // Cleanup
@@ -274,6 +279,7 @@ namespace ClockworkGrid
             {
                 CameraController.Instance.SetTarget(preDragCameraTarget);
                 CameraController.Instance.ZoomTo(preDragZoomDistance);
+                CameraController.Instance.SetAutoRotate(preDragAutoRotate);
             }
             CleanupDragVisuals();
             isDragging = false;

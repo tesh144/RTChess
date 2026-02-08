@@ -153,17 +153,28 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Initialize wave timeline with spawn code.
-        /// Called by WaveManager when a wave starts.
-        /// NOTE: UI should already be active from ShowCountdown() call
+        /// Called by WaveManager when a wave starts executing.
         /// </summary>
         public void InitializeWave(int waveNumber, string spawnCode)
         {
             ClearTimeline();
 
-            // Re-show dot container (hidden during countdown)
+            // Activate timeline holder (may be hidden at start)
+            if (timelineHolder != null)
+            {
+                timelineHolder.SetActive(true);
+            }
+
+            // Show dot container
             if (dotContainer != null)
             {
                 dotContainer.gameObject.SetActive(true);
+            }
+
+            // Trigger slide-down animation
+            if (enableSlideAnimation && rectTransform != null)
+            {
+                StartCoroutine(SlideDownAnimation());
             }
 
             // IMPORTANT: Clear any placeholder/design-time children from dotContainer
