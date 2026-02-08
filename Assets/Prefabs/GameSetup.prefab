@@ -67,11 +67,11 @@ MonoBehaviour:
   ogreHP: 8
   ogreAttackDamage: 3
   ogreAttackRange: 1
-  ogreAttackInterval: 3
+  ogreAttackInterval: 2
   ogreResourceCost: 0
   ogreKillReward: 1
   ogreRevealRadius: 1
-  ogreChargeDistance: 0
+  ogreChargeDistance: 1
   ogreModelScale: 1
   ogreIconSprite: {fileID: 21300000, guid: 7058973981e304155bac8e28ba9083fa, type: 3}
   ninjaPlayerPrefab: {fileID: 1531087478788396153, guid: 0a952b697fd5f4a19a28a5f976af2e82, type: 3}
@@ -80,7 +80,7 @@ MonoBehaviour:
   ninjaHP: 1
   ninjaAttackDamage: 5
   ninjaAttackRange: 1
-  ninjaAttackInterval: 1
+  ninjaAttackInterval: 2
   ninjaResourceCost: 0
   ninjaKillReward: 1
   ninjaRevealRadius: 1
@@ -91,7 +91,8 @@ MonoBehaviour:
   peacePeriodTicks: 2
   resourceProximityRadius: 3
   waveSequences:
-  - asasbcsmccsabbc
+  - asa0sasbc0sbcsbscb0saccb
+  waveObjectives: 03000000050000000a000000
   resourceTokenIconSprite: {fileID: 0}
   resourceNodeLevel1Prefab: {fileID: 3376462439609532193, guid: 846954e0d358a4a5081e890670494b00, type: 3}
   level1HP: 10
