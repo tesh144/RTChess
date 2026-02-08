@@ -90,7 +90,7 @@ MonoBehaviour:
   ticksPerWaveAdvance: 4
   peacePeriodTicks: 8
   waveSequences:
-  - 12122321122113
+  - asasbcsmccsabbc
   resourceNodeLevel1Prefab: {fileID: 3376462439609532193, guid: 846954e0d358a4a5081e890670494b00, type: 3}
   level1HP: 10
   level1TokensPerHit: 1

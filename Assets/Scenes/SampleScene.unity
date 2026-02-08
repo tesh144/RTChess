@@ -1420,10 +1420,6 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: waveSequences.Array.data[0]
-      value: 121223211212113
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[1]
       value: 
       objectReference: {fileID: 0}
