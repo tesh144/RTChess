@@ -1001,7 +1001,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Objective Description
+  m_text: Clear Mines to Complete the wave
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b3ae88bf5447841a69faf61293d6b180, type: 2}
   m_sharedMaterial: {fileID: -165490512334753193, guid: b3ae88bf5447841a69faf61293d6b180, type: 2}
@@ -1752,6 +1752,10 @@ PrefabInstance:
       propertyPath: waveSequence
       value: 12112112113
       objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: resourceTokenIconSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 343cd0fce607d4e039155d01bbf28de2, type: 3}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.size
       value: 2
