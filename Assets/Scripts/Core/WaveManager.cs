@@ -35,34 +35,33 @@ namespace ClockworkGrid
     {
         public ObjectiveType type;
         public int target;
+        public string customText; // If set, displayed instead of auto-generated text
 
-        public WaveObjective(ObjectiveType type, int target)
+        public WaveObjective(ObjectiveType type, int target, string customText = null)
         {
             this.type = type;
             this.target = target;
+            this.customText = customText;
         }
 
-        public string GetDisplayName()
+        public string GetDisplayText(int progress)
         {
-            switch (type)
-            {
-                case ObjectiveType.KillOgres: return "Ogres";
-                case ObjectiveType.KillNinjas: return "Ninjas";
-                case ObjectiveType.KillSoldiers: return "Soldiers";
-                case ObjectiveType.DestroyResources: return "Mines";
-                case ObjectiveType.DefeatEnemies: return "Enemies";
-                case ObjectiveType.PlaceUnits: return "Units";
-                default: return "Targets";
-            }
-        }
+            if (!string.IsNullOrEmpty(customText))
+                return customText;
 
-        public string GetVerb()
-        {
+            string verb = (type == ObjectiveType.PlaceUnits) ? "Place" : "Defeat";
+            string name;
             switch (type)
             {
-                case ObjectiveType.PlaceUnits: return "Place";
-                default: return "Defeat";
+                case ObjectiveType.KillOgres: name = "Ogres"; break;
+                case ObjectiveType.KillNinjas: name = "Ninjas"; break;
+                case ObjectiveType.KillSoldiers: name = "Soldiers"; break;
+                case ObjectiveType.DestroyResources: name = "Mines"; break;
+                case ObjectiveType.DefeatEnemies: name = "Enemies"; break;
+                case ObjectiveType.PlaceUnits: name = "Units"; break;
+                default: name = "Targets"; break;
             }
+            return $"{verb} {progress}/{target} {name}";
         }
     }
 
@@ -205,6 +204,12 @@ namespace ClockworkGrid
             if (IntervalTimer.Instance != null)
             {
                 IntervalTimer.Instance.OnIntervalTick += OnIntervalTick;
+            }
+
+            // Show pre-wave tutorial text
+            if (ObjectiveUI.Instance != null)
+            {
+                ObjectiveUI.Instance.ShowTutorial("Drag your unit next to a mine");
             }
 
             Debug.Log($"WaveManager initialized with {waveSequences.Count} waves, {ticksPerWaveAdvance} ticks per advance, {peacePeriodTicks} peace ticks");
@@ -1329,6 +1334,12 @@ namespace ClockworkGrid
         public void OnPlayerUnitPlaced()
         {
             playerUnitCount++;
+
+            // Dismiss tutorial on first unit placed
+            if (playerUnitCount == 1 && ObjectiveUI.Instance != null)
+            {
+                ObjectiveUI.Instance.DismissTutorial();
+            }
 
             // Track PlaceUnits objectives
             IncrementObjectiveProgress(ObjectiveType.PlaceUnits);

@@ -75,6 +75,31 @@ namespace ClockworkGrid
                 btn.onClick.AddListener(OnVictoryScreenTapped);
             }
 
+            // Add a full-screen invisible button so tapping anywhere dismisses it
+            if (buttons.Length == 0)
+            {
+                // Ensure the root has a RectTransform that covers the screen
+                RectTransform rt = activeVictoryScreen.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.anchorMin = Vector2.zero;
+                    rt.anchorMax = Vector2.one;
+                    rt.offsetMin = Vector2.zero;
+                    rt.offsetMax = Vector2.zero;
+                }
+
+                // Add Image as raycast target (fully transparent)
+                Image tapTarget = activeVictoryScreen.GetComponent<Image>();
+                if (tapTarget == null)
+                    tapTarget = activeVictoryScreen.AddComponent<Image>();
+                tapTarget.color = new Color(0, 0, 0, 0); // invisible
+                tapTarget.raycastTarget = true;
+
+                // Add Button component for the tap
+                Button tapButton = activeVictoryScreen.AddComponent<Button>();
+                tapButton.onClick.AddListener(OnVictoryScreenTapped);
+            }
+
             // Pause the interval timer while showing
             if (IntervalTimer.Instance != null)
                 IntervalTimer.Instance.Pause();

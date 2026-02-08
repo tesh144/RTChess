@@ -454,7 +454,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &416481660
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1185,10 +1185,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1023953705}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 4.13031, y: 232.29248}
-  m_SizeDelta: {x: -303.7157, y: -584.8196}
+  m_AnchoredPosition: {x: -217.4, y: -66.258}
+  m_SizeDelta: {x: 396.214, y: -95.521484}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1468440913
 MonoBehaviour:
@@ -1210,7 +1210,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Clear Mines to Complete the wave
+  m_text: Drag your unit next to the mine
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b3ae88bf5447841a69faf61293d6b180, type: 2}
   m_sharedMaterial: {fileID: -165490512334753193, guid: b3ae88bf5447841a69faf61293d6b180, type: 2}
@@ -1237,14 +1237,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
-  m_fontSizeBase: 13.78
+  m_fontSize: 20
+  m_fontSizeBase: 20
   m_fontWeight: 400
-  m_enableAutoSizing: 1
+  m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 18
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 4
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -1697,10 +1697,10 @@ RectTransform:
   - {fileID: 416481660}
   m_Father: {fileID: 2115214530}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -374, y: 165.59}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 184.08575, y: 103}
+  m_SizeDelta: {x: 368.1713, y: 206.1111}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2061195569
 GameObject:
@@ -3103,7 +3103,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 16.4
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_AnchoredPosition.x

@@ -84,9 +84,7 @@ namespace ClockworkGrid
             for (int i = 0; i < objectives.Count; i++)
             {
                 bool complete = progress[i] >= objectives[i].target;
-                string verb = objectives[i].GetVerb();
-                string name = objectives[i].GetDisplayName();
-                string line = $"{verb} {progress[i]}/{objectives[i].target} {name}";
+                string line = objectives[i].GetDisplayText(progress[i]);
 
                 if (complete)
                 {

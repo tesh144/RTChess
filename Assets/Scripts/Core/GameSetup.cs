@@ -93,8 +93,7 @@ namespace ClockworkGrid
         [SerializeField] private List<WaveObjectiveSet> waveObjectives = new List<WaveObjectiveSet>
         {
             new WaveObjectiveSet(                                     // Wave 1
-                new WaveObjective(ObjectiveType.PlaceUnits, 5),       //   Place 5 units
-                new WaveObjective(ObjectiveType.DefeatEnemies, 5)     //   Defeat 5 enemies
+                new WaveObjective(ObjectiveType.DefeatEnemies, 3)  //   Defeat 3 enemies
             ),
             new WaveObjectiveSet(                                     // Wave 2
                 new WaveObjective(ObjectiveType.DestroyResources, 5)  //   Destroy 5 resource nodes
@@ -179,6 +178,7 @@ namespace ClockworkGrid
             // SetupTimelineTestButton(); // Removed: Timeline integrates automatically with WaveManager
             SetupLighting();
             SetupSFXManager();
+            SetupControlSchemeOverlay();
 
             // Music will start when first unit is placed (see DragDropHandler.EndDrag)
         }
@@ -858,6 +858,24 @@ namespace ClockworkGrid
             }
 
             Debug.Log("SFXManager initialized");
+        }
+
+        private void SetupControlSchemeOverlay()
+        {
+            // Find the "ControlSceme" overlay in the scene and attach dismiss-on-interaction
+            GameObject overlay = GameObject.Find("ControlSceme");
+            if (overlay == null)
+                overlay = GameObject.Find("ControlScheme");
+
+            if (overlay != null && overlay.GetComponent<ControlSchemeOverlay>() == null)
+            {
+                // Ensure CanvasGroup exists for fade-out
+                if (overlay.GetComponent<CanvasGroup>() == null)
+                    overlay.AddComponent<CanvasGroup>();
+
+                overlay.AddComponent<ControlSchemeOverlay>();
+                Debug.Log("[GameSetup] ControlSchemeOverlay attached - will fade out on first interaction");
+            }
         }
 
         /// <summary>
