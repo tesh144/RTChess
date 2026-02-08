@@ -50,23 +50,23 @@ MonoBehaviour:
   baseIntervalDuration: 2
   soldierPlayerPrefab: {fileID: 6974813962620877057, guid: 4b782cfc9fe18410e9900051ea2f39d4, type: 3}
   soldierEnemyPrefab: {fileID: 1174396167649158818, guid: 8e21f175452cc4678816fc825c4c8ca7, type: 3}
-  soldierRarityWeight: 60
+  soldierRarityWeight: 50
   soldierHP: 10
   soldierAttackDamage: 3
   soldierAttackRange: 1
   soldierAttackInterval: 2
   soldierResourceCost: 3
-  soldierKillReward: 2
+  soldierKillReward: 3
   soldierRevealRadius: 1
   soldierModelScale: 1
   soldierIconSprite: {fileID: 21300000, guid: 44fa00cf12c8b4732afb9768afecdc13, type: 3}
   ogrePlayerPrefab: {fileID: 512660297386461547, guid: a574714abd87149ed941e99cc2d8e3b7, type: 3}
   ogreEnemyPrefab: {fileID: 8296657993349735102, guid: acf33468e1b81422883828c3a3f167df, type: 3}
-  ogreRarityWeight: 5
+  ogreRarityWeight: 15
   ogreHP: 20
   ogreAttackDamage: 5
   ogreAttackRange: 2
-  ogreAttackInterval: 3
+  ogreAttackInterval: 2
   ogreResourceCost: 6
   ogreKillReward: 5
   ogreRevealRadius: 1
