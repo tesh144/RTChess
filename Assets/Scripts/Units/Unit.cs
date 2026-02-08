@@ -339,8 +339,8 @@ namespace ClockworkGrid
                     return;
                 }
 
-                // Priority 2: Attack resources
-                if (targetState == CellState.Resource)
+                // Priority 2: Attack resources (Player units only - enemies ignore resources)
+                if (targetState == CellState.Resource && team == Team.Player)
                 {
                     AttackResource(targetX, targetY);
                     return;

@@ -112,9 +112,14 @@ namespace ClockworkGrid
         /// <summary>
         /// Initialize wave system (called by GameSetup).
         /// </summary>
-        public void Initialize(List<string> waves, int ticksPerAdvance = 4, int peaceTicks = 8)
+        // Wave objectives
+        private List<int> waveObjectiveTargets = new List<int>();
+        private int currentWaveResourcesCleared = 0;
+
+        public void Initialize(List<string> waves, List<int> objectives, int ticksPerAdvance = 4, int peaceTicks = 8)
         {
             waveSequences = waves;
+            waveObjectiveTargets = objectives;
             ticksPerWaveAdvance = ticksPerAdvance;
             peacePeriodTicks = peaceTicks;
             delayTicksRemaining = startDelayTicks;
@@ -128,6 +133,7 @@ namespace ClockworkGrid
             enemyUnitCount = 0;
             resourceNodeCount = 0;
             allEnemiesSpawned = false;
+            currentWaveResourcesCleared = 0;
 
             // Subscribe to interval timer
             if (IntervalTimer.Instance != null)
@@ -209,6 +215,13 @@ namespace ClockworkGrid
                         ticksSinceLastAdvance = 0;
                         allEnemiesSpawned = false;
 
+                        // Reset objective progress for new wave
+                        currentWaveResourcesCleared = 0;
+                        if (ObjectiveUI.Instance != null)
+                        {
+                            ObjectiveUI.Instance.ResetProgress();
+                        }
+
                         Debug.Log($"WaveManager: Peace period over, starting Wave {currentWaveNumber + 1}");
                     }
                     return;
@@ -254,6 +267,15 @@ namespace ClockworkGrid
                 {
                     Debug.Log($"[WaveManager] Initializing timeline UI");
                     InitializeTimelineUI();
+
+                    // Initialize wave objective
+                    if (ObjectiveUI.Instance != null && currentWaveNumber < waveObjectiveTargets.Count)
+                    {
+                        int targetCount = waveObjectiveTargets[currentWaveNumber];
+                        ObjectiveUI.Instance.SetObjective(currentWaveNumber + 1, targetCount);
+                        ObjectiveUI.Instance.Show();
+                        Debug.Log($"[WaveManager] Wave {currentWaveNumber + 1} objective set: Clear {targetCount} mines");
+                    }
                 }
                 else
                 {
@@ -1249,7 +1271,14 @@ namespace ClockworkGrid
             resourceNodeCount--;
             if (resourceNodeCount < 0) resourceNodeCount = 0;
 
-            Debug.Log($"[WaveManager] Resource destroyed. {resourceNodeCount} resources remaining. allSpawned={allEnemiesSpawned}");
+            // Track objective progress
+            currentWaveResourcesCleared++;
+            if (ObjectiveUI.Instance != null)
+            {
+                ObjectiveUI.Instance.IncrementCleared();
+            }
+
+            Debug.Log($"[WaveManager] Resource destroyed. {resourceNodeCount} resources remaining. Cleared {currentWaveResourcesCleared} this wave. allSpawned={allEnemiesSpawned}");
 
             CheckWaveComplete();
         }

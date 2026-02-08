@@ -84,7 +84,17 @@ namespace ClockworkGrid
         [Tooltip("List of wave sequences. Click + to add more waves. Format: 0=Nothing, A=Soldier, B=Ninja, C=Ogre, S=Resource L1, M=Resource L2, L=Resource L3")]
         [SerializeField] private List<string> waveSequences = new List<string>
         {
-            "00S0A00A00S00A0C" // Wave 1 (default)
+            "00S0A00A00S00A0C", // Wave 1 (default)
+            "00S0A00A00S00A0C", // Wave 2
+            "00S0A00A00S00A0C"  // Wave 3
+        };
+
+        [Tooltip("Resource node clear objectives for each wave. Must match wave count.")]
+        [SerializeField] private List<int> waveObjectives = new List<int>
+        {
+            3,  // Wave 1: Clear 3 resource nodes
+            5,  // Wave 2: Clear 5 resource nodes
+            10  // Wave 3: Clear 10 resource nodes
         };
 
         [Header("Resource Nodes")]
@@ -619,6 +629,22 @@ namespace ClockworkGrid
                 {
                     Debug.LogWarning("[GameSetup] No resourceTokenIconSprite assigned in Inspector. Off-screen indicators will not show token icons.");
                 }
+
+                // Setup ObjectiveUI - find existing "objective" TMPro Text in canvas
+                TextMeshProUGUI objectiveText = canvas.GetComponentInChildren<TextMeshProUGUI>();
+                if (objectiveText != null && objectiveText.name == "objective")
+                {
+                    ObjectiveUI objectiveUI = objectiveText.GetComponent<ObjectiveUI>();
+                    if (objectiveUI == null)
+                    {
+                        objectiveUI = objectiveText.gameObject.AddComponent<ObjectiveUI>();
+                    }
+                    Debug.Log("[GameSetup] ObjectiveUI initialized");
+                }
+                else
+                {
+                    Debug.LogWarning("[GameSetup] No TMPro Text named 'objective' found in canvas. Objective display will not work.");
+                }
             }
 
             Debug.Log("SetupUI: UI should be manually created in scene hierarchy");
@@ -727,8 +753,8 @@ namespace ClockworkGrid
             SetPrivateField(waveManager, "resourceNodeLevel3Prefab", level3ResourcePrefab);
             SetPrivateField(waveManager, "resourceProximityRadius", resourceProximityRadius);
 
-            // Initialize with wave sequences list
-            waveManager.Initialize(waveSequences, ticksPerWaveAdvance, peacePeriodTicks);
+            // Initialize with wave sequences list and objectives
+            waveManager.Initialize(waveSequences, waveObjectives, ticksPerWaveAdvance, peacePeriodTicks);
 
             Debug.Log($"SetupWaveManager: Initialized WaveManager with {waveSequences.Count} waves, {ticksPerWaveAdvance} ticks per advance, {peacePeriodTicks} peace ticks, proximity radius: {resourceProximityRadius}");
         }
