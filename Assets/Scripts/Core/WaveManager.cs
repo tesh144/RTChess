@@ -745,22 +745,19 @@ namespace ClockworkGrid
         /// </summary>
         private bool SpawnSingleResource(int level)
         {
-            // Select prefab and grid size based on level
+            // Select prefab based on level (all resources occupy 1 cell)
             GameObject prefab;
-            Vector2Int gridSize;
+            Vector2Int gridSize = new Vector2Int(1, 1);
             switch (level)
             {
                 case 2:
                     prefab = resourceNodeLevel2Prefab != null ? resourceNodeLevel2Prefab : resourceNodePrefab;
-                    gridSize = new Vector2Int(2, 1);
                     break;
                 case 3:
                     prefab = resourceNodeLevel3Prefab != null ? resourceNodeLevel3Prefab : resourceNodePrefab;
-                    gridSize = new Vector2Int(2, 2);
                     break;
                 default:
                     prefab = resourceNodePrefab;
-                    gridSize = new Vector2Int(1, 1);
                     break;
             }
 

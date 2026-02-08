@@ -47,12 +47,12 @@ MonoBehaviour:
   gridWidth: 50
   gridHeight: 50
   cellSize: 1.5
-  baseIntervalDuration: 2
+  baseIntervalDuration: 1
   soldierPlayerPrefab: {fileID: 6974813962620877057, guid: 4b782cfc9fe18410e9900051ea2f39d4, type: 3}
   soldierEnemyPrefab: {fileID: 1174396167649158818, guid: 8e21f175452cc4678816fc825c4c8ca7, type: 3}
   soldierRarityWeight: 50
   soldierHP: 10
-  soldierAttackDamage: 3
+  soldierAttackDamage: 5
   soldierAttackRange: 1
   soldierAttackInterval: 2
   soldierResourceCost: 3
@@ -64,31 +64,31 @@ MonoBehaviour:
   ogrePlayerPrefab: {fileID: 512660297386461547, guid: a574714abd87149ed941e99cc2d8e3b7, type: 3}
   ogreEnemyPrefab: {fileID: 8296657993349735102, guid: acf33468e1b81422883828c3a3f167df, type: 3}
   ogreRarityWeight: 15
-  ogreHP: 20
-  ogreAttackDamage: 5
+  ogreHP: 25
+  ogreAttackDamage: 8
   ogreAttackRange: 2
-  ogreAttackInterval: 3
+  ogreAttackInterval: 2
   ogreResourceCost: 6
   ogreKillReward: 8
   ogreRevealRadius: 1
-  ogreChargeDistance: 1
+  ogreChargeDistance: 0
   ogreModelScale: 1
   ogreIconSprite: {fileID: 21300000, guid: 7058973981e304155bac8e28ba9083fa, type: 3}
   ninjaPlayerPrefab: {fileID: 1531087478788396153, guid: 0a952b697fd5f4a19a28a5f976af2e82, type: 3}
   ninjaEnemyPrefab: {fileID: 8139704103507337014, guid: 8e5b38abe23fc4709ae6d3344eca3864, type: 3}
   ninjaRarityWeight: 35
   ninjaHP: 5
-  ninjaAttackDamage: 2
+  ninjaAttackDamage: 10
   ninjaAttackRange: 1
   ninjaAttackInterval: 1
   ninjaResourceCost: 4
   ninjaKillReward: 3
   ninjaRevealRadius: 1
-  ninjaChargeDistance: 2
+  ninjaChargeDistance: 0
   ninjaModelScale: 1
   ninjaIconSprite: {fileID: 21300000, guid: a8ea82bf8ac074ad7b281dced4f4558b, type: 3}
   ticksPerWaveAdvance: 4
-  peacePeriodTicks: 8
+  peacePeriodTicks: 2
   waveSequences:
   - asasbcsmccsabbc
   resourceNodeLevel1Prefab: {fileID: 3376462439609532193, guid: 846954e0d358a4a5081e890670494b00, type: 3}
