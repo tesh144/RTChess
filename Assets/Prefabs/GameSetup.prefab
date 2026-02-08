@@ -91,8 +91,22 @@ MonoBehaviour:
   peacePeriodTicks: 2
   resourceProximityRadius: 3
   waveSequences:
-  - asa0sasbc0sbcsbscb0saccb
-  waveObjectives: 03000000050000000a000000
+  - asa0sasbc0sbcsbscb0sas
+  - aaascs00aasbcsbcbscbssabb
+  - cccssaa00sccbb0sabsbcsbcbscbssabb
+  waveObjectives:
+  - objectives:
+    - type: 5
+      target: 5
+    - type: 4
+      target: 5
+  - objectives:
+    - type: 0
+      target: 5
+  - objectives:
+    - type: 2
+      target: 5
+  objectiveText: {fileID: 0}
   resourceTokenIconSprite: {fileID: 0}
   resourceNodeLevel1Prefab: {fileID: 3376462439609532193, guid: 846954e0d358a4a5081e890670494b00, type: 3}
   level1HP: 10
