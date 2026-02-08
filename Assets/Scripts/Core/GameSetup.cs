@@ -89,12 +89,19 @@ namespace ClockworkGrid
             "00S0A00A00S00A0C"  // Wave 3
         };
 
-        [Tooltip("Objectives for each wave. Must match wave count.")]
-        [SerializeField] private List<WaveObjective> waveObjectives = new List<WaveObjective>
+        [Tooltip("Objectives for each wave. Each wave can have multiple objectives.")]
+        [SerializeField] private List<WaveObjectiveSet> waveObjectives = new List<WaveObjectiveSet>
         {
-            new WaveObjective(ObjectiveType.KillOgres, 1),       // Wave 1: Kill 1 Ogre
-            new WaveObjective(ObjectiveType.DestroyResources, 5), // Wave 2: Destroy 5 resource nodes
-            new WaveObjective(ObjectiveType.KillNinjas, 5)        // Wave 3: Kill 5 Ninjas
+            new WaveObjectiveSet(                                     // Wave 1
+                new WaveObjective(ObjectiveType.PlaceUnits, 5),       //   Place 5 units
+                new WaveObjective(ObjectiveType.DefeatEnemies, 5)     //   Defeat 5 enemies
+            ),
+            new WaveObjectiveSet(                                     // Wave 2
+                new WaveObjective(ObjectiveType.DestroyResources, 5)  //   Destroy 5 resource nodes
+            ),
+            new WaveObjectiveSet(                                     // Wave 3
+                new WaveObjective(ObjectiveType.KillNinjas, 5)        //   Kill 5 Ninjas
+            )
         };
 
         [Header("UI References")]
