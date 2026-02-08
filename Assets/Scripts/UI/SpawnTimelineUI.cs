@@ -195,13 +195,10 @@ namespace ClockworkGrid
 
             currentSpawnCode = spawnCode;
 
-            // Update wave title
+            // Hide wave title text (dots speak for themselves)
             if (waveNumberText != null)
             {
-                waveNumberText.text = $"WAVE {waveNumber}";
-                waveNumberText.fontSize = 36;
-                waveNumberText.fontStyle = FontStyles.Bold;
-                waveNumberText.color = enemyColor;
+                waveNumberText.gameObject.SetActive(false);
             }
 
             // Calculate offset to center dots
@@ -401,9 +398,9 @@ namespace ClockworkGrid
                 }
                 else if (i < currentDotIndex)
                 {
-                    // Completed: Fade to 50% opacity
+                    // Completed: Fully hidden
                     Color c = dotImage.color;
-                    c.a = 0.5f;
+                    c.a = 0f;
                     dotImage.color = c;
                     spawnDots[i].transform.localScale = Vector3.one;
                 }

@@ -251,6 +251,10 @@ namespace ClockworkGrid
                 Debug.Log("[DragDropHandler] First player unit placed - wave started!");
             }
 
+            // Play placement SFX
+            if (SFXManager.Instance != null)
+                SFXManager.Instance.PlayPlayerPlacement();
+
             // Remove from dock
             DockBarManager.Instance.RemoveUnitIcon(currentDraggingIcon);
 

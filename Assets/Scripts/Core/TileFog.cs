@@ -11,11 +11,13 @@ namespace ClockworkGrid
     {
         [Header("Fog Settings")]
         [SerializeField] private float fogDropDistance = 1.5f; // How far below normal position fogged tiles sit
-        [SerializeField] private float revealDuration = 0.6f; // Tween duration in seconds
+        [SerializeField] private float revealDuration = 0.6f; // Base tween duration in seconds
+        [SerializeField] private float revealDurationVariation = 0.35f; // Random +/- variation per tile
 
         // State
         private float revealedY;   // Normal tile Y (top at ground level)
         private float foggedY;     // Lowered Y (in fog)
+        private float actualRevealDuration; // Per-tile randomized duration
         private bool isRevealed;
         private bool isAnimating;
         private float animationProgress; // 0 = fogged, 1 = revealed
@@ -46,6 +48,8 @@ namespace ClockworkGrid
             if (isRevealed) return;
             isRevealed = true;
             isAnimating = true;
+            actualRevealDuration = revealDuration + Random.Range(-revealDurationVariation, revealDurationVariation);
+            actualRevealDuration = Mathf.Max(actualRevealDuration, 0.15f); // Floor so it never stalls
         }
 
         /// <summary>
@@ -66,7 +70,7 @@ namespace ClockworkGrid
         {
             if (!isAnimating) return;
 
-            animationProgress += Time.deltaTime / revealDuration;
+            animationProgress += Time.deltaTime / actualRevealDuration;
 
             if (animationProgress >= 1f)
             {

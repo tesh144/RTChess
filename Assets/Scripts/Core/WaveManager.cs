@@ -707,6 +707,11 @@ namespace ClockworkGrid
 
             GridManager.Instance.PlaceUnit(pos.x, pos.y, enemyObj, CellState.EnemyUnit);
             enemyUnitCount++;
+
+            // Play enemy placement SFX (lower pitch)
+            if (SFXManager.Instance != null)
+                SFXManager.Instance.PlayEnemyPlacement();
+
             return true;
         }
 
@@ -740,6 +745,10 @@ namespace ClockworkGrid
             }
 
             GridManager.Instance.PlaceUnit(pos.x, pos.y, nodeObj, CellState.Resource);
+
+            // Play resource placement SFX
+            if (SFXManager.Instance != null)
+                SFXManager.Instance.PlayResourcePlacement();
 
             // Reveal fog around resource node
             if (FogManager.Instance != null)

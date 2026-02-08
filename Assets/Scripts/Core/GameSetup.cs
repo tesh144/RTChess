@@ -146,6 +146,7 @@ namespace ClockworkGrid
             SetupDebugPlacer();
             // SetupTimelineTestButton(); // Removed: Timeline integrates automatically with WaveManager
             SetupLighting();
+            SetupSFXManager();
         }
 
         private void SetupCamera()
@@ -306,9 +307,9 @@ namespace ClockworkGrid
                 Debug.LogError("[GameSetup] SpawnStartingResource: GridManager.Instance is null!");
                 return;
             }
-            if (level1ResourcePrefab == null)
+            if (level3ResourcePrefab == null)
             {
-                Debug.LogError("[GameSetup] SpawnStartingResource: level1ResourcePrefab is null!");
+                Debug.LogError("[GameSetup] SpawnStartingResource: level3ResourcePrefab is null!");
                 return;
             }
 
@@ -316,7 +317,7 @@ namespace ClockworkGrid
             int centerY = GridManager.Instance.Height / 2;
 
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(centerX, centerY);
-            GameObject nodeObj = Instantiate(level1ResourcePrefab, worldPos, Quaternion.identity);
+            GameObject nodeObj = Instantiate(level3ResourcePrefab, worldPos, Quaternion.identity);
             nodeObj.SetActive(true);
 
             ResourceNode node = nodeObj.GetComponent<ResourceNode>();
@@ -324,15 +325,22 @@ namespace ClockworkGrid
             {
                 node.GridX = centerX;
                 node.GridY = centerY;
-                node.Initialize(new Vector2Int(1, 1));
+                node.Initialize(new Vector2Int(2, 2)); // Level 3: 2x2
             }
 
-            GridManager.Instance.PlaceUnit(centerX, centerY, nodeObj, CellState.Resource);
+            // Register all cells occupied by the 2x2 resource
+            for (int dx = 0; dx < 2; dx++)
+            {
+                for (int dy = 0; dy < 2; dy++)
+                {
+                    GridManager.Instance.PlaceUnit(centerX + dx, centerY + dy, nodeObj, CellState.Resource);
+                }
+            }
 
             // Reveal fog around the starting resource so the player can see it
             if (FogManager.Instance != null)
             {
-                FogManager.Instance.RevealRadius(centerX, centerY, 1);
+                FogManager.Instance.RevealRadius(centerX, centerY, 2);
             }
 
             // Center camera on the starting resource
@@ -738,6 +746,30 @@ namespace ClockworkGrid
             expansion.Initialize(skipTutorial: true);
 
             Debug.Log("GridExpansionManager initialized");
+        }
+
+        private void SetupSFXManager()
+        {
+            GameObject sfxObj = new GameObject("SFXManager");
+            SFXManager sfxManager = sfxObj.AddComponent<SFXManager>();
+
+            // Load placement SFX clip from Resources or by path
+            AudioClip placementClip = Resources.Load<AudioClip>("drop_sfx");
+            if (placementClip == null)
+            {
+                // Try loading from Music folder
+                placementClip = Resources.Load<AudioClip>("Music/drop_sfx");
+            }
+            if (placementClip != null)
+            {
+                SetPrivateField(sfxManager, "placementClip", placementClip);
+            }
+            else
+            {
+                Debug.LogWarning("[GameSetup] Could not load drop_sfx audio clip. Assign it manually on SFXManager.");
+            }
+
+            Debug.Log("SFXManager initialized");
         }
 
         /// <summary>
