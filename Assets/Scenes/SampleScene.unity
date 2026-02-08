@@ -469,7 +469,7 @@ MonoBehaviour:
   drawButton: {fileID: 501985954}
   drawButtonText: {fileID: 1132470255}
   costNumberText: {fileID: 1667690219}
-  baseDrawCost: 3
+  baseDrawCost: 1
   costIncrement: 1
   costDecreaseInterval: 2
   createUIAtRuntime: 0
@@ -1571,12 +1571,20 @@ PrefabInstance:
       value: 12112112113
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: waveSequences.Array.size
-      value: 1
+      propertyPath: ogreKillReward
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: waveSequences.Array.data[0]
-      value: 122122321121113
+      propertyPath: ninjaKillReward
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: soldierKillReward
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: baseIntervalDuration
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[1]
@@ -1793,7 +1801,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9218407696684505593, guid: f605eb6ec8e794527ab85039928f1788, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 33.66
       objectReference: {fileID: 0}
     - target: {fileID: 9218407696684505593, guid: f605eb6ec8e794527ab85039928f1788, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -2374,7 +2382,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 16.4
       objectReference: {fileID: 0}
     - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_AnchoredPosition.x
