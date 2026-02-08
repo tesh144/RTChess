@@ -88,6 +88,7 @@ namespace ClockworkGrid
         };
 
         [Header("Resource Nodes")]
+        [SerializeField] private Sprite resourceTokenIconSprite; // Icon for off-screen resource indicators
         [SerializeField] private GameObject resourceNodeLevel1Prefab; // Drag prefab, or leave empty for procedural
         [SerializeField] private int level1HP = 10;
         [SerializeField] private int level1TokensPerHit = 1;
@@ -591,6 +592,33 @@ namespace ClockworkGrid
             if (canvas != null && canvas.GetComponentInChildren<CoinFlyEffect>() == null)
             {
                 canvas.gameObject.AddComponent<CoinFlyEffect>();
+            }
+
+            // Add ResourceIndicatorUI for off-screen resource indicators
+            if (canvas != null)
+            {
+                ResourceIndicatorUI indicatorUI = canvas.GetComponentInChildren<ResourceIndicatorUI>();
+                if (indicatorUI == null)
+                {
+                    GameObject indicatorObj = new GameObject("ResourceIndicatorUI");
+                    indicatorObj.transform.SetParent(canvas.transform, false);
+                    RectTransform rect = indicatorObj.AddComponent<RectTransform>();
+                    rect.anchorMin = Vector2.zero;
+                    rect.anchorMax = Vector2.one;
+                    rect.offsetMin = Vector2.zero;
+                    rect.offsetMax = Vector2.zero;
+                    indicatorUI = indicatorObj.AddComponent<ResourceIndicatorUI>();
+                }
+
+                // Set resource token icon
+                if (resourceTokenIconSprite != null)
+                {
+                    indicatorUI.SetResourceTokenIcon(resourceTokenIconSprite);
+                }
+                else
+                {
+                    Debug.LogWarning("[GameSetup] No resourceTokenIconSprite assigned in Inspector. Off-screen indicators will not show token icons.");
+                }
             }
 
             Debug.Log("SetupUI: UI should be manually created in scene hierarchy");
