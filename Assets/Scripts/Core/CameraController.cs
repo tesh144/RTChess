@@ -36,8 +36,6 @@ namespace ClockworkGrid
 
         [Header("Pan")]
         [SerializeField] private float panSpeed = 10f;
-        [Tooltip("Middle-click drag pan speed")]
-        [SerializeField] private float dragPanSpeed = 0.3f;
 
         [Header("Smoothing")]
         [SerializeField] private float moveSmoothTime = 0.15f;
@@ -56,7 +54,6 @@ namespace ClockworkGrid
         private Vector3 targetPointVelocity;
 
         // Input state
-        private bool isMiddleDragging;
         private bool isRightDragging;
         private Vector3 lastMousePos;
 
@@ -67,6 +64,7 @@ namespace ClockworkGrid
 
         // Rotation events for UI visibility
         public bool IsRotating => isRightDragging;
+        public bool IsAutoRotating => autoRotate;
         public Vector3 CurrentTarget => targetPoint;
         public float CurrentDistance => targetDistance;
         public event System.Action OnRotationStarted;
@@ -147,28 +145,20 @@ namespace ClockworkGrid
             {
                 Vector3 delta = Input.mousePosition - lastMousePos;
                 targetYaw += delta.x * manualRotateSpeed;
-                targetPitch -= delta.y * manualRotateSpeed;
-                targetPitch = Mathf.Clamp(targetPitch, 10f, 85f);
-                lastMousePos = Input.mousePosition;
-            }
 
-            // Middle-click drag to pan target point
-            if (Input.GetMouseButtonDown(2))
-            {
-                isMiddleDragging = true;
-                lastMousePos = Input.mousePosition;
-            }
-            if (Input.GetMouseButtonUp(2))
-            {
-                isMiddleDragging = false;
-            }
-            if (isMiddleDragging)
-            {
-                Vector3 delta = Input.mousePosition - lastMousePos;
-                // Pan along the ground plane relative to camera orientation
-                Vector3 right = transform.right;
-                Vector3 forward = Vector3.Cross(right, Vector3.up).normalized;
-                targetPoint -= (right * delta.x + forward * delta.y) * dragPanSpeed * Time.deltaTime;
+                // Tighter pitch range with soft edges - dampen rotation near limits
+                float pitchMin = 30f;
+                float pitchMax = 65f;
+                float edgeZone = 8f; // degrees from limit where dampening kicks in
+                float dampFactor = 1f;
+                if (targetPitch < pitchMin + edgeZone)
+                    dampFactor = Mathf.Clamp01((targetPitch - pitchMin) / edgeZone);
+                else if (targetPitch > pitchMax - edgeZone)
+                    dampFactor = Mathf.Clamp01((pitchMax - targetPitch) / edgeZone);
+                dampFactor = Mathf.Max(dampFactor, 0.1f); // never fully zero
+
+                targetPitch -= delta.y * manualRotateSpeed * dampFactor;
+                targetPitch = Mathf.Clamp(targetPitch, pitchMin, pitchMax);
                 lastMousePos = Input.mousePosition;
             }
 

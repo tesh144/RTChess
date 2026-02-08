@@ -20,13 +20,30 @@ namespace ClockworkGrid
         [SerializeField] private Color lowHealthColor = new Color(0.9f, 0.2f, 0.2f); // Red
         [SerializeField] private Color backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.8f); // Dark gray
 
+        [Header("Team Tint")]
+        [SerializeField] private Color allyTint = new Color(0.4f, 0.6f, 1f); // Blue
+        [SerializeField] private Color enemyTint = new Color(1f, 0.4f, 0.4f); // Red
+        [SerializeField] private Color resourceTint = new Color(1f, 0.9f, 0.3f); // Yellow
+
+        [Header("Fade (Units Only)")]
+        [SerializeField] private float fadeDelay = 3f; // Seconds before fading starts
+        [SerializeField] private float fadeDuration = 1.5f; // Seconds to fully fade out
+
         // Bar objects
         private GameObject barContainer;
         private GameObject backgroundBar;
         private GameObject fillBar;
 
         private Renderer fillRenderer;
+        private Renderer bgRenderer;
         private IDamageable unit;
+        private Color teamTint = Color.white; // Cached tint (white = no tint)
+
+        // Fade state (units only, not resource nodes)
+        private bool shouldFade = false;
+        private float lastInterestTime;
+        private int lastHP;
+        private float currentAlpha = 1f;
 
         // HP number text
         private TextMesh hpTextMesh;
@@ -43,6 +60,11 @@ namespace ClockworkGrid
             }
 
             CreateHPBar();
+
+            // Units fade; resource nodes stay visible
+            shouldFade = GetComponent<ResourceNode>() == null;
+            lastInterestTime = Time.time;
+            lastHP = unit.CurrentHP;
         }
 
         private void Update()
@@ -51,6 +73,29 @@ namespace ClockworkGrid
 
             // Follow unit position in world space
             barContainer.transform.position = transform.position + Vector3.up * yOffset;
+
+            // Detect HP change to re-show bar
+            if (shouldFade && unit.CurrentHP != lastHP)
+            {
+                lastHP = unit.CurrentHP;
+                lastInterestTime = Time.time;
+                currentAlpha = 1f;
+            }
+
+            // Fade logic for units
+            if (shouldFade)
+            {
+                float elapsed = Time.time - lastInterestTime;
+                if (elapsed > fadeDelay)
+                {
+                    float fadeProgress = (elapsed - fadeDelay) / fadeDuration;
+                    currentAlpha = Mathf.Clamp01(1f - fadeProgress);
+                }
+                else
+                {
+                    currentAlpha = 1f;
+                }
+            }
 
             UpdateHPBar();
         }
@@ -70,11 +115,14 @@ namespace ClockworkGrid
             backgroundBar.transform.localPosition = Vector3.zero;
             backgroundBar.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Face upward
 
-            Renderer bgRenderer = backgroundBar.GetComponent<Renderer>();
+            bgRenderer = backgroundBar.GetComponent<Renderer>();
             if (bgRenderer != null)
             {
                 bgRenderer.material.color = backgroundColor;
             }
+
+            // Cache team tint for fill bar coloring
+            teamTint = GetTeamTint();
 
             // Fill bar (colored, scales with HP)
             fillBar = CreateBar("HPBarFill", barWidth, barHeight);
@@ -130,7 +178,7 @@ namespace ClockworkGrid
                 hpTextMesh.fontSize = 48;
                 hpTextMesh.anchor = TextAnchor.MiddleCenter;
                 hpTextMesh.alignment = TextAlignment.Center;
-                hpTextMesh.color = Color.white;
+                hpTextMesh.color = teamTint;
                 hpTextMesh.fontStyle = FontStyle.Bold;
             }
         }
@@ -150,11 +198,11 @@ namespace ClockworkGrid
             // Scale to desired size
             bar.transform.localScale = new Vector3(width, height, 1f);
 
-            // Use unlit shader for consistent visibility
+            // Use Sprites/Default shader (supports alpha for fading)
             Renderer renderer = bar.GetComponent<Renderer>();
             if (renderer != null)
             {
-                Material mat = new Material(Shader.Find("Unlit/Color"));
+                Material mat = new Material(Shader.Find("Sprites/Default"));
                 renderer.material = mat;
             }
 
@@ -202,15 +250,30 @@ namespace ClockworkGrid
                 targetColor = Color.Lerp(lowHealthColor, midHealthColor, t);
             }
 
+            // Apply fade alpha
+            targetColor.a = currentAlpha;
             fillRenderer.material.color = targetColor;
+
+            if (bgRenderer != null)
+            {
+                Color bgColor = backgroundColor;
+                bgColor.a = backgroundColor.a * currentAlpha;
+                bgRenderer.material.color = bgColor;
+            }
 
             // Update HP number text
             if (hpTextMesh != null)
             {
                 string hpStr = unit.CurrentHP.ToString();
                 hpTextMesh.text = hpStr;
+                Color textColor = teamTint;
+                textColor.a = currentAlpha;
+                hpTextMesh.color = textColor;
                 if (hpTextShadow != null)
+                {
                     hpTextShadow.text = hpStr;
+                    hpTextShadow.color = new Color(0f, 0f, 0f, currentAlpha);
+                }
             }
 
             // Hide bar if unit is destroyed
@@ -218,6 +281,25 @@ namespace ClockworkGrid
             {
                 barContainer.SetActive(false);
             }
+        }
+
+        /// <summary>
+        /// Get team tint color based on entity type (ally/enemy/resource).
+        /// </summary>
+        private Color GetTeamTint()
+        {
+            Unit unitComp = GetComponent<Unit>();
+            if (unitComp != null)
+            {
+                return unitComp.Team == Team.Player ? allyTint : enemyTint;
+            }
+
+            if (GetComponent<ResourceNode>() != null)
+            {
+                return resourceTint;
+            }
+
+            return Color.white; // No tint
         }
 
         private void OnDestroy()

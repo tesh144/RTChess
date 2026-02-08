@@ -146,6 +146,7 @@ namespace ClockworkGrid
             SetupDebugPlacer();
             // SetupTimelineTestButton(); // Removed: Timeline integrates automatically with WaveManager
             SetupLighting();
+            SetupSFXManager();
         }
 
         private void SetupCamera()
@@ -281,16 +282,16 @@ namespace ClockworkGrid
                 new Color(0.2f, 0.85f, 0.4f), 1f,
                 1, level1HP, level1TokensPerHit, level1BonusTokens, new Vector2Int(1, 1));
 
-            // Level 2: 2x1 (medium, yellow-green, larger scale)
+            // Level 2: 2x1 (medium, yellow-green)
             level2ResourcePrefab = CreateResourceNodePrefab(
                 resourceNodeLevel2Prefab, "ResourceNode_Level2",
-                new Color(0.6f, 0.9f, 0.3f), 1.5f,
+                new Color(0.6f, 0.9f, 0.3f), 1f,
                 2, level2HP, level2TokensPerHit, level2BonusTokens, new Vector2Int(2, 1));
 
-            // Level 3: 2x2 (large, blue-green, much larger scale)
+            // Level 3: 2x2 (large, blue-green)
             level3ResourcePrefab = CreateResourceNodePrefab(
                 resourceNodeLevel3Prefab, "ResourceNode_Level3",
-                new Color(0.2f, 0.7f, 0.9f), 2.0f,
+                new Color(0.2f, 0.7f, 0.9f), 1f,
                 3, level3HP, level3TokensPerHit, level3BonusTokens, new Vector2Int(2, 2));
 
             // Keep legacy reference for backward compatibility
@@ -306,9 +307,9 @@ namespace ClockworkGrid
                 Debug.LogError("[GameSetup] SpawnStartingResource: GridManager.Instance is null!");
                 return;
             }
-            if (level1ResourcePrefab == null)
+            if (level2ResourcePrefab == null)
             {
-                Debug.LogError("[GameSetup] SpawnStartingResource: level1ResourcePrefab is null!");
+                Debug.LogError("[GameSetup] SpawnStartingResource: level2ResourcePrefab is null!");
                 return;
             }
 
@@ -316,7 +317,7 @@ namespace ClockworkGrid
             int centerY = GridManager.Instance.Height / 2;
 
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(centerX, centerY);
-            GameObject nodeObj = Instantiate(level1ResourcePrefab, worldPos, Quaternion.identity);
+            GameObject nodeObj = Instantiate(level2ResourcePrefab, worldPos, Quaternion.identity);
             nodeObj.SetActive(true);
 
             ResourceNode node = nodeObj.GetComponent<ResourceNode>();
@@ -324,15 +325,19 @@ namespace ClockworkGrid
             {
                 node.GridX = centerX;
                 node.GridY = centerY;
-                node.Initialize(new Vector2Int(1, 1));
+                node.Initialize(new Vector2Int(2, 1)); // Level 2: 2x1
             }
 
-            GridManager.Instance.PlaceUnit(centerX, centerY, nodeObj, CellState.Resource);
+            // Register all cells occupied by the 2x1 resource
+            for (int dx = 0; dx < 2; dx++)
+            {
+                GridManager.Instance.PlaceUnit(centerX + dx, centerY, nodeObj, CellState.Resource);
+            }
 
             // Reveal fog around the starting resource so the player can see it
             if (FogManager.Instance != null)
             {
-                FogManager.Instance.RevealRadius(centerX, centerY, 1);
+                FogManager.Instance.RevealRadius(centerX, centerY, 2);
             }
 
             // Center camera on the starting resource
@@ -738,6 +743,30 @@ namespace ClockworkGrid
             expansion.Initialize(skipTutorial: true);
 
             Debug.Log("GridExpansionManager initialized");
+        }
+
+        private void SetupSFXManager()
+        {
+            GameObject sfxObj = new GameObject("SFXManager");
+            SFXManager sfxManager = sfxObj.AddComponent<SFXManager>();
+
+            // Load placement SFX clip from Resources or by path
+            AudioClip placementClip = Resources.Load<AudioClip>("drop_sfx");
+            if (placementClip == null)
+            {
+                // Try loading from Music folder
+                placementClip = Resources.Load<AudioClip>("Music/drop_sfx");
+            }
+            if (placementClip != null)
+            {
+                SetPrivateField(sfxManager, "placementClip", placementClip);
+            }
+            else
+            {
+                Debug.LogWarning("[GameSetup] Could not load drop_sfx audio clip. Assign it manually on SFXManager.");
+            }
+
+            Debug.Log("SFXManager initialized");
         }
 
         /// <summary>

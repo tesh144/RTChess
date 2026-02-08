@@ -409,6 +409,12 @@ namespace ClockworkGrid
                 {
                     AddUnitToDock(drawnStats);
                     Debug.Log($"Drew {drawnStats.unitName} ({drawnStats.rarity}) - Cost was {cost}T");
+
+                    // Screen shake feedback on successful draw
+                    if (CameraController.Instance != null)
+                    {
+                        CameraController.Instance.Shake(0.12f, 0.2f);
+                    }
                 }
             }
 

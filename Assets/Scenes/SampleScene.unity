@@ -468,6 +468,10 @@ MonoBehaviour:
   dockIconsContainer: {fileID: 390485712}
   drawButton: {fileID: 501985954}
   drawButtonText: {fileID: 1132470255}
+  costNumberText: {fileID: 1667690219}
+  baseDrawCost: 1
+  costIncrement: 1
+  costDecreaseInterval: 2
   createUIAtRuntime: 0
   enableSlideAnimation: 1
   slideUpDistance: 150
@@ -1123,6 +1127,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 885112283407565611, guid: ed53cf476a52641ce8e8e1509193b0af, type: 3}
   m_PrefabInstance: {fileID: 3784763283592544865}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1667690219 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1678682741824356269, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+  m_PrefabInstance: {fileID: 8226156663477309879}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1732502098
 GameObject:
   m_ObjectHideFlags: 0
@@ -1552,16 +1567,28 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: level2HP
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequence
       value: 12112112113
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: waveSequences.Array.size
+      propertyPath: ogreKillReward
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: ninjaKillReward
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: soldierKillReward
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: waveSequences.Array.data[0]
-      value: 12121121112
+      propertyPath: baseIntervalDuration
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[1]

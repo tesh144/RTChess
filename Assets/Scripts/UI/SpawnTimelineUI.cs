@@ -153,17 +153,28 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Initialize wave timeline with spawn code.
-        /// Called by WaveManager when a wave starts.
-        /// NOTE: UI should already be active from ShowCountdown() call
+        /// Called by WaveManager when a wave starts executing.
         /// </summary>
         public void InitializeWave(int waveNumber, string spawnCode)
         {
             ClearTimeline();
 
-            // Re-show dot container (hidden during countdown)
+            // Activate timeline holder (may be hidden at start)
+            if (timelineHolder != null)
+            {
+                timelineHolder.SetActive(true);
+            }
+
+            // Show dot container
             if (dotContainer != null)
             {
                 dotContainer.gameObject.SetActive(true);
+            }
+
+            // Trigger slide-down animation
+            if (enableSlideAnimation && rectTransform != null)
+            {
+                StartCoroutine(SlideDownAnimation());
             }
 
             // IMPORTANT: Clear any placeholder/design-time children from dotContainer
@@ -184,13 +195,10 @@ namespace ClockworkGrid
 
             currentSpawnCode = spawnCode;
 
-            // Update wave title
+            // Hide wave title text (dots speak for themselves)
             if (waveNumberText != null)
             {
-                waveNumberText.text = $"WAVE {waveNumber}";
-                waveNumberText.fontSize = 36;
-                waveNumberText.fontStyle = FontStyles.Bold;
-                waveNumberText.color = enemyColor;
+                waveNumberText.gameObject.SetActive(false);
             }
 
             // Calculate offset to center dots
@@ -390,9 +398,9 @@ namespace ClockworkGrid
                 }
                 else if (i < currentDotIndex)
                 {
-                    // Completed: Fade to 50% opacity
+                    // Completed: Fully hidden
                     Color c = dotImage.color;
-                    c.a = 0.5f;
+                    c.a = 0f;
                     dotImage.color = c;
                     spawnDots[i].transform.localScale = Vector3.one;
                 }
