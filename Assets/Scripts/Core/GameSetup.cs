@@ -64,7 +64,7 @@ namespace ClockworkGrid
         [SerializeField] private int ninjaAttackInterval = 1;
         [SerializeField] private int ninjaResourceCost = 4;
         [SerializeField] private int ninjaKillReward = 3;
-        [SerializeField] private int ninjaRevealRadius = 2;
+        [SerializeField] private int ninjaRevealRadius = 1;
         [SerializeField] private float ninjaModelScale = 0.8f;
         [SerializeField] private Sprite ninjaIconSprite;
 
@@ -177,6 +177,10 @@ namespace ClockworkGrid
             GradientBackground gradient = cam.GetComponent<GradientBackground>();
             if (gradient == null)
                 gradient = cam.gameObject.AddComponent<GradientBackground>();
+
+            // Hide UI during camera rotation
+            if (cam.GetComponent<UIHideOnCameraRotate>() == null)
+                cam.gameObject.AddComponent<UIHideOnCameraRotate>();
 
             Debug.Log($"[GameSetup] Camera ready: {cam.gameObject.name}");
         }
@@ -329,6 +333,12 @@ namespace ClockworkGrid
             if (FogManager.Instance != null)
             {
                 FogManager.Instance.RevealRadius(centerX, centerY, 1);
+            }
+
+            // Center camera on the starting resource
+            if (CameraController.Instance != null)
+            {
+                CameraController.Instance.FocusOnCell(centerX, centerY);
             }
 
             Debug.Log($"Spawned starting resource node at grid center ({centerX}, {centerY})");

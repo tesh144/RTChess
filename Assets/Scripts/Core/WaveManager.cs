@@ -753,6 +753,13 @@ namespace ClockworkGrid
             }
 
             GridManager.Instance.PlaceUnit(pos.x, pos.y, nodeObj, CellState.Resource);
+
+            // Reveal fog around resource node
+            if (FogManager.Instance != null)
+            {
+                FogManager.Instance.RevealRadius(pos.x, pos.y, 1);
+            }
+
             return true;
         }
 
