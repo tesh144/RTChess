@@ -162,20 +162,20 @@ namespace ClockworkGrid
 
         private void SpawnDestructionEffect()
         {
-            // Simple particle burst
             GameObject particleObj = new GameObject("ResourceDestroyVFX");
             particleObj.transform.position = transform.position + Vector3.up * 0.5f;
 
             ParticleSystem ps = particleObj.AddComponent<ParticleSystem>();
             var main = ps.main;
             main.duration = 0.5f;
-            main.startLifetime = 0.6f;
-            main.startSpeed = 3f;
-            main.startSize = 0.15f;
-            main.startColor = new Color(0.2f, 0.9f, 0.3f);
+            main.startLifetime = 0.8f;
+            main.startSpeed = 2.5f;
+            main.startSize = 0.12f;
+            main.startColor = new Color(1f, 0.85f, 0.2f); // Gold color
             main.maxParticles = 20;
             main.loop = false;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.gravityModifier = 0.8f; // Particles arc and fall (bounce feel)
 
             var emission = ps.emission;
             emission.rateOverTime = 0;
@@ -187,8 +187,28 @@ namespace ClockworkGrid
             shape.shapeType = ParticleSystemShapeType.Sphere;
             shape.radius = 0.3f;
 
-            // Auto-destroy after particles finish
-            Destroy(particleObj, 1.5f);
+            // Assign material so particles don't render magenta
+            var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
+            renderer.material = new Material(Shader.Find("Particles/Standard Unlit"));
+            renderer.material.color = new Color(1f, 0.85f, 0.2f); // Gold
+
+            // Color fades from bright gold to darker gold over lifetime
+            var colorOverLifetime = ps.colorOverLifetime;
+            colorOverLifetime.enabled = true;
+            Gradient grad = new Gradient();
+            grad.SetKeys(
+                new GradientColorKey[] {
+                    new GradientColorKey(new Color(1f, 0.9f, 0.3f), 0f),
+                    new GradientColorKey(new Color(0.9f, 0.7f, 0.1f), 1f)
+                },
+                new GradientAlphaKey[] {
+                    new GradientAlphaKey(1f, 0f),
+                    new GradientAlphaKey(0f, 1f)
+                }
+            );
+            colorOverLifetime.color = grad;
+
+            Destroy(particleObj, 2f);
         }
 
         private void FlashWhite()
