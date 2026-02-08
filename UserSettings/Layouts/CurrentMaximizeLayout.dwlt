@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 117230
+  controlID: 117573
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -149,7 +149,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 117194
+  controlID: 117537
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -175,7 +175,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 117186
+  controlID: 117524
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -196,8 +196,8 @@ MonoBehaviour:
     y: 0
     width: 283.5
     height: 493.5
-  m_MinSize: {x: 201, y: 221}
-  m_MaxSize: {x: 4001, y: 4021}
+  m_MinSize: {x: 200, y: 200}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 6}
   m_Panes:
   - {fileID: 6}
@@ -242,7 +242,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 267fe3ff6a0be7ff7296e8ffb04febff324ff0ff4013f8ffd04efdffd84efdff624efeffc266feff6696feff149cfeff6c11ffff0a64ffffa064ffffa4d2ffffb0d2ffffecd2ffffaae1ffff8eebffff9aebfffff4ebfffffaebffff08ecffff24ecffff90faffffa4faffffc6faffff486700007c670000b26b0000067a0000207a00003e7a00008a8c00000a8d0000d6d70000f2d700001ad80000900f0100d60f0100e85b0100
+      m_ExpandedIDs: fc7be1ff267fe3ff6a0be7ff7296e8ffb04febff324ff0ff4013f8ffd04efdffd84efdff624efeffc266feff6696feff149cfeff6c11ffff0a64ffffa064ffffa4d2ffffb0d2ffffecd2ffffaae1ffff8eebffff9aebfffff4ebfffffaebffff08ecffff24ecffff90faffffa4faffffc6faffff486700007c670000b26b0000067a0000207a00003e7a00008a8c00000a8d0000d6d70000f2d700001ad80000900f0100d60f0100e85b0100
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -848,8 +848,8 @@ MonoBehaviour:
     y: 493.5
     width: 1021
     height: 339.5
-  m_MinSize: {x: 101, y: 121}
-  m_MaxSize: {x: 4001, y: 4021}
+  m_MinSize: {x: 100, y: 100}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 11}
   m_Panes:
   - {fileID: 11}
@@ -1141,7 +1141,7 @@ MonoBehaviour:
     m_CachedPref: 320
     m_ControlHash: -371814159
     m_PrefName: Preview_InspectorPreview
-  m_LastInspectedObjectInstanceID: -1868184
+  m_LastInspectedObjectInstanceID: -1
   m_LastVerticalScrollValue: 0
   m_GlobalObjectId: 
   m_InspectorMode: 0

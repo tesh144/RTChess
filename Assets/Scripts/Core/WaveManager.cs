@@ -603,6 +603,31 @@ namespace ClockworkGrid
         }
 
         /// <summary>
+        /// Get all unrevealed, empty cells on the grid.
+        /// </summary>
+        private List<Vector2Int> GetUnrevealedEmptyCells()
+        {
+            List<Vector2Int> cells = new List<Vector2Int>();
+            if (GridManager.Instance == null || FogManager.Instance == null) return cells;
+
+            int width = GridManager.Instance.Width;
+            int height = GridManager.Instance.Height;
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (GridManager.Instance.IsCellEmpty(x, y) && !FogManager.Instance.IsCellRevealed(x, y))
+                    {
+                        cells.Add(new Vector2Int(x, y));
+                    }
+                }
+            }
+
+            return cells;
+        }
+
+        /// <summary>
         /// Get all resource node positions on the grid.
         /// </summary>
         private List<Vector2Int> GetAllResourcePositions()
@@ -632,12 +657,12 @@ namespace ClockworkGrid
         /// <summary>
         /// Find a spawn position for a resource node.
         /// First resource: Spawns in any revealed empty cell.
-        /// Subsequent resources: Spawns within proximity radius of player units or revealed cells.
+        /// Subsequent resources: Prioritizes unrevealed cells within proximity radius.
         /// </summary>
         private Vector2Int? FindResourceSpawnPosition()
         {
-            var candidates = GetRevealedEmptyCells();
-            if (candidates.Count == 0)
+            var revealedCandidates = GetRevealedEmptyCells();
+            if (revealedCandidates.Count == 0)
             {
                 Debug.LogWarning("[AI] No revealed empty cells for resource placement");
                 return null;
@@ -651,17 +676,17 @@ namespace ClockworkGrid
                 // If no existing resources, pick any revealed empty cell
                 if (existingResources.Count == 0)
                 {
-                    var firstChosen = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+                    var firstChosen = revealedCandidates[UnityEngine.Random.Range(0, revealedCandidates.Count)];
                     Debug.Log($"[AI] First Resource: no existing resources, chose ({firstChosen.x},{firstChosen.y})");
                     return firstChosen;
                 }
 
                 // Maintain spacing for first resource if resources already exist
                 List<Vector2Int> spacedCandidates = new List<Vector2Int>();
-                Vector2Int bestFallback = candidates[0];
+                Vector2Int bestFallback = revealedCandidates[0];
                 int bestFallbackDist = 0;
 
-                foreach (var pos in candidates)
+                foreach (var pos in revealedCandidates)
                 {
                     int minDist = int.MaxValue;
                     foreach (var res in existingResources)
@@ -687,24 +712,47 @@ namespace ClockworkGrid
                 return result;
             }
 
-            // Subsequent resources: spawn near player units or revealed cells
-            List<Vector2Int> proximityCandidates = FindProximityCandidates(candidates);
+            // Subsequent resources: prioritize unrevealed cells
+            var unrevealedCandidates = GetUnrevealedEmptyCells();
 
-            if (proximityCandidates.Count == 0)
+            // Priority 1: Unrevealed cells within proximity
+            if (unrevealedCandidates.Count > 0)
             {
-                Debug.LogWarning("[AI] No candidates within proximity radius, falling back to any revealed cell");
-                var fallback = candidates[UnityEngine.Random.Range(0, candidates.Count)];
-                Debug.Log($"[AI] Resource (fallback): chose ({fallback.x},{fallback.y})");
-                return fallback;
+                List<Vector2Int> unrevealedProximity = FindProximityCandidates(unrevealedCandidates);
+                if (unrevealedProximity.Count > 0)
+                {
+                    var chosen = unrevealedProximity[UnityEngine.Random.Range(0, unrevealedProximity.Count)];
+                    Debug.Log($"[AI] Resource (unrevealed+proximity): chose ({chosen.x},{chosen.y}), {unrevealedProximity.Count} candidates");
+                    return chosen;
+                }
             }
 
-            var chosen = proximityCandidates[UnityEngine.Random.Range(0, proximityCandidates.Count)];
-            Debug.Log($"[AI] Resource (proximity): chose ({chosen.x},{chosen.y}), {proximityCandidates.Count} candidates");
-            return chosen;
+            // Priority 2: Revealed cells within proximity (current behavior)
+            List<Vector2Int> revealedProximity = FindProximityCandidates(revealedCandidates);
+            if (revealedProximity.Count > 0)
+            {
+                var chosen = revealedProximity[UnityEngine.Random.Range(0, revealedProximity.Count)];
+                Debug.Log($"[AI] Resource (revealed+proximity): chose ({chosen.x},{chosen.y}), {revealedProximity.Count} candidates");
+                return chosen;
+            }
+
+            // Priority 3: Any unrevealed cell
+            if (unrevealedCandidates.Count > 0)
+            {
+                var chosen = unrevealedCandidates[UnityEngine.Random.Range(0, unrevealedCandidates.Count)];
+                Debug.Log($"[AI] Resource (any unrevealed): chose ({chosen.x},{chosen.y})");
+                return chosen;
+            }
+
+            // Priority 4: Any revealed cell (last resort)
+            var fallback = revealedCandidates[UnityEngine.Random.Range(0, revealedCandidates.Count)];
+            Debug.Log($"[AI] Resource (any revealed): chose ({fallback.x},{fallback.y})");
+            return fallback;
         }
 
         /// <summary>
         /// Find cells within proximity radius of player units (priority) or other revealed cells.
+        /// Works with any candidate list (revealed or unrevealed cells).
         /// </summary>
         private List<Vector2Int> FindProximityCandidates(List<Vector2Int> allCandidates)
         {
