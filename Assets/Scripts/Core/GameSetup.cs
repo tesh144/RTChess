@@ -690,8 +690,10 @@ namespace ClockworkGrid
             // This allows wave sequences to be edited in GameSetup Inspector!
             WaveManager waveManager = gameObject.AddComponent<WaveManager>();
 
-            // Pass resource node prefab
+            // Pass resource node prefabs (all levels)
             SetPrivateField(waveManager, "resourceNodePrefab", resourceNodePrefab);
+            SetPrivateField(waveManager, "resourceNodeLevel2Prefab", level2ResourcePrefab);
+            SetPrivateField(waveManager, "resourceNodeLevel3Prefab", level3ResourcePrefab);
 
             // Initialize with wave sequences list
             waveManager.Initialize(waveSequences, ticksPerWaveAdvance, peacePeriodTicks);

@@ -67,7 +67,9 @@ namespace ClockworkGrid
         [SerializeField] private int peacePeriodTicks = 8;
 
         [Header("Prefab References")]
-        [SerializeField] private GameObject resourceNodePrefab;
+        [SerializeField] private GameObject resourceNodePrefab; // Level 1 (legacy/fallback)
+        [SerializeField] private GameObject resourceNodeLevel2Prefab;
+        [SerializeField] private GameObject resourceNodeLevel3Prefab;
 
         // State
         private WaveState currentState = WaveState.Preparation;
@@ -743,9 +745,28 @@ namespace ClockworkGrid
         /// </summary>
         private bool SpawnSingleResource(int level)
         {
-            if (resourceNodePrefab == null)
+            // Select prefab and grid size based on level
+            GameObject prefab;
+            Vector2Int gridSize;
+            switch (level)
             {
-                Debug.LogWarning("WaveManager: No resource node prefab assigned");
+                case 2:
+                    prefab = resourceNodeLevel2Prefab != null ? resourceNodeLevel2Prefab : resourceNodePrefab;
+                    gridSize = new Vector2Int(2, 1);
+                    break;
+                case 3:
+                    prefab = resourceNodeLevel3Prefab != null ? resourceNodeLevel3Prefab : resourceNodePrefab;
+                    gridSize = new Vector2Int(2, 2);
+                    break;
+                default:
+                    prefab = resourceNodePrefab;
+                    gridSize = new Vector2Int(1, 1);
+                    break;
+            }
+
+            if (prefab == null)
+            {
+                Debug.LogWarning($"WaveManager: No resource node prefab for level {level}");
                 return false;
             }
 
@@ -756,7 +777,7 @@ namespace ClockworkGrid
 
             // Instantiate and initialize
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(pos.x, pos.y);
-            GameObject nodeObj = Instantiate(resourceNodePrefab, worldPos, Quaternion.identity);
+            GameObject nodeObj = Instantiate(prefab, worldPos, Quaternion.identity);
             nodeObj.SetActive(true);
 
             ResourceNode node = nodeObj.GetComponent<ResourceNode>();
@@ -764,10 +785,17 @@ namespace ClockworkGrid
             {
                 node.GridX = pos.x;
                 node.GridY = pos.y;
-                node.Initialize(new Vector2Int(1, 1)); // Level 1: 1x1
+                node.Initialize(gridSize);
             }
 
-            GridManager.Instance.PlaceUnit(pos.x, pos.y, nodeObj, CellState.Resource);
+            // Mark all occupied cells
+            for (int dx = 0; dx < gridSize.x; dx++)
+            {
+                for (int dy = 0; dy < gridSize.y; dy++)
+                {
+                    GridManager.Instance.PlaceUnit(pos.x + dx, pos.y + dy, nodeObj, CellState.Resource);
+                }
+            }
             resourceNodeCount++;
 
             // Play resource placement SFX

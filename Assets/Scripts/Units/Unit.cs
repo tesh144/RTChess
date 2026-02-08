@@ -356,6 +356,10 @@ namespace ClockworkGrid
         {
             if (target == null || target.IsDestroyed) return;
 
+            // Capture target position before attack (for chess-style capture move)
+            int targetGridX = target.GridX;
+            int targetGridY = target.GridY;
+
             // Trigger attack animation
             if (animator != null)
             {
@@ -363,7 +367,7 @@ namespace ClockworkGrid
             }
 
             // Forward lunge toward target
-            Vector3 targetPos = GridManager.Instance.GridToWorldPosition(target.GridX, target.GridY);
+            Vector3 targetPos = GridManager.Instance.GridToWorldPosition(targetGridX, targetGridY);
             StartCoroutine(AttackLungeAnimation(targetPos));
 
             // Play attack sound
@@ -379,6 +383,56 @@ namespace ClockworkGrid
             SpawnCombatEffect(targetPos);
 
             Debug.Log($"{team} {gameObject.name} attacks {target.Team} unit for {attackDamage} damage!");
+
+            // Chess-style capture: if the target died, move attacker to its position
+            if (target.IsDestroyed && GridManager.Instance != null)
+            {
+                CellState myState = (team == Team.Player) ? CellState.PlayerUnit : CellState.EnemyUnit;
+
+                // Only move if the target cell is now empty (OnDestroyed clears it)
+                if (GridManager.Instance.IsCellEmpty(targetGridX, targetGridY))
+                {
+                    // Vacate old position
+                    GridManager.Instance.RemoveUnit(GridX, GridY);
+
+                    // Update grid position
+                    GridX = targetGridX;
+                    GridY = targetGridY;
+                    GridManager.Instance.PlaceUnit(GridX, GridY, gameObject, myState);
+
+                    // Animate move to captured position
+                    StartCoroutine(MoveToPositionAnimation(targetPos));
+
+                    // Reveal fog at new position (player units)
+                    if (FogManager.Instance != null)
+                    {
+                        FogManager.Instance.RevealRadius(GridX, GridY, RevealRadius);
+                    }
+
+                    Debug.Log($"{team} {gameObject.name} captured position ({GridX},{GridY})");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Animate unit sliding to a new grid position (chess-style capture move).
+        /// </summary>
+        private IEnumerator MoveToPositionAnimation(Vector3 targetWorldPos)
+        {
+            Vector3 startPos = transform.position;
+            float duration = 0.25f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                float t = elapsed / duration;
+                float smooth = 1f - Mathf.Pow(1f - t, 3f); // Ease-out
+                transform.position = Vector3.Lerp(startPos, targetWorldPos, smooth);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.position = targetWorldPos;
         }
 
         private void AttackResource(int targetX, int targetY)

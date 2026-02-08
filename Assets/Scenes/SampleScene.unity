@@ -624,8 +624,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7beaa073ab2b54444a50604d1d1ab0e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  victoryColor: {r: 0.2, g: 1, b: 0.2, a: 1}
-  defeatColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+  victoryScreenPrefab: {fileID: 0}
 --- !u!4 &721835034
 Transform:
   m_ObjectHideFlags: 0
@@ -1553,48 +1552,12 @@ PrefabInstance:
       value: 12112112113
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ogreKillReward
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ninjaKillReward
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: ogreAttackDamage
-      value: 3
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ogreRarityWeight
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ninjaAttackDamage
+      propertyPath: ninjaAttackInterval
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ninjaRarityWeight
-      value: 30
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ninjaRevealRadius
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: soldierKillReward
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ogreAttackInterval
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: soldierAttackDamage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: soldierRarityWeight
-      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: baseIntervalDuration
@@ -1602,23 +1565,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.size
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[0]
-      value: 121223211212113
+      value: aamblb0c
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[1]
-      value: 121223211212113
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: waveSequences.Array.data[2]
-      value: 121223211212113
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: waveSequences.Array.data[3]
-      value: 12121121112
+      value: asasbcsmccsabbc
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequence.Array.data[0].spawnType
@@ -2602,7 +2557,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 16.4
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_AnchoredPosition.x

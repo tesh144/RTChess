@@ -80,7 +80,7 @@ MonoBehaviour:
   ninjaHP: 5
   ninjaAttackDamage: 2
   ninjaAttackRange: 1
-  ninjaAttackInterval: 2
+  ninjaAttackInterval: 1
   ninjaResourceCost: 4
   ninjaKillReward: 3
   ninjaRevealRadius: 1
