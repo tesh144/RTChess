@@ -325,14 +325,10 @@ namespace ClockworkGrid
             {
                 node.GridX = centerX;
                 node.GridY = centerY;
-                node.Initialize(new Vector2Int(2, 1)); // Level 2: 2x1
+                node.Initialize(new Vector2Int(1, 1)); // Single cell
             }
 
-            // Register all cells occupied by the 2x1 resource
-            for (int dx = 0; dx < 2; dx++)
-            {
-                GridManager.Instance.PlaceUnit(centerX + dx, centerY, nodeObj, CellState.Resource);
-            }
+            GridManager.Instance.PlaceUnit(centerX, centerY, nodeObj, CellState.Resource);
 
             // Reveal fog around the starting resource so the player can see it
             if (FogManager.Instance != null)
@@ -446,6 +442,10 @@ namespace ClockworkGrid
                 prefab.transform.localScale = overridePrefab.transform.localScale * scale;
                 // Reset position (will be set when spawning)
                 prefab.transform.localPosition = Vector3.zero;
+
+                // Remove root-level WorldRotationLock (it overrides Unit.Rotate() in LateUpdate)
+                WorldRotationLock rootLock = prefab.GetComponent<WorldRotationLock>();
+                if (rootLock != null) DestroyImmediate(rootLock);
             }
             else
             {
