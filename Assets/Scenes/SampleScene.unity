@@ -1781,10 +1781,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ogreHP
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: level2HP
       value: 50
       objectReference: {fileID: 0}
@@ -1793,52 +1789,8 @@ PrefabInstance:
       value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: soldierHP
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequence
       value: 12112112113
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ogreKillReward
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ninjaKillReward
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ogreAttackRange
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ogreAttackDamage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ogreResourceCost
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ninjaAttackDamage
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: ninjaResourceCost
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: soldierKillReward
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: soldierAttackDamage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
-      propertyPath: soldierResourceCost
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.size
@@ -2838,7 +2790,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 16.4
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2835804585457045834, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
       propertyPath: m_AnchoredPosition.x
