@@ -56,6 +56,7 @@ MonoBehaviour:
   soldierAttackRange: 1
   soldierAttackInterval: 2
   soldierResourceCost: 3
+  soldierKillReward: 2
   soldierRevealRadius: 1
   soldierModelScale: 1
   soldierIconSprite: {fileID: 21300000, guid: 44fa00cf12c8b4732afb9768afecdc13, type: 3}
@@ -67,6 +68,7 @@ MonoBehaviour:
   ogreAttackRange: 2
   ogreAttackInterval: 3
   ogreResourceCost: 6
+  ogreKillReward: 5
   ogreRevealRadius: 1
   ogreModelScale: 1
   ogreIconSprite: {fileID: 21300000, guid: 7058973981e304155bac8e28ba9083fa, type: 3}
@@ -78,13 +80,14 @@ MonoBehaviour:
   ninjaAttackRange: 1
   ninjaAttackInterval: 1
   ninjaResourceCost: 4
+  ninjaKillReward: 3
   ninjaRevealRadius: 2
   ninjaModelScale: 1
   ninjaIconSprite: {fileID: 21300000, guid: a8ea82bf8ac074ad7b281dced4f4558b, type: 3}
   ticksPerWaveAdvance: 4
   peacePeriodTicks: 8
   waveSequences:
-  - 0020100100200103
+  - 12122321122113
   resourceNodeLevel1Prefab: {fileID: 3376462439609532193, guid: 846954e0d358a4a5081e890670494b00, type: 3}
   level1HP: 10
   level1TokensPerHit: 1
