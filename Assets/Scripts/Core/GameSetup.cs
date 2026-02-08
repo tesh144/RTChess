@@ -282,16 +282,16 @@ namespace ClockworkGrid
                 new Color(0.2f, 0.85f, 0.4f), 1f,
                 1, level1HP, level1TokensPerHit, level1BonusTokens, new Vector2Int(1, 1));
 
-            // Level 2: 2x1 (medium, yellow-green, larger scale)
+            // Level 2: 2x1 (medium, yellow-green)
             level2ResourcePrefab = CreateResourceNodePrefab(
                 resourceNodeLevel2Prefab, "ResourceNode_Level2",
-                new Color(0.6f, 0.9f, 0.3f), 1.5f,
+                new Color(0.6f, 0.9f, 0.3f), 1f,
                 2, level2HP, level2TokensPerHit, level2BonusTokens, new Vector2Int(2, 1));
 
-            // Level 3: 2x2 (large, blue-green, much larger scale)
+            // Level 3: 2x2 (large, blue-green)
             level3ResourcePrefab = CreateResourceNodePrefab(
                 resourceNodeLevel3Prefab, "ResourceNode_Level3",
-                new Color(0.2f, 0.7f, 0.9f), 2.0f,
+                new Color(0.2f, 0.7f, 0.9f), 1f,
                 3, level3HP, level3TokensPerHit, level3BonusTokens, new Vector2Int(2, 2));
 
             // Keep legacy reference for backward compatibility
@@ -307,9 +307,9 @@ namespace ClockworkGrid
                 Debug.LogError("[GameSetup] SpawnStartingResource: GridManager.Instance is null!");
                 return;
             }
-            if (level3ResourcePrefab == null)
+            if (level2ResourcePrefab == null)
             {
-                Debug.LogError("[GameSetup] SpawnStartingResource: level3ResourcePrefab is null!");
+                Debug.LogError("[GameSetup] SpawnStartingResource: level2ResourcePrefab is null!");
                 return;
             }
 
@@ -317,7 +317,7 @@ namespace ClockworkGrid
             int centerY = GridManager.Instance.Height / 2;
 
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(centerX, centerY);
-            GameObject nodeObj = Instantiate(level3ResourcePrefab, worldPos, Quaternion.identity);
+            GameObject nodeObj = Instantiate(level2ResourcePrefab, worldPos, Quaternion.identity);
             nodeObj.SetActive(true);
 
             ResourceNode node = nodeObj.GetComponent<ResourceNode>();
@@ -325,16 +325,13 @@ namespace ClockworkGrid
             {
                 node.GridX = centerX;
                 node.GridY = centerY;
-                node.Initialize(new Vector2Int(2, 2)); // Level 3: 2x2
+                node.Initialize(new Vector2Int(2, 1)); // Level 2: 2x1
             }
 
-            // Register all cells occupied by the 2x2 resource
+            // Register all cells occupied by the 2x1 resource
             for (int dx = 0; dx < 2; dx++)
             {
-                for (int dy = 0; dy < 2; dy++)
-                {
-                    GridManager.Instance.PlaceUnit(centerX + dx, centerY + dy, nodeObj, CellState.Resource);
-                }
+                GridManager.Instance.PlaceUnit(centerX + dx, centerY, nodeObj, CellState.Resource);
             }
 
             // Reveal fog around the starting resource so the player can see it
