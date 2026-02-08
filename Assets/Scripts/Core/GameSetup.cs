@@ -333,7 +333,7 @@ namespace ClockworkGrid
             // Reveal fog around the starting resource so the player can see it
             if (FogManager.Instance != null)
             {
-                FogManager.Instance.RevealRadius(centerX, centerY, 2);
+                FogManager.Instance.RevealRadius(centerX, centerY, 1);
             }
 
             // Center camera on the starting resource
