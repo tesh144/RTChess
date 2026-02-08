@@ -85,10 +85,11 @@ namespace ClockworkGrid
         {
             ClearTimeline(); // Remove any dots from previous wave
 
-            if (timelineHolder != null)
-            {
-                timelineHolder.SetActive(true);
-            }
+            // Timeline UI hidden - keep logic but don't show visuals
+            // if (timelineHolder != null)
+            // {
+            //     timelineHolder.SetActive(true);
+            // }
 
             // Hide dot container during countdown
             if (dotContainer != null)
@@ -159,11 +160,11 @@ namespace ClockworkGrid
         {
             ClearTimeline();
 
-            // Activate timeline holder (may be hidden at start)
-            if (timelineHolder != null)
-            {
-                timelineHolder.SetActive(true);
-            }
+            // Timeline UI hidden - keep logic but don't show visuals
+            // if (timelineHolder != null)
+            // {
+            //     timelineHolder.SetActive(true);
+            // }
 
             // Show dot container
             if (dotContainer != null)
