@@ -67,6 +67,8 @@ namespace ClockworkGrid
 
         // Cached components
         private PlacementCooldown placementCooldown;
+        private Animator animator;
+        private AudioSource audioSource;
 
         protected virtual void Start()
         {
@@ -92,6 +94,30 @@ namespace ClockworkGrid
             FindTypeText();
             CacheRenderers();
             UpdateHPText();
+
+            // Cache animator component
+            animator = GetComponent<Animator>();
+
+            // Setup audio
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0.5f; // 3D spatial audio
+            audioSource.volume = 0.3f;
+            audioSource.minDistance = 5f;
+            audioSource.maxDistance = 20f;
+
+            // Generate sound effects if none assigned in MusicSystem
+            if (MusicSystem.instance != null)
+            {
+                if (MusicSystem.instance.attack_sfx == null)
+                {
+                    MusicSystem.instance.attack_sfx = GenerateAttackSound();
+                }
+                if (MusicSystem.instance.mine_hit_sfx == null)
+                {
+                    MusicSystem.instance.mine_hit_sfx = GenerateMineHitSound();
+                }
+            }
         }
 
         protected virtual void OnDestroy()
@@ -260,6 +286,18 @@ namespace ClockworkGrid
         {
             if (target == null || target.IsDestroyed) return;
 
+            // Trigger attack animation
+            if (animator != null)
+            {
+                animator.SetTrigger("attack");
+            }
+
+            // Play attack sound
+            if (audioSource != null && MusicSystem.instance != null && MusicSystem.instance.attack_sfx != null)
+            {
+                audioSource.PlayOneShot(MusicSystem.instance.attack_sfx);
+            }
+
             // Deal damage to enemy unit
             target.TakeDamage(attackDamage);
 
@@ -277,6 +315,18 @@ namespace ClockworkGrid
 
             ResourceNode node = targetObj.GetComponent<ResourceNode>();
             if (node == null) return;
+
+            // Trigger attack animation
+            if (animator != null)
+            {
+                animator.SetTrigger("attack");
+            }
+
+            // Play mine hit sound
+            if (audioSource != null && MusicSystem.instance != null && MusicSystem.instance.mine_hit_sfx != null)
+            {
+                audioSource.PlayOneShot(MusicSystem.instance.mine_hit_sfx);
+            }
 
             int tokensEarned = node.TakeDamage(attackDamage);
 
@@ -478,6 +528,85 @@ namespace ClockworkGrid
             shape.radius = 0.15f;
 
             Destroy(vfxObj, 1f);
+        }
+
+        /// <summary>
+        /// Generate a procedural sword slash sound effect.
+        /// Sharp, metallic "shing" with whoosh.
+        /// </summary>
+        private AudioClip GenerateAttackSound()
+        {
+            int sampleRate = 44100;
+            float duration = 0.2f;
+            int sampleCount = Mathf.FloorToInt(sampleRate * duration);
+
+            AudioClip clip = AudioClip.Create("SwordSlashSound", sampleCount, 1, sampleRate, false);
+            float[] samples = new float[sampleCount];
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleCount;
+
+                // High frequency sweep (sharp metallic "shing")
+                float shingFreq = Mathf.Lerp(2400f, 800f, t * t);
+                float shing = Mathf.Sin(2f * Mathf.PI * shingFreq * t);
+
+                // Add harmonics for metallic quality
+                float harmonic = Mathf.Sin(2f * Mathf.PI * shingFreq * 2f * t) * 0.3f;
+                float harmonic2 = Mathf.Sin(2f * Mathf.PI * shingFreq * 3f * t) * 0.15f;
+
+                // Wind whoosh (filtered noise)
+                float whoosh = (Random.value * 2f - 1f) * 0.4f;
+                whoosh *= Mathf.Sin(Mathf.PI * t); // Shape the noise
+
+                // Very fast attack, quick decay
+                float envelope = Mathf.Exp(-12f * t);
+
+                // Mix components (emphasize the metallic shing)
+                float sample = (shing * 0.6f + harmonic + harmonic2 + whoosh * 0.3f) * envelope;
+
+                samples[i] = Mathf.Clamp(sample, -1f, 1f);
+            }
+
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        /// <summary>
+        /// Generate mine hit sound - lower impact, rocky texture
+        /// </summary>
+        private AudioClip GenerateMineHitSound()
+        {
+            int sampleRate = 44100;
+            float duration = 0.12f;
+            int sampleCount = Mathf.FloorToInt(sampleRate * duration);
+
+            AudioClip clip = AudioClip.Create("MineHitSound", sampleCount, 1, sampleRate, false);
+            float[] samples = new float[sampleCount];
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleCount;
+
+                // Low impact thunk
+                float thunkFreq = Mathf.Lerp(120f, 60f, t);
+                float thunk = Mathf.Sin(2f * Mathf.PI * thunkFreq * t);
+
+                // Rock texture (filtered noise burst)
+                float noise = (Random.value * 2f - 1f) * 0.6f;
+                float rockTexture = noise * Mathf.Exp(-15f * t);
+
+                // Quick attack, medium decay
+                float envelope = Mathf.Exp(-10f * t);
+
+                // Mix
+                float sample = (thunk * 0.5f + rockTexture * 0.5f) * envelope;
+
+                samples[i] = Mathf.Clamp(sample, -1f, 1f);
+            }
+
+            clip.SetData(samples, 0);
+            return clip;
         }
 
         private void FindHPText()

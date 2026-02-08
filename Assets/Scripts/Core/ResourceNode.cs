@@ -42,6 +42,9 @@ namespace ClockworkGrid
         private float flashTimer;
         private const float FlashDuration = 0.15f;
 
+        // Audio
+        private AudioSource audioSource;
+
         private void Awake()
         {
             currentHP = maxHP;
@@ -52,6 +55,18 @@ namespace ClockworkGrid
             FindHPText();
             CacheRenderers();
             UpdateHPText();
+
+            // Setup audio
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0.7f;
+            audioSource.volume = 0.4f;
+
+            // Generate mine destroyed sound if none assigned in MusicSystem
+            if (MusicSystem.instance != null && MusicSystem.instance.mine_destroyed_sfx == null)
+            {
+                MusicSystem.instance.mine_destroyed_sfx = GenerateMineDestroyedSound(1);
+            }
 
             // Note: Registration removed - WaveManager handles spawning now (Iteration 10)
         }
@@ -154,10 +169,17 @@ namespace ClockworkGrid
                 }
             }
 
+            // Play celebratory destruction sound (regenerate with current level)
+            if (audioSource != null && MusicSystem.instance != null)
+            {
+                AudioClip destroySound = GenerateMineDestroyedSound(level);
+                audioSource.PlayOneShot(destroySound);
+            }
+
             // Spawn destruction particles
             SpawnDestructionEffect();
 
-            Destroy(gameObject);
+            Destroy(gameObject, 0.5f); // Delay destruction so sound can play
         }
 
         private void SpawnDestructionEffect()
@@ -209,6 +231,67 @@ namespace ClockworkGrid
             colorOverLifetime.color = grad;
 
             Destroy(particleObj, 2f);
+        }
+
+        /// <summary>
+        /// Generate celebratory mine destroyed sound.
+        /// More exciting for higher level mines.
+        /// </summary>
+        private AudioClip GenerateMineDestroyedSound(int mineLevel)
+        {
+            int sampleRate = 44100;
+            float duration = 0.4f + (mineLevel - 1) * 0.1f; // Longer for higher levels
+            int sampleCount = Mathf.FloorToInt(sampleRate * duration);
+
+            AudioClip clip = AudioClip.Create("MineDestroyedSound", sampleCount, 1, sampleRate, false);
+            float[] samples = new float[sampleCount];
+
+            // More chimes for higher levels (1-3 chimes)
+            int numChimes = Mathf.Min(mineLevel, 3);
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleCount;
+                float sample = 0f;
+
+                // Ascending chime sequence
+                for (int c = 0; c < numChimes; c++)
+                {
+                    float chimeStart = c * 0.15f;
+                    float chimeEnd = chimeStart + 0.25f;
+
+                    if (t >= chimeStart && t <= chimeEnd)
+                    {
+                        float chimeT = (t - chimeStart) / (chimeEnd - chimeStart);
+
+                        // Higher pitch for each chime
+                        float baseFreq = 440f + (c * 220f); // A4, then higher notes
+                        float chime = Mathf.Sin(2f * Mathf.PI * baseFreq * chimeT);
+
+                        // Add harmonics for richer sound
+                        chime += Mathf.Sin(2f * Mathf.PI * baseFreq * 2f * chimeT) * 0.4f;
+                        chime += Mathf.Sin(2f * Mathf.PI * baseFreq * 3f * chimeT) * 0.2f;
+
+                        // Bell-like envelope
+                        float chimeEnvelope = Mathf.Exp(-6f * chimeT);
+
+                        sample += chime * chimeEnvelope * 0.5f;
+                    }
+                }
+
+                // Add sparkle (high frequency texture)
+                if (t < 0.3f)
+                {
+                    float sparkle = (Random.value * 2f - 1f) * 0.15f;
+                    sparkle *= Mathf.Exp(-10f * t);
+                    sample += sparkle;
+                }
+
+                samples[i] = Mathf.Clamp(sample, -1f, 1f);
+            }
+
+            clip.SetData(samples, 0);
+            return clip;
         }
 
         private void FlashWhite()
