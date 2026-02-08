@@ -468,6 +468,10 @@ MonoBehaviour:
   dockIconsContainer: {fileID: 390485712}
   drawButton: {fileID: 501985954}
   drawButtonText: {fileID: 1132470255}
+  costNumberText: {fileID: 1667690219}
+  baseDrawCost: 6
+  costIncrement: 1
+  costDecreaseInterval: 0
   createUIAtRuntime: 0
   enableSlideAnimation: 1
   slideUpDistance: 150
@@ -1123,6 +1127,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 885112283407565611, guid: ed53cf476a52641ce8e8e1509193b0af, type: 3}
   m_PrefabInstance: {fileID: 3784763283592544865}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1667690219 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1678682741824356269, guid: 5d007e63fae6e417887a724d08d03938, type: 3}
+  m_PrefabInstance: {fileID: 8226156663477309879}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1732502098
 GameObject:
   m_ObjectHideFlags: 0
