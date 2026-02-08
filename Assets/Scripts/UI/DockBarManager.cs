@@ -22,6 +22,7 @@ namespace ClockworkGrid
         [SerializeField] private Button drawButton; // White button on the right
         [SerializeField] private TextMeshProUGUI drawButtonText; // Text on draw button
         [SerializeField] private TextMeshProUGUI costNumberText; // Cost display on gatcha button (CostNumber TMP)
+        [SerializeField] private Image costFillImage; // Fill bar showing time until cost decrease
 
         [Header("Draw Cost Settings")]
         [SerializeField] private int baseDrawCost = 6; // Starting cost for the first draw
@@ -400,6 +401,7 @@ namespace ClockworkGrid
             // Increment draw count AFTER spending
             drawCount++;
             ticksSinceCostDecrease = 0; // Reset cost-decrease timer on draw
+            UpdateCostFill(); // Reset fill bar to full
 
             // Draw a random unit from RaritySystem
             if (RaritySystem.Instance != null)
@@ -549,7 +551,11 @@ namespace ClockworkGrid
 
         private void OnIntervalTickCostDecrease(int intervalCount)
         {
-            if (costDecreaseInterval <= 0 || drawCount <= 0) return;
+            if (costDecreaseInterval <= 0 || drawCount <= 0)
+            {
+                UpdateCostFill();
+                return;
+            }
 
             ticksSinceCostDecrease++;
             if (ticksSinceCostDecrease >= costDecreaseInterval)
@@ -560,6 +566,26 @@ namespace ClockworkGrid
                 Debug.Log($"[DockBarManager] Cost decreased by interval. drawCount={drawCount}, cost={CalculateDealCost()}");
                 UpdateDealButtonDisplay();
             }
+
+            UpdateCostFill();
+        }
+
+        /// <summary>
+        /// Update the cost fill bar. Fill = remaining time until next cost decrease.
+        /// Full (1) = just drew/reset, depletes toward 0 as ticks pass.
+        /// </summary>
+        private void UpdateCostFill()
+        {
+            if (costFillImage == null) return;
+
+            if (costDecreaseInterval <= 0 || drawCount <= 0)
+            {
+                costFillImage.fillAmount = 0f;
+                return;
+            }
+
+            float remaining = (float)(costDecreaseInterval - ticksSinceCostDecrease) / costDecreaseInterval;
+            costFillImage.fillAmount = Mathf.Clamp01(remaining);
         }
 
         /// <summary>
