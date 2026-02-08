@@ -44,6 +44,9 @@ namespace ClockworkGrid
         public int resourceCost = 3; // Currently unused (placement is free)
         public int killReward = 2; // Tokens awarded to player when this enemy unit is killed
 
+        [Header("Movement")]
+        public int chargeDistance = 0; // Tiles to dash forward before attacking (0 = no dash)
+
         [Header("Fog of War - Iteration 7")]
         public int revealRadius = 1; // Cells revealed around unit when placed (Soldier: 1, Ninja: 2, Ogre: 1)
 

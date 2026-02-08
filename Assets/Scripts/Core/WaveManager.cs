@@ -16,13 +16,17 @@ namespace ClockworkGrid
 
     /// <summary>
     /// Spawn type for each interval in the wave sequence.
+    /// Codes: 0=Nothing, A=Soldier, B=Ninja, C=Ogre, S=Resource L1, M=Resource L2, L=Resource L3
     /// </summary>
     public enum SpawnType
     {
-        Nothing = 0,    // Nothing happens this interval
-        Enemies = 1,    // Standard enemy units spawn
-        Resources = 2,  // Resource nodes spawn
-        Boss = 3        // High-value/boss enemy units spawn
+        Nothing,
+        EnemySoldier,
+        EnemyNinja,
+        EnemyOgre,
+        ResourceL1,
+        ResourceL2,
+        ResourceL3
     }
 
     // WaveEntry class removed - using string-based wave sequence now (Iteration 10)
@@ -51,8 +55,8 @@ namespace ClockworkGrid
         public static WaveManager Instance { get; private set; }
 
         [Header("=== WAVE SEQUENCES (Iteration 11) ===")]
-        [Tooltip("List of wave sequences. Each string is one wave. Format: 0=Nothing, 1=Soldier, 2=Resource, 3=Ogre")]
-        public List<string> waveSequences = new List<string> { "1012103" };
+        [Tooltip("List of wave sequences. Each string is one wave. Format: 0=Nothing, A=Soldier, B=Ninja, C=Ogre, S=Resource L1, M=Resource L2, L=Resource L3")]
+        public List<string> waveSequences = new List<string> { "A0S0A00A0SC" };
 
         [Header("Timing")]
         [Tooltip("Number of interval ticks before starting the wave sequence (breathing room for player)")]
@@ -281,26 +285,43 @@ namespace ClockworkGrid
             switch (code)
             {
                 case '0':
-                    // Do nothing this wave tick
                     spawnType = SpawnType.Nothing;
                     break;
 
-                case '1':
-                    // Spawn 1 soldier
+                case 'A':
+                case 'a':
                     SpawnEnemyUnit(UnitType.Soldier, 1);
-                    spawnType = SpawnType.Enemies;
+                    spawnType = SpawnType.EnemySoldier;
                     break;
 
-                case '2':
-                    // Spawn 1 resource node
-                    SpawnResourceNodes(1);
-                    spawnType = SpawnType.Resources;
+                case 'B':
+                case 'b':
+                    SpawnEnemyUnit(UnitType.Ninja, 1);
+                    spawnType = SpawnType.EnemyNinja;
                     break;
 
-                case '3':
-                    // Spawn 1 ogre (boss/strong unit)
+                case 'C':
+                case 'c':
                     SpawnEnemyUnit(UnitType.Ogre, 1);
-                    spawnType = SpawnType.Boss;
+                    spawnType = SpawnType.EnemyOgre;
+                    break;
+
+                case 'S':
+                case 's':
+                    SpawnSingleResource(1);
+                    spawnType = SpawnType.ResourceL1;
+                    break;
+
+                case 'M':
+                case 'm':
+                    SpawnSingleResource(2);
+                    spawnType = SpawnType.ResourceL2;
+                    break;
+
+                case 'L':
+                case 'l':
+                    SpawnSingleResource(3);
+                    spawnType = SpawnType.ResourceL3;
                     break;
 
                 default:

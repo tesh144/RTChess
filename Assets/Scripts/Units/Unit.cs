@@ -18,6 +18,7 @@ namespace ClockworkGrid
         [SerializeField] protected int attackIntervalMultiplier = 2;
         [SerializeField] protected int resourceCost = 3;
         [SerializeField] protected int killReward = 2;
+        [SerializeField] protected int chargeDistance = 0; // Tiles to dash forward before attacking
 
         [Header("Unit State")]
         [SerializeField] private Team team = Team.Player;
@@ -57,6 +58,7 @@ namespace ClockworkGrid
         public int AttackRange => attackRange;
         public int AttackIntervalMultiplier => attackIntervalMultiplier;
         public int ResourceCost => resourceCost;
+        public int ChargeDistance => chargeDistance;
         public int RevealRadius { get; private set; } = 1; // Fog reveal radius (Iteration 7)
 
         // Rotation animation state
@@ -183,7 +185,10 @@ namespace ClockworkGrid
 
             Debug.Log($"[Unit {gameObject.name}] Rotating and attacking!");
             Rotate();
-            TryAttack();
+            if (chargeDistance > 0)
+                StartCoroutine(ChargeAndAttack()); // Dash animation first, then attack
+            else
+                TryAttack();
         }
 
         /// <summary>
@@ -234,6 +239,71 @@ namespace ClockworkGrid
 
             // Ensure we end exactly at original scale
             transform.localScale = originalScale;
+        }
+
+        /// <summary>
+        /// Dash forward then attack — runs as a coroutine so the dash animation
+        /// finishes before the attack lunge starts (no position conflicts).
+        /// </summary>
+        private IEnumerator ChargeAndAttack()
+        {
+            if (GridManager.Instance == null) { TryAttack(); yield break; }
+
+            currentFacing.ToGridOffset(out int dx, out int dy);
+
+            int landX = GridX;
+            int landY = GridY;
+
+            // Walk forward tile by tile, stop before any occupied cell or grid edge
+            for (int i = 1; i <= chargeDistance; i++)
+            {
+                int nextX = GridX + dx * i;
+                int nextY = GridY + dy * i;
+
+                if (!GridManager.Instance.IsCellEmpty(nextX, nextY))
+                    break;
+
+                landX = nextX;
+                landY = nextY;
+            }
+
+            // If we can move, animate the dash
+            if (landX != GridX || landY != GridY)
+            {
+                Vector3 oldWorldPos = transform.position;
+
+                // Update grid state immediately
+                CellState myState = (team == Team.Player) ? CellState.PlayerUnit : CellState.EnemyUnit;
+                GridManager.Instance.RemoveUnit(GridX, GridY);
+                GridX = landX;
+                GridY = landY;
+                GridManager.Instance.PlaceUnit(GridX, GridY, gameObject, myState);
+
+                // Reveal fog at new position
+                if (FogManager.Instance != null)
+                {
+                    FogManager.Instance.RevealRadius(GridX, GridY, RevealRadius);
+                }
+
+                // Animate dash — yield until complete
+                Vector3 newWorldPos = GridManager.Instance.GridToWorldPosition(GridX, GridY);
+                float duration = 0.2f;
+                float elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    float t = elapsed / duration;
+                    float smooth = 1f - Mathf.Pow(1f - t, 3f); // Ease-out
+                    transform.position = Vector3.Lerp(oldWorldPos, newWorldPos, smooth);
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+                transform.position = newWorldPos;
+
+                Debug.Log($"[Unit {gameObject.name}] Dashed to ({GridX},{GridY})");
+            }
+
+            // Now attack from the new position
+            TryAttack();
         }
 
         private void TryAttack()
@@ -353,7 +423,10 @@ namespace ClockworkGrid
         /// </summary>
         private IEnumerator AttackLungeAnimation(Vector3 targetWorldPos)
         {
-            Vector3 startPos = transform.position;
+            // Use grid position as authoritative home (not transform.position which may be mid-animation)
+            Vector3 startPos = GridManager.Instance != null
+                ? GridManager.Instance.GridToWorldPosition(GridX, GridY)
+                : transform.position;
             Vector3 direction = (targetWorldPos - startPos).normalized;
             direction.y = 0f; // Keep on same plane
             float lungeDistance = 0.3f;
@@ -761,6 +834,7 @@ namespace ClockworkGrid
             attackIntervalMultiplier = stats.attackIntervalMultiplier;
             resourceCost = stats.resourceCost;
             killReward = stats.killReward;
+            chargeDistance = stats.chargeDistance;
             RevealRadius = stats.revealRadius;
 
             // Reset HP to new max
@@ -792,7 +866,7 @@ namespace ClockworkGrid
                 FogManager.Instance.RevealRadius(gridX, gridY, RevealRadius);
             }
 
-            Debug.Log($"Initialized {unitTeam} {stats.unitName}: HP={maxHP}, Damage={attackDamage}, Range={attackRange}, Interval={attackIntervalMultiplier}, RevealRadius={RevealRadius}");
+            Debug.Log($"Initialized {unitTeam} {stats.unitName}: HP={maxHP}, Damage={attackDamage}, Range={attackRange}, Interval={attackIntervalMultiplier}, Charge={chargeDistance}, RevealRadius={RevealRadius}");
         }
 
         /// <summary>

@@ -37,6 +37,7 @@ namespace ClockworkGrid
         [SerializeField] private int soldierResourceCost = 3;
         [SerializeField] private int soldierKillReward = 2;
         [SerializeField] private int soldierRevealRadius = 1;
+        [SerializeField] private int soldierChargeDistance = 0;
         [SerializeField] private float soldierModelScale = 1f;
         [SerializeField] private Sprite soldierIconSprite;
 
@@ -51,6 +52,7 @@ namespace ClockworkGrid
         [SerializeField] private int ogreResourceCost = 6;
         [SerializeField] private int ogreKillReward = 5;
         [SerializeField] private int ogreRevealRadius = 1;
+        [SerializeField] private int ogreChargeDistance = 0;
         [SerializeField] private float ogreModelScale = 1.3f;
         [SerializeField] private Sprite ogreIconSprite;
 
@@ -65,6 +67,7 @@ namespace ClockworkGrid
         [SerializeField] private int ninjaResourceCost = 4;
         [SerializeField] private int ninjaKillReward = 3;
         [SerializeField] private int ninjaRevealRadius = 1;
+        [SerializeField] private int ninjaChargeDistance = 2;
         [SerializeField] private float ninjaModelScale = 0.8f;
         [SerializeField] private Sprite ninjaIconSprite;
 
@@ -75,10 +78,10 @@ namespace ClockworkGrid
         [Tooltip("Ticks of peace period between waves (breathing room for player)")]
         [SerializeField] private int peacePeriodTicks = 8;
 
-        [Tooltip("List of wave sequences. Click + to add more waves. Format: 0=Nothing, 1=Soldier, 2=Resource, 3=Ogre")]
+        [Tooltip("List of wave sequences. Click + to add more waves. Format: 0=Nothing, A=Soldier, B=Ninja, C=Ogre, S=Resource L1, M=Resource L2, L=Resource L3")]
         [SerializeField] private List<string> waveSequences = new List<string>
         {
-            "0020100100200103" // Wave 1 (default)
+            "00S0A00A00S00A0C" // Wave 1 (default)
         };
 
         [Header("Resource Nodes")]
@@ -394,33 +397,33 @@ namespace ClockworkGrid
             soldierPrefab = CreateUnitPrefab(
                 soldierPlayerPrefab, "SoldierPrefab", playerColor, soldierModelScale,
                 soldierHP, soldierAttackDamage, soldierAttackRange,
-                soldierAttackInterval, soldierResourceCost);
+                soldierAttackInterval, soldierResourceCost, soldierChargeDistance);
 
             ogrePrefab = CreateUnitPrefab(
                 ogrePlayerPrefab, "OgrePrefab", playerColor, ogreModelScale,
                 ogreHP, ogreAttackDamage, ogreAttackRange,
-                ogreAttackInterval, ogreResourceCost);
+                ogreAttackInterval, ogreResourceCost, ogreChargeDistance);
 
             ninjaPrefab = CreateUnitPrefab(
                 ninjaPlayerPrefab, "NinjaPrefab", playerColor, ninjaModelScale,
                 ninjaHP, ninjaAttackDamage, ninjaAttackRange,
-                ninjaAttackInterval, ninjaResourceCost);
+                ninjaAttackInterval, ninjaResourceCost, ninjaChargeDistance);
 
             // --- Enemy prefabs (use enemyColor for procedural fallback) ---
             enemySoldierPrefab = CreateUnitPrefab(
                 soldierEnemyPrefab, "EnemySoldierPrefab", enemyColor, soldierModelScale,
                 soldierHP, soldierAttackDamage, soldierAttackRange,
-                soldierAttackInterval, soldierResourceCost);
+                soldierAttackInterval, soldierResourceCost, soldierChargeDistance);
 
             enemyOgrePrefab = CreateUnitPrefab(
                 ogreEnemyPrefab, "EnemyOgrePrefab", enemyColor, ogreModelScale,
                 ogreHP, ogreAttackDamage, ogreAttackRange,
-                ogreAttackInterval, ogreResourceCost);
+                ogreAttackInterval, ogreResourceCost, ogreChargeDistance);
 
             enemyNinjaPrefab = CreateUnitPrefab(
                 ninjaEnemyPrefab, "EnemyNinjaPrefab", enemyColor, ninjaModelScale,
                 ninjaHP, ninjaAttackDamage, ninjaAttackRange,
-                ninjaAttackInterval, ninjaResourceCost);
+                ninjaAttackInterval, ninjaResourceCost, ninjaChargeDistance);
 
             Debug.Log("Created 6 unit prefabs: 3 player + 3 enemy");
         }
@@ -431,7 +434,8 @@ namespace ClockworkGrid
         /// </summary>
         private GameObject CreateUnitPrefab(
             GameObject overridePrefab, string prefabName, Color color, float scale,
-            int hp, int attackDamage, int attackRange, int attackInterval, int resourceCost)
+            int hp, int attackDamage, int attackRange, int attackInterval, int resourceCost,
+            int chargeDistance = 0)
         {
             GameObject prefab;
 
@@ -464,6 +468,7 @@ namespace ClockworkGrid
             SetPrivateField(unit, "attackRange", attackRange);
             SetPrivateField(unit, "attackIntervalMultiplier", attackInterval);
             SetPrivateField(unit, "resourceCost", resourceCost);
+            SetPrivateField(unit, "chargeDistance", chargeDistance);
 
             // Add HPBarOverlay if not already present, and set scale
             HPBarOverlay hpBar = prefab.GetComponent<HPBarOverlay>();
@@ -499,6 +504,7 @@ namespace ClockworkGrid
             soldierStats.resourceCost = soldierResourceCost;
             soldierStats.killReward = soldierKillReward;
             soldierStats.revealRadius = soldierRevealRadius;
+            soldierStats.chargeDistance = soldierChargeDistance;
             soldierStats.unitColor = playerColor;
             soldierStats.modelScale = soldierModelScale;
             soldierStats.unitPrefab = soldierPrefab;
@@ -518,6 +524,7 @@ namespace ClockworkGrid
             ogreStats.resourceCost = ogreResourceCost;
             ogreStats.killReward = ogreKillReward;
             ogreStats.revealRadius = ogreRevealRadius;
+            ogreStats.chargeDistance = ogreChargeDistance;
             ogreStats.unitColor = playerColor;
             ogreStats.modelScale = ogreModelScale;
             ogreStats.unitPrefab = ogrePrefab;
@@ -537,6 +544,7 @@ namespace ClockworkGrid
             ninjaStats.resourceCost = ninjaResourceCost;
             ninjaStats.killReward = ninjaKillReward;
             ninjaStats.revealRadius = ninjaRevealRadius;
+            ninjaStats.chargeDistance = ninjaChargeDistance;
             ninjaStats.unitColor = playerColor;
             ninjaStats.modelScale = ninjaModelScale;
             ninjaStats.unitPrefab = ninjaPrefab;

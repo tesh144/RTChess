@@ -300,12 +300,13 @@ namespace ClockworkGrid
                 dotObj.transform.GetChild(i).gameObject.SetActive(false);
             }
 
-            // Activate correct child based on code
+            // Map new letter codes to child indices
             int childIndex = -1;
-            if (code == '0') childIndex = 0; // Blank
-            else if (code == '1') childIndex = 1; // Enemy
-            else if (code == '2') childIndex = 2; // Resource
-            else if (code == '3') childIndex = 3; // Boss
+            char upper = char.ToUpper(code);
+            if (code == '0') childIndex = 0;                                    // Blank
+            else if (upper == 'A' || upper == 'B') childIndex = 1;              // Enemy (Soldier/Ninja)
+            else if (upper == 'S' || upper == 'M' || upper == 'L') childIndex = 2; // Resource (L1/L2/L3)
+            else if (upper == 'C') childIndex = 3;                              // Boss (Ogre)
 
             if (childIndex >= 0 && childIndex < dotObj.transform.childCount)
             {
@@ -354,8 +355,9 @@ namespace ClockworkGrid
         /// </summary>
         private Color GetColorForCode(char code)
         {
-            if (code == '1' || code == '3') return enemyColor; // Enemy/Boss
-            if (code == '2') return resourceColor; // Resource
+            char upper = char.ToUpper(code);
+            if (upper == 'A' || upper == 'B' || upper == 'C') return enemyColor; // Enemy (Soldier/Ninja/Ogre)
+            if (upper == 'S' || upper == 'M' || upper == 'L') return resourceColor; // Resource (L1/L2/L3)
             return emptyColor; // Empty
         }
 
