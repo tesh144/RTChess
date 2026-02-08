@@ -24,7 +24,8 @@ namespace ClockworkGrid
         KillNinjas,
         KillOgres,
         DefeatEnemies,  // Any enemy type
-        PlaceUnits      // Place player units
+        PlaceUnits,     // Place player units
+        CollectGold     // Collect tokens/gold
     }
 
     /// <summary>
@@ -49,17 +50,18 @@ namespace ClockworkGrid
             if (!string.IsNullOrEmpty(customText))
                 return customText;
 
-            string verb = (type == ObjectiveType.PlaceUnits) ? "Place" : "Defeat";
+            string verb;
             string name;
             switch (type)
             {
-                case ObjectiveType.KillOgres: name = "Ogres"; break;
-                case ObjectiveType.KillNinjas: name = "Ninjas"; break;
-                case ObjectiveType.KillSoldiers: name = "Soldiers"; break;
-                case ObjectiveType.DestroyResources: name = "Mines"; break;
-                case ObjectiveType.DefeatEnemies: name = "Enemies"; break;
-                case ObjectiveType.PlaceUnits: name = "Units"; break;
-                default: name = "Targets"; break;
+                case ObjectiveType.KillOgres: verb = "Defeat"; name = "Ogres"; break;
+                case ObjectiveType.KillNinjas: verb = "Defeat"; name = "Ninjas"; break;
+                case ObjectiveType.KillSoldiers: verb = "Defeat"; name = "Soldiers"; break;
+                case ObjectiveType.DestroyResources: verb = "Defeat"; name = "Mines"; break;
+                case ObjectiveType.DefeatEnemies: verb = "Defeat"; name = "Enemies"; break;
+                case ObjectiveType.PlaceUnits: verb = "Place"; name = "Units"; break;
+                case ObjectiveType.CollectGold: verb = "Collect"; name = "Gold"; break;
+                default: verb = "Complete"; name = "Targets"; break;
             }
             return $"{verb} {progress}/{target} {name}";
         }
@@ -1343,6 +1345,15 @@ namespace ClockworkGrid
 
             // Track PlaceUnits objectives
             IncrementObjectiveProgress(ObjectiveType.PlaceUnits);
+        }
+
+        /// <summary>
+        /// Notify WaveManager that tokens were collected (for CollectGold objective tracking).
+        /// </summary>
+        public void OnGoldCollected(int amount)
+        {
+            for (int i = 0; i < amount; i++)
+                IncrementObjectiveProgress(ObjectiveType.CollectGold);
         }
 
         /// <summary>

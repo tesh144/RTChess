@@ -119,6 +119,7 @@ namespace ClockworkGrid
         }
 
         private bool showingTutorial = false;
+        private string tutorialMessage = "";
 
         /// <summary>
         /// Show a pre-wave tutorial message (before wave objectives).
@@ -126,15 +127,17 @@ namespace ClockworkGrid
         public void ShowTutorial(string message)
         {
             showingTutorial = true;
+            tutorialMessage = message;
             if (objectiveText != null)
             {
-                objectiveText.text = message;
+                objectiveText.text = $"  {message}";
                 objectiveText.gameObject.SetActive(true);
             }
         }
 
         /// <summary>
-        /// Dismiss the tutorial text. Wave objectives will show when the wave starts.
+        /// Mark the tutorial as complete (checkmark + strikethrough).
+        /// Wave objectives will replace it when the wave starts.
         /// </summary>
         public void DismissTutorial()
         {
@@ -142,7 +145,7 @@ namespace ClockworkGrid
             showingTutorial = false;
             if (objectiveText != null)
             {
-                objectiveText.text = "";
+                objectiveText.text = $"<color=#888888>\u2714 <s>{tutorialMessage}</s></color>";
             }
         }
 
