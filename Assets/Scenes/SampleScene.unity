@@ -1583,16 +1583,40 @@ PrefabInstance:
       value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: ogreRarityWeight
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: ninjaRarityWeight
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: soldierKillReward
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: ogreAttackInterval
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: soldierRarityWeight
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: baseIntervalDuration
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: waveSequences.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
+      propertyPath: waveSequences.Array.data[0]
+      value: 121223211212113
+      objectReference: {fileID: 0}
+    - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[1]
-      value: 12121121112
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 756457815420490688, guid: b38c452b5d2614f46b4d3a3a53c98839, type: 3}
       propertyPath: waveSequences.Array.data[2]
