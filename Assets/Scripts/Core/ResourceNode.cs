@@ -130,8 +130,8 @@ namespace ClockworkGrid
             int actualDamage = Mathf.Min(damage, currentHP);
             currentHP -= actualDamage;
 
-            // Tokens earned = tokensPerHit per HP lost
-            int tokensEarned = actualDamage * tokensPerHit;
+            // Fixed 1 token per hit regardless of damage
+            int tokensEarned = 1;
 
             // Visual feedback
             FlashWhite();

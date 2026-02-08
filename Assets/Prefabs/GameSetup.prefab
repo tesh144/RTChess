@@ -77,7 +77,7 @@ MonoBehaviour:
   ninjaPlayerPrefab: {fileID: 1531087478788396153, guid: 0a952b697fd5f4a19a28a5f976af2e82, type: 3}
   ninjaEnemyPrefab: {fileID: 8139704103507337014, guid: 8e5b38abe23fc4709ae6d3344eca3864, type: 3}
   ninjaRarityWeight: 35
-  ninjaHP: 5
+  ninjaHP: 1
   ninjaAttackDamage: 10
   ninjaAttackRange: 1
   ninjaAttackInterval: 1
