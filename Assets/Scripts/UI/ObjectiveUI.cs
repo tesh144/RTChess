@@ -15,6 +15,7 @@ namespace ClockworkGrid
         private int currentCleared = 0;
         private int targetCount = 0;
         private int currentWave = 1;
+        private string targetName = "Mines";
 
         private void Awake()
         {
@@ -40,10 +41,11 @@ namespace ClockworkGrid
         /// <summary>
         /// Set the objective for the current wave.
         /// </summary>
-        public void SetObjective(int waveNumber, int target)
+        public void SetObjective(int waveNumber, int target, string displayName = "Mines")
         {
             currentWave = waveNumber;
             targetCount = target;
+            targetName = displayName;
             currentCleared = 0;
             UpdateDisplay();
         }
@@ -81,7 +83,7 @@ namespace ClockworkGrid
         {
             if (objectiveText == null) return;
 
-            objectiveText.text = $"Wave {currentWave}: Clear {currentCleared}/{targetCount} Mines";
+            objectiveText.text = $"Wave {currentWave}: Clear {currentCleared}/{targetCount} {targetName}";
         }
 
         /// <summary>

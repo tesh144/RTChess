@@ -36,6 +36,7 @@ namespace ClockworkGrid
 
         [Header("Pan")]
         [SerializeField] private float panSpeed = 10f;
+        [SerializeField] private float panSmoothTime = 0.15f;
 
         [Header("Smoothing")]
         [SerializeField] private float moveSmoothTime = 0.15f;
@@ -52,6 +53,7 @@ namespace ClockworkGrid
         private float pitchVelocity;
         private float distanceVelocity;
         private Vector3 targetPointVelocity;
+        private Vector3 panVelocity;
 
         // Input state
         private bool isRightDragging;
@@ -162,19 +164,18 @@ namespace ClockworkGrid
                 lastMousePos = Input.mousePosition;
             }
 
-            // WASD/arrow key pan
+            // WASD/arrow key pan (smoothed)
             float h = 0f, v = 0f;
             if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) v += 1f;
             if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) v -= 1f;
             if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) h -= 1f;
             if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) h += 1f;
 
-            if (h != 0f || v != 0f)
-            {
-                Vector3 right = transform.right;
-                Vector3 forward = Vector3.Cross(right, Vector3.up).normalized;
-                targetPoint += (right * h + forward * v) * panSpeed * Time.deltaTime;
-            }
+            Vector3 right = transform.right;
+            Vector3 forward = Vector3.Cross(right, Vector3.up).normalized;
+            Vector3 desiredPanVelocity = (right * h + forward * v) * panSpeed;
+            panVelocity = Vector3.Lerp(panVelocity, desiredPanVelocity, Time.deltaTime / Mathf.Max(panSmoothTime, 0.001f));
+            targetPoint += panVelocity * Time.deltaTime;
         }
 
         private void ApplyOrbitPosition(bool immediate)

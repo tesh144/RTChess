@@ -112,6 +112,20 @@ namespace ClockworkGrid
         }
 
         /// <summary>
+        /// Reveal a + shaped pattern: center cell plus cardinal neighbors (N, S, E, W).
+        /// </summary>
+        public void RevealCross(int centerX, int centerY)
+        {
+            RevealCell(centerX, centerY);
+            RevealCell(centerX + 1, centerY);
+            RevealCell(centerX - 1, centerY);
+            RevealCell(centerX, centerY + 1);
+            RevealCell(centerX, centerY - 1);
+
+            Debug.Log($"Revealed + pattern around ({centerX}, {centerY})");
+        }
+
+        /// <summary>
         /// Get all revealed cells (for debugging/UI)
         /// </summary>
         public List<Vector2Int> GetRevealedCells()

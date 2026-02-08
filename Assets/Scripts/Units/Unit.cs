@@ -27,6 +27,9 @@ namespace ClockworkGrid
         [Header("Rotation Animation")]
         [SerializeField] private float rotationDuration = 0.25f;
 
+        // Unit type (set during Initialize)
+        public UnitType UnitType { get; set; }
+
         // Grid position
         public int GridX { get; set; }
         public int GridY { get; set; }
@@ -609,7 +612,7 @@ namespace ClockworkGrid
                 }
                 else if (team == Team.Enemy)
                 {
-                    WaveManager.Instance.OnEnemyUnitDestroyed();
+                    WaveManager.Instance.OnEnemyUnitDestroyed(UnitType);
                 }
             }
 
@@ -897,6 +900,8 @@ namespace ClockworkGrid
             killReward = stats.killReward;
             chargeDistance = stats.chargeDistance;
             RevealRadius = stats.revealRadius;
+
+            UnitType = stats.unitType;
 
             // Reset HP to new max
             currentHP = maxHP;

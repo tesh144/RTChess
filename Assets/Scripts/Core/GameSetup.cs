@@ -89,13 +89,17 @@ namespace ClockworkGrid
             "00S0A00A00S00A0C"  // Wave 3
         };
 
-        [Tooltip("Resource node clear objectives for each wave. Must match wave count.")]
-        [SerializeField] private List<int> waveObjectives = new List<int>
+        [Tooltip("Objectives for each wave. Must match wave count.")]
+        [SerializeField] private List<WaveObjective> waveObjectives = new List<WaveObjective>
         {
-            3,  // Wave 1: Clear 3 resource nodes
-            5,  // Wave 2: Clear 5 resource nodes
-            10  // Wave 3: Clear 10 resource nodes
+            new WaveObjective(ObjectiveType.KillOgres, 1),       // Wave 1: Kill 1 Ogre
+            new WaveObjective(ObjectiveType.DestroyResources, 5), // Wave 2: Destroy 5 resource nodes
+            new WaveObjective(ObjectiveType.KillNinjas, 5)        // Wave 3: Kill 5 Ninjas
         };
+
+        [Header("UI References")]
+        [Tooltip("Drag the TMPro Text for the objective display here")]
+        [SerializeField] private TextMeshProUGUI objectiveText;
 
         [Header("Resource Nodes")]
         [SerializeField] private Sprite resourceTokenIconSprite; // Icon for off-screen resource indicators
@@ -356,7 +360,7 @@ namespace ClockworkGrid
             // Reveal fog around the starting resource so the player can see it
             if (FogManager.Instance != null)
             {
-                FogManager.Instance.RevealRadius(centerX, centerY, 1);
+                FogManager.Instance.RevealCross(centerX, centerY);
             }
 
             // Center camera on the starting resource
@@ -630,9 +634,8 @@ namespace ClockworkGrid
                     Debug.LogWarning("[GameSetup] No resourceTokenIconSprite assigned in Inspector. Off-screen indicators will not show token icons.");
                 }
 
-                // Setup ObjectiveUI - find existing "objective" TMPro Text in canvas
-                TextMeshProUGUI objectiveText = canvas.GetComponentInChildren<TextMeshProUGUI>();
-                if (objectiveText != null && objectiveText.name == "objective")
+                // Setup ObjectiveUI using inspector-assigned text reference
+                if (objectiveText != null)
                 {
                     ObjectiveUI objectiveUI = objectiveText.GetComponent<ObjectiveUI>();
                     if (objectiveUI == null)
@@ -643,7 +646,7 @@ namespace ClockworkGrid
                 }
                 else
                 {
-                    Debug.LogWarning("[GameSetup] No TMPro Text named 'objective' found in canvas. Objective display will not work.");
+                    Debug.LogWarning("[GameSetup] No objectiveText assigned in Inspector. Drag your TMPro Text into the 'Objective Text' field on GameSetup.");
                 }
             }
 
