@@ -244,6 +244,7 @@ GameObject:
   - component: {fileID: 1911927038192613408}
   - component: {fileID: 4071131591278184399}
   - component: {fileID: 7449109967649898887}
+  - component: {fileID: 5062128567993276826}
   m_Layer: 5
   m_Name: UnitIconPrefab
   m_TagString: Untagged
@@ -362,6 +363,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hoverScale: 1.2
   characterSpriteImage: {fileID: 3030463504018244274}
+--- !u!95 &5062128567993276826
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 415459406493875654}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: a2ca985d048ed49e09bf34e4612802d4, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &2713119081154837856
 GameObject:
   m_ObjectHideFlags: 0

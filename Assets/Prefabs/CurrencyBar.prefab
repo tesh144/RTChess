@@ -259,6 +259,7 @@ GameObject:
   - component: {fileID: 7706677822596625950}
   - component: {fileID: 5745046255996484356}
   - component: {fileID: 7794350297861628817}
+  - component: {fileID: 6131881243898860871}
   m_Layer: 5
   m_Name: CurrencyBar
   m_TagString: Untagged
@@ -389,3 +390,24 @@ MonoBehaviour:
   animationSpeed: 5
   pulseScale: 1.15
   pulseDuration: 0.3
+--- !u!95 &6131881243898860871
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8385723298304775818}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: a2ca985d048ed49e09bf34e4612802d4, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
