@@ -118,6 +118,34 @@ namespace ClockworkGrid
             }
         }
 
+        private bool showingTutorial = false;
+
+        /// <summary>
+        /// Show a pre-wave tutorial message (before wave objectives).
+        /// </summary>
+        public void ShowTutorial(string message)
+        {
+            showingTutorial = true;
+            if (objectiveText != null)
+            {
+                objectiveText.text = message;
+                objectiveText.gameObject.SetActive(true);
+            }
+        }
+
+        /// <summary>
+        /// Dismiss the tutorial text. Wave objectives will show when the wave starts.
+        /// </summary>
+        public void DismissTutorial()
+        {
+            if (!showingTutorial) return;
+            showingTutorial = false;
+            if (objectiveText != null)
+            {
+                objectiveText.text = "";
+            }
+        }
+
         // Legacy compatibility
         public void SetObjective(int waveNumber, int target, string displayName = "Mines")
         {
