@@ -64,7 +64,7 @@ MonoBehaviour:
   ogrePlayerPrefab: {fileID: 512660297386461547, guid: a574714abd87149ed941e99cc2d8e3b7, type: 3}
   ogreEnemyPrefab: {fileID: 8296657993349735102, guid: acf33468e1b81422883828c3a3f167df, type: 3}
   ogreRarityWeight: 30
-  ogreHP: 8
+  ogreHP: 12
   ogreAttackDamage: 3
   ogreAttackRange: 1
   ogreAttackInterval: 2
@@ -98,14 +98,18 @@ MonoBehaviour:
   - objectives:
     - type: 5
       target: 5
+      customText: 
     - type: 4
       target: 5
+      customText: 
   - objectives:
     - type: 0
       target: 5
+      customText: 
   - objectives:
     - type: 2
       target: 5
+      customText: 
   objectiveText: {fileID: 0}
   resourceTokenIconSprite: {fileID: 0}
   resourceNodeLevel1Prefab: {fileID: 3376462439609532193, guid: 846954e0d358a4a5081e890670494b00, type: 3}
