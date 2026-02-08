@@ -254,7 +254,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d80dada096166424ab3f0836667576ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clipOnEnable: {fileID: 8300000, guid: 2a1c96ce499ac489c8822e221985e35e, type: 3}
+  clipOnEnable: {fileID: 0}
 --- !u!82 &-6380390863362881741
 AudioSource:
   m_ObjectHideFlags: 0
