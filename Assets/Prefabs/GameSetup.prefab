@@ -63,8 +63,8 @@ MonoBehaviour:
   soldierIconSprite: {fileID: 21300000, guid: 44fa00cf12c8b4732afb9768afecdc13, type: 3}
   ogrePlayerPrefab: {fileID: 512660297386461547, guid: a574714abd87149ed941e99cc2d8e3b7, type: 3}
   ogreEnemyPrefab: {fileID: 8296657993349735102, guid: acf33468e1b81422883828c3a3f167df, type: 3}
-  ogreRarityWeight: 15
-  ogreHP: 7
+  ogreRarityWeight: 30
+  ogreHP: 8
   ogreAttackDamage: 3
   ogreAttackRange: 1
   ogreAttackInterval: 3
@@ -76,7 +76,7 @@ MonoBehaviour:
   ogreIconSprite: {fileID: 21300000, guid: 7058973981e304155bac8e28ba9083fa, type: 3}
   ninjaPlayerPrefab: {fileID: 1531087478788396153, guid: 0a952b697fd5f4a19a28a5f976af2e82, type: 3}
   ninjaEnemyPrefab: {fileID: 8139704103507337014, guid: 8e5b38abe23fc4709ae6d3344eca3864, type: 3}
-  ninjaRarityWeight: 35
+  ninjaRarityWeight: 20
   ninjaHP: 1
   ninjaAttackDamage: 5
   ninjaAttackRange: 1
@@ -92,12 +92,13 @@ MonoBehaviour:
   resourceProximityRadius: 3
   waveSequences:
   - asasbcsmccsabbc
+  resourceTokenIconSprite: {fileID: 0}
   resourceNodeLevel1Prefab: {fileID: 3376462439609532193, guid: 846954e0d358a4a5081e890670494b00, type: 3}
   level1HP: 10
   level1TokensPerHit: 1
   level1BonusTokens: 3
   resourceNodeLevel2Prefab: {fileID: 2247713723973092092, guid: 65c7ae2b3c8884d84be92cb5e639f953, type: 3}
-  level2HP: 20
+  level2HP: 50
   level2TokensPerHit: 1
   level2BonusTokens: 6
   resourceNodeLevel3Prefab: {fileID: 3466083495638642607, guid: 7a5dd10ad177c42d58d7e627eaf00b09, type: 3}
