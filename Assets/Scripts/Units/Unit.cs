@@ -292,6 +292,10 @@ namespace ClockworkGrid
                 animator.SetTrigger("attack");
             }
 
+            // Forward lunge toward target
+            Vector3 targetPos = GridManager.Instance.GridToWorldPosition(target.GridX, target.GridY);
+            StartCoroutine(AttackLungeAnimation(targetPos));
+
             // Play attack sound
             if (audioSource != null && MusicSystem.instance != null && MusicSystem.instance.attack_sfx != null)
             {
@@ -302,7 +306,6 @@ namespace ClockworkGrid
             target.TakeDamage(attackDamage);
 
             // Spawn attack VFX
-            Vector3 targetPos = GridManager.Instance.GridToWorldPosition(target.GridX, target.GridY);
             SpawnCombatEffect(targetPos);
 
             Debug.Log($"{team} {gameObject.name} attacks {target.Team} unit for {attackDamage} damage!");
@@ -322,6 +325,10 @@ namespace ClockworkGrid
                 animator.SetTrigger("attack");
             }
 
+            // Forward lunge toward target
+            Vector3 targetPos = GridManager.Instance.GridToWorldPosition(targetX, targetY);
+            StartCoroutine(AttackLungeAnimation(targetPos));
+
             // Play mine hit sound
             if (audioSource != null && MusicSystem.instance != null && MusicSystem.instance.mine_hit_sfx != null)
             {
@@ -339,6 +346,44 @@ namespace ClockworkGrid
 
             // Spawn attack VFX
             SpawnAttackEffect(targetX, targetY);
+        }
+
+        /// <summary>
+        /// Quick forward lunge toward the attack target and snap back.
+        /// </summary>
+        private IEnumerator AttackLungeAnimation(Vector3 targetWorldPos)
+        {
+            Vector3 startPos = transform.position;
+            Vector3 direction = (targetWorldPos - startPos).normalized;
+            direction.y = 0f; // Keep on same plane
+            float lungeDistance = 0.3f;
+            Vector3 lungePos = startPos + direction * lungeDistance;
+
+            float lungeDuration = 0.08f;
+            float returnDuration = 0.12f;
+
+            // Lunge forward
+            float elapsed = 0f;
+            while (elapsed < lungeDuration)
+            {
+                float t = elapsed / lungeDuration;
+                transform.position = Vector3.Lerp(startPos, lungePos, t);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            // Return with ease-out
+            elapsed = 0f;
+            while (elapsed < returnDuration)
+            {
+                float t = elapsed / returnDuration;
+                float smooth = 1f - Mathf.Pow(1f - t, 2f);
+                transform.position = Vector3.Lerp(lungePos, startPos, smooth);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.position = startPos;
         }
 
         private void SpawnAttackEffect(int targetX, int targetY)

@@ -147,6 +147,12 @@ namespace ClockworkGrid
             // SetupTimelineTestButton(); // Removed: Timeline integrates automatically with WaveManager
             SetupLighting();
             SetupSFXManager();
+
+            // Start background music if MusicSystem exists in scene
+            if (MusicSystem.instance != null)
+            {
+                MusicSystem.instance.StartMusic();
+            }
         }
 
         private void SetupCamera()
