@@ -414,6 +414,13 @@ namespace ClockworkGrid
                 ResourceTokenManager.Instance.AddTokens(tokensEarned, nodePos);
             }
 
+            // Enemy mined - show "lost" coins that shatter and fall
+            if (team == Team.Enemy && tokensEarned > 0 && CoinFlyEffect.Instance != null)
+            {
+                Vector3 nodePos = GridManager.Instance.GridToWorldPosition(targetX, targetY);
+                CoinFlyEffect.Instance.SpawnLostCoins(nodePos, tokensEarned);
+            }
+
             // Spawn attack VFX
             SpawnAttackEffect(targetX, targetY);
         }

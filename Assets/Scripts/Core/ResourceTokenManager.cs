@@ -51,10 +51,10 @@ namespace ClockworkGrid
             currentTokens += amount;
             OnTokensChanged?.Invoke(currentTokens);
 
-            // Spawn floating text at the world position
-            if (worldPosition.HasValue)
+            // Spawn coin fly effect toward the token UI
+            if (worldPosition.HasValue && CoinFlyEffect.Instance != null)
             {
-                SpawnFloatingText($"+{amount}", worldPosition.Value);
+                CoinFlyEffect.Instance.SpawnCoins(worldPosition.Value, amount);
             }
         }
 

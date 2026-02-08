@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 namespace ClockworkGrid
 {
@@ -24,6 +25,11 @@ namespace ClockworkGrid
         [SerializeField] private Color allyTint = new Color(0.4f, 0.6f, 1f); // Blue
         [SerializeField] private Color enemyTint = new Color(1f, 0.4f, 0.4f); // Red
         [SerializeField] private Color resourceTint = new Color(1f, 0.9f, 0.3f); // Yellow
+
+        [Header("Appear Animation")]
+        [SerializeField] private float appearDelay = 0.8f; // Wait for spawn animation before showing
+        [SerializeField] private float appearDuration = 0.35f; // Pop-up animation length
+        [SerializeField] private float appearBounce = 1.2f; // Overshoot scale during pop
 
         [Header("Fade (Units Only)")]
         [SerializeField] private float fadeDelay = 3f; // Seconds before fading starts
@@ -61,8 +67,15 @@ namespace ClockworkGrid
 
             CreateHPBar();
 
-            // Units fade; resource nodes stay visible
-            shouldFade = GetComponent<ResourceNode>() == null;
+            // Hide bar initially, show after spawn animation finishes
+            if (barContainer != null && appearDelay > 0f)
+            {
+                barContainer.SetActive(false);
+                StartCoroutine(ShowAfterDelay());
+            }
+
+            // All entities fade after inactivity
+            shouldFade = true;
             lastInterestTime = Time.time;
             lastHP = unit.CurrentHP;
         }
@@ -300,6 +313,86 @@ namespace ClockworkGrid
             }
 
             return Color.white; // No tint
+        }
+
+        private IEnumerator ShowAfterDelay()
+        {
+            yield return new WaitForSeconds(appearDelay);
+            if (barContainer == null) yield break;
+
+            // Start from zero scale at the unit's position, then pop up to final position
+            barContainer.SetActive(true);
+            Vector3 finalScale = Vector3.one * overlayScale;
+            barContainer.transform.localScale = Vector3.zero;
+
+            // Also start with bar closer to unit center
+            float startYOffset = yOffset * 0.3f;
+
+            float elapsed = 0f;
+            while (elapsed < appearDuration)
+            {
+                float t = elapsed / appearDuration;
+
+                // Bounce ease-out: overshoot then settle
+                float scale;
+                if (t < 0.6f)
+                {
+                    // Scale up to overshoot
+                    float st = t / 0.6f;
+                    scale = Mathf.Lerp(0f, appearBounce, st * st);
+                }
+                else
+                {
+                    // Settle from overshoot to 1.0
+                    float st = (t - 0.6f) / 0.4f;
+                    scale = Mathf.Lerp(appearBounce, 1f, st);
+                }
+
+                barContainer.transform.localScale = finalScale * scale;
+
+                // Slide up from near-center to final offset
+                float currentYOffset = Mathf.Lerp(startYOffset, yOffset, t);
+                barContainer.transform.position = transform.position + Vector3.up * currentYOffset;
+
+                // Fade in alpha
+                float alpha = Mathf.Clamp01(t * 2f); // Fade in during first half
+                SetBarAlpha(alpha);
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            // Ensure final state is exact
+            barContainer.transform.localScale = finalScale;
+            SetBarAlpha(1f);
+        }
+
+        private void SetBarAlpha(float alpha)
+        {
+            if (fillRenderer != null)
+            {
+                Color c = fillRenderer.material.color;
+                c.a = alpha;
+                fillRenderer.material.color = c;
+            }
+            if (bgRenderer != null)
+            {
+                Color c = bgRenderer.material.color;
+                c.a = backgroundColor.a * alpha;
+                bgRenderer.material.color = c;
+            }
+            if (hpTextMesh != null)
+            {
+                Color c = hpTextMesh.color;
+                c.a = alpha;
+                hpTextMesh.color = c;
+            }
+            if (hpTextShadow != null)
+            {
+                Color c = hpTextShadow.color;
+                c.a = alpha;
+                hpTextShadow.color = c;
+            }
         }
 
         private void OnDestroy()

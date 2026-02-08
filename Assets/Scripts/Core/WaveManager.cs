@@ -82,6 +82,7 @@ namespace ClockworkGrid
         private bool hasWaveStarted = false; // Wave doesn't start until player places first unit
         private int playerUnitCount = 0; // Cached count to avoid O(N²) grid iteration
         private int enemyUnitCount = 0; // Track living enemies for wave completion
+        private int resourceNodeCount = 0; // Track living resource nodes for wave completion
         private bool allEnemiesSpawned = false; // True when wave sequence has finished spawning
 
         // Events
@@ -118,6 +119,7 @@ namespace ClockworkGrid
             sequenceComplete = false;
             gameOver = false;
             enemyUnitCount = 0;
+            resourceNodeCount = 0;
             allEnemiesSpawned = false;
 
             // Subscribe to interval timer
@@ -766,6 +768,7 @@ namespace ClockworkGrid
             }
 
             GridManager.Instance.PlaceUnit(pos.x, pos.y, nodeObj, CellState.Resource);
+            resourceNodeCount++;
 
             // Play resource placement SFX
             if (SFXManager.Instance != null)
@@ -861,16 +864,41 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Complete the current wave and either start peace period or end game.
+        /// Complete the current wave. Shows the victory screen and waits for player input.
         /// </summary>
         private void CompleteCurrentWave()
         {
             Debug.Log($"WaveManager: Wave {currentWaveNumber + 1} complete!");
 
+            // Pause the timer while showing victory screen
+            if (IntervalTimer.Instance != null)
+                IntervalTimer.Instance.Pause();
+
+            // Show victory screen via GameOverManager (player taps to proceed)
+            if (GameOverManager.Instance != null)
+            {
+                GameOverManager.Instance.ShowWaveComplete();
+            }
+            else
+            {
+                // No GameOverManager - proceed automatically
+                ProceedAfterWaveComplete();
+            }
+        }
+
+        /// <summary>
+        /// Called by GameOverManager when the player dismisses the victory screen.
+        /// Starts peace period or triggers final victory.
+        /// </summary>
+        public void ProceedAfterWaveComplete()
+        {
+            // Resume timer
+            if (IntervalTimer.Instance != null)
+                IntervalTimer.Instance.Resume();
+
             // Check if there are more waves
             if (currentWaveNumber + 1 < waveSequences.Count)
             {
-                // Start peace period before next wave
                 StartPeacePeriod();
             }
             else
@@ -986,6 +1014,10 @@ namespace ClockworkGrid
 
             hasWaveStarted = true;
             Debug.Log("WaveManager: Wave started by player placing first unit!");
+
+            // Switch from lobby music to battle music
+            if (MusicSystem.instance != null)
+                MusicSystem.instance.SwitchToBattleTrack();
         }
 
         // Public accessors for UI/other systems
@@ -1029,15 +1061,36 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Check if the current wave is complete (all enemies spawned AND all enemies defeated).
+        /// Notify WaveManager that a resource node was destroyed (for wave completion tracking).
+        /// </summary>
+        public void OnResourceNodeDestroyed()
+        {
+            resourceNodeCount--;
+            if (resourceNodeCount < 0) resourceNodeCount = 0;
+
+            Debug.Log($"[WaveManager] Resource destroyed. {resourceNodeCount} resources remaining. allSpawned={allEnemiesSpawned}");
+
+            CheckWaveComplete();
+        }
+
+        /// <summary>
+        /// Register an existing resource node (e.g. the starting resource spawned by GameSetup).
+        /// </summary>
+        public void RegisterResourceNode()
+        {
+            resourceNodeCount++;
+        }
+
+        /// <summary>
+        /// Check if the current wave is complete (all spawns done AND all resource nodes destroyed).
         /// </summary>
         private void CheckWaveComplete()
         {
             if (gameOver || !allEnemiesSpawned) return;
 
-            if (enemyUnitCount <= 0)
+            if (resourceNodeCount <= 0)
             {
-                Debug.Log($"[WaveManager] Wave {currentWaveNumber + 1} complete - all enemies defeated!");
+                Debug.Log($"[WaveManager] Wave {currentWaveNumber + 1} complete - all resources destroyed!");
                 allEnemiesSpawned = false; // Reset for next wave
                 CompleteCurrentWave();
             }

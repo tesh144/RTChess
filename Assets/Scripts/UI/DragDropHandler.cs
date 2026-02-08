@@ -244,12 +244,6 @@ namespace ClockworkGrid
                 WaveManager.Instance.OnPlayerUnitPlaced();
             }
 
-            // Start music on first player unit placement
-            if (MusicSystem.instance != null)
-            {
-                MusicSystem.instance.StartMusic();
-            }
-
             // Trigger wave start on first player unit placement
             if (WaveManager.Instance != null && !WaveManager.Instance.HasWaveStarted)
             {

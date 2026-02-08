@@ -169,6 +169,10 @@ namespace ClockworkGrid
                 }
             }
 
+            // Notify WaveManager for wave completion tracking
+            if (WaveManager.Instance != null)
+                WaveManager.Instance.OnResourceNodeDestroyed();
+
             // Play celebratory destruction sound (regenerate with current level)
             if (audioSource != null && MusicSystem.instance != null)
             {

@@ -5,26 +5,19 @@ using TMPro;
 namespace ClockworkGrid
 {
     /// <summary>
-    /// Manages game over UI for victory and defeat states.
-    /// Displays full-screen overlay with results and statistics.
+    /// Shows the custom Victory Screen prefab at the end of each wave.
+    /// Tapping the screen proceeds to the next wave.
+    /// Also handles defeat with a simple programmatic overlay.
     /// </summary>
     public class GameOverManager : MonoBehaviour
     {
-        // Singleton
         public static GameOverManager Instance { get; private set; }
 
-        [Header("UI References")]
-        private GameObject gameOverPanel;
-        private TextMeshProUGUI titleText;
-        private TextMeshProUGUI statsText;
-        private TextMeshProUGUI messageText;
-        private Button restartButton;
-        private Button quitButton;
+        [Header("Victory Screen")]
+        [SerializeField] private GameObject victoryScreenPrefab;
 
-        [Header("Colors")]
-        [SerializeField] private Color victoryColor = new Color(0.2f, 1f, 0.2f);
-        [SerializeField] private Color defeatColor = new Color(1f, 0.2f, 0.2f);
-
+        private Canvas canvas;
+        private GameObject activeVictoryScreen;
         private bool isGameOver = false;
 
         private void Awake()
@@ -37,269 +30,152 @@ namespace ClockworkGrid
             Instance = this;
         }
 
-        public void Initialize(Canvas canvas)
+        public void Initialize(Canvas parentCanvas)
         {
-            CreateGameOverUI(canvas);
+            canvas = parentCanvas;
 
-            // Subscribe to WaveManager events
             if (WaveManager.Instance != null)
             {
-                WaveManager.Instance.OnVictory += ShowVictory;
                 WaveManager.Instance.OnDefeat += ShowDefeat;
             }
-
-            // Hide initially
-            gameOverPanel.SetActive(false);
         }
 
         private void OnDestroy()
         {
             if (WaveManager.Instance != null)
             {
-                WaveManager.Instance.OnVictory -= ShowVictory;
                 WaveManager.Instance.OnDefeat -= ShowDefeat;
             }
         }
 
         /// <summary>
-        /// Create the game over UI hierarchy
+        /// Called by WaveManager when a wave is cleared.
+        /// Shows the victory screen and pauses game until player taps.
         /// </summary>
-        private void CreateGameOverUI(Canvas canvas)
-        {
-            // Full-screen overlay panel
-            gameOverPanel = new GameObject("GameOverPanel");
-            RectTransform panelRect = gameOverPanel.AddComponent<RectTransform>();
-            panelRect.SetParent(canvas.transform, false);
-            panelRect.anchorMin = Vector2.zero;
-            panelRect.anchorMax = Vector2.one;
-            panelRect.offsetMin = Vector2.zero;
-            panelRect.offsetMax = Vector2.zero;
-
-            Image panelBg = gameOverPanel.AddComponent<Image>();
-            panelBg.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-            panelBg.color = new Color(0f, 0f, 0f, 0.9f);
-
-            // Content container (centered)
-            GameObject content = new GameObject("Content");
-            RectTransform contentRect = content.AddComponent<RectTransform>();
-            contentRect.SetParent(panelRect, false);
-            contentRect.anchorMin = new Vector2(0.5f, 0.5f);
-            contentRect.anchorMax = new Vector2(0.5f, 0.5f);
-            contentRect.pivot = new Vector2(0.5f, 0.5f);
-            contentRect.anchoredPosition = Vector2.zero;
-            contentRect.sizeDelta = new Vector2(600f, 500f);
-
-            // Title text (VICTORY or DEFEAT)
-            GameObject titleObj = new GameObject("Title");
-            RectTransform titleRect = titleObj.AddComponent<RectTransform>();
-            titleRect.SetParent(contentRect, false);
-            titleRect.anchorMin = new Vector2(0.5f, 1f);
-            titleRect.anchorMax = new Vector2(0.5f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.anchoredPosition = new Vector2(0f, -50f);
-            titleRect.sizeDelta = new Vector2(600f, 100f);
-
-            titleText = titleObj.AddComponent<TextMeshProUGUI>();
-            titleText.text = "VICTORY";
-            titleText.fontSize = 72;
-            titleText.fontStyle = FontStyles.Bold;
-            titleText.alignment = TextAlignmentOptions.Center;
-            titleText.color = Color.white;
-
-            // Message text
-            GameObject messageObj = new GameObject("Message");
-            RectTransform messageRect = messageObj.AddComponent<RectTransform>();
-            messageRect.SetParent(contentRect, false);
-            messageRect.anchorMin = new Vector2(0.5f, 1f);
-            messageRect.anchorMax = new Vector2(0.5f, 1f);
-            messageRect.pivot = new Vector2(0.5f, 1f);
-            messageRect.anchoredPosition = new Vector2(0f, -170f);
-            messageRect.sizeDelta = new Vector2(550f, 60f);
-
-            messageText = messageObj.AddComponent<TextMeshProUGUI>();
-            messageText.text = "You survived all 20 waves!";
-            messageText.fontSize = 24;
-            messageText.alignment = TextAlignmentOptions.Center;
-            messageText.color = new Color(0.9f, 0.9f, 0.9f);
-
-            // Statistics text
-            GameObject statsObj = new GameObject("Stats");
-            RectTransform statsRect = statsObj.AddComponent<RectTransform>();
-            statsRect.SetParent(contentRect, false);
-            statsRect.anchorMin = new Vector2(0.5f, 0.5f);
-            statsRect.anchorMax = new Vector2(0.5f, 0.5f);
-            statsRect.pivot = new Vector2(0.5f, 0.5f);
-            statsRect.anchoredPosition = new Vector2(0f, 0f);
-            statsRect.sizeDelta = new Vector2(500f, 150f);
-
-            statsText = statsObj.AddComponent<TextMeshProUGUI>();
-            statsText.text = "Wave: 20\nEnemies Defeated: 150\nTokens Earned: 75";
-            statsText.fontSize = 20;
-            statsText.alignment = TextAlignmentOptions.Center;
-            statsText.color = new Color(0.8f, 0.8f, 0.8f);
-
-            // Restart button
-            GameObject restartObj = CreateButton("RestartButton", "Play Again");
-            RectTransform restartRect = restartObj.GetComponent<RectTransform>();
-            restartRect.SetParent(contentRect, false);
-            restartRect.anchorMin = new Vector2(0.5f, 0f);
-            restartRect.anchorMax = new Vector2(0.5f, 0f);
-            restartRect.pivot = new Vector2(0.5f, 0f);
-            restartRect.anchoredPosition = new Vector2(0f, 70f);
-            restartRect.sizeDelta = new Vector2(200f, 50f);
-
-            restartButton = restartObj.GetComponent<Button>();
-            restartButton.onClick.AddListener(OnRestartClicked);
-
-            // Quit button
-            GameObject quitObj = CreateButton("QuitButton", "Quit");
-            RectTransform quitRect = quitObj.GetComponent<RectTransform>();
-            quitRect.SetParent(contentRect, false);
-            quitRect.anchorMin = new Vector2(0.5f, 0f);
-            quitRect.anchorMax = new Vector2(0.5f, 0f);
-            quitRect.pivot = new Vector2(0.5f, 0f);
-            quitRect.anchoredPosition = new Vector2(0f, 10f);
-            quitRect.sizeDelta = new Vector2(200f, 50f);
-
-            quitButton = quitObj.GetComponent<Button>();
-            quitButton.onClick.AddListener(OnQuitClicked);
-        }
-
-        /// <summary>
-        /// Create a UI button
-        /// </summary>
-        private GameObject CreateButton(string name, string text)
-        {
-            GameObject buttonObj = new GameObject(name);
-            RectTransform buttonRect = buttonObj.AddComponent<RectTransform>();
-
-            Image buttonImage = buttonObj.AddComponent<Image>();
-            buttonImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-            buttonImage.color = new Color(0.2f, 0.2f, 0.2f, 0.9f);
-
-            Button button = buttonObj.AddComponent<Button>();
-            button.targetGraphic = buttonImage;
-
-            // Button text
-            GameObject textObj = new GameObject("Text");
-            RectTransform textRect = textObj.AddComponent<RectTransform>();
-            textRect.SetParent(buttonRect, false);
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = Vector2.zero;
-            textRect.offsetMax = Vector2.zero;
-
-            TextMeshProUGUI buttonText = textObj.AddComponent<TextMeshProUGUI>();
-            buttonText.text = text;
-            buttonText.fontSize = 20;
-            buttonText.alignment = TextAlignmentOptions.Center;
-            buttonText.color = Color.white;
-            buttonText.fontStyle = FontStyles.Bold;
-
-            return buttonObj;
-        }
-
-        /// <summary>
-        /// Show victory screen
-        /// </summary>
-        private void ShowVictory()
+        public void ShowWaveComplete()
         {
             if (isGameOver) return;
-            isGameOver = true;
+            if (canvas == null || victoryScreenPrefab == null)
+            {
+                // No prefab assigned - just proceed immediately
+                Debug.LogWarning("GameOverManager: No victory screen prefab assigned, proceeding automatically");
+                if (WaveManager.Instance != null)
+                    WaveManager.Instance.ProceedAfterWaveComplete();
+                return;
+            }
 
-            // Set victory styling
-            titleText.text = "VICTORY!";
-            titleText.color = victoryColor;
+            // Instantiate the victory screen under the canvas
+            activeVictoryScreen = Instantiate(victoryScreenPrefab, canvas.transform, false);
+            activeVictoryScreen.SetActive(true);
 
-            int totalWaves = WaveManager.Instance != null ? WaveManager.Instance.TotalWaves : 0;
-            messageText.text = $"You defeated all {totalWaves} waves!";
+            // Wire up all buttons in the prefab to dismiss and proceed
+            Button[] buttons = activeVictoryScreen.GetComponentsInChildren<Button>(true);
+            foreach (Button btn in buttons)
+            {
+                btn.onClick.AddListener(OnVictoryScreenTapped);
+            }
 
-            // Calculate and display statistics
-            string stats = GenerateStatistics();
-            statsText.text = stats;
+            // Pause the interval timer while showing
+            if (IntervalTimer.Instance != null)
+                IntervalTimer.Instance.Pause();
 
-            // Show panel
-            gameOverPanel.SetActive(true);
+            Debug.Log($"[GameOverManager] Wave complete screen shown (Wave {(WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveNumber : 0)})");
+        }
 
-            // Pause game time (optional)
-            // Time.timeScale = 0f;
+        private void OnVictoryScreenTapped()
+        {
+            if (activeVictoryScreen == null) return;
 
-            Debug.Log("Victory screen displayed");
+            // Destroy the victory screen
+            Destroy(activeVictoryScreen);
+            activeVictoryScreen = null;
+
+            // Resume timer and proceed to next wave
+            if (IntervalTimer.Instance != null)
+                IntervalTimer.Instance.Resume();
+
+            if (WaveManager.Instance != null)
+                WaveManager.Instance.ProceedAfterWaveComplete();
+
+            Debug.Log("[GameOverManager] Victory screen dismissed, proceeding to next wave");
         }
 
         /// <summary>
-        /// Show defeat screen
+        /// Show defeat screen (simple programmatic overlay).
         /// </summary>
         private void ShowDefeat()
         {
             if (isGameOver) return;
             isGameOver = true;
 
-            // Set defeat styling
+            if (canvas == null) return;
+
+            // Create simple defeat overlay
+            GameObject defeatPanel = new GameObject("DefeatPanel");
+            RectTransform panelRect = defeatPanel.AddComponent<RectTransform>();
+            panelRect.SetParent(canvas.transform, false);
+            panelRect.anchorMin = Vector2.zero;
+            panelRect.anchorMax = Vector2.one;
+            panelRect.offsetMin = Vector2.zero;
+            panelRect.offsetMax = Vector2.zero;
+
+            Image panelBg = defeatPanel.AddComponent<Image>();
+            panelBg.color = new Color(0f, 0f, 0f, 0.85f);
+
+            // Defeat title
+            GameObject titleObj = new GameObject("DefeatTitle");
+            RectTransform titleRect = titleObj.AddComponent<RectTransform>();
+            titleRect.SetParent(panelRect, false);
+            titleRect.anchorMin = new Vector2(0.5f, 0.5f);
+            titleRect.anchorMax = new Vector2(0.5f, 0.5f);
+            titleRect.sizeDelta = new Vector2(600f, 100f);
+            titleRect.anchoredPosition = new Vector2(0f, 50f);
+
+            TextMeshProUGUI titleText = titleObj.AddComponent<TextMeshProUGUI>();
             titleText.text = "DEFEAT";
-            titleText.color = defeatColor;
+            titleText.fontSize = 72;
+            titleText.fontStyle = FontStyles.Bold;
+            titleText.alignment = TextAlignmentOptions.Center;
+            titleText.color = new Color(1f, 0.2f, 0.2f);
 
-            messageText.text = "Your defenses have fallen...";
+            // Restart button
+            GameObject restartObj = new GameObject("RestartButton");
+            RectTransform restartRect = restartObj.AddComponent<RectTransform>();
+            restartRect.SetParent(panelRect, false);
+            restartRect.anchorMin = new Vector2(0.5f, 0.5f);
+            restartRect.anchorMax = new Vector2(0.5f, 0.5f);
+            restartRect.sizeDelta = new Vector2(200f, 50f);
+            restartRect.anchoredPosition = new Vector2(0f, -50f);
 
-            // Calculate and display statistics
-            string stats = GenerateStatistics();
-            statsText.text = stats;
+            Image restartBg = restartObj.AddComponent<Image>();
+            restartBg.color = new Color(0.2f, 0.2f, 0.2f, 0.9f);
 
-            // Show panel
-            gameOverPanel.SetActive(true);
+            Button restartBtn = restartObj.AddComponent<Button>();
+            restartBtn.targetGraphic = restartBg;
+            restartBtn.onClick.AddListener(() =>
+            {
+                Time.timeScale = 1f;
+                UnityEngine.SceneManagement.SceneManager.LoadScene(
+                    UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex
+                );
+            });
 
-            // Pause game time (optional)
-            // Time.timeScale = 0f;
+            GameObject btnTextObj = new GameObject("Text");
+            RectTransform btnTextRect = btnTextObj.AddComponent<RectTransform>();
+            btnTextRect.SetParent(restartRect, false);
+            btnTextRect.anchorMin = Vector2.zero;
+            btnTextRect.anchorMax = Vector2.one;
+            btnTextRect.offsetMin = Vector2.zero;
+            btnTextRect.offsetMax = Vector2.zero;
 
-            Debug.Log("Defeat screen displayed");
-        }
+            TextMeshProUGUI btnText = btnTextObj.AddComponent<TextMeshProUGUI>();
+            btnText.text = "Play Again";
+            btnText.fontSize = 20;
+            btnText.alignment = TextAlignmentOptions.Center;
+            btnText.color = Color.white;
+            btnText.fontStyle = FontStyles.Bold;
 
-        /// <summary>
-        /// Generate statistics text
-        /// </summary>
-        private string GenerateStatistics()
-        {
-            int wavesCompleted = WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveNumber : 0;
-            int totalWaves = WaveManager.Instance != null ? WaveManager.Instance.TotalWaves : 0;
-            int currentTokens = ResourceTokenManager.Instance != null ? ResourceTokenManager.Instance.CurrentTokens : 0;
-            int intervals = IntervalTimer.Instance != null ? IntervalTimer.Instance.CurrentInterval : 0;
-            float timePlayed = intervals * 2f; // Each interval is 2 seconds
-
-            string stats = $"Waves Completed: {wavesCompleted}/{totalWaves}\n";
-            stats += $"Intervals Survived: {intervals}\n";
-            stats += $"Time Played: {Mathf.FloorToInt(timePlayed / 60f)}:{(timePlayed % 60f):00}\n";
-            stats += $"Tokens Remaining: {currentTokens}";
-
-            return stats;
-        }
-
-        /// <summary>
-        /// Restart button clicked
-        /// </summary>
-        private void OnRestartClicked()
-        {
-            Debug.Log("Restart clicked - reloading scene");
-            // Reset time scale if paused
-            Time.timeScale = 1f;
-
-            // Reload current scene
-            UnityEngine.SceneManagement.SceneManager.LoadScene(
-                UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex
-            );
-        }
-
-        /// <summary>
-        /// Quit button clicked
-        /// </summary>
-        private void OnQuitClicked()
-        {
-            Debug.Log("Quit clicked - exiting application");
-
-            #if UNITY_EDITOR
-                UnityEditor.EditorApplication.isPlaying = false;
-            #else
-                Application.Quit();
-            #endif
+            Debug.Log("[GameOverManager] Defeat screen displayed");
         }
     }
 }

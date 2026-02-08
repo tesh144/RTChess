@@ -140,6 +140,10 @@ namespace ClockworkGrid
             SetupRaritySystem(); // Iteration 6: Must be before WaveManager
             SpawnStartingResource(); // Spawn resource node at grid center before wave
             SetupWaveManager(); // Iteration 10: Handles ALL spawning (enemies + resources)
+
+            // Register starting resource with WaveManager for win condition tracking
+            if (WaveManager.Instance != null)
+                WaveManager.Instance.RegisterResourceNode();
             SetupUI();
             SetupDockBar();
             // SetupWaveTimelineUI(); // REMOVED: Timeline UI now manually created in Unity Editor scene
@@ -578,6 +582,13 @@ namespace ClockworkGrid
 
             // All UI should be manually created in the scene following the guide in:
             // SETUP_UI_HIERARCHY.md (to be created)
+
+            // Add CoinFlyEffect to the canvas for token collection animations
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas != null && canvas.GetComponentInChildren<CoinFlyEffect>() == null)
+            {
+                canvas.gameObject.AddComponent<CoinFlyEffect>();
+            }
 
             Debug.Log("SetupUI: UI should be manually created in scene hierarchy");
         }

@@ -1,15 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using TMPro;
 
 namespace ClockworkGrid
 {
     /// <summary>
     /// Enhanced token display with visual container, icon, and animations.
-    /// Phase 6: Redesigned with better visuals and smooth number transitions.
+    /// Hidden on start; pops in when player first earns currency.
     /// </summary>
     public class TokenUI : MonoBehaviour
     {
+        public static TokenUI Instance { get; private set; }
+
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI tokenText;
         [SerializeField] private Image tokenIcon;
@@ -20,11 +23,62 @@ namespace ClockworkGrid
         [SerializeField] private float pulseScale = 1.15f;
         [SerializeField] private float pulseDuration = 0.3f;
 
+        [Header("Reveal Animation")]
+        [SerializeField] private float revealDuration = 0.4f;
+        [SerializeField] private float revealBounce = 1.25f;
+
         // Animation state
         private int displayedTokens = 0;
         private int targetTokens = 0;
         private float pulseTimer = 0f;
         private Vector3 originalScale;
+
+        // Reveal state
+        private bool hasRevealed = false;
+        private bool readyToReveal = false;
+        private CanvasGroup canvasGroup;
+
+        private void Awake()
+        {
+            Instance = this;
+
+            // Use CanvasGroup for reliable hide/show (auto-add if missing)
+            canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+                canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+            // Hide immediately
+            canvasGroup.alpha = 0f;
+            canvasGroup.blocksRaycasts = false;
+        }
+
+        /// <summary>
+        /// Get the screen position of the token icon (fly target for coin effects).
+        /// </summary>
+        public Vector3 GetIconScreenPosition()
+        {
+            if (tokenIcon != null)
+                return tokenIcon.rectTransform.position; // In screen-space overlay, this is screen pos
+            if (container != null)
+                return container.position;
+            return Vector3.zero;
+        }
+
+        /// <summary>
+        /// Get the token icon sprite so flying coins can match it.
+        /// </summary>
+        public Sprite GetIconSprite()
+        {
+            return tokenIcon != null ? tokenIcon.sprite : null;
+        }
+
+        /// <summary>
+        /// Get the current token icon color.
+        /// </summary>
+        public Color GetIconColor()
+        {
+            return Color.white; // Natural sprite color, no tint
+        }
 
         private void Start()
         {
@@ -36,7 +90,7 @@ namespace ClockworkGrid
             if (ResourceTokenManager.Instance != null)
             {
                 ResourceTokenManager.Instance.OnTokensChanged += UpdateDisplay;
-                // Display current token count immediately
+                // Sync display with current tokens (but stay hidden)
                 displayedTokens = ResourceTokenManager.Instance.CurrentTokens;
                 targetTokens = displayedTokens;
                 UpdateText();
@@ -45,6 +99,15 @@ namespace ClockworkGrid
             {
                 UpdateDisplay(0);
             }
+
+            // Allow reveal starting next frame (skip initial starting-token events)
+            StartCoroutine(EnableRevealNextFrame());
+        }
+
+        private IEnumerator EnableRevealNextFrame()
+        {
+            yield return null;
+            readyToReveal = true;
         }
 
         private void OnDestroy()
@@ -68,8 +131,8 @@ namespace ClockworkGrid
                 UpdateText();
             }
 
-            // Pulse animation
-            if (pulseTimer > 0f)
+            // Pulse animation (only when revealed)
+            if (hasRevealed && pulseTimer > 0f)
             {
                 pulseTimer -= Time.deltaTime;
 
@@ -84,7 +147,7 @@ namespace ClockworkGrid
                     container.localScale = originalScale * scale;
                 }
             }
-            else if (container != null && container.localScale != originalScale)
+            else if (hasRevealed && container != null && container.localScale != originalScale)
             {
                 container.localScale = originalScale;
             }
@@ -95,14 +158,65 @@ namespace ClockworkGrid
             bool gained = newTotal > targetTokens;
             targetTokens = newTotal;
 
-            // Trigger pulse effect if tokens increased
-            if (gained)
+            // Reveal UI on first token gain (after initial frame)
+            if (gained && !hasRevealed && readyToReveal)
+            {
+                hasRevealed = true;
+                StartCoroutine(RevealAnimation());
+            }
+
+            // Trigger pulse effect if tokens increased (only when already visible)
+            if (gained && hasRevealed)
             {
                 pulseTimer = pulseDuration;
             }
 
-            // Update icon color based on token amount
-            UpdateIconColor(newTotal);
+        }
+
+        private IEnumerator RevealAnimation()
+        {
+            float elapsed = 0f;
+            while (elapsed < revealDuration)
+            {
+                float t = elapsed / revealDuration;
+
+                // Fade in alpha via CanvasGroup
+                if (canvasGroup != null)
+                {
+                    canvasGroup.alpha = Mathf.Clamp01(t * 2.5f); // Fade in during first 40%
+                }
+
+                // Bounce scale on container
+                if (container != null)
+                {
+                    float scale;
+                    if (t < 0.6f)
+                    {
+                        float st = t / 0.6f;
+                        scale = Mathf.Lerp(0f, revealBounce, st * st);
+                    }
+                    else
+                    {
+                        float st = (t - 0.6f) / 0.4f;
+                        scale = Mathf.Lerp(revealBounce, 1f, st);
+                    }
+                    container.localScale = originalScale * scale;
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            // Ensure final state
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 1f;
+                canvasGroup.blocksRaycasts = true;
+            }
+            if (container != null)
+            {
+                container.localScale = originalScale;
+            }
         }
 
         private void UpdateText()
@@ -113,34 +227,5 @@ namespace ClockworkGrid
             }
         }
 
-        private void UpdateIconColor(int tokenCount)
-        {
-            if (tokenIcon == null) return;
-
-            // Color-code based on token count
-            Color targetColor;
-            if (tokenCount >= 10)
-            {
-                // Wealthy: Gold
-                targetColor = new Color(1f, 0.9f, 0.2f);
-            }
-            else if (tokenCount >= 5)
-            {
-                // Moderate: Yellow
-                targetColor = new Color(1f, 1f, 0.5f);
-            }
-            else if (tokenCount >= 1)
-            {
-                // Low: Orange
-                targetColor = new Color(1f, 0.6f, 0.2f);
-            }
-            else
-            {
-                // Broke: Red
-                targetColor = new Color(1f, 0.3f, 0.3f);
-            }
-
-            tokenIcon.color = targetColor;
-        }
     }
 }
