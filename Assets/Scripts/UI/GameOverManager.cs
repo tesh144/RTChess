@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 namespace ClockworkGrid
@@ -7,6 +8,7 @@ namespace ClockworkGrid
     /// <summary>
     /// Shows the custom Victory Screen prefab at the end of each wave.
     /// Tapping the screen proceeds to the next wave.
+    /// When all waves are cleared, tapping restarts the game.
     /// Also handles defeat with a simple programmatic overlay.
     /// </summary>
     public class GameOverManager : MonoBehaviour
@@ -19,6 +21,7 @@ namespace ClockworkGrid
         private Canvas canvas;
         private GameObject activeVictoryScreen;
         private bool isGameOver = false;
+        private bool isFinalVictory = false;
 
         private void Awake()
         {
@@ -37,6 +40,7 @@ namespace ClockworkGrid
             if (WaveManager.Instance != null)
             {
                 WaveManager.Instance.OnDefeat += ShowDefeat;
+                WaveManager.Instance.OnVictory += ShowFinalVictory;
             }
         }
 
@@ -45,7 +49,18 @@ namespace ClockworkGrid
             if (WaveManager.Instance != null)
             {
                 WaveManager.Instance.OnDefeat -= ShowDefeat;
+                WaveManager.Instance.OnVictory -= ShowFinalVictory;
             }
+        }
+
+        /// <summary>
+        /// Called when all designed waves have been cleared.
+        /// Shows the victory screen; tapping restarts the game.
+        /// </summary>
+        private void ShowFinalVictory()
+        {
+            isFinalVictory = true;
+            ShowWaveComplete();
         }
 
         /// <summary>
@@ -59,7 +74,7 @@ namespace ClockworkGrid
             {
                 // No prefab assigned - just proceed immediately
                 Debug.LogWarning("GameOverManager: No victory screen prefab assigned, proceeding automatically");
-                if (WaveManager.Instance != null)
+                if (!isFinalVictory && WaveManager.Instance != null)
                     WaveManager.Instance.ProceedAfterWaveComplete();
                 return;
             }
@@ -68,43 +83,36 @@ namespace ClockworkGrid
             activeVictoryScreen = Instantiate(victoryScreenPrefab, canvas.transform, false);
             activeVictoryScreen.SetActive(true);
 
-            // Wire up all buttons in the prefab to dismiss and proceed
+            // Wire up all existing buttons in the prefab to dismiss
             Button[] buttons = activeVictoryScreen.GetComponentsInChildren<Button>(true);
             foreach (Button btn in buttons)
             {
                 btn.onClick.AddListener(OnVictoryScreenTapped);
             }
 
-            // Add a full-screen invisible button so tapping anywhere dismisses it
-            if (buttons.Length == 0)
-            {
-                // Ensure the root has a RectTransform that covers the screen
-                RectTransform rt = activeVictoryScreen.GetComponent<RectTransform>();
-                if (rt != null)
-                {
-                    rt.anchorMin = Vector2.zero;
-                    rt.anchorMax = Vector2.one;
-                    rt.offsetMin = Vector2.zero;
-                    rt.offsetMax = Vector2.zero;
-                }
+            // Always add a full-screen invisible tap target behind other content
+            // so tapping anywhere on the screen dismisses it
+            GameObject tapArea = new GameObject("TapAnywhere");
+            RectTransform tapRect = tapArea.AddComponent<RectTransform>();
+            tapRect.SetParent(activeVictoryScreen.transform, false);
+            tapRect.anchorMin = Vector2.zero;
+            tapRect.anchorMax = Vector2.one;
+            tapRect.offsetMin = Vector2.zero;
+            tapRect.offsetMax = Vector2.zero;
+            tapRect.SetAsFirstSibling(); // Behind other content
 
-                // Add Image as raycast target (fully transparent)
-                Image tapTarget = activeVictoryScreen.GetComponent<Image>();
-                if (tapTarget == null)
-                    tapTarget = activeVictoryScreen.AddComponent<Image>();
-                tapTarget.color = new Color(0, 0, 0, 0); // invisible
-                tapTarget.raycastTarget = true;
+            Image tapImage = tapArea.AddComponent<Image>();
+            tapImage.color = new Color(0, 0, 0, 0); // invisible
+            tapImage.raycastTarget = true;
 
-                // Add Button component for the tap
-                Button tapButton = activeVictoryScreen.AddComponent<Button>();
-                tapButton.onClick.AddListener(OnVictoryScreenTapped);
-            }
+            Button tapButton = tapArea.AddComponent<Button>();
+            tapButton.onClick.AddListener(OnVictoryScreenTapped);
 
             // Pause the interval timer while showing
             if (IntervalTimer.Instance != null)
                 IntervalTimer.Instance.Pause();
 
-            Debug.Log($"[GameOverManager] Wave complete screen shown (Wave {(WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveNumber : 0)})");
+            Debug.Log($"[GameOverManager] Wave complete screen shown (Wave {(WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveNumber : 0)}, final={isFinalVictory})");
         }
 
         private void OnVictoryScreenTapped()
@@ -114,6 +122,15 @@ namespace ClockworkGrid
             // Destroy the victory screen
             Destroy(activeVictoryScreen);
             activeVictoryScreen = null;
+
+            if (isFinalVictory)
+            {
+                // All waves cleared - restart the game
+                Debug.Log("[GameOverManager] All waves cleared! Restarting game.");
+                Time.timeScale = 1f;
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                return;
+            }
 
             // Resume timer and proceed to next wave
             if (IntervalTimer.Instance != null)

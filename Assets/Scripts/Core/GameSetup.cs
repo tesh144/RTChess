@@ -93,7 +93,7 @@ namespace ClockworkGrid
         [SerializeField] private List<WaveObjectiveSet> waveObjectives = new List<WaveObjectiveSet>
         {
             new WaveObjectiveSet(                                     // Wave 1
-                new WaveObjective(ObjectiveType.DefeatEnemies, 3), //   Defeat 3 enemies
+                new WaveObjective(ObjectiveType.DefeatEnemies, 4), //   Defeat 4 enemies
                 new WaveObjective(ObjectiveType.CollectGold, 20)   //   Collect 20 gold
             ),
             new WaveObjectiveSet(                                     // Wave 2

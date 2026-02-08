@@ -43,6 +43,13 @@ namespace ClockworkGrid
         /// </summary>
         public void SetObjectives(int waveNumber, List<WaveObjective> waveObjectives)
         {
+            // Auto-complete tutorial if still showing when wave starts
+            if (showingTutorial)
+            {
+                showingTutorial = false;
+                tutorialCompleted = true;
+            }
+
             currentWave = waveNumber;
             objectives = new List<WaveObjective>(waveObjectives);
             progress = new List<int>();
@@ -80,7 +87,15 @@ namespace ClockworkGrid
         {
             if (objectiveText == null) return;
 
-            string display = $"<b>Wave {currentWave}</b>\n";
+            string display = "";
+
+            // Show completed tutorial line above wave objectives
+            if (tutorialCompleted && !string.IsNullOrEmpty(tutorialMessage))
+            {
+                display += $"<color=#888888>\u2714 <s>{tutorialMessage}</s></color>\n";
+            }
+
+            display += $"<b>Wave {currentWave}</b>\n";
             for (int i = 0; i < objectives.Count; i++)
             {
                 bool complete = progress[i] >= objectives[i].target;
@@ -119,6 +134,7 @@ namespace ClockworkGrid
         }
 
         private bool showingTutorial = false;
+        private bool tutorialCompleted = false;
         private string tutorialMessage = "";
 
         /// <summary>
@@ -127,6 +143,7 @@ namespace ClockworkGrid
         public void ShowTutorial(string message)
         {
             showingTutorial = true;
+            tutorialCompleted = false;
             tutorialMessage = message;
             if (objectiveText != null)
             {
@@ -137,16 +154,14 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Mark the tutorial as complete (checkmark + strikethrough).
-        /// Wave objectives will replace it when the wave starts.
+        /// The completed line will persist above wave objectives.
         /// </summary>
         public void DismissTutorial()
         {
             if (!showingTutorial) return;
             showingTutorial = false;
-            if (objectiveText != null)
-            {
-                objectiveText.text = $"<color=#888888>\u2714 <s>{tutorialMessage}</s></color>";
-            }
+            tutorialCompleted = true;
+            UpdateDisplay();
         }
 
         // Legacy compatibility
