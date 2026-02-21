@@ -12,4 +12,49 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb7aaff90c5c74c419eb7b8c740b918e, type: 3}
   m_Name: EnvironmentDatabase
   m_EditorClassIdentifier: 
-  environmentList: []
+  environmentList:
+  - assetName: Goldmine
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    drawWeight: 1
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    prefab: {fileID: 1792174969384683449, guid: 91040046050aa421b8f17a364f7d2680, type: 3}
+    icon: {fileID: 0}
+  - assetName: Tree
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    drawWeight: 1
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    prefab: {fileID: 8309333646760003843, guid: f06e19f66f4cb467cbd277d8362fa5fd, type: 3}
+    icon: {fileID: 0}
+  - assetName: Rock
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    drawWeight: 1
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    prefab: {fileID: 4678236312839536724, guid: 5d394f2b4da824d1a81774bc2a1373f7, type: 3}
+    icon: {fileID: 0}
+  - assetName: Mountain
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    drawWeight: 0
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    prefab: {fileID: 1865641483583068949, guid: 99a009e1eb04c4f02a193e9a6ba30d54, type: 3}
+    icon: {fileID: 0}
+  - assetName: Water
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    drawWeight: 0
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    prefab: {fileID: 7464727058517861843, guid: 27273a07510604f2a95f573a9e1527f0, type: 3}
+    icon: {fileID: 0}

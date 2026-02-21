@@ -17,6 +17,7 @@ MonoBehaviour:
     type: 1
     isFunctional: 1
     isWalkable: 0
+    drawWeight: 2
     gridSize: {x: 1, y: 1}
     visualScale: 1
     prefab: {fileID: 3847811305800165348, guid: 1cd0d8df38200447fb8ea46d40619b16, type: 3}
@@ -25,6 +26,7 @@ MonoBehaviour:
     type: 2
     isFunctional: 1
     isWalkable: 0
+    drawWeight: 4
     gridSize: {x: 1, y: 1}
     visualScale: 1
     prefab: {fileID: 7332964061169735873, guid: 75fb2d4059229413dbfc1c5f0de5eaf2, type: 3}
@@ -33,6 +35,7 @@ MonoBehaviour:
     type: 0
     isFunctional: 0
     isWalkable: 0
+    drawWeight: 1
     gridSize: {x: 1, y: 1}
     visualScale: 1
     prefab: {fileID: 8309333646760003843, guid: f06e19f66f4cb467cbd277d8362fa5fd, type: 3}
@@ -41,6 +44,7 @@ MonoBehaviour:
     type: 6
     isFunctional: 1
     isWalkable: 0
+    drawWeight: 1
     gridSize: {x: 1, y: 1}
     visualScale: 1
     prefab: {fileID: 6188970566783066001, guid: d010d8d79b839417295f06434dfb49e7, type: 3}
@@ -49,6 +53,7 @@ MonoBehaviour:
     type: 5
     isFunctional: 1
     isWalkable: 0
+    drawWeight: 1
     gridSize: {x: 1, y: 1}
     visualScale: 1
     prefab: {fileID: 5054184118276883295, guid: 9e1cb9c5110964f01a39a89e49608083, type: 3}
@@ -57,6 +62,7 @@ MonoBehaviour:
     type: 4
     isFunctional: 1
     isWalkable: 0
+    drawWeight: 2
     gridSize: {x: 1, y: 1}
     visualScale: 1
     prefab: {fileID: 5593746746923473591, guid: 8556ca5f5d76c41dcbca6e4d33c77c6b, type: 3}
@@ -65,6 +71,7 @@ MonoBehaviour:
     type: 3
     isFunctional: 0
     isWalkable: 0
+    drawWeight: 1
     gridSize: {x: 1, y: 1}
     visualScale: 1
     prefab: {fileID: 5308099893573556514, guid: 6ed1784c68edf4713b583900c4cbeff2, type: 3}

@@ -1,235 +1,343 @@
-# RTChess - Real-Time Grid Strategy Game
+# RTChess / LittleCafe — Project Documentation
 
 ## Project Overview
-A Unity-based real-time chess-like strategy game with an interval-based clockwork system. Units automatically rotate and attack resources to gather tokens in a turn-based manner synchronized to a global interval timer.
+A Unity-based grid strategy game with two game modes sharing a common core. The project started as a real-time chess-like combat game (RTChess) and evolved into a cafe/world builder (LittleCafe) using the same grid, camera, and placement systems.
+
+**Unity Version:** 2022.3.62f3
+**Last Updated:** 2026-02-21
 
 ## Current Status
-**Latest Iteration:** Multi-Cell Placement & Asset Integration (Post Iteration 6)
-**Last Updated:** 2026-02-16
 
-**Key Achievements:**
-- Card-game-style dock bar with drag-and-drop unit placement
+### Active Development: LittleCafe (Cafe/World Builder)
+The primary focus is the cafe builder mode — a cozy grid-based placement game where players draw furniture cards, drag-and-drop them onto a grid, and build layouts. This has grown into a broader world-building concept with buildings, workers, and environment objects.
+
+**Implemented Features:**
+- Card-game-style dock bar with drag-and-drop placement
 - Multi-cell object support (1x1, 2x2, 3x3, etc.)
-- GridObject component for defining object grid sizes
-- Unity Animator-based placement animations (Unit_Appear)
-- PEPO game assets integrated with proper scaling
-- Fog of war system with reveal mechanics
-- Wave-based enemy spawning
-- Debug menu for testing
+- PEPO 3D game assets with proper scaling
+- Fog of war with tile reveal on placement
+- Adaptive camera zoom (grows with revealed tiles)
+- Orbiting camera with scroll-wheel zoom and auto-rotate
+- Furniture connectivity system (tables group, chairs attach to table groups)
+- Debug perimeter outlines around connected groups
+- Chair auto-tuck (slides toward adjacent table after placement animation)
+- Tap-and-hold furniture removal with radial loading bar
+- Tap interaction animation on placed objects
+- Per-item draw weights controlling card draw probability
+- Draw cost that decreases over time via interval timer
+- Placement animations (appear, interact, remove) via Animator
+- Layout save/load (JSON serialization)
+
+### Legacy Mode: RTChess (Combat)
+The original combat system is still intact but not actively developed. Units auto-rotate, attack resources, and fight enemies on a timer.
+
+## Architecture
+
+### Namespaces
+- `ClockworkGrid` — Core shared systems (GridManager, IntervalTimer, DragDropHandler, etc.)
+- `LittleCafe` — Cafe/world builder systems (FurnitureObject, GridCamera, connectivity, etc.)
+
+### Singleton Managers
+All managers use the `Instance` singleton pattern:
+- `GridManager.Instance` — Grid state, cell occupants, coordinate conversion
+- `IntervalTimer.Instance` — Global clock driving gameplay ticks
+- `ResourceTokenManager.Instance` — Economy (token tracking)
+- `DragDropHandler.Instance` — Drag state, arc line, cell highlights, placement validation
+- `DockBarManager.Instance` — Bottom dock bar with draggable cards
+- `RaritySystem.Instance` — Draw pool and weighted random selection
+- `FurnitureConnectivityManager.Instance` — Groups adjacent furniture
+- `FogManager.Instance` — Fog of war, tile reveal tracking
+- `GridCamera.Instance` — Orbiting camera with adaptive zoom
+- `FurnitureRemovalHandler.Instance` — Tap/hold removal
+- `TableSeatingManager.Instance` — Chair-to-table seat assignment
+- `WaveManager.Instance` — Enemy wave spawning (RTChess)
+- `SFXManager.Instance` — Sound effects
+
+### Camera System
+`ICameraSystem` interface with `CameraSystemLocator` service locator. GridCamera (LittleCafe) and CameraController (RTChess) both implement it. Code references `CameraSystemLocator.Current` for scene-agnostic camera access.
+
+**GridCamera features:**
+- Orbiting around a pivot point
+- Scroll-wheel zoom clamped to [minDistance, currentMaxDistance]
+- Adaptive zoom: default and max distance grow with `FogManager.GetRevealedCount()`
+- Auto-rotate (slow orbit)
+- Camera shake
+- Focus on position / cell
+- `ZoomToDefault()` — recalculates adaptive zoom and zooms to it (called after placement)
+
+### Event System
+- `IntervalTimer.OnIntervalTick` — Subscribe for interval-based actions
+- `ResourceTokenManager.OnTokensChanged` — UI updates on token change
+- `FurnitureConnectivityManager.ConnectivityChanged` — Fires when groups are rebuilt
 
 ## Core Systems
 
-### 1. Grid System (`Assets/Scripts/Core/GridManager.cs`)
-- 11x11 grid (configurable via GameSetup or Inspector)
-- Cell-based state management (Empty, PlayerUnit, EnemyUnit, Resource)
-- World/grid coordinate conversion
-- Singleton pattern
-- **Tile prefabs assigned directly on GridManager Inspector** (gridTilePrefabA, gridTilePrefabB)
-- Checkerboard pattern: alternates A/B prefabs using `(x + y) % 2 == 0`
-- Falls back to default white/gray cubes if no prefabs assigned
-- GameSetup finds existing GridManager in scene (does NOT create tile prefabs)
+### Grid System (`Assets/Scripts/Core/GridManager.cs`)
+- Configurable grid size (default 11x11, cafe uses custom sizes)
+- Cell states: Empty, PlayerUnit, EnemyUnit, Resource
+- `cellOccupants[,]` — GameObject array tracking what's on each cell
+- `GetOccupant(x, y)` — Public accessor for cell lookup
+- `PlaceMultiCell()` / `RemoveMultiCell()` — Multi-cell footprint support
+- Checkerboard tile prefabs (A/B pattern)
+- `WorldToGridPosition()` / `GridToWorldPosition()` — Coordinate conversion
+- Cell size: 1.5 units
 
-### 2. Interval Timer (`Assets/Scripts/Core/IntervalTimer.cs`)
-- Global clock that drives all game actions
-- Default: 2 second intervals
-- Event-based system (`OnIntervalTick`)
-- All gameplay mechanics sync to this timer
+### Placement Flow (Dock → Grid)
+1. `DockBarManager` shows cards, player drags a `UnitIcon`
+2. `UnitIcon.OnBeginDrag()` calls `DragDropHandler.StartDrag()`
+3. Camera zooms in (50% of current distance), auto-rotate off
+4. `DragDropHandler.UpdateDrag()` raycasts to ground plane, validates cells, shows arc line + cell highlights
+5. On release: `DragDropHandler.EndDrag()` instantiates prefab, applies `furnitureTypeOverride` from UnitStats, calls `FurnitureObject.OnPlaced()`
+6. `OnPlaced()` registers with grid, reveals fog tiles, registers with connectivity manager, triggers appear animation
+7. Camera calls `ZoomToDefault()` (adaptive zoom out) and `FocusOnPosition()` on placed object
 
-### 3. Resource System
-**ResourceNode** (`Assets/Scripts/Core/ResourceNode.cs`)
-- Harvestable nodes placed on grid
-- HP: 10, Tokens per hit: 1, Bonus on destroy: 3
-- Visual HP bar (green → red)
-- Particle effects on destruction
+### Furniture System
 
-**ResourceTokenManager** (`Assets/Scripts/Core/ResourceTokenManager.cs`)
-- Singleton economy manager
-- Tracks player tokens
-- Floating "+X" text animations
-- Event system for UI updates
+**FurnitureObject** (`Assets/Scripts/Components/FurnitureObject.cs`)
+- Base component for all placeable objects
+- Serialized fields: furnitureType, isFunctional, isWalkable, gridSize
+- `SetType()` — Runtime type override (fixes variant prefab inheritance issues)
+- `OnPlaced()` / `OnRemoved()` — Lifecycle hooks
+- Subclasses: `ChairObject`, `TableObject`, `WallObject`
 
-### 4. Unit System (`Assets/Scripts/Units/Unit.cs`)
-**Base Stats:**
-- HP: 10
-- Attack Damage: 3
-- Attack Range: 1
-- Attack Interval: 2 (attacks every 2 intervals)
-- Resource Cost: 3 tokens
+**FurnitureType enum:**
+Decoration, Table, Chair, Wall, Countertop, Sink, Cooker
 
-**Behavior:**
-- Automatic rotation (clockwise for Player, counter-clockwise for Enemy)
-- Attacks resources in facing direction
-- Smooth rotation animations (0.25s)
-- Attack VFX particles
-- Only Player units earn tokens
+**Prefab Hierarchy:** Root → AnimatorHolder → Recenter → [3D Model]
+- Animator controls AnimatorHolder
+- Recenter transform is free to move (used by ChairPositionController for tuck)
 
-**Facing System** (`Assets/Scripts/Units/Facing.cs`)
-- North, South, East, West directions
-- Rotation and grid offset calculations
+**ChairPositionController:**
+- Moves via Recenter transform's localPosition (NOT root)
+- 0.9s delay after placement animation before tuck begins
+- States: Idle, Stored (tucked toward table), InUse
+- `storedOffset = 0.75f` on local Z axis
 
-### 5. UI System
-- **IntervalUI**: Shows current interval and progress bar (top-left)
-- **TokenUI**: Displays token count (top-right, gold color)
-- **DockBarManager**: Bottom-center dock bar with draggable unit icons
-- **DragDropHandler**: Manages drag state, ghost preview, and placement validation
-- **DebugMenu**: Top-right debug panel for testing (toggle, token adjustment, placement controls)
+### Connectivity System
 
-### 6. Grid Object System (`Assets/Scripts/Components/GridObject.cs`)
-- Component for marking objects with intended grid size (1x1, 2x2, etc.)
-- Visual gizmos in editor: green = properly scaled, yellow = needs adjustment
-- Multi-cell placement support via `GridManager.PlaceMultiCell()`
-- Grid-centered positioning at (0,0,0) with cell size of 1.5 units
-- Supports custom PEPO game assets and procedurally generated units
+**FurnitureConnectivityManager** — Two-pass BFS grouping:
+- Pass 1: Groups same-type functional furniture (tables with tables, counters with counters, etc.). Skips Chair and Decoration types.
+- Pass 2: Attaches chairs to adjacent table groups.
+- Strict orthogonal adjacency only (no diagonal connections)
+- `StrictOverlapX/Y` — Ensures actual face overlap for multi-cell items
 
-### 7. Animation System
-**Placement Animations:**
-- Uses Unity Animator with `PlaceableObject` controller
-- Default animation: `Unit_Appear.anim` (hand-crafted with wobble effect)
-- Plays automatically when objects are instantiated
-- Alternative: `PlacementAnimation.cs` (code-based, currently unused but available for future)
+**FurnitureGroup** — Contains members, occupied cells, debug color. Provides `GetAllPerimeterPositions()` for seating.
 
-**Combat Animations:**
-- Unit_Attack.anim for attack actions
-- Triggered via Animator parameter "attack"
+**FurnitureConnectionDebugVisualizer** — GL.QUADS perimeter outlines and fill for each group, diamond markers for seating positions.
 
-### 8. Visual Systems
-- Procedural 3D models via `UnitModelBuilder` and `ResourceNodeModelBuilder`
-- PEPO game assets (3D models from asset store)
-- Particle systems for attacks and destruction
-- Grid visualization with cell highlights
-- Billboard floating text
-- Fog of war with fade-out effects
+### Removal System (`FurnitureRemovalHandler`)
+- Grid-based detection: raycasts to ground plane → grid cell → `GetOccupant()` → FurnitureObject
+- This ensures chairs tucked under tables are still selectable via their original grid square
+- Tap (< 0.2s): triggers `interact` animation
+- Hold past 0.2s: fires interact animation, shows radial loading bar
+- Hold 3s: triggers `remove` animation, calls `OnRemoved()`, destroys GameObject
+- Won't activate during drag (`DragDropHandler.IsDragging`)
 
-## Controls
+### Animation System
 
-### Normal Play
-- **Draw Button**: Click to spend tokens and draw a random unit into dock (cost: 3, 4, 5, 6...)
-- **Drag from Dock**: Drag unit icons from dock bar to grid (placement is FREE)
-- **Hover Icons**: Icons magnify 1.3x on hover (macOS dock style)
+**ObjectAnimController** (`Assets/Animations/ObjectAnimController.controller`)
+This is the animator controller used by all PEPO furniture prefabs.
 
-### Debug Mode (Toggle via Debug Menu - Top Right)
-- **Toggle Button**: Enable/disable debug placement controls
-- **Token Adjustment**: +/-1, +/-10, +100 buttons to modify token count
-- **Right-click**: Place Resource node (free, debug only)
-- **Middle-click**: Place Enemy unit (free, debug only)
+States: Idle (default), Appear, Interact, Remove
+Parameters (all triggers, lowercase): `appear`, `interact`, `remove`
+Transitions:
+- Idle → Appear (on `appear` trigger)
+- AnyState → Interact (on `interact` trigger) → auto-returns to Idle
+- AnyState → Remove (on `remove` trigger) → no return (object destroyed)
+- Appear → Idle (on exit time)
 
-## Game Loop
-1. Start with 10 tokens
-2. Click "Draw" to spend tokens (3, 4, 5...) and draw units into dock
-3. Drag units from dock to grid (placement is FREE)
-4. Placed units have 2-interval cooldown (greyed out)
-5. After cooldown, units auto-rotate and attack
-6. Earn tokens from harvesting resources
-7. Use debug menu to place resources and enemies for testing
+Animation clips:
+- `Furniture_Appear.anim` — Drop/wobble spawn animation
+- `Furniture_Interact_Weak.anim` — Light jiggle on tap
+- `Furniture_Remove.anim` — Disappear/hide animation
+
+**Note:** There is also `ObjectAnimatorController.controller` in Prefabs/ — this is the old RTChess controller (not used by PEPO furniture). The PEPO prefabs use `ObjectAnimController` in Animations/.
+
+### Draw & Economy System
+- `RaritySystem` manages the draw pool of available items
+- `UnitStats` holds per-item data including `drawWeight` and `furnitureTypeOverride`
+- `GetEffectiveDrawWeight()` — Uses explicit drawWeight if > 0, else falls back to rarity-based weight
+- Draw cost starts at 0 in cafe mode and decreases over time via interval timer
+- `UnitIcon` shows weight badge (green "xN") on dock cards
+
+### Fog of War
+- `FogManager` tracks revealed cells in a bool grid
+- `TileFog` component on each tile handles visual state (lowered + transparent when fogged)
+- Placing furniture reveals surrounding tiles based on `revealRadius`
+- `GetRevealedCount()` — Used by GridCamera for adaptive zoom calculation
+
+## Data Layer — ScriptableObject Databases
+
+All databases follow the same pattern: a `[Serializable]` data class + a `ScriptableObject` database with list, query methods, and an editor "Scan PEPO Folder" context menu.
+
+### FurnitureDatabase (`LittleCafe/Furniture Database`)
+- **Data class:** `FurnitureData` — assetName, FurnitureType, isFunctional, isWalkable, drawWeight, gridSize, visualScale, prefab, icon
+- **Types:** Decoration, Table, Chair, Wall, Countertop, Sink, Cooker
+- **Asset:** `Assets/Scripts/Data/FurnitureDatabase.asset`
+- **Used by:** CafeSceneSetupV2 to populate RaritySystem draw pool
+
+### BuildingDatabase (`LittleCafe/Building Database`)
+- **Data class:** `BuildingData` — same fields as FurnitureData but with BuildingType
+- **Types:** Generic, House, Shop, Workshop, Storage, Civic, Military, Religious
+- **Status:** Schema created, ready for prefab assignment
+
+### WorkerDatabase (`LittleCafe/Worker Database`)
+- **Data class:** `WorkerData` — same fields, defaults to isWalkable=true
+- **Types:** Generic, Villager, Farmer, Miner, Builder, Merchant, Guard, Crafter
+- **Status:** Schema created, ready for prefab assignment
+
+### UnitDatabase (`LittleCafe/Unit Database`)
+- **Data class:** `UnitData` — same fields as WorkerData plus `isEnemy` bool to distinguish allied vs enemy units
+- **Enum:** `GameUnitType` (named to avoid clash with `ClockworkGrid.UnitType`)
+- **Types:** Generic, Villager, Farmer, Miner, Builder, Merchant, Guard, Crafter, Soldier, Archer, Beast, Boss
+- **Query helpers:** `GetEnemyUnits()`, `GetAlliedUnits()`, `GetByType()`, `GetFunctionalUnits()`
+- **Status:** Schema created, ready for prefab assignment
+
+### EnvironmentDatabase (`LittleCafe/Environment Database`)
+- **Data class:** `EnvironmentData` — same fields with EnvironmentType
+- **Types:** Generic, Tree, Rock, Water, Path, Fence, Terrain, Flora
+- **Status:** Schema created, ready for prefab assignment
 
 ## File Structure
 ```
 Assets/
 ├── Scripts/
-│   ├── Core/
-│   │   ├── GameSetup.cs          # Scene bootstrap
-│   │   ├── GridManager.cs        # Grid system (multi-cell support)
-│   │   ├── GridVisualizer.cs     # Grid rendering
-│   │   ├── IntervalTimer.cs      # Global clock
-│   │   ├── ResourceNode.cs       # Harvestable nodes
-│   │   ├── ResourceTokenManager.cs # Economy
-│   │   ├── WaveManager.cs        # Enemy wave spawning
-│   │   └── SFXManager.cs         # Sound effects
-│   ├── Units/
-│   │   ├── Unit.cs               # Base unit class with combat
-│   │   ├── SoldierUnit.cs        # Soldier implementation
-│   │   ├── Facing.cs             # Direction system
-│   │   ├── UnitModelBuilder.cs   # 3D model generation
-│   │   └── ResourceNodeModelBuilder.cs
-│   ├── UI/
-│   │   ├── IntervalUI.cs         # Interval display
-│   │   ├── TokenUI.cs            # Token counter
-│   │   ├── DockBarManager.cs     # Dock bar controller
-│   │   ├── UnitIcon.cs           # Draggable unit icon
-│   │   ├── DragDropHandler.cs    # Drag state and placement validation
-│   │   └── DebugMenu.cs          # Debug panel with placement controls
-│   ├── Components/
-│   │   ├── GridObject.cs         # Grid size component (1x1, 2x2, etc.)
-│   │   └── PlacementAnimation.cs # Code-based animation (unused, for future)
-│   ├── Systems/
-│   │   ├── FogManager.cs         # Fog of war system
-│   │   └── RaritySystem.cs       # Unit rarity tiers
-│   ├── Data/
-│   │   ├── UnitStats.cs          # ScriptableObject for unit data
-│   │   └── ResourceNodeStats.cs  # ScriptableObject for resource data
-│   ├── LittleCafe/               # Cafe scene (separate game mode)
-│   │   ├── CafeEquipment.cs
-│   │   └── [other cafe scripts]
-│   └── Debug/
-│       └── CellDebugPlacer.cs    # Click-to-place debugging
+│   ├── Core/                          # Shared systems (both game modes)
+│   │   ├── GameSetup.cs               # Scene bootstrap
+│   │   ├── GridManager.cs             # Grid state, cell occupants, coordinates
+│   │   ├── GridVisualizer.cs          # Grid rendering
+│   │   ├── IntervalTimer.cs           # Global clock
+│   │   ├── ResourceNode.cs            # Harvestable nodes (RTChess)
+│   │   ├── ResourceTokenManager.cs    # Token economy
+│   │   ├── WaveManager.cs             # Enemy wave spawning (RTChess)
+│   │   ├── SFXManager.cs              # Sound effects
+│   │   ├── TileFog.cs                 # Per-tile fog component
+│   │   ├── CameraController.cs        # RTChess camera
+│   │   ├── CameraSystemLocator.cs     # Camera service locator
+│   │   ├── ICameraSystem.cs           # Camera interface
+│   │   └── PlacementAudioManager.cs   # Placement sounds
+│   │
+│   ├── Components/                    # Shared components
+│   │   ├── FurnitureObject.cs         # Base furniture (+ FurnitureType enum)
+│   │   ├── ChairObject.cs             # Chair specialization
+│   │   ├── TableObject.cs             # Table specialization
+│   │   ├── WallObject.cs              # Wall specialization
+│   │   ├── ChairPositionController.cs # Chair tuck via Recenter transform
+│   │   ├── GridObject.cs              # Grid size component (1x1, 2x2, etc.)
+│   │   └── PlacementAnimation.cs      # Code-based animation (unused)
+│   │
+│   ├── Data/                          # ScriptableObject databases
+│   │   ├── FurnitureData.cs           # Furniture config + FurnitureDatabase.cs
+│   │   ├── BuildingData.cs            # Building config + BuildingDatabase.cs
+│   │   ├── WorkerData.cs              # Worker config + WorkerDatabase.cs
+│   │   ├── UnitData.cs                # Unit config (allied + enemy) + UnitDatabase.cs
+│   │   ├── EnvironmentData.cs         # Environment config + EnvironmentDatabase.cs
+│   │   ├── UnitStats.cs               # Per-unit stats (draw weight, type override, etc.)
+│   │   └── ResourceNodeStats.cs       # Resource node stats
+│   │
+│   ├── LittleCafe/                    # Cafe/world builder systems
+│   │   ├── CafeSceneSetupV2.cs        # Scene bootstrap for cafe mode
+│   │   ├── GridCamera.cs              # Orbiting camera with adaptive zoom
+│   │   ├── FurnitureConnectivityManager.cs  # BFS grouping
+│   │   ├── FurnitureConnectionDebugVisualizer.cs  # GL outline rendering
+│   │   ├── FurnitureGroup.cs          # Group data structure
+│   │   ├── FurnitureRemovalHandler.cs # Tap/hold removal with loading bar
+│   │   ├── TableSeatingManager.cs     # Chair-to-table seat tracking
+│   │   ├── LayoutSerializer.cs        # JSON save/load
+│   │   ├── LayoutManager.cs           # Layout management
+│   │   ├── CafeEquipment.cs           # Legacy equipment component
+│   │   └── [other legacy cafe scripts]
+│   │
+│   ├── Systems/                       # Game-wide systems
+│   │   ├── FogManager.cs              # Fog of war + GetRevealedCount()
+│   │   ├── RaritySystem.cs            # Weighted random draw
+│   │   └── GridExpansionManager.cs    # Dynamic grid resizing
+│   │
+│   ├── UI/                            # UI components
+│   │   ├── DockBarManager.cs          # Bottom dock bar
+│   │   ├── DragDropHandler.cs         # Drag state, arc line, placement
+│   │   ├── UnitIcon.cs                # Draggable card with weight badge
+│   │   ├── TokenUI.cs                 # Token counter display
+│   │   ├── DebugMenu.cs              # Debug panel
+│   │   └── [other UI scripts]
+│   │
+│   ├── Units/                         # RTChess combat units
+│   │   ├── Unit.cs                    # Base unit with combat
+│   │   ├── Facing.cs                  # Direction system
+│   │   └── [model builders, etc.]
+│   │
+│   └── Editor/                        # Editor-only scripts
+│       ├── PEPOPrefabGenerator.cs     # Generates prefab variants from FBX + database
+│       └── [other editor tools]
+│
+├── Animations/
+│   ├── ObjectAnimController.controller  # THE controller used by PEPO prefabs
+│   ├── ObjectAnimations/
+│   │   ├── Object_Appear.anim
+│   │   ├── Object_Interact.anim
+│   │   ├── Object_Destroy.anim
+│   │   └── Object_Idle.anim
+│   ├── Furniture_Appear.anim
+│   ├── Furniture_Interact_Weak.anim
+│   ├── Furniture_Interact_Strong.anim
+│   └── Furniture_Remove.anim
+│
 ├── Prefabs/
-│   ├── PlaceableObject.controller # Animator for placement
-│   ├── Unit_Appear.anim           # Spawn animation
-│   ├── Unit_Attack.anim           # Attack animation
-│   └── [PEPO asset prefabs]
+│   ├── PEPO/
+│   │   ├── MainFurniture/             # Variant prefabs used in game
+│   │   │   ├── DiningTable Variant.prefab
+│   │   │   ├── Chair_1 Variant.prefab
+│   │   │   ├── Chair_2 Variant.prefab
+│   │   │   ├── Counter Variant.prefab
+│   │   │   ├── Wall Variant.prefab
+│   │   │   ├── WoodFence_cross Variant.prefab
+│   │   │   ├── WoodFence_straight Variant.prefab
+│   │   │   ├── PineTree Variant.prefab
+│   │   │   ├── Sink_1 Variant.prefab
+│   │   │   ├── Sink_2 Variant.prefab
+│   │   │   ├── Furnace Variant.prefab
+│   │   │   └── Firepit Variant.prefab
+│   │   └── [base PEPO FBX prefabs]
+│   └── ObjectAnimatorController.controller  # OLD RTChess controller (not used by furniture)
+│
+├── Docs/LittleCafe/                   # Design documentation
+│   ├── GDD/Little-Cafe-GDD.docx
+│   ├── Diagrams/
+│   ├── Prompts/
+│   └── References/
+│
+└── Scripts/Data/
+    └── FurnitureDatabase.asset        # The active furniture database asset
 ```
 
-## Known Patterns
+## Known Issues & Gotchas
 
-### Singleton Pattern
-Used for managers (prefix with `Instance`):
-- `GridManager.Instance`
-- `IntervalTimer.Instance`
-- `ResourceTokenManager.Instance`
-- `DragDropHandler.Instance`
-- `DockBarManager.Instance`
+### Variant Prefab Type Inheritance
+PEPO variant prefabs may inherit incorrect `furnitureType` from their base prefab. The runtime fix: `UnitStats.furnitureTypeOverride` is set from `FurnitureData.type` in CafeSceneSetupV2, then applied via `FurnitureObject.SetType()` before `OnPlaced()` in DragDropHandler. If adding new prefab variants, either regenerate via PEPOPrefabGenerator or ensure the runtime override is set.
 
-### Event System
-- `IntervalTimer.OnIntervalTick` - Subscribe for interval-based actions
-- `ResourceTokenManager.OnTokensChanged` - Subscribe for UI updates
+### Two Animator Controllers
+- `Assets/Animations/ObjectAnimController.controller` — Used by PEPO furniture. Has Idle, Appear, Interact, Remove states with lowercase trigger names (`appear`, `interact`, `remove`).
+- `Assets/Prefabs/ObjectAnimatorController.controller` — Old RTChess controller. Has different trigger names (`Interact`, `Destroy` — uppercase). Not used by furniture.
 
-### Reflection Usage
-`GameSetup.cs` uses reflection to set private serialized fields at runtime via `SetPrivateField()` helper.
+### Chair Tuck & Selection
+Chairs visually slide under tables via the Recenter transform, but their grid cell occupancy stays at the original position. The removal system uses grid-based detection (raycast → ground plane → grid cell → occupant) so chairs are always selectable by tapping their original square.
 
-## Development Notes
+## Design Principles
+1. **Grid-centric** — All objects positioned relative to 1.5-unit grid cells
+2. **Data-driven** — Stats in ScriptableObject databases for easy tweaking
+3. **Animator-first** — Unity Animator for all visual effects
+4. **Component composition** — FurnitureObject + GridObject on any prefab makes it placeable
+5. **Event-driven** — Loose coupling via events (IntervalTimer, TokenManager, Connectivity)
+6. **Scene-agnostic camera** — ICameraSystem interface + CameraSystemLocator
+7. **Runtime type safety** — furnitureTypeOverride corrects variant prefab inheritance
+8. **Recenter transform** — Visual positioning layer free from Animator control
 
-### Testing
-- Scene bootstraps from empty GameObject with `GameSetup` component
-- Everything creates programmatically (no scene dependencies)
-- Easy to test different configurations via GameSetup inspector fields
-
-### Next Features (Ideas)
-- [x] Token spending for unit placement (Iteration 4: Draw system)
-- [x] Unit vs Unit combat (Iteration 3)
-- [x] Dock bar with drag-and-drop (Iteration 4)
-- [x] Placement cooldown system (Iteration 4)
-- [x] Debug menu for testing (Iteration 4)
-- [ ] Enemy unit spawning/AI
-- [ ] Movement system
-- [ ] Different unit types with rarity system (Iteration 6)
-- [ ] Victory/defeat conditions
-- [ ] Wave-based enemy spawning
-- [ ] Grid size variations
-
-### Architecture Notes
-- **Avoid Unity scene dependencies**: Use prefabs and procedural generation
-- **Interval-based gameplay**: All gameplay synced to interval timer (no Update() frame-dependent logic)
-- **Visual feedback**: Particles, animations, and UI for all actions
-- **Event-driven design**: Loose coupling via event systems
-- **Singleton pattern**: Used for managers (GridManager, IntervalTimer, etc.)
-- **Component-based**: GridObject, Unit, CafeEquipment components define behavior
-- **ScriptableObjects**: UnitStats and ResourceNodeStats for data-driven design
-- **Multi-cell support**: Objects can occupy 1x1, 2x2, or larger grid spaces
-- **Animation system**: Unity Animator for placement/combat (extensible via PlacementAnimation.cs for custom code-based animations)
-
-### Design Principles for Future Development
-1. **Grid-centric design**: All objects positioned relative to 1.5-unit grid cells
-2. **Animator-first animations**: Use Unity Animator for visual effects (PlacementAnimation.cs available for special cases)
-3. **Component composition**: Add GridObject to any prefab to make it placeable
-4. **Data-driven balance**: Stats in ScriptableObjects for easy tweaking
-5. **Event subscription**: Subscribe to IntervalTimer.OnIntervalTick for time-based actions
-6. **Multi-scene support**: LittleCafe scene demonstrates separate game modes using same core systems
-
-## Team Workflow
-- **Main development**: This account (jai)
-- **Feature branches**: Other team members
-- **Merge strategy**: Pull requests → review → merge to master
-- **Communication**: Coordinate before editing same files
+## Development Workflow
+- **Main development:** jai
+- **Auto-compile:** Unity stays open, scripts auto-compile on save
+- **Console logs:** Check `Logs/Unity_Console_Latest.log` proactively
+- **Prefab generation:** Use PEPOPrefabGenerator editor script for new assets
+- **Database editing:** Edit FurnitureDatabase.asset (or Building/Worker/Environment) in Inspector
 
 ## Credits
 Built with Claude Code (Anthropic)
