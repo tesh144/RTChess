@@ -1,0 +1,58 @@
+using UnityEngine;
+
+namespace LittleCafe
+{
+    /// <summary>
+    /// Classification of building types.
+    /// </summary>
+    public enum BuildingType
+    {
+        Generic,        // Default - unclassified building
+        House,          // Residential
+        Shop,           // Commercial / retail
+        Workshop,       // Crafting / production
+        Storage,        // Warehouses, barns
+        Civic,          // Town hall, fountain, well
+        Military,       // Barracks, watchtower
+        Religious       // Temple, shrine
+    }
+
+    /// <summary>
+    /// Configuration data for a single building asset.
+    /// Stored in BuildingDatabase ScriptableObject.
+    /// </summary>
+    [System.Serializable]
+    public class BuildingData
+    {
+        [Header("Asset Identity")]
+        public string assetName;
+
+        [Header("Building Properties")]
+        public BuildingType type = BuildingType.Generic;
+        public bool isFunctional = false;
+        public bool isWalkable = false;
+
+        [Header("Draw Weight")]
+        [Tooltip("Relative likelihood of being drawn. Default 1. Higher = more likely.")]
+        public float drawWeight = 1f;
+
+        [Header("Grid & Visual")]
+        public Vector2Int gridSize = Vector2Int.one;
+        public float visualScale = 1.0f;
+
+        [Header("Prefab & Icon")]
+        public GameObject prefab;
+        public Sprite icon;
+
+        /// <summary>
+        /// Get clean asset name without file extension.
+        /// </summary>
+        public string GetCleanName()
+        {
+            if (string.IsNullOrEmpty(assetName))
+                return "Unknown";
+
+            return assetName.Replace(".fbx", "").Replace(".FBX", "");
+        }
+    }
+}
