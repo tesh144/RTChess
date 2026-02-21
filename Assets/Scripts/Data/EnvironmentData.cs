@@ -31,6 +31,8 @@ namespace LittleCafe
         public EnvironmentType type = EnvironmentType.Generic;
         public bool isFunctional = false;
         public bool isWalkable = false;
+        [Tooltip("Active objects perform an action each interval tick. Environment objects are passive by default.")]
+        public bool isActive = false;
 
         [Header("Combat Stats")]
         [Tooltip("Health points. When HP reaches 0, triggers an event (removal, completion, etc.).")]

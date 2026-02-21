@@ -31,6 +31,8 @@ namespace LittleCafe
         public BuildingType type = BuildingType.Generic;
         public bool isFunctional = false;
         public bool isWalkable = false;
+        [Tooltip("Active objects perform an action each interval tick. Buildings are passive by default.")]
+        public bool isActive = false;
 
         [Header("Combat Stats")]
         [Tooltip("Health points. When HP reaches 0, triggers an event (removal, completion, etc.).")]

@@ -16,6 +16,8 @@ namespace LittleCafe
         public FurnitureType type = FurnitureType.Decoration;
         public bool isFunctional = false;     // Has special behavior (Table/Chair/Wall)
         public bool isWalkable = false;       // Default: false (blocks movement)
+        [Tooltip("Active objects perform an action each interval tick. Furniture is passive by default.")]
+        public bool isActive = false;
 
         [Header("Draw Weight")]
         [Tooltip("Relative likelihood of being drawn. Default 1. Set to 2 for 2x more likely, 3 for 3x, etc.")]

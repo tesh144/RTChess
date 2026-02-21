@@ -51,6 +51,10 @@ namespace ClockworkGrid
         [Tooltip("FurnitureType to apply at runtime, overriding whatever the prefab has serialized.")]
         public int furnitureTypeOverride = -1; // -1 = no override, 0+ = FurnitureType enum value
 
+        [Header("Entity Behavior")]
+        [Tooltip("Whether this object acts each interval tick (workers/units = true, furniture/buildings = false)")]
+        public bool isActive = false;
+
         [Header("Combat Stats")]
         public int maxHP = 10;
         public int attackDamage = 3;

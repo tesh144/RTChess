@@ -12,4 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69ea0a49ac09140c58dae5c4ada66eeb, type: 3}
   m_Name: WorkerDatabase
   m_EditorClassIdentifier: 
-  workerList: []
+  workerList:
+  - assetName: Worker
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 1
+    hp: 5
+    attackPower: 1
+    drawWeight: 0
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    prefab: {fileID: 9011859404534711103, guid: 40a97e5d9c6d64bf888cecc906b97fd3, type: 3}
+    icon: {fileID: 0}

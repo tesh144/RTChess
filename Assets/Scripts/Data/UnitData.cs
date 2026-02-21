@@ -36,10 +36,12 @@ namespace LittleCafe
         public bool isEnemy = false;
         public bool isFunctional = false;
         public bool isWalkable = true;          // Units are walkable by default
+        [Tooltip("Active objects perform an action each interval tick. Units act by default.")]
+        public bool isActive = true;
 
         [Header("Combat Stats")]
         [Tooltip("Health points. When HP reaches 0, triggers an event (removal, completion, etc.).")]
-        public int hp = 1;
+        public int hp = 3;
         [Tooltip("Damage dealt to target's HP per successful interaction.")]
         public int attackPower = 1;
 

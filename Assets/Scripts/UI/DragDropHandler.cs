@@ -260,6 +260,17 @@ namespace ClockworkGrid
 
                 furniture.OnPlaced(targetGridX, targetGridY, currentGridSize);
                 placedWithFurniture = true;
+
+                // Attach GridEntity components (health, actor) based on database stats
+                if (LittleCafe.GridEntityManager.Instance != null && currentDraggingIcon?.UnitStats != null)
+                {
+                    var stats = currentDraggingIcon.UnitStats;
+                    // Read entity stats from UnitStats — defaults to furniture (no HP, not active)
+                    int hp = stats.maxHP > 0 ? stats.maxHP : 0;
+                    int attackPower = stats.attackDamage > 0 ? stats.attackDamage : 0;
+                    bool isActive = stats.isActive;
+                    LittleCafe.GridEntityManager.Instance.AttachComponents(unitObj, hp, attackPower, isActive);
+                }
             }
 
             // LEGACY: Initialize Unit with UnitStats (RTChess combat system)

@@ -212,6 +212,9 @@ namespace LittleCafe
                 stats.gridSize = data.gridSize;
                 stats.modelScale = data.visualScale;
                 stats.enemyPrefab = null;
+                stats.isActive = data.isActive; // From database (furniture defaults to false)
+                stats.maxHP = 0; // Furniture has no HP
+                stats.attackDamage = 0; // Furniture has no attack
                 furnitureStats.Add(stats);
             }
 
@@ -333,6 +336,13 @@ namespace LittleCafe
             {
                 GameObject removalObj = new GameObject("FurnitureRemovalHandler");
                 removalObj.AddComponent<FurnitureRemovalHandler>();
+            }
+
+            // Grid Entity Manager (attaches health/actor components on placement)
+            if (FindObjectOfType<GridEntityManager>() == null)
+            {
+                GameObject gemObj = new GameObject("GridEntityManager");
+                gemObj.AddComponent<GridEntityManager>();
             }
 
             Debug.Log("[CafeSceneSetupV2] Furniture systems initialized");

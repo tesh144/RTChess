@@ -17,6 +17,9 @@ MonoBehaviour:
     type: 0
     isFunctional: 0
     isWalkable: 0
+    isActive: 0
+    hp: 300
+    attackPower: 0
     drawWeight: 1
     gridSize: {x: 0, y: 0}
     visualScale: 0
@@ -26,6 +29,9 @@ MonoBehaviour:
     type: 0
     isFunctional: 0
     isWalkable: 0
+    isActive: 0
+    hp: 5
+    attackPower: 0
     drawWeight: 1
     gridSize: {x: 0, y: 0}
     visualScale: 0
@@ -35,6 +41,9 @@ MonoBehaviour:
     type: 0
     isFunctional: 0
     isWalkable: 0
+    isActive: 0
+    hp: 5
+    attackPower: 0
     drawWeight: 1
     gridSize: {x: 0, y: 0}
     visualScale: 0
@@ -44,6 +53,9 @@ MonoBehaviour:
     type: 0
     isFunctional: 0
     isWalkable: 0
+    isActive: 0
+    hp: 5
+    attackPower: 0
     drawWeight: 0
     gridSize: {x: 0, y: 0}
     visualScale: 0
@@ -53,6 +65,9 @@ MonoBehaviour:
     type: 0
     isFunctional: 0
     isWalkable: 0
+    isActive: 0
+    hp: 5
+    attackPower: 0
     drawWeight: 0
     gridSize: {x: 0, y: 0}
     visualScale: 0
