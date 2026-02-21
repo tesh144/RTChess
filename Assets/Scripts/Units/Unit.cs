@@ -71,7 +71,6 @@ namespace ClockworkGrid
         private float rotationElapsed;
 
         // Cached components
-        private PlacementCooldown placementCooldown;
         private Animator animator;
         private AudioSource audioSource;
 
@@ -169,15 +168,6 @@ namespace ClockworkGrid
 
             // Debug logging
             Debug.Log($"[Unit {gameObject.name}] OnIntervalTick called - Interval: {intervalCount}, Multiplier: {attackIntervalMultiplier}, Team: {team}");
-
-            // Check for placement cooldown (cached for performance)
-            if (placementCooldown == null)
-                placementCooldown = GetComponent<PlacementCooldown>();
-            if (placementCooldown != null && placementCooldown.IsOnCooldown)
-            {
-                Debug.Log($"[Unit {gameObject.name}] Skipping - on cooldown");
-                return; // Skip all actions while on cooldown
-            }
 
             // Only rotate on intervals that match our multiplier
             if (intervalCount % attackIntervalMultiplier != 0)

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using LittleCafe;
 
 namespace ClockworkGrid
 {
@@ -17,6 +18,7 @@ namespace ClockworkGrid
         private TextMeshProUGUI instructionsText;
         private bool isDebugMode = false;
         private bool isPanelVisible = false;
+        private TextMeshProUGUI connectionsButtonText;
 
         public bool IsDebugModeActive => isDebugMode;
 
@@ -39,7 +41,7 @@ namespace ClockworkGrid
             panelRect.anchorMax = new Vector2(1f, 1f);
             panelRect.pivot = new Vector2(1f, 1f);
             panelRect.anchoredPosition = new Vector2(-20f, -80f); // Below token display
-            panelRect.sizeDelta = new Vector2(280f, 180f);
+            panelRect.sizeDelta = new Vector2(280f, 230f);
 
             // Background
             Image panelBg = debugPanel.AddComponent<Image>();
@@ -67,6 +69,9 @@ namespace ClockworkGrid
 
             // Token adjustment controls
             CreateTokenControls();
+
+            // Furniture debug connections toggle
+            CreateConnectionsToggle();
 
             // Instructions
             CreateInstructions();
@@ -181,6 +186,65 @@ namespace ClockworkGrid
             text.color = Color.white;
             text.alignment = TextAlignmentOptions.Center;
             text.fontStyle = FontStyles.Bold;
+        }
+
+        private void CreateConnectionsToggle()
+        {
+            GameObject buttonObj = new GameObject("ConnectionsToggle");
+            buttonObj.transform.SetParent(debugPanel.transform, false);
+
+            RectTransform buttonRect = buttonObj.AddComponent<RectTransform>();
+            buttonRect.anchorMin = new Vector2(0.5f, 1f);
+            buttonRect.anchorMax = new Vector2(0.5f, 1f);
+            buttonRect.pivot = new Vector2(0.5f, 1f);
+            buttonRect.anchoredPosition = new Vector2(0f, -125f);
+            buttonRect.sizeDelta = new Vector2(220f, 30f);
+
+            Image buttonBg = buttonObj.AddComponent<Image>();
+            buttonBg.color = new Color(0.2f, 0.25f, 0.4f, 1f);
+
+            Button btn = buttonObj.AddComponent<Button>();
+            btn.targetGraphic = buttonBg;
+            btn.onClick.AddListener(ToggleConnectionsVisualizer);
+
+            // Button text
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(buttonObj.transform, false);
+            RectTransform textRect = textObj.AddComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+
+            connectionsButtonText = textObj.AddComponent<TextMeshProUGUI>();
+            connectionsButtonText.fontSize = 14;
+            connectionsButtonText.color = Color.white;
+            connectionsButtonText.alignment = TextAlignmentOptions.Center;
+            connectionsButtonText.fontStyle = FontStyles.Bold;
+            UpdateConnectionsButtonText();
+        }
+
+        private void ToggleConnectionsVisualizer()
+        {
+            FurnitureConnectionDebugVisualizer vis = FurnitureConnectionDebugVisualizer.Instance;
+            if (vis != null)
+            {
+                vis.Toggle();
+                UpdateConnectionsButtonText();
+            }
+            else
+            {
+                Debug.LogWarning("[DebugMenu] FurnitureConnectionDebugVisualizer not found");
+            }
+        }
+
+        private void UpdateConnectionsButtonText()
+        {
+            if (connectionsButtonText == null) return;
+
+            FurnitureConnectionDebugVisualizer vis = FurnitureConnectionDebugVisualizer.Instance;
+            bool isOn = vis != null && vis.IsVisible;
+            connectionsButtonText.text = $"Connections: {(isOn ? "ON" : "OFF")}";
+            connectionsButtonText.color = isOn ? new Color(0.5f, 0.8f, 1f) : Color.gray;
         }
 
         private void CreateInstructions()

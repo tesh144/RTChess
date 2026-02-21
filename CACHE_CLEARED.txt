@@ -1,0 +1,27 @@
+Unity Cache Cleared - Feb 18, 2026
+
+The following caches have been cleared to fix compilation errors:
+- Library/ScriptAssemblies/* (compiled scripts)
+- Library/Bee/* (build system cache)
+- Library/SourceAssetDB (asset database cache)
+
+Deleted files that were causing errors:
+- Assets/Editor/PEPOPrefabGeneratorBatch.cs (deleted)
+- Assets/Editor/PEPOPrefabGeneratorCorrect.cs (deleted)
+- Assets/Editor/RegenerateClean.cs (deleted)
+- Assets/Editor/PEPO*.cs (all deleted)
+
+These scripts had [InitializeOnLoad] attributes that were running code on Unity startup,
+even after the files were deleted. The cached assemblies needed to be cleared.
+
+NEXT STEPS:
+1. Close Unity Editor completely
+2. Reopen Unity Editor
+3. Unity will recompile all scripts fresh (may take 1-2 minutes)
+4. Check console for errors - should be clear now
+5. Try creating FurnitureDatabase:
+   Right-click in Project → Create → LittleCafe → Furniture Database
+
+If you still see errors after reopening:
+- Check the Unity console for specific error messages
+- The log will be in: Logs/Unity_Console_Latest.log

@@ -1,0 +1,66 @@
+# Washing Sink
+# Counter with inset basin
+# Color: Blue/cyan (apply in Unity)
+
+# Counter base vertices
+v -0.5 0.0 -0.5
+v 0.5 0.0 -0.5
+v 0.5 0.0 0.5
+v -0.5 0.0 0.5
+v -0.5 0.9 -0.5
+v 0.5 0.9 -0.5
+v 0.5 0.9 0.5
+v -0.5 0.9 0.5
+
+# Counter top
+v -0.45 0.95 -0.45
+v 0.45 0.95 -0.45
+v 0.45 0.95 0.45
+v -0.45 0.95 0.45
+
+# Sink basin (inset)
+v -0.3 0.95 -0.3
+v 0.3 0.95 -0.3
+v 0.3 0.95 0.3
+v -0.3 0.95 0.3
+v -0.3 0.7 -0.3   # Basin bottom
+v 0.3 0.7 -0.3
+v 0.3 0.7 0.3
+v -0.3 0.7 0.3
+
+# Faucet base
+v -0.05 0.95 -0.35
+v 0.05 0.95 -0.35
+v 0.05 0.95 -0.25
+v -0.05 0.95 -0.25
+
+# Faucet top
+v -0.05 1.2 -0.35
+v 0.05 1.2 -0.35
+v 0.05 1.2 -0.25
+v -0.05 1.2 -0.25
+
+# Counter body faces
+f 1 2 6 5
+f 2 3 7 6
+f 3 4 8 7
+f 4 1 5 8
+f 1 4 3 2
+f 5 6 7 8
+
+# Counter top
+f 9 10 11 12
+
+# Basin inner walls
+f 13 14 18 17
+f 14 15 19 18
+f 15 16 20 19
+f 16 13 17 20
+f 17 18 19 20  # Basin bottom
+
+# Faucet
+f 21 22 26 25
+f 22 23 27 26
+f 23 24 28 27
+f 24 21 25 28
+f 25 26 27 28  # Faucet top

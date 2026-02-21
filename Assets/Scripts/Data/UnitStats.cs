@@ -9,7 +9,16 @@ namespace ClockworkGrid
     {
         Soldier,  // Balanced, common
         Ogre,     // Tank, epic
-        Ninja     // Fast, rare
+        Ninja,    // Fast, rare
+        // LittleCafe equipment (appended to preserve existing serialized values)
+        Table,
+        Chair,
+        Wall,
+        Door,
+        CookingStation,
+        ServingCounter,
+        WashingStation,
+        PlateRack
     }
 
     /// <summary>
@@ -34,6 +43,14 @@ namespace ClockworkGrid
         public string unitName;
         public Rarity rarity;
 
+        [Header("Draw Weight")]
+        [Tooltip("Relative draw likelihood. Default 1. Higher = more likely. Overrides rarity-based weight when > 0.")]
+        public float drawWeight = 0f;  // 0 = use rarity-based weight (backwards compatible)
+
+        [Header("Furniture (LittleCafe)")]
+        [Tooltip("FurnitureType to apply at runtime, overriding whatever the prefab has serialized.")]
+        public int furnitureTypeOverride = -1; // -1 = no override, 0+ = FurnitureType enum value
+
         [Header("Combat Stats")]
         public int maxHP = 10;
         public int attackDamage = 3;
@@ -50,6 +67,9 @@ namespace ClockworkGrid
         [Header("Fog of War - Iteration 7")]
         public int revealRadius = 1; // Cells revealed around unit when placed (Soldier: 1, Ninja: 2, Ogre: 1)
 
+        [Header("Grid Footprint")]
+        public Vector2Int gridSize = new Vector2Int(1, 1); // Cells occupied (e.g. 2x1 table, 2x2 cooking station)
+
         [Header("Visuals")]
         public Color unitColor = Color.blue;
         public Sprite iconSprite; // Icon for dock bar
@@ -60,10 +80,13 @@ namespace ClockworkGrid
         public GameObject enemyPrefab; // Enemy prefab to spawn (falls back to unitPrefab if null)
 
         /// <summary>
-        /// Get rarity weight for draw probability
+        /// Get effective draw weight. Uses drawWeight if set (> 0), otherwise falls back to rarity-based weight.
         /// </summary>
-        public float GetRarityWeight()
+        public float GetEffectiveDrawWeight()
         {
+            if (drawWeight > 0f) return drawWeight;
+
+            // Fallback to rarity-based weights for backwards compatibility
             switch (rarity)
             {
                 case Rarity.Common: return 60f;
@@ -71,6 +94,14 @@ namespace ClockworkGrid
                 case Rarity.Epic: return 5f;
                 default: return 1f;
             }
+        }
+
+        /// <summary>
+        /// Get rarity weight for draw probability (legacy, prefer GetEffectiveDrawWeight)
+        /// </summary>
+        public float GetRarityWeight()
+        {
+            return GetEffectiveDrawWeight();
         }
 
         /// <summary>

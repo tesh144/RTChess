@@ -1,0 +1,65 @@
+# Cooking Stove
+# Counter with stovetop burners
+# Color: Red/dark red (apply in Unity)
+
+# Counter base
+v -0.5 0.0 -0.5
+v 0.5 0.0 -0.5
+v 0.5 0.0 0.5
+v -0.5 0.0 0.5
+v -0.5 0.9 -0.5
+v 0.5 0.9 -0.5
+v 0.5 0.9 0.5
+v -0.5 0.9 0.5
+
+# Stovetop surface
+v -0.45 0.95 -0.45
+v 0.45 0.95 -0.45
+v 0.45 0.95 0.45
+v -0.45 0.95 0.45
+
+# Burner 1 (front-left)
+v -0.3 0.96 -0.1
+v -0.1 0.96 -0.1
+v -0.1 0.96 0.1
+v -0.3 0.96 0.1
+
+# Burner 2 (front-right)
+v 0.1 0.96 -0.1
+v 0.3 0.96 -0.1
+v 0.3 0.96 0.1
+v 0.1 0.96 0.1
+
+# Control knobs (front edge)
+v -0.35 0.95 -0.4
+v -0.3 0.95 -0.4
+v -0.3 1.0 -0.4
+v -0.35 1.0 -0.4
+
+v 0.3 0.95 -0.4
+v 0.35 0.95 -0.4
+v 0.35 1.0 -0.4
+v 0.3 1.0 -0.4
+
+# Counter body
+f 1 2 6 5
+f 2 3 7 6
+f 3 4 8 7
+f 4 1 5 8
+f 1 4 3 2
+f 5 6 7 8
+
+# Stovetop
+f 9 10 11 12
+
+# Burner 1
+f 13 14 15 16
+
+# Burner 2
+f 17 18 19 20
+
+# Knob 1
+f 21 22 23 24
+
+# Knob 2
+f 25 26 27 28

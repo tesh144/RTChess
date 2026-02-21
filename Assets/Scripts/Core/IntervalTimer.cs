@@ -37,7 +37,6 @@ namespace ClockworkGrid
         {
             if (isPaused)
             {
-                Debug.Log("[IntervalTimer] PAUSED - not ticking");
                 return;
             }
 

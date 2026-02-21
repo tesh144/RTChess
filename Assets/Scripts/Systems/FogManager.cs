@@ -168,6 +168,19 @@ namespace ClockworkGrid
         }
 
         /// <summary>
+        /// Get the number of revealed cells.
+        /// </summary>
+        public int GetRevealedCount()
+        {
+            int count = 0;
+            for (int x = 0; x < gridWidth; x++)
+                for (int y = 0; y < gridHeight; y++)
+                    if (revealedCells[x, y])
+                        count++;
+            return count;
+        }
+
+        /// <summary>
         /// Get reveal percentage (for debugging/UI)
         /// </summary>
         public float GetRevealPercentage()

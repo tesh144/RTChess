@@ -4,15 +4,18 @@
 A Unity-based real-time chess-like strategy game with an interval-based clockwork system. Units automatically rotate and attack resources to gather tokens in a turn-based manner synchronized to a global interval timer.
 
 ## Current Status
-**Latest Iteration:** Dock Bar & Draw System (Iteration 4)
-**Last Updated:** 2026-02-07
+**Latest Iteration:** Multi-Cell Placement & Asset Integration (Post Iteration 6)
+**Last Updated:** 2026-02-16
 
 **Key Achievements:**
 - Card-game-style dock bar with drag-and-drop unit placement
-- Linear cost escalation for drawing units (3, 4, 5, 6...)
-- Placement is FREE (tokens spent on drawing)
-- 2-interval cooldown for placed units
-- Debug menu for testing with resource and enemy placement
+- Multi-cell object support (1x1, 2x2, 3x3, etc.)
+- GridObject component for defining object grid sizes
+- Unity Animator-based placement animations (Unit_Appear)
+- PEPO game assets integrated with proper scaling
+- Fog of war system with reveal mechanics
+- Wave-based enemy spawning
+- Debug menu for testing
 
 ## Core Systems
 
@@ -71,11 +74,31 @@ A Unity-based real-time chess-like strategy game with an interval-based clockwor
 - **DragDropHandler**: Manages drag state, ghost preview, and placement validation
 - **DebugMenu**: Top-right debug panel for testing (toggle, token adjustment, placement controls)
 
-### 6. Visual Systems
+### 6. Grid Object System (`Assets/Scripts/Components/GridObject.cs`)
+- Component for marking objects with intended grid size (1x1, 2x2, etc.)
+- Visual gizmos in editor: green = properly scaled, yellow = needs adjustment
+- Multi-cell placement support via `GridManager.PlaceMultiCell()`
+- Grid-centered positioning at (0,0,0) with cell size of 1.5 units
+- Supports custom PEPO game assets and procedurally generated units
+
+### 7. Animation System
+**Placement Animations:**
+- Uses Unity Animator with `PlaceableObject` controller
+- Default animation: `Unit_Appear.anim` (hand-crafted with wobble effect)
+- Plays automatically when objects are instantiated
+- Alternative: `PlacementAnimation.cs` (code-based, currently unused but available for future)
+
+**Combat Animations:**
+- Unit_Attack.anim for attack actions
+- Triggered via Animator parameter "attack"
+
+### 8. Visual Systems
 - Procedural 3D models via `UnitModelBuilder` and `ResourceNodeModelBuilder`
+- PEPO game assets (3D models from asset store)
 - Particle systems for attacks and destruction
 - Grid visualization with cell highlights
 - Billboard floating text
+- Fog of war with fade-out effects
 
 ## Controls
 
@@ -105,13 +128,15 @@ Assets/
 ├── Scripts/
 │   ├── Core/
 │   │   ├── GameSetup.cs          # Scene bootstrap
-│   │   ├── GridManager.cs        # Grid system
+│   │   ├── GridManager.cs        # Grid system (multi-cell support)
 │   │   ├── GridVisualizer.cs     # Grid rendering
 │   │   ├── IntervalTimer.cs      # Global clock
 │   │   ├── ResourceNode.cs       # Harvestable nodes
-│   │   └── ResourceTokenManager.cs # Economy
+│   │   ├── ResourceTokenManager.cs # Economy
+│   │   ├── WaveManager.cs        # Enemy wave spawning
+│   │   └── SFXManager.cs         # Sound effects
 │   ├── Units/
-│   │   ├── Unit.cs               # Base unit class
+│   │   ├── Unit.cs               # Base unit class with combat
 │   │   ├── SoldierUnit.cs        # Soldier implementation
 │   │   ├── Facing.cs             # Direction system
 │   │   ├── UnitModelBuilder.cs   # 3D model generation
@@ -121,12 +146,27 @@ Assets/
 │   │   ├── TokenUI.cs            # Token counter
 │   │   ├── DockBarManager.cs     # Dock bar controller
 │   │   ├── UnitIcon.cs           # Draggable unit icon
-│   │   ├── DragDropHandler.cs    # Drag state and ghost preview
+│   │   ├── DragDropHandler.cs    # Drag state and placement validation
 │   │   └── DebugMenu.cs          # Debug panel with placement controls
 │   ├── Components/
-│   │   └── PlacementCooldown.cs  # 2-interval cooldown component
+│   │   ├── GridObject.cs         # Grid size component (1x1, 2x2, etc.)
+│   │   └── PlacementAnimation.cs # Code-based animation (unused, for future)
+│   ├── Systems/
+│   │   ├── FogManager.cs         # Fog of war system
+│   │   └── RaritySystem.cs       # Unit rarity tiers
+│   ├── Data/
+│   │   ├── UnitStats.cs          # ScriptableObject for unit data
+│   │   └── ResourceNodeStats.cs  # ScriptableObject for resource data
+│   ├── LittleCafe/               # Cafe scene (separate game mode)
+│   │   ├── CafeEquipment.cs
+│   │   └── [other cafe scripts]
 │   └── Debug/
-│       └── CellDebugPlacer.cs    # Click-to-place
+│       └── CellDebugPlacer.cs    # Click-to-place debugging
+├── Prefabs/
+│   ├── PlaceableObject.controller # Animator for placement
+│   ├── Unit_Appear.anim           # Spawn animation
+│   ├── Unit_Attack.anim           # Attack animation
+│   └── [PEPO asset prefabs]
 ```
 
 ## Known Patterns
@@ -167,10 +207,23 @@ Used for managers (prefix with `Instance`):
 - [ ] Grid size variations
 
 ### Architecture Notes
-- Avoid Unity scene dependencies (use prefabs/procedural generation)
-- All gameplay synced to interval timer (no Update() frame-dependent logic)
-- Visual feedback for all actions (particles, animations, UI)
-- Event-driven design (loose coupling)
+- **Avoid Unity scene dependencies**: Use prefabs and procedural generation
+- **Interval-based gameplay**: All gameplay synced to interval timer (no Update() frame-dependent logic)
+- **Visual feedback**: Particles, animations, and UI for all actions
+- **Event-driven design**: Loose coupling via event systems
+- **Singleton pattern**: Used for managers (GridManager, IntervalTimer, etc.)
+- **Component-based**: GridObject, Unit, CafeEquipment components define behavior
+- **ScriptableObjects**: UnitStats and ResourceNodeStats for data-driven design
+- **Multi-cell support**: Objects can occupy 1x1, 2x2, or larger grid spaces
+- **Animation system**: Unity Animator for placement/combat (extensible via PlacementAnimation.cs for custom code-based animations)
+
+### Design Principles for Future Development
+1. **Grid-centric design**: All objects positioned relative to 1.5-unit grid cells
+2. **Animator-first animations**: Use Unity Animator for visual effects (PlacementAnimation.cs available for special cases)
+3. **Component composition**: Add GridObject to any prefab to make it placeable
+4. **Data-driven balance**: Stats in ScriptableObjects for easy tweaking
+5. **Event subscription**: Subscribe to IntervalTimer.OnIntervalTick for time-based actions
+6. **Multi-scene support**: LittleCafe scene demonstrates separate game modes using same core systems
 
 ## Team Workflow
 - **Main development**: This account (jai)

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Little Cafe - 3D Model Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            height: 100vh;
+        }
+
+        .sidebar {
+            background: white;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .model-list {
+            list-style: none;
+        }
+
+        .model-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .model-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .model-item.active {
+            background: #667eea;
+            color: white;
+            border-color: #5568d3;
+        }
+
+        .model-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .model-color {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+
+        .color-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        .viewer {
+            position: relative;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .control-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            max-width: 400px;
+        }
+
+        .info h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .info-value {
+            color: #6c757d;
+        }
+
+        .instructions {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .instructions strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>🍳 3D Models</h1>
+            <p class="subtitle">Click to view • Drag to rotate</p>
+
+            <ul class="model-list" id="modelList">
+                <li class="model-item active" data-model="counter" data-color="#D4A574">
+                    <div class="model-name">🪵 Kitchen Counter</div>
+                    <div class="model-color">
+                        <span class="color-dot" style="background: #D4A574;"></span>
+                        Wood brown
+                    </div>
+                </li>
+                <li class="model-item" data-model="stove" data-color="#FF6B6B">
+                    <div class="model-name">🔥 Cooking Stove</div>
+                    <div class="model-color">
+                        <span class="color-dot" style="background: #FF6B6B;"></span>
+                        Red
+                    </div>
+                </li>
+                <li class="model-item" data-model="sink" data-color="#6BCBFF">
+                    <div class="model-name">🚰 Washing Sink</div>
+                    <div class="model-color">
+                        <span class="color-dot" style="background: #6BCBFF;"></span>
+                        Cyan blue
+                    </div>
+                </li>
+                <li class="model-item" data-model="pot" data-color="#6C757D">
+                    <div class="model-name">🍲 Cooking Pot</div>
+                    <div class="model-color">
+                        <span class="color-dot" style="background: #6C757D;"></span>
+                        Dark grey
+                    </div>
+                </li>
+                <li class="model-item" data-model="plate_rack" data-color="#FF69B4">
+                    <div class="model-name">🍽️ Plate Rack</div>
+                    <div class="model-color">
+                        <span class="color-dot" style="background: #FF69B4;"></span>
+                        Pink
+                    </div>
+                </li>
+                <li class="model-item" data-model="bin" data-color="#495057">
+                    <div class="model-name">🗑️ Trash Bin</div>
+                    <div class="model-color">
+                        <span class="color-dot" style="background: #495057;"></span>
+                        Dark grey
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="viewer">
+            <canvas id="canvas"></canvas>
+
+            <div class="instructions">
+                <strong>🖱️ Controls:</strong> Left-click drag to rotate • Right-click drag to pan • Scroll to zoom
+            </div>
+
+            <div class="info" id="info">
+                <h2 id="modelTitle">Kitchen Counter</h2>
+                <div class="info-item">
+                    <span class="info-label">File:</span>
+                    <span class="info-value" id="fileName">counter_3d.obj</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Dimensions:</span>
+                    <span class="info-value" id="dimensions">1.0 × 0.95 × 1.0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Grid Size:</span>
+                    <span class="info-value">1×1 unit</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value" style="color: #28a745; font-weight: bold;">✓ Ready for Unity</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Three.js setup
+        const canvas = document.getElementById('canvas');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f0f0);
+
+        const camera = new THREE.PerspectiveCamera(
+            50,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        camera.position.set(2, 2, 2);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(window.innerWidth - 300, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        // Grid helper
+        const gridHelper = new THREE.GridHelper(5, 5, 0x888888, 0xcccccc);
+        scene.add(gridHelper);
+
+        // Mouse controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let rotation = { x: 0, y: 0 };
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
+
+            rotation.y += deltaX * 0.01;
+            rotation.x += deltaY * 0.01;
+
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            camera.position.z += e.deltaY * 0.01;
+            camera.position.z = Math.max(1, Math.min(5, camera.position.z));
+        });
+
+        // Current mesh
+        let currentMesh = null;
+
+        // Model loader
+        const loader = new THREE.OBJLoader();
+
+        function loadModel(modelName, color) {
+            // Remove old mesh
+            if (currentMesh) {
+                scene.remove(currentMesh);
+            }
+
+            // Create material with specified color
+            const material = new THREE.MeshPhongMaterial({
+                color: new THREE.Color(color),
+                flatShading: false,
+            });
+
+            // For demo, create simple geometries (since we can't load external files easily)
+            let geometry;
+
+            if (modelName === 'counter') {
+                const group = new THREE.Group();
+                // Main body
+                const body = new THREE.BoxGeometry(1, 0.9, 1);
+                const bodyMesh = new THREE.Mesh(body, material);
+                bodyMesh.position.y = 0.45;
+                group.add(bodyMesh);
+                // Countertop
+                const top = new THREE.BoxGeometry(0.96, 0.05, 0.96);
+                const topMesh = new THREE.Mesh(top, new THREE.MeshPhongMaterial({
+                    color: new THREE.Color(color).multiplyScalar(1.1)
+                }));
+                topMesh.position.y = 0.925;
+                group.add(topMesh);
+                currentMesh = group;
+            } else if (modelName === 'stove') {
+                const group = new THREE.Group();
+                const body = new THREE.BoxGeometry(1, 0.95, 1);
+                const bodyMesh = new THREE.Mesh(body, material);
+                bodyMesh.position.y = 0.475;
+                group.add(bodyMesh);
+                // Burners
+                const burner1 = new THREE.CylinderGeometry(0.1, 0.1, 0.02);
+                const b1 = new THREE.Mesh(burner1, new THREE.MeshPhongMaterial({ color: 0x333333 }));
+                b1.position.set(-0.2, 0.96, 0);
+                group.add(b1);
+                const b2 = new THREE.Mesh(burner1, new THREE.MeshPhongMaterial({ color: 0x333333 }));
+                b2.position.set(0.2, 0.96, 0);
+                group.add(b2);
+                currentMesh = group;
+            } else if (modelName === 'sink') {
+                const group = new THREE.Group();
+                const body = new THREE.BoxGeometry(1, 0.9, 1);
+                const bodyMesh = new THREE.Mesh(body, material);
+                bodyMesh.position.y = 0.45;
+                group.add(bodyMesh);
+                // Basin
+                const basin = new THREE.BoxGeometry(0.6, 0.2, 0.6);
+                const basinMesh = new THREE.Mesh(basin, new THREE.MeshPhongMaterial({
+                    color: new THREE.Color(color).multiplyScalar(0.8)
+                }));
+                basinMesh.position.y = 0.8;
+                group.add(basinMesh);
+                currentMesh = group;
+            } else if (modelName === 'pot') {
+                const group = new THREE.Group();
+                const body = new THREE.CylinderGeometry(0.15, 0.15, 0.25, 8);
+                const bodyMesh = new THREE.Mesh(body, material);
+                bodyMesh.position.y = 1.085;
+                group.add(bodyMesh);
+                // Handles
+                const handle = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+                const h1 = new THREE.Mesh(handle, material);
+                h1.position.set(-0.2, 1.1, 0);
+                group.add(h1);
+                const h2 = new THREE.Mesh(handle, material);
+                h2.position.set(0.2, 1.1, 0);
+                group.add(h2);
+                currentMesh = group;
+            } else if (modelName === 'plate_rack') {
+                const group = new THREE.Group();
+                const body = new THREE.BoxGeometry(1, 0.15, 1);
+                const bodyMesh = new THREE.Mesh(body, material);
+                bodyMesh.position.y = 0.075;
+                group.add(bodyMesh);
+                // Rim
+                const rim = new THREE.TorusGeometry(0.35, 0.05, 8, 8);
+                const rimMesh = new THREE.Mesh(rim, new THREE.MeshPhongMaterial({
+                    color: new THREE.Color(color).multiplyScalar(1.2)
+                }));
+                rimMesh.rotation.x = Math.PI / 2;
+                rimMesh.position.y = 0.15;
+                group.add(rimMesh);
+                currentMesh = group;
+            } else if (modelName === 'bin') {
+                const group = new THREE.Group();
+                const body = new THREE.CylinderGeometry(0.2, 0.15, 0.5, 8);
+                const bodyMesh = new THREE.Mesh(body, material);
+                bodyMesh.position.y = 0.25;
+                group.add(bodyMesh);
+                // Lid
+                const lid = new THREE.CylinderGeometry(0.22, 0.22, 0.05, 8);
+                const lidMesh = new THREE.Mesh(lid, new THREE.MeshPhongMaterial({
+                    color: new THREE.Color(color).multiplyScalar(1.1)
+                }));
+                lidMesh.position.y = 0.525;
+                group.add(lidMesh);
+                currentMesh = group;
+            }
+
+            scene.add(currentMesh);
+            rotation = { x: 0, y: 0 };
+        }
+
+        // Model list interaction
+        const models = {
+            'counter': { title: 'Kitchen Counter', file: 'counter_3d.obj', dims: '1.0 × 0.95 × 1.0' },
+            'stove': { title: 'Cooking Stove', file: 'stove_3d.obj', dims: '1.0 × 0.95 × 1.0' },
+            'sink': { title: 'Washing Sink', file: 'sink_3d.obj', dims: '1.0 × 0.9 × 1.0' },
+            'pot': { title: 'Cooking Pot', file: 'pot_3d.obj', dims: '0.3 × 0.25 × 0.3' },
+            'plate_rack': { title: 'Plate Rack', file: 'plate_rack_3d.obj', dims: '1.0 × 0.15 × 1.0' },
+            'bin': { title: 'Trash Bin', file: 'bin_3d.obj', dims: '0.4 × 0.5 × 0.4' }
+        };
+
+        document.querySelectorAll('.model-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.model-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                const modelName = item.dataset.model;
+                const color = item.dataset.color;
+                const info = models[modelName];
+
+                document.getElementById('modelTitle').textContent = info.title;
+                document.getElementById('fileName').textContent = info.file;
+                document.getElementById('dimensions').textContent = info.dims;
+
+                loadModel(modelName, color);
+            });
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (currentMesh) {
+                currentMesh.rotation.x = rotation.x;
+                currentMesh.rotation.y = rotation.y;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 300) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 300, window.innerHeight);
+        });
+
+        // Load initial model
+        loadModel('counter', '#D4A574');
+        animate();
+    </script>
+</body>
+</html>

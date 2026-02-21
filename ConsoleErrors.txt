@@ -1,0 +1,3 @@
+[PLAY_MODE] 2026-02-18 22:41:05
+[EXCEPTION] FileNotFoundException: Could not find file '/Users/jai/RTChess/ConsoleOutput.txt'.
+

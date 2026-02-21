@@ -1,0 +1,125 @@
+
+# Little Cafe 3D Models - Visual Preview
+
+## 1. Kitchen Counter (Wood Brown #D4A574)
+```
+     _______________
+    |_______________|  ← Raised countertop (0.05 units tall)
+    |               |
+    |               |  ← Main body (0.9 units tall)
+    |               |
+    |_______________|
+    
+    Width: 1.0 unit
+    Height: 0.95 units total
+    Depth: 1.0 unit
+    
+    ✓ This is a simple box with a slightly raised top surface
+    ✓ Fits perfectly in 1×1 grid cell
+```
+
+## 2. Cooking Stove (Red #FF6B6B)
+```
+     _______________
+    |   O     O    |  ← Two burners (circles)
+    |               |
+    |               |  ← Stove body
+    |               |
+    |_______________|
+    
+    Width: 1.0 unit
+    Height: 0.95 units
+    Depth: 1.0 unit
+    
+    ✓ Box base with two circular burners on top
+    ✓ Fits 1×1 grid cell
+```
+
+## 3. Washing Sink (Cyan Blue #6BCBFF)
+```
+     _______________
+    |  _________   |  
+    | |         |  |  ← Basin (inset)
+    | |_________|  |
+    |       🚰      |  ← Faucet (small)
+    |_______________|
+    
+    Width: 1.0 unit
+    Height: 0.9 units (1.2 with faucet)
+    Depth: 1.0 unit
+    
+    ✓ Counter with rectangular basin cut into top
+    ✓ Small faucet detail on front edge
+```
+
+## 4. Cooking Pot (Dark Grey #6C757D)
+```
+        _____
+       |     |  ← Handles on sides
+      _|     |_
+     |         |
+     |         |  ← Pot body (octagonal cylinder)
+     |_________|
+     
+    Width: 0.3 units
+    Height: 0.25 units
+    Depth: 0.3 units
+    
+    ✓ Small separate object
+    ✓ Sits ON TOP of stove burners
+    ✓ Can be moved independently
+```
+
+## 5. Plate Rack (Pink #FF69B4)
+```
+     _______________
+    |      ( )      |  ← Circular raised rim
+    |_____(   )_____|  
+    
+    Width: 1.0 unit
+    Height: 0.15 units (low profile)
+    Depth: 1.0 unit
+    
+    ✓ Flat platform with circular rim
+    ✓ Plates stack in the center indent
+```
+
+## 6. Trash Bin (Dark Grey #495057)
+```
+         _____
+        |_____|  ← Lid
+       /       \
+      |         |  ← Tapered body
+      |         |
+       \_______/
+       
+    Width: 0.4 units
+    Height: 0.56 units (with lid)
+    Depth: 0.4 units
+    
+    ✓ Smaller than grid cell (0.4×0.4)
+    ✓ Tapered sides (wider at top)
+```
+
+## Summary
+
+ALL MODELS:
+- ✓ Simple geometric shapes (boxes, cylinders)
+- ✓ Low polygon count (15-35 polygons each)
+- ✓ Designed for unlit shader with solid colors
+- ✓ Sized to fit or sit on 1×1 grid units
+- ✓ Ready to import into Unity as .obj files
+
+IMPORT TO UNITY:
+1. Drag .obj files into Unity Project panel
+2. Create Unlit materials with the colors above
+3. Assign materials to imported models
+4. Use as prefabs in your equipment system
+
+FILES READY:
+- counter_3d.obj
+- stove_3d.obj  
+- sink_3d.obj
+- pot_3d.obj
+- plate_rack_3d.obj
+- bin_3d.obj

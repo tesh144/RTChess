@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Little Cafe - 3D Models Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .note {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .note h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .model-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .model-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .model-visual {
+            width: 100%;
+            height: 200px;
+            background: #e9ecef;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid #dee2e6;
+        }
+
+        .model-shape {
+            width: 120px;
+            height: 140px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-20deg) rotateY(25deg);
+        }
+
+        /* Counter */
+        .counter-shape {
+            background: linear-gradient(135deg, #d4a574 0%, #b8935c 100%);
+            border: 2px solid #8b6f47;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .counter-shape::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -5px;
+            right: -5px;
+            height: 15px;
+            background: #e6c29a;
+            border: 2px solid #8b6f47;
+        }
+
+        /* Sink */
+        .sink-shape {
+            background: linear-gradient(135deg, #6bcbff 0%, #4a9fd8 100%);
+            border: 2px solid #3a7fa8;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .sink-shape::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 25%;
+            width: 50%;
+            height: 40%;
+            background: #4a9fd8;
+            border: 2px solid #2a5f78;
+            border-radius: 5px;
+        }
+
+        .sink-shape::after {
+            content: '🚰';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+        }
+
+        /* Stove */
+        .stove-shape {
+            background: linear-gradient(135deg, #ff6b6b 0%, #d65050 100%);
+            border: 2px solid #a63d3d;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .stove-shape::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 20%;
+            width: 25%;
+            height: 25%;
+            background: #333;
+            border-radius: 50%;
+        }
+
+        .stove-shape::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            right: 20%;
+            width: 25%;
+            height: 25%;
+            background: #333;
+            border-radius: 50%;
+        }
+
+        /* Pot */
+        .pot-shape {
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            border: 2px solid #343a40;
+            border-radius: 10px 10px 5px 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .pot-shape::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: -15px;
+            width: 10px;
+            height: 30px;
+            background: #495057;
+            border: 2px solid #343a40;
+            border-radius: 3px;
+        }
+
+        .pot-shape::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: -15px;
+            width: 10px;
+            height: 30px;
+            background: #495057;
+            border: 2px solid #343a40;
+            border-radius: 3px;
+        }
+
+        /* Plate Rack */
+        .rack-shape {
+            background: linear-gradient(135deg, #ff69b4 0%, #d4508c 100%);
+            border: 2px solid #a33d6f;
+            height: 50px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .rack-shape::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: #e888c1;
+            border: 3px solid #a33d6f;
+            border-radius: 50%;
+        }
+
+        /* Bin */
+        .bin-shape {
+            width: 80px;
+            height: 100px;
+            background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+            border: 2px solid #212529;
+            clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .bin-shape::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 10%;
+            right: 10%;
+            height: 10px;
+            background: #6c757d;
+            border: 2px solid #212529;
+        }
+
+        .model-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .model-specs {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .spec-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .spec-label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .spec-value {
+            color: #6c757d;
+        }
+
+        .color-swatch {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #333;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+
+        .usage-section {
+            background: #e7f3ff;
+            border: 2px solid #2196f3;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .usage-section h3 {
+            color: #1565c0;
+            margin-bottom: 15px;
+        }
+
+        .usage-steps {
+            list-style: none;
+            counter-reset: step;
+        }
+
+        .usage-steps li {
+            counter-increment: step;
+            margin-bottom: 15px;
+            padding-left: 40px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .usage-steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 28px;
+            height: 28px;
+            background: #2196f3;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍳 Little Cafe - 3D Models</h1>
+        <p class="subtitle">Simple geometric equipment models for Phase 1</p>
+
+        <div class="note">
+            <h3>🎨 Rendering Style</h3>
+            <p><strong>Shader:</strong> Unlit with simple solid color textures (like your reference image)</p>
+            <p><strong>Style:</strong> Low-poly geometric, Overcooked-inspired</p>
+            <p><strong>Grid Size:</strong> Each model fits in 1x1 grid unit (except extends upward)</p>
+            <p><strong>Format:</strong> .obj files (import into Unity, assign materials)</p>
+        </div>
+
+        <div class="models-grid">
+            <!-- Counter -->
+            <div class="model-card">
+                <div class="model-title">🪵 Kitchen Counter</div>
+                <div class="model-visual">
+                    <div class="model-shape counter-shape"></div>
+                </div>
+                <p class="model-description">
+                    Basic kitchen counter with slightly raised countertop surface. Modular design connects seamlessly with other counters.
+                </p>
+                <div class="model-specs">
+                    <div class="spec-item">
+                        <span class="spec-label">File:</span>
+                        <span class="spec-value"><code>counter.obj</code></span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Color:</span>
+                        <span class="spec-value">
+                            Wood brown #D4A574
+                            <span class="color-swatch" style="background: #D4A574;"></span>
+                        </span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Polygons:</span>
+                        <span class="spec-value">~20</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Height:</span>
+                        <span class="spec-value">0.95 units</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sink -->
+            <div class="model-card">
+                <div class="model-title">🚰 Washing Sink</div>
+                <div class="model-visual">
+                    <div class="model-shape sink-shape"></div>
+                </div>
+                <p class="model-description">
+                    Counter with inset basin for washing dirty plates. Includes simple faucet detail on front edge.
+                </p>
+                <div class="model-specs">
+                    <div class="spec-item">
+                        <span class="spec-label">File:</span>
+                        <span class="spec-value"><code>sink.obj</code></span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Color:</span>
+                        <span class="spec-value">
+                            Cyan blue #6BCBFF
+                            <span class="color-swatch" style="background: #6BCBFF;"></span>
+                        </span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Polygons:</span>
+                        <span class="spec-value">~35</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Height:</span>
+                        <span class="spec-value">1.2 units (with faucet)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stove -->
+            <div class="model-card">
+                <div class="model-title">🔥 Cooking Stove</div>
+                <div class="model-visual">
+                    <div class="model-shape stove-shape"></div>
+                </div>
+                <p class="model-description">
+                    Stovetop with two burners and control knobs on front edge. Used for cooking dishes.
+                </p>
+                <div class="model-specs">
+                    <div class="spec-item">
+                        <span class="spec-label">File:</span>
+                        <span class="spec-value"><code>stove.obj</code></span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Color:</span>
+                        <span class="spec-value">
+                            Red #FF6B6B
+                            <span class="color-swatch" style="background: #FF6B6B;"></span>
+                        </span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Polygons:</span>
+                        <span class="spec-value">~25</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Height:</span>
+                        <span class="spec-value">1.0 units (with knobs)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pot -->
+            <div class="model-card">
+                <div class="model-title">🍲 Cooking Pot</div>
+                <div class="model-visual">
+                    <div class="model-shape pot-shape"></div>
+                </div>
+                <p class="model-description">
+                    Separate pot that sits on stove burners. Octagonal body with two handles. Can be moved independently.
+                </p>
+                <div class="model-specs">
+                    <div class="spec-item">
+                        <span class="spec-label">File:</span>
+                        <span class="spec-value"><code>pot.obj</code></span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Color:</span>
+                        <span class="spec-value">
+                            Dark grey #6C757D
+                            <span class="color-swatch" style="background: #6C757D;"></span>
+                        </span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Polygons:</span>
+                        <span class="spec-value">~20</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Height:</span>
+                        <span class="spec-value">0.24 units (standalone)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plate Rack -->
+            <div class="model-card">
+                <div class="model-title">🍽️ Plate Rack</div>
+                <div class="model-visual">
+                    <div class="model-shape rack-shape"></div>
+                </div>
+                <p class="model-description">
+                    Low platform with circular raised rim for storing clean plates. Starting point for the plate-first cooking system.
+                </p>
+                <div class="model-specs">
+                    <div class="spec-item">
+                        <span class="spec-label">File:</span>
+                        <span class="spec-value"><code>plate_rack.obj</code></span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Color:</span>
+                        <span class="spec-value">
+                            Pink #FF69B4
+                            <span class="color-swatch" style="background: #FF69B4;"></span>
+                        </span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Polygons:</span>
+                        <span class="spec-value">~30</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Height:</span>
+                        <span class="spec-value">0.15 units (low profile)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bin -->
+            <div class="model-card">
+                <div class="model-title">🗑️ Trash Bin</div>
+                <div class="model-visual">
+                    <div class="model-shape bin-shape"></div>
+                </div>
+                <p class="model-description">
+                    Simple trash bin with tapered sides and lid. For disposing of ruined dishes or scraps.
+                </p>
+                <div class="model-specs">
+                    <div class="spec-item">
+                        <span class="spec-label">File:</span>
+                        <span class="spec-value"><code>bin.obj</code></span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Color:</span>
+                        <span class="spec-value">
+                            Dark grey #495057
+                            <span class="color-swatch" style="background: #495057;"></span>
+                        </span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Polygons:</span>
+                        <span class="spec-value">~18</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Height:</span>
+                        <span class="spec-value">0.56 units</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="usage-section">
+            <h3>📥 How to Use in Unity</h3>
+            <ul class="usage-steps">
+                <li>
+                    <strong>Import Models:</strong> Drag all <code>.obj</code> files from <code>Assets/Docs/LittleCafe/Models/</code> into Unity. They'll appear in your Project panel.
+                </li>
+                <li>
+                    <strong>Create Materials:</strong> Create unlit materials with solid colors:
+                    <br>→ Right-click in Project → Create → Material
+                    <br>→ Set Shader to "Unlit/Color"
+                    <br>→ Set colors from specs above
+                </li>
+                <li>
+                    <strong>Assign Materials:</strong> Drag each .obj into Scene, then drag the matching material onto the model in the Inspector.
+                </li>
+                <li>
+                    <strong>Create Prefabs:</strong> Drag the models from Hierarchy into <code>Assets/LittleCafe/Prefabs/Equipment/</code> to create prefabs.
+                </li>
+                <li>
+                    <strong>Scale Check:</strong> Models are designed for 1x1 grid units. Verify they align with your GridManager tiles.
+                </li>
+                <li>
+                    <strong>Replace Cubes:</strong> Update your Equipment classes to use these prefabs instead of procedural cubes.
+                </li>
+            </ul>
+        </div>
+
+        <div class="note" style="margin-top: 30px; background: #d4edda; border-color: #28a745;">
+            <h3 style="color: #155724;">✨ Next Steps</h3>
+            <p>If you like these models, I can:</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>Create tables and chairs (Phase 3)</li>
+                <li>Create wall and door pieces</li>
+                <li>Create customer and staff character models</li>
+                <li>Create plate, food, and prop models</li>
+                <li>Adjust any model details you want changed</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

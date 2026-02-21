@@ -160,13 +160,18 @@ namespace ClockworkGrid
         /// </summary>
         public Vector3 GridToWorldPosition(int gridX, int gridY)
         {
-            float offsetX = (gridWidth - 1) * cellSize * 0.5f;
-            float offsetZ = (gridHeight - 1) * cellSize * 0.5f;
+            // Center grid so that one cell is centered at (0,0,0)
+            // For a 5x5 grid, cell [2,2] will be at origin
+            int centerX = gridWidth / 2;
+            int centerZ = gridHeight / 2;
+            float offsetX = centerX * cellSize;
+            float offsetZ = centerZ * cellSize;
 
+            Vector3 origin = transform.position;
             return new Vector3(
-                gridX * cellSize - offsetX,
-                0f,
-                gridY * cellSize - offsetZ
+                origin.x + gridX * cellSize - offsetX,
+                origin.y,
+                origin.z + gridY * cellSize - offsetZ
             );
         }
 
@@ -175,11 +180,15 @@ namespace ClockworkGrid
         /// </summary>
         public bool WorldToGridPosition(Vector3 worldPos, out int gridX, out int gridY)
         {
-            float offsetX = (gridWidth - 1) * cellSize * 0.5f;
-            float offsetZ = (gridHeight - 1) * cellSize * 0.5f;
+            // Match the centering logic from GridToWorldPosition
+            int centerX = gridWidth / 2;
+            int centerZ = gridHeight / 2;
+            float offsetX = centerX * cellSize;
+            float offsetZ = centerZ * cellSize;
 
-            gridX = Mathf.RoundToInt((worldPos.x + offsetX) / cellSize);
-            gridY = Mathf.RoundToInt((worldPos.z + offsetZ) / cellSize);
+            Vector3 origin = transform.position;
+            gridX = Mathf.RoundToInt((worldPos.x - origin.x + offsetX) / cellSize);
+            gridY = Mathf.RoundToInt((worldPos.z - origin.z + offsetZ) / cellSize);
 
             return IsValidCell(gridX, gridY);
         }
@@ -240,6 +249,19 @@ namespace ClockworkGrid
         }
 
         /// <summary>
+        /// Check whether a tile's fog has been revealed.
+        /// Works universally — no dependency on FogManager.
+        /// </summary>
+        public bool IsTileRevealed(int gridX, int gridY)
+        {
+            if (!IsValidCell(gridX, gridY) || gridTiles == null) return false;
+            GameObject tile = gridTiles[gridX, gridY];
+            if (tile == null) return false;
+            TileFog tileFog = tile.GetComponent<TileFog>();
+            return tileFog == null || tileFog.IsRevealed;
+        }
+
+        /// <summary>
         /// Handler for FogManager.OnCellRevealed event.
         /// </summary>
         private void OnFogCellRevealed(int x, int y)
@@ -262,6 +284,75 @@ namespace ClockworkGrid
 
             cellStates[gridX, gridY] = CellState.Empty;
             cellOccupants[gridX, gridY] = null;
+        }
+
+        /// <summary>
+        /// Get the GameObject occupying a cell, or null if empty.
+        /// </summary>
+        public GameObject GetOccupant(int gridX, int gridY)
+        {
+            if (!IsValidCell(gridX, gridY)) return null;
+            return cellOccupants[gridX, gridY];
+        }
+
+        // --- Multi-Cell Helpers ---
+
+        /// <summary>
+        /// Check if ALL cells in a rectangular footprint are valid, empty, and revealed.
+        /// </summary>
+        public bool AreAllCellsAvailable(int anchorX, int anchorY, Vector2Int size)
+        {
+            for (int dx = 0; dx < size.x; dx++)
+            {
+                for (int dy = 0; dy < size.y; dy++)
+                {
+                    int cx = anchorX + dx;
+                    int cy = anchorY + dy;
+                    if (!IsCellEmpty(cx, cy)) return false;
+                    if (!IsTileRevealed(cx, cy)) return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Place a unit across multiple cells. All cells point to the same GameObject.
+        /// Returns false without modifying state if any cell is occupied.
+        /// </summary>
+        public bool PlaceMultiCell(int anchorX, int anchorY, Vector2Int size, GameObject unit, CellState state)
+        {
+            // Pre-validate all cells
+            for (int dx = 0; dx < size.x; dx++)
+                for (int dy = 0; dy < size.y; dy++)
+                    if (!IsCellEmpty(anchorX + dx, anchorY + dy)) return false;
+
+            // Place across all cells
+            for (int dx = 0; dx < size.x; dx++)
+                for (int dy = 0; dy < size.y; dy++)
+                    PlaceUnit(anchorX + dx, anchorY + dy, unit, state);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Remove a unit from all cells in a rectangular footprint.
+        /// </summary>
+        public void RemoveMultiCell(int anchorX, int anchorY, Vector2Int size)
+        {
+            for (int dx = 0; dx < size.x; dx++)
+                for (int dy = 0; dy < size.y; dy++)
+                    RemoveUnit(anchorX + dx, anchorY + dy);
+        }
+
+        /// <summary>
+        /// Get the world-space center of a multi-cell footprint.
+        /// For 1x1 this returns the same as GridToWorldPosition.
+        /// </summary>
+        public Vector3 GetFootprintCenter(int anchorX, int anchorY, Vector2Int size)
+        {
+            Vector3 anchor = GridToWorldPosition(anchorX, anchorY);
+            Vector3 far = GridToWorldPosition(anchorX + size.x - 1, anchorY + size.y - 1);
+            return (anchor + far) * 0.5f;
         }
 
         /// <summary>

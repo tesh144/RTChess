@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport content="width=device-width, initial-scale=1.0">
+    <title>Little Cafe - Design Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+
+        /* GRID SYSTEM */
+        .grid-container {
+            margin: 30px 0;
+        }
+
+        .grid-title {
+            font-size: 1.8em;
+            color: #764ba2;
+            margin-bottom: 20px;
+            padding-left: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .cafe-grid {
+            display: grid;
+            grid-template-columns: repeat(15, 50px);
+            grid-template-rows: repeat(15, 50px);
+            gap: 1px;
+            background: #999;
+            padding: 1px;
+            border-radius: 10px;
+            margin: 20px auto;
+            width: fit-content;
+            border: 3px solid #333;
+        }
+
+        .grid-cell {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            position: relative;
+        }
+
+        /* Zone backgrounds */
+        .kitchen-zone { background: #ffddb3; }
+        .dining-zone { background: #caffbf; }
+
+        /* Element types */
+        .wall { background: #2d2d2d; }
+        .door { background: #ffd93d; font-size: 20px; }
+        .cooking-station { background: #ff6b6b; color: white; font-size: 18px; }
+        .counter { background: #4fb05d; color: white; font-size: 18px; }
+        .washing-station { background: #6bcbff; font-size: 20px; }
+        .plate-rack { background: #ff69b4; color: white; font-size: 20px; }
+        .table { background: #8b5cf6; color: white; font-size: 16px; }
+        .chair { background: #90ee90; font-size: 28px; color: #333; }
+        .chef-queue { background: #ff8533; font-size: 18px; }
+        .waiter-queue { background: #2dd4bf; font-size: 18px; }
+        .customer-queue { background: #c4b5fd; font-size: 18px; }
+
+        /* LEGEND */
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 30px 0;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .legend-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .legend-text {
+            font-size: 14px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        /* SERVICE PIPELINE */
+        .pipeline-section {
+            margin: 40px 0;
+            padding: 30px;
+            background: linear-gradient(to bottom, #fef3c7, #fde68a);
+            border-radius: 15px;
+            border: 3px solid #f59e0b;
+        }
+
+        .pipeline-title {
+            font-size: 2em;
+            color: #92400e;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .pipeline-steps {
+            display: grid;
+            gap: 15px;
+        }
+
+        .pipeline-step {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #f59e0b;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .pipeline-step:hover {
+            transform: translateX(5px);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 35px;
+            height: 35px;
+            background: #f59e0b;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .step-title {
+            font-weight: bold;
+            color: #92400e;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .step-description {
+            color: #666;
+            margin-left: 50px;
+            line-height: 1.6;
+        }
+
+        .interaction-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Little Cafe</h1>
+        <p class="subtitle">Complete Game Design Document</p>
+
+        <!-- CAFE LAYOUT GRID -->
+        <div class="grid-container">
+            <h2 class="grid-title">1. Cafe Layout (15x15 Grid)</h2>
+            <div class="cafe-grid" id="cafeGrid"></div>
+        </div>
+
+        <!-- LEGEND -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color kitchen-zone"></div>
+                <span class="legend-text">Kitchen Zone</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color dining-zone"></div>
+                <span class="legend-text">Dining Zone</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color wall">⬛</div>
+                <span class="legend-text">Wall</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color door">🚪</div>
+                <span class="legend-text">Door</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color cooking-station">🍳</div>
+                <span class="legend-text">Cooking Station</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color counter"></div>
+                <span class="legend-text">Serving Counter</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color washing-station">🚰</div>
+                <span class="legend-text">Washing Station</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color plate-rack">🍽️</div>
+                <span class="legend-text">Plate Rack</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color table">T1</div>
+                <span class="legend-text">Table</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color chair">→</div>
+                <span class="legend-text">Chair</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color chef-queue">👨‍🍳</div>
+                <span class="legend-text">Chef Queue</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color waiter-queue">🧑‍💼</div>
+                <span class="legend-text">Waiter Queue</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color customer-queue">👥</div>
+                <span class="legend-text">Customer Queue</span>
+            </div>
+        </div>
+
+        <!-- SERVICE PIPELINE -->
+        <div class="pipeline-section">
+            <h2 class="pipeline-title">⚡ 13-Step Service Pipeline</h2>
+            <div class="pipeline-steps">
+                <div class="pipeline-step">
+                    <span class="step-number">1</span>
+                    <div class="step-title">Batch Customer Entry <span class="interaction-badge">TAP OUTSIDE</span></div>
+                    <div class="step-description">Player taps outside queue. All waiting customers enter and form line at once.</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">2</span>
+                    <div class="step-title">Customer Enters Restaurant <span class="interaction-badge">AUTO</span></div>
+                    <div class="step-description">First customer auto-walks through door into restaurant.</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">3</span>
+                    <div class="step-title">Waiter Seats Customer <span class="interaction-badge">TAP CUSTOMER</span></div>
+                    <div class="step-description">Player taps customer. Nearest waiter seats them at empty table.</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">4</span>
+                    <div class="step-title">Take Order <span class="interaction-badge">TAP SEATED CUSTOMER</span></div>
+                    <div class="step-description">Player taps seated customer. Waiter takes order, order appears above customer.</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">5</span>
+                    <div class="step-title">Chef Gets Clean Plate <span class="interaction-badge">TAP ORDER</span></div>
+                    <div class="step-description">Player taps order. Nearest chef walks to plate rack, picks up clean plate (plate-first cooking).</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">6</span>
+                    <div class="step-title">Chef Cooks Dish <span class="interaction-badge">AUTO</span></div>
+                    <div class="step-description">Chef auto-walks to cooking station with plate and cooks ordered dish.</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">7</span>
+                    <div class="step-title">Chef Delivers to Counter <span class="interaction-badge">AUTO</span></div>
+                    <div class="step-description">Chef manually carries completed dish from cooking station to serving counter (no teleport).</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">8</span>
+                    <div class="step-title">Waiter Picks Up Dish <span class="interaction-badge">TAP DISH</span></div>
+                    <div class="step-description">Player taps completed dish on counter. Nearest waiter picks it up.</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">9</span>
+                    <div class="step-title">Waiter Serves Customer <span class="interaction-badge">AUTO</span></div>
+                    <div class="step-description">Waiter auto-walks to customer's table and serves dish.</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">10</span>
+                    <div class="step-title">Customer Eats & Auto-Pays <span class="interaction-badge">AUTO</span></div>
+                    <div class="step-description">Customer eats dish (timer). Payment happens automatically when done eating. Customer leaves, dirty plate remains on table.</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">11</span>
+                    <div class="step-title">Waiter Collects Dirty Plates <span class="interaction-badge">TAP DIRTY PLATE</span></div>
+                    <div class="step-description">Player taps dirty plate. Waiter collects it. Can stack multiple dirty plates by tapping multiple tables before washing.</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">12</span>
+                    <div class="step-title">Waiter Takes Plates to Sink <span class="interaction-badge">AUTO</span></div>
+                    <div class="step-description">Waiter auto-walks to washing station with dirty plate stack.</div>
+                </div>
+
+                <div class="pipeline-step">
+                    <span class="step-number">13</span>
+                    <div class="step-title">Waiter Washes Plates <span class="interaction-badge">TAP WASHING STATION</span></div>
+                    <div class="step-description">Player taps washing station. Waiter washes ONE plate at a time (even if carrying multiple). Clean plate returns to plate rack. Repeat taps for each additional dirty plate.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const grid = document.getElementById('cafeGrid');
+        const gridSize = 15;
+
+        // Complete layout based on user's exact design
+        const layout = [];
+
+        // Initialize empty grid with zones
+        for (let row = 0; row < gridSize; row++) {
+            layout[row] = [];
+            for (let col = 0; col < gridSize; col++) {
+                // Default zones
+                if (row <= 4) {
+                    layout[row][col] = { class: 'kitchen-zone', content: '' };
+                } else if (row >= 6 && row <= 11) {
+                    layout[row][col] = { class: 'dining-zone', content: '' };
+                } else {
+                    layout[row][col] = { class: '', content: '' };
+                }
+            }
+        }
+
+        // ROW 0-4: Kitchen area with equipment
+        // Chef Queue (column 0, rows 0-4)
+        for (let row = 0; row <= 4; row++) {
+            layout[row][0] = { class: 'chef-queue', content: '👨‍🍳' };
+        }
+
+        // Plate Rack (column 11, row 1) - FIXED POSITION
+        layout[1][11] = { class: 'plate-rack', content: '🍽️' };
+
+        // Cooking Stations (column 5, rows 2-4) - FIXED ROWS
+        layout[2][5] = { class: 'cooking-station', content: '🍳Q' };
+        layout[3][5] = { class: 'cooking-station', content: '🍳Q' };
+        layout[4][5] = { class: 'cooking-station', content: '🍳Q' };
+
+        // Serving Counter (columns 6-9, row 2) with GAP and EMOJI
+        layout[2][7] = { class: 'counter', content: '🍴' };
+        layout[2][8] = { class: 'counter', content: '🍴' };
+        layout[2][9] = { class: 'counter', content: '🍴' };
+        layout[2][10] = { class: 'counter', content: '🍴' };
+
+        // Washing Station (column 11, row 2)
+        layout[2][11] = { class: 'washing-station', content: '🚰' };
+
+        // ROW 5: Wall with doors
+        for (let col = 0; col < gridSize; col++) {
+            if (col === 7 || col === 8) {
+                layout[5][col] = { class: 'door', content: '🚪' };
+            } else {
+                layout[5][col] = { class: 'wall', content: '⬛' };
+            }
+        }
+
+        // ROW 6: First dining row with table and chairs
+        layout[6][0] = { class: 'table', content: 'T1' };
+        layout[6][1] = { class: 'chair', content: '←' };
+        layout[6][14] = { class: 'waiter-queue', content: '🧑‍💼' };
+
+        // ROW 7: Chair at left and table clusters - FIXED CHAIR POSITION
+        layout[7][0] = { class: 'chair', content: '↑' };
+
+        // ROWS 7-9: Three rows of table clusters
+        for (let row = 7; row <= 9; row++) {
+            // First table cluster (columns 2-4)
+            layout[row][2] = { class: 'chair', content: '→' };
+            layout[row][3] = { class: 'table', content: 'T1' };
+            layout[row][4] = { class: 'chair', content: '←' };
+
+            // Second table cluster (columns 6-8)
+            layout[row][6] = { class: 'chair', content: '→' };
+            layout[row][7] = { class: 'table', content: 'T1' };
+            layout[row][8] = { class: 'chair', content: '←' };
+
+            // Third table cluster (columns 10-12)
+            layout[row][10] = { class: 'chair', content: '→' };
+            layout[row][11] = { class: 'table', content: 'T1' };
+            layout[row][12] = { class: 'chair', content: '←' };
+
+            // Waiter Queue
+            layout[row][14] = { class: 'waiter-queue', content: '🧑‍💼' };
+        }
+
+        // ROW 10: Chair below first table
+        layout[10][1] = { class: 'chair', content: '↓' };
+        layout[10][14] = { class: 'waiter-queue', content: '🧑‍💼' };
+
+        // ROW 11: Fourth table with chair
+        layout[11][0] = { class: 'table', content: 'T1' };
+        layout[11][1] = { class: 'chair', content: '←' };
+        layout[11][14] = { class: 'waiter-queue', content: '🧑‍💼' };
+
+        // ROW 12: Bottom wall with doors
+        for (let col = 0; col < gridSize; col++) {
+            if (col === 7 || col === 8) {
+                layout[12][col] = { class: 'door', content: '🚪' };
+            } else {
+                layout[12][col] = { class: 'wall', content: '⬛' };
+            }
+        }
+
+        // ROW 13: Customer Queue
+        for (let col = 1; col <= 5; col++) {
+            layout[13][col] = { class: 'customer-queue', content: '👥' };
+        }
+
+        // Render grid
+        for (let row = 0; row < gridSize; row++) {
+            for (let col = 0; col < gridSize; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell ' + layout[row][col].class;
+                cell.textContent = layout[row][col].content;
+                grid.appendChild(cell);
+            }
+        }
+    </script>
+</body>
+</html>

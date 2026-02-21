@@ -7,7 +7,7 @@ namespace ClockworkGrid
     /// Supports zoom (scroll), auto-rotation, smooth transitions,
     /// and public API for gameplay-driven camera effects.
     /// </summary>
-    public class CameraController : MonoBehaviour
+    public class CameraController : MonoBehaviour, ICameraSystem
     {
         public static CameraController Instance { get; private set; }
 
@@ -94,9 +94,8 @@ namespace ClockworkGrid
         {
             if (GridManager.Instance != null)
             {
-                // Grid is centered at origin by design (GridToWorldPosition uses symmetric offsets)
-                targetPoint = Vector3.zero;
-                Debug.Log("[CameraController] Centered on grid at origin");
+                targetPoint = GridManager.Instance.transform.position;
+                Debug.Log($"[CameraController] Centered on grid at {targetPoint}");
             }
             else
             {
@@ -250,6 +249,11 @@ namespace ClockworkGrid
             {
                 targetPoint = GridManager.Instance.GridToWorldPosition(gridX, gridY);
             }
+        }
+
+        public void FocusOnPosition(Vector3 worldPos)
+        {
+            targetPoint = worldPos;
         }
 
         /// <summary>

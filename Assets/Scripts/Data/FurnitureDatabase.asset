@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 510087276568d4aabb21ce42cd8bec71, type: 3}
+  m_Name: FurnitureDatabase
+  m_EditorClassIdentifier: 
+  furnitureList:
+  - assetName: Table
+    type: 1
+    isFunctional: 1
+    isWalkable: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 1
+    prefab: {fileID: 3847811305800165348, guid: 1cd0d8df38200447fb8ea46d40619b16, type: 3}
+    icon: {fileID: 21300000, guid: 559b90b687cdd4d7a8c0634b1d705177, type: 3}
+  - assetName: Chair
+    type: 2
+    isFunctional: 1
+    isWalkable: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 1
+    prefab: {fileID: 7332964061169735873, guid: 75fb2d4059229413dbfc1c5f0de5eaf2, type: 3}
+    icon: {fileID: 21300000, guid: 8b554857202344106b92c191052a6424, type: 3}
+  - assetName: Tree
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 1
+    prefab: {fileID: 8309333646760003843, guid: f06e19f66f4cb467cbd277d8362fa5fd, type: 3}
+    icon: {fileID: 0}
+  - assetName: Stove
+    type: 6
+    isFunctional: 1
+    isWalkable: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 1
+    prefab: {fileID: 6188970566783066001, guid: d010d8d79b839417295f06434dfb49e7, type: 3}
+    icon: {fileID: 21300000, guid: c285973dd04284d1b8ae90fc9702bb06, type: 3}
+  - assetName: Sink
+    type: 5
+    isFunctional: 1
+    isWalkable: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 1
+    prefab: {fileID: 5054184118276883295, guid: 9e1cb9c5110964f01a39a89e49608083, type: 3}
+    icon: {fileID: 21300000, guid: fc9cabec25e764a84a7efab5898a2f92, type: 3}
+  - assetName: Counter
+    type: 4
+    isFunctional: 1
+    isWalkable: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 1
+    prefab: {fileID: 5593746746923473591, guid: 8556ca5f5d76c41dcbca6e4d33c77c6b, type: 3}
+    icon: {fileID: 21300000, guid: f005744354fd5481493668a9399a711a, type: 3}
+  - assetName: Wall
+    type: 3
+    isFunctional: 0
+    isWalkable: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 1
+    prefab: {fileID: 5308099893573556514, guid: 6ed1784c68edf4713b583900c4cbeff2, type: 3}
+    icon: {fileID: 0}

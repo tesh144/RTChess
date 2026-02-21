@@ -63,11 +63,11 @@ namespace ClockworkGrid
                 return null;
             }
 
-            // Calculate total weight
+            // Calculate total weight using per-item drawWeight (falls back to rarity-based)
             float totalWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
-                totalWeight += GetWeightForRarity(stats.rarity);
+                totalWeight += stats.GetEffectiveDrawWeight();
             }
 
             // Roll random value
@@ -77,10 +77,10 @@ namespace ClockworkGrid
             float currentWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
-                currentWeight += GetWeightForRarity(stats.rarity);
+                currentWeight += stats.GetEffectiveDrawWeight();
                 if (roll <= currentWeight)
                 {
-                    Debug.Log($"Drew {stats.unitName} ({stats.rarity})");
+                    Debug.Log($"Drew {stats.unitName} ({stats.rarity}, weight:{stats.GetEffectiveDrawWeight()})");
                     return stats;
                 }
             }

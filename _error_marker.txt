@@ -1,0 +1,6 @@
+ERRORS DETECTED AT: 2026-02-19 11:44:51
+ERROR COUNT: 1
+
+[PLAY_MODE] 2026-02-18 22:41:05
+[EXCEPTION] FileNotFoundException: Could not find file '/Users/jai/RTChess/ConsoleOutput.txt'.
+

@@ -1,0 +1,149 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         GRID SCALING TOOLKIT                                 ║
+║                         Quick Start Guide                                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📐 YOUR GRID: 1.5 units per cell
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ STEP 1: BATCH SCALE ALL PREFABS (ONE-TIME SETUP)                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+   1. Open: Tools → RTChess → Grid Batch Scaler
+
+   2. Settings:
+      ├─ Prefab Folder: "Assets/Prefabs"
+      ├─ Include Subfolders: ✓
+      ├─ Auto-Add GridObject: ✓
+      └─ Click: "Process All Prefabs"
+
+   3. Review results:
+      ├─ ✓ Green = Success
+      └─ ✗ Red = Needs manual fix
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ STEP 2: FIX PROBLEM PREFABS (IF ANY)                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+   1. Select problem prefab
+
+   2. Open: Tools → RTChess → Grid Object Scaler
+
+   3. Check auto-suggested size:
+      ├─ Correct? → Click "Apply Scale"
+      └─ Wrong? → Use preset buttons (1×1, 2×2, etc.) → Click "Apply Scale"
+
+   4. Verify: Green gizmo in Scene view = Success!
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ DAILY WORKFLOW: CREATING NEW OBJECTS                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+   1. Create your 3D object
+
+   2. Add Component → Grid Object
+
+   3. Tools → RTChess → Grid Object Scaler (or use Inspector buttons)
+
+   4. Adjust size if needed → Click "Fit to Grid Size"
+
+   5. Check gizmo:
+      ├─ 🟢 Green = Properly scaled ✓
+      └─ 🟡 Yellow = Still needs work
+
+   6. Save as prefab
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ VISUAL AIDS                                                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+   Grid Overlay:
+   ├─ Toggle: Tools → RTChess → Toggle Grid Overlay
+   ├─ Shows: Full grid in Scene view
+   └─ Use: General alignment work
+
+   GridObject Gizmos:
+   ├─ 🟢 Green wireframe = Properly scaled
+   ├─ 🟡 Yellow wireframe = Needs scaling
+   └─ 🔵 Cyan spheres = Corner markers
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ COMMON GRID SIZES                                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+   ┌─────────┬──────────────┬─────────────────────────────────┐
+   │ Size    │ World Units  │ Use For                         │
+   ├─────────┼──────────────┼─────────────────────────────────┤
+   │ 1×1     │ 1.5 × 1.5    │ Units, small resources          │
+   │ 2×2     │ 3.0 × 3.0    │ Buildings, tables, large items  │
+   │ 3×3     │ 4.5 × 4.5    │ Huge structures                 │
+   │ 1×2     │ 1.5 × 3.0    │ Walls, paths (rectangular)      │
+   └─────────┴──────────────┴─────────────────────────────────┘
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ MENU SHORTCUTS                                                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+   Tools → RTChess →
+   ├─ Grid Object Scaler ........... Individual object scaling with preview
+   ├─ Grid Batch Scaler ............ Batch process prefab folders
+   └─ Toggle Grid Overlay .......... Show/hide grid in Scene view
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ INSPECTOR SHORTCUTS (when GridObject selected)                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+   Quick Actions:
+   ├─ [Fit to Grid Size] .......... Scale to match grid size setting
+   ├─ [Auto-Detect Size] .......... Calculate size from current bounds
+   └─ [1×1] [2×2] [3×3] ........... Size presets
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ TROUBLESHOOTING                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+   Problem: "No renderers" error
+   Solution: Add MeshRenderer component to object
+
+   Problem: Yellow gizmo won't turn green
+   Solution: Click "Fit to Grid Size" again in Inspector
+
+   Problem: Object way too big or too small
+   Solution: Wrong grid size selected - try different preset
+
+   Problem: Batch scaler skipped my prefab
+   Solution: Enable "Auto-Add GridObject if Missing"
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ FILES CREATED                                                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+   Assets/Scripts/Components/
+   └── GridObject.cs .......................... Component for prefabs
+
+   Assets/Scripts/Editor/
+   ├── GridObjectScaler.cs .................... Window tool (individual)
+   ├── GridObjectEditor.cs .................... Custom Inspector
+   ├── GridBatchScaler.cs ..................... Batch processor
+   └── GridVisualizerOverlay.cs ............... Grid overlay toggle
+
+   Documentation:
+   ├── GRID_SCALING_GUIDE.md .................. Full detailed guide
+   ├── GRID_SCALING_SUMMARY.md ................ Quick reference
+   └── GRID_TOOLS_QUICKSTART.txt .............. This file
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+💡 TIP: Start with Grid Batch Scaler to fix all prefabs at once, then use
+       Grid Object Scaler for individual adjustments and new objects!
+
+═══════════════════════════════════════════════════════════════════════════════

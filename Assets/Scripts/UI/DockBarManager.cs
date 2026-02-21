@@ -68,11 +68,11 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            // Hide ONLY the gatcha button at start (dock bar with cards stays visible)
-            // Gatcha button appears after wave starts
-            if (gatchaButtonHolder != null && (WaveManager.Instance == null || !WaveManager.Instance.HasWaveStarted))
+            // Hide ONLY the gatcha button at start if WaveManager exists and wave hasn't started.
+            // If no WaveManager (e.g. LittleCafe), gacha button stays visible.
+            if (gatchaButtonHolder != null && WaveManager.Instance != null && !WaveManager.Instance.HasWaveStarted)
             {
-                Debug.Log("[DockBarManager] Hiding gatcha button holder at start");
+                Debug.Log("[DockBarManager] Hiding gatcha button holder at start (wave not started)");
                 gatchaButtonHolder.SetActive(false);
             }
             else if (gatchaButtonHolder == null)
@@ -166,6 +166,16 @@ namespace ClockworkGrid
             {
                 IntervalTimer.Instance.OnIntervalTick -= OnIntervalTickCostDecrease;
             }
+        }
+
+        /// <summary>
+        /// Hide the dock bar UI (keeps component alive and initialized).
+        /// Call ShowWithAnimation() to reveal it again.
+        /// </summary>
+        public void HideUI()
+        {
+            if (dockBarHolder != null) dockBarHolder.SetActive(false);
+            if (gatchaButtonHolder != null) gatchaButtonHolder.SetActive(false);
         }
 
         /// <summary>
@@ -413,10 +423,7 @@ namespace ClockworkGrid
                     Debug.Log($"Drew {drawnStats.unitName} ({drawnStats.rarity}) - Cost was {cost}T");
 
                     // Screen shake feedback on successful draw
-                    if (CameraController.Instance != null)
-                    {
-                        CameraController.Instance.Shake(0.12f, 0.2f);
-                    }
+                    CameraSystemLocator.Current?.Shake(0.12f, 0.2f);
                 }
             }
 

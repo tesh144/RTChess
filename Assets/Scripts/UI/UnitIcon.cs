@@ -61,14 +61,19 @@ namespace ClockworkGrid
             }
 
             // Try to find and populate existing UI elements in prefab
-            bool foundPrefabUI = PopulatePrefabUI(stats.resourceCost, stats.unitType);
+            string displayName = !string.IsNullOrEmpty(stats.unitName) ? stats.unitName : stats.unitType.ToString();
+            bool foundPrefabUI = PopulatePrefabUI(stats.resourceCost, displayName);
 
             // Fallback: Create UI dynamically if prefab doesn't have elements
             if (!foundPrefabUI)
             {
                 CreateCostBadge(stats.resourceCost);
-                CreateTypeLabel(stats.unitType);
+                CreateTypeLabel(displayName);
             }
+
+            // Show draw weight badge (bottom-left) if weight differs from default
+            float weight = stats.GetEffectiveDrawWeight();
+            CreateWeightBadge(weight);
 
             // Subscribe to token changes for cost color updates
             if (ResourceTokenManager.Instance != null)
@@ -126,6 +131,8 @@ namespace ClockworkGrid
             // Capture current layout position (not the stale one from Initialize)
             originalPosition = rectTransform.anchoredPosition;
 
+            Debug.Log($"[UnitIcon] OnBeginDrag — DragDropHandler.Instance={DragDropHandler.Instance != null}, unitPrefab={unitPrefab?.name ?? "NULL"}");
+
             // Notify DragDropHandler to create ghost preview
             if (DragDropHandler.Instance != null && DragDropHandler.Instance.StartDrag(this, unitPrefab))
             {
@@ -133,6 +140,7 @@ namespace ClockworkGrid
             }
             else
             {
+                Debug.LogWarning($"[UnitIcon] Drag NOT started — Instance null? {DragDropHandler.Instance == null}, unitPrefab null? {unitPrefab == null}");
                 isDragging = false;
             }
         }
@@ -172,7 +180,7 @@ namespace ClockworkGrid
         /// Searches for TextMeshProUGUI components with specific names.
         /// Returns true if prefab UI was found and populated.
         /// </summary>
-        private bool PopulatePrefabUI(int cost, UnitType type)
+        private bool PopulatePrefabUI(int cost, string displayName)
         {
             bool foundCost = false;
             bool foundName = false;
@@ -194,7 +202,7 @@ namespace ClockworkGrid
                 // Look for name/type display
                 else if (objName.Contains("name") || objName.Contains("type") || objName.Contains("label"))
                 {
-                    textComp.text = type.ToString();
+                    textComp.text = displayName;
                     foundName = true;
                 }
             }
@@ -244,7 +252,7 @@ namespace ClockworkGrid
         /// <summary>
         /// Create type label (positioned above icon)
         /// </summary>
-        private void CreateTypeLabel(UnitType type)
+        private void CreateTypeLabel(string displayName)
         {
             // Label container (positioned above icon)
             typeLabel = new GameObject("TypeLabel");
@@ -258,7 +266,7 @@ namespace ClockworkGrid
 
             // Type text
             TextMeshProUGUI typeText = typeLabel.AddComponent<TextMeshProUGUI>();
-            typeText.text = type.ToString(); // "Soldier", "Ogre", or "Ninja"
+            typeText.text = displayName; // Custom name from UnitStats
             typeText.fontSize = 12;
             typeText.color = Color.white;
             typeText.alignment = TextAlignmentOptions.Center;
@@ -269,5 +277,44 @@ namespace ClockworkGrid
             typeText.outlineWidth = 0.2f;
             typeText.outlineColor = Color.black;
         }
+
+        /// <summary>
+        /// Create weight badge (positioned bottom-left of icon).
+        /// Shows the draw weight value so designers can see relative likelihood at a glance.
+        /// </summary>
+        private void CreateWeightBadge(float weight)
+        {
+            // Badge container (bottom-left corner)
+            GameObject badge = new GameObject("WeightBadge");
+            RectTransform badgeRect = badge.AddComponent<RectTransform>();
+            badgeRect.SetParent(transform, false);
+            badgeRect.anchorMin = new Vector2(0f, 0f);
+            badgeRect.anchorMax = new Vector2(0f, 0f);
+            badgeRect.pivot = new Vector2(0f, 0f);
+            badgeRect.anchoredPosition = new Vector2(2f, 2f);
+            badgeRect.sizeDelta = new Vector2(22f, 16f);
+
+            // Background
+            Image badgeBg = badge.AddComponent<Image>();
+            badgeBg.color = new Color(0.2f, 0.7f, 0.3f, 0.85f); // Green tint
+
+            // Weight text
+            GameObject textObj = new GameObject("WeightText");
+            RectTransform textRect = textObj.AddComponent<RectTransform>();
+            textRect.SetParent(badgeRect, false);
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+
+            TextMeshProUGUI weightText = textObj.AddComponent<TextMeshProUGUI>();
+            // Display as integer if whole number, otherwise 1 decimal
+            weightText.text = weight % 1 == 0 ? $"x{weight:0}" : $"x{weight:0.#}";
+            weightText.fontSize = 10;
+            weightText.color = Color.white;
+            weightText.alignment = TextAlignmentOptions.Center;
+            weightText.fontStyle = FontStyles.Bold;
+        }
     }
 }
+
+

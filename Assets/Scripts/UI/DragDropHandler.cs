@@ -15,8 +15,10 @@ namespace ClockworkGrid
         private UnitIcon currentDraggingIcon;
         private GameObject currentUnitPrefab;
         private bool isDragging = false;
+        public bool IsDragging => isDragging;
         private bool isValidPlacement = false;
         private int targetGridX, targetGridY;
+        private Vector2Int currentGridSize = new Vector2Int(1, 1);
 
         // Arc line rendering
         private LineRenderer arcLine;
@@ -29,9 +31,10 @@ namespace ClockworkGrid
         private Canvas iconCanvas;
         private Camera canvasCamera;
 
-        // Grid cell highlight
-        private GameObject cellHighlight;
-        private MeshRenderer cellHighlightRenderer;
+        // Grid cell highlights (pooled for multi-cell footprints)
+        private const int MaxFootprintCells = 9; // supports up to 3x3
+        private GameObject[] cellHighlights = new GameObject[MaxFootprintCells];
+        private MeshRenderer[] cellHighlightRenderers = new MeshRenderer[MaxFootprintCells];
 
         // Colors
         private Color validColor = new Color(1f, 1f, 1f, 0.6f);
@@ -41,8 +44,8 @@ namespace ClockworkGrid
         private Vector3 preDragCameraTarget;
         private float preDragZoomDistance;
         private bool preDragAutoRotate;
-        private float dragZoomRatio = 0.6f; // Zoom to 60% of current distance during drag
-        private float dragCameraEaseSpeed = 3f; // How fast camera eases toward target
+        private float dragZoomRatio = 0.5f; // Zoom to 50% of current distance during drag
+        private float dragCameraEaseSpeed = 5f; // How fast camera eases toward target
 
         private void Awake()
         {
@@ -52,28 +55,32 @@ namespace ClockworkGrid
                 return;
             }
             Instance = this;
+            Debug.Log($"[DragDropHandler] Awake — Instance set on '{gameObject.name}'");
 
             // Create line renderer for arcing trajectory
             arcLine = gameObject.AddComponent<LineRenderer>();
             arcLine.startWidth = 0.25f;
             arcLine.endWidth = 0.15f;
 
-            // Create animated dotted line material
+            // Create animated dotted line material — renders on top of all geometry
             arcMaterial = new Material(Shader.Find("Sprites/Default"));
             arcMaterial.color = new Color(1f, 1f, 1f, 0.8f);
+            arcMaterial.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
             arcLine.material = arcMaterial;
+            arcLine.sortingOrder = 100;
 
             arcLine.startColor = new Color(1f, 1f, 1f, 0.8f);
             arcLine.endColor = new Color(1f, 1f, 1f, 0.8f);
             arcLine.positionCount = arcSegments;
+            arcLine.alignment = LineAlignment.TransformZ; // Prevents 180° twist at arc apex
             arcLine.enabled = false;
             arcLine.useWorldSpace = true;
 
             // Enable texture tiling for animated effect
             arcLine.textureMode = LineTextureMode.Tile;
 
-            // Create cell highlight quad
-            CreateCellHighlight();
+            // Create cell highlight quads (pooled for multi-cell footprints)
+            CreateCellHighlights();
         }
 
         private void Update()
@@ -86,24 +93,25 @@ namespace ClockworkGrid
             }
         }
 
-        private void CreateCellHighlight()
+        private void CreateCellHighlights()
         {
-            cellHighlight = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            cellHighlight.name = "CellHighlight";
-            cellHighlight.transform.rotation = Quaternion.Euler(90, 0, 0); // Face up
-            cellHighlight.transform.localScale = Vector3.one; // Will be resized to cell size
+            Material sharedMat = new Material(Shader.Find("Sprites/Default"));
+            for (int i = 0; i < MaxFootprintCells; i++)
+            {
+                GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                quad.name = $"CellHighlight_{i}";
+                quad.transform.rotation = Quaternion.Euler(90, 0, 0);
+                quad.transform.localScale = Vector3.one;
 
-            // Remove collider
-            Collider collider = cellHighlight.GetComponent<Collider>();
-            if (collider != null) Destroy(collider);
+                Collider col = quad.GetComponent<Collider>();
+                if (col != null) Destroy(col);
 
-            // Setup material
-            cellHighlightRenderer = cellHighlight.GetComponent<MeshRenderer>();
-            Material mat = new Material(Shader.Find("Sprites/Default"));
-            mat.color = validColor;
-            cellHighlightRenderer.material = mat;
+                cellHighlightRenderers[i] = quad.GetComponent<MeshRenderer>();
+                cellHighlightRenderers[i].material = new Material(sharedMat);
 
-            cellHighlight.SetActive(false);
+                quad.SetActive(false);
+                cellHighlights[i] = quad;
+            }
         }
 
         /// <summary>
@@ -111,6 +119,7 @@ namespace ClockworkGrid
         /// </summary>
         public bool StartDrag(UnitIcon icon, GameObject unitPrefab)
         {
+            Debug.Log($"[DragDropHandler] StartDrag called — isDragging={isDragging}, unitPrefab={unitPrefab?.name ?? "NULL"}");
             if (isDragging) return false;
             if (unitPrefab == null)
             {
@@ -123,23 +132,28 @@ namespace ClockworkGrid
             isDragging = true;
             isValidPlacement = false; // Reset - must hover a valid cell to place
 
+            // Get grid size from GridObject component on the prefab (not UnitStats)
+            GridObject gridObj = currentUnitPrefab.GetComponent<GridObject>();
+            currentGridSize = (gridObj != null) ? gridObj.GridSize : new Vector2Int(1, 1);
+
             // Cache canvas info for correct UI-to-screen conversion
             iconCanvas = icon.GetComponentInParent<Canvas>();
             canvasCamera = (iconCanvas != null && iconCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
                 ? iconCanvas.worldCamera : null;
 
             // Save camera state before drag for tracking and zoom
-            if (CameraController.Instance != null)
+            var cam = CameraSystemLocator.Current;
+            if (cam != null)
             {
-                preDragCameraTarget = CameraController.Instance.CurrentTarget;
-                preDragZoomDistance = CameraController.Instance.CurrentDistance;
-                preDragAutoRotate = CameraController.Instance.IsAutoRotating;
-                CameraController.Instance.SetAutoRotate(false);
-                CameraController.Instance.ZoomTo(preDragZoomDistance * dragZoomRatio);
+                preDragCameraTarget = cam.CurrentTarget;
+                preDragZoomDistance = cam.CurrentDistance;
+                preDragAutoRotate = cam.IsAutoRotating;
+                cam.SetAutoRotate(false);
+                cam.ZoomTo(preDragZoomDistance * dragZoomRatio);
             }
 
             arcLine.enabled = true;
-            cellHighlight.SetActive(true);
+            // Highlights are activated per-cell in UpdateCellHighlights
 
             return true;
         }
@@ -158,23 +172,25 @@ namespace ClockworkGrid
                 bool valid = ValidatePlacement(worldPos, out targetGridX, out targetGridY);
                 isValidPlacement = valid;
 
-                // Snap to grid cell center
-                Vector3 cellCenter = GridManager.Instance.GridToWorldPosition(targetGridX, targetGridY);
+                // Footprint center for camera tracking and arc endpoint
+                Vector3 footprintCenter = GridManager.Instance.GetFootprintCenter(targetGridX, targetGridY, currentGridSize);
+                footprintCenter.y = GetTileSurfaceY();
 
-                // Update cell highlight
-                UpdateCellHighlight(cellCenter, valid);
+                // Update per-cell highlights
+                UpdateCellHighlights(targetGridX, targetGridY);
 
-                // Ease camera halfway toward hovered cell
-                if (CameraController.Instance != null)
+                // Ease camera toward hovered cell
+                var dragCam = CameraSystemLocator.Current;
+                if (dragCam != null)
                 {
-                    Vector3 halfTarget = Vector3.Lerp(preDragCameraTarget, cellCenter, 0.5f);
-                    Vector3 current = CameraController.Instance.CurrentTarget;
-                    Vector3 eased = Vector3.Lerp(current, halfTarget, Time.deltaTime * dragCameraEaseSpeed);
-                    CameraController.Instance.SetTarget(eased);
+                    Vector3 blendTarget = Vector3.Lerp(preDragCameraTarget, footprintCenter, 0.8f);
+                    Vector3 current = dragCam.CurrentTarget;
+                    Vector3 eased = Vector3.Lerp(current, blendTarget, Time.deltaTime * dragCameraEaseSpeed);
+                    dragCam.SetTarget(eased);
                 }
 
-                // Update arc line
-                UpdateArcLine(cellCenter);
+                // Update arc line (target = footprint center)
+                UpdateArcLine(footprintCenter);
             }
             else
             {
@@ -194,11 +210,12 @@ namespace ClockworkGrid
             {
                 // Invalid placement - snap back to dock and restore camera
                 currentDraggingIcon.SnapBackToOriginalPosition();
-                if (CameraController.Instance != null)
+                var snapCam = CameraSystemLocator.Current;
+                if (snapCam != null)
                 {
-                    CameraController.Instance.SetTarget(preDragCameraTarget);
-                    CameraController.Instance.ZoomTo(preDragZoomDistance);
-                    CameraController.Instance.SetAutoRotate(preDragAutoRotate);
+                    snapCam.SetTarget(preDragCameraTarget);
+                    snapCam.ZoomTo(preDragZoomDistance);
+                    snapCam.SetAutoRotate(preDragAutoRotate);
                 }
                 CleanupDragVisuals();
                 isDragging = false;
@@ -219,24 +236,51 @@ namespace ClockworkGrid
                 }
             }
 
-            // Place unit on grid
-            Vector3 worldPos = GridManager.Instance.GridToWorldPosition(targetGridX, targetGridY);
+            // Place unit on grid — center on footprint
+            Vector3 worldPos = GridManager.Instance.GetFootprintCenter(targetGridX, targetGridY, currentGridSize);
+            worldPos.y = GetTileSurfaceY() + 0.05f; // Offset to prevent shadow clipping into grid
             GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, currentUnitPrefab.transform.rotation);
             unitObj.SetActive(true);
 
-            // Initialize unit with UnitStats (Iteration 6)
+            // Placement animation handled by Animator component (Unit_Appear animation)
+            // Objects with PlaceableObject controller will automatically play spawn animation
+
+            // Initialize based on component type
+            bool placedWithFurniture = false;
+
+            // NEW: Initialize FurnitureObject (LittleCafe furniture system)
+            LittleCafe.FurnitureObject furniture = unitObj.GetComponent<LittleCafe.FurnitureObject>();
+            if (furniture != null)
+            {
+                // Apply correct FurnitureType from database (variant prefabs may have wrong serialized type)
+                if (currentDraggingIcon?.UnitStats != null && currentDraggingIcon.UnitStats.furnitureTypeOverride >= 0)
+                {
+                    furniture.SetType((LittleCafe.FurnitureType)currentDraggingIcon.UnitStats.furnitureTypeOverride);
+                }
+
+                furniture.OnPlaced(targetGridX, targetGridY, currentGridSize);
+                placedWithFurniture = true;
+            }
+
+            // LEGACY: Initialize Unit with UnitStats (RTChess combat system)
             Unit unit = unitObj.GetComponent<Unit>();
             if (unit != null && currentDraggingIcon != null && currentDraggingIcon.UnitStats != null)
             {
                 unit.Initialize(Team.Player, targetGridX, targetGridY, currentDraggingIcon.UnitStats);
             }
 
-            // Add placement cooldown component
-            PlacementCooldown cooldown = unitObj.AddComponent<PlacementCooldown>();
-            cooldown.StartCooldown(2); // 2 intervals
+            // LEGACY: Initialize CafeEquipment (old system, kept for backwards compatibility)
+            if (!placedWithFurniture)
+            {
+                LittleCafe.CafeEquipment equip = unitObj.GetComponent<LittleCafe.CafeEquipment>();
+                if (equip == null)
+                    equip = unitObj.AddComponent<LittleCafe.CafeEquipment>();
+                equip.Initialize(targetGridX, targetGridY, currentGridSize);
 
-            // Register with grid
-            GridManager.Instance.PlaceUnit(targetGridX, targetGridY, unitObj, CellState.PlayerUnit);
+                // Register with grid (multi-cell: all footprint cells point to same object)
+                GridManager.Instance.PlaceMultiCell(targetGridX, targetGridY, currentGridSize, unitObj, CellState.PlayerUnit);
+            }
+            // Note: FurnitureObject.OnPlaced() already handles grid registration
 
             // Notify WaveManager that player placed a unit (for lose condition tracking)
             if (WaveManager.Instance != null)
@@ -251,6 +295,12 @@ namespace ClockworkGrid
                 Debug.Log("[DragDropHandler] First player unit placed - wave started!");
             }
 
+            // Update furniture connectivity after placement
+            if (placedWithFurniture && LittleCafe.FurnitureConnectivityManager.Instance != null)
+            {
+                LittleCafe.FurnitureConnectivityManager.Instance.UpdateConnectivity();
+            }
+
             // Play placement SFX
             if (SFXManager.Instance != null)
                 SFXManager.Instance.PlayPlayerPlacement();
@@ -258,12 +308,20 @@ namespace ClockworkGrid
             // Remove from dock
             DockBarManager.Instance.RemoveUnitIcon(currentDraggingIcon);
 
-            // Quick-pan camera to the placed tile and restore zoom + rotation
-            if (CameraController.Instance != null)
+            // Restore camera settings and re-center on the newly placed object
+            var placeCam = CameraSystemLocator.Current;
+            if (placeCam != null)
             {
-                CameraController.Instance.FocusOnCell(targetGridX, targetGridY);
-                CameraController.Instance.ZoomTo(preDragZoomDistance);
-                CameraController.Instance.SetAutoRotate(preDragAutoRotate);
+                placeCam.SetAutoRotate(preDragAutoRotate);
+
+                // Update orbit pivot to the placed object's position
+                placeCam.FocusOnPosition(worldPos);
+
+                // Zoom out to adaptive default (grows with revealed tiles)
+                if (LittleCafe.GridCamera.Instance != null)
+                    LittleCafe.GridCamera.Instance.ZoomToDefault();
+                else
+                    placeCam.ZoomTo(preDragZoomDistance); // Fallback for RTChess scene
             }
 
             // Cleanup
@@ -279,40 +337,59 @@ namespace ClockworkGrid
             if (!isDragging) return;
 
             currentDraggingIcon.SnapBackToOriginalPosition();
-            if (CameraController.Instance != null)
+            var cancelCam = CameraSystemLocator.Current;
+            if (cancelCam != null)
             {
-                CameraController.Instance.SetTarget(preDragCameraTarget);
-                CameraController.Instance.ZoomTo(preDragZoomDistance);
-                CameraController.Instance.SetAutoRotate(preDragAutoRotate);
+                cancelCam.SetTarget(preDragCameraTarget);
+                cancelCam.ZoomTo(preDragZoomDistance);
+                cancelCam.SetAutoRotate(preDragAutoRotate);
             }
             CleanupDragVisuals();
             isDragging = false;
         }
 
-        private void UpdateCellHighlight(Vector3 cellCenter, bool isValid)
+        private void UpdateCellHighlights(int anchorX, int anchorY)
         {
-            if (cellHighlight == null || GridManager.Instance == null) return;
+            if (GridManager.Instance == null) return;
 
-            // Position at cell center, slightly above ground
-            Vector3 highlightPos = cellCenter;
-            highlightPos.y = 0.02f; // Just above ground to avoid z-fighting
-
-            cellHighlight.transform.position = highlightPos;
-
-            // Scale to match cell size
             float cellSize = GridManager.Instance.CellSize;
-            cellHighlight.transform.localScale = new Vector3(cellSize * 0.95f, cellSize * 0.95f, 1f);
+            float highlightY = GetTileSurfaceY() + 0.02f;
+            int idx = 0;
 
-            // Update color
-            Color targetColor = isValid ? validColor : invalidColor;
-            cellHighlightRenderer.material.color = targetColor;
+            for (int dx = 0; dx < currentGridSize.x; dx++)
+            {
+                for (int dy = 0; dy < currentGridSize.y; dy++)
+                {
+                    if (idx >= MaxFootprintCells) break;
+
+                    int cx = anchorX + dx;
+                    int cy = anchorY + dy;
+
+                    Vector3 pos = GridManager.Instance.GridToWorldPosition(cx, cy);
+                    pos.y = highlightY;
+
+                    cellHighlights[idx].transform.position = pos;
+                    cellHighlights[idx].transform.localScale = new Vector3(cellSize * 0.95f, cellSize * 0.95f, 1f);
+                    cellHighlights[idx].SetActive(true);
+
+                    // Per-cell color: green if available, red if blocked
+                    bool cellOk = GridManager.Instance.IsCellEmpty(cx, cy) && GridManager.Instance.IsTileRevealed(cx, cy);
+                    cellHighlightRenderers[idx].material.color = cellOk ? validColor : invalidColor;
+
+                    idx++;
+                }
+            }
+
+            // Hide unused highlight quads
+            for (int i = idx; i < MaxFootprintCells; i++)
+                cellHighlights[i].SetActive(false);
         }
 
         private void UpdateArcLine(Vector3 targetPos)
         {
             if (arcLine == null || currentDraggingIcon == null) return;
 
-            Camera cam = Camera.main;
+            Camera cam = GetActiveCamera();
             if (cam == null) return;
 
             // Get icon's screen position correctly based on canvas render mode
@@ -332,7 +409,8 @@ namespace ClockworkGrid
 
             // Project icon screen position onto the ground plane to get world-space start
             Ray iconRay = cam.ScreenPointToRay(iconScreenPos);
-            Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+            float surfaceY = GetTileSurfaceY();
+            Plane groundPlane = new Plane(Vector3.up, new Vector3(0f, surfaceY, 0f));
             Vector3 startPos;
             if (groundPlane.Raycast(iconRay, out float dist))
                 startPos = iconRay.GetPoint(dist);
@@ -366,13 +444,12 @@ namespace ClockworkGrid
         private void CleanupDragVisuals()
         {
             if (arcLine != null)
-            {
                 arcLine.enabled = false;
-            }
 
-            if (cellHighlight != null)
+            for (int i = 0; i < MaxFootprintCells; i++)
             {
-                cellHighlight.SetActive(false);
+                if (cellHighlights[i] != null)
+                    cellHighlights[i].SetActive(false);
             }
         }
 
@@ -383,16 +460,12 @@ namespace ClockworkGrid
 
             if (GridManager.Instance == null) return false;
 
-            // Convert world position to grid coordinates
+            // Convert world position to anchor grid coordinates
             if (!GridManager.Instance.WorldToGridPosition(worldPos, out gridX, out gridY))
                 return false;
 
-            // Check if cell is revealed (Iteration 7: Fog of War)
-            if (FogManager.Instance != null && !FogManager.Instance.IsCellRevealed(gridX, gridY))
-                return false;
-
-            // Check if cell is empty
-            if (!GridManager.Instance.IsCellEmpty(gridX, gridY))
+            // Check ALL cells in the footprint are available (empty + revealed)
+            if (!GridManager.Instance.AreAllCellsAvailable(gridX, gridY, currentGridSize))
                 return false;
 
             // Check if player can afford placement cost
@@ -406,15 +479,39 @@ namespace ClockworkGrid
             return true;
         }
 
+        /// <summary>
+        /// Returns the Y coordinate of the tile surface (top of tiles).
+        /// GridManager places tile centers at Y = -cellSize/2 so the top surface is always Y=0.
+        /// We use this constant rather than reading tile.transform.position because
+        /// TileFog animates tiles upward from a lowered position.
+        /// </summary>
+        private float GetTileSurfaceY()
+        {
+            return 0f;
+        }
+
+        private Camera GetActiveCamera()
+        {
+            Camera cam = Camera.main;
+            if (cam != null) return cam;
+            // Fallback when camera isn't tagged "MainCamera" (e.g. GridCamera in cafe scene)
+            cam = FindObjectOfType<Camera>();
+            Debug.Log($"[DragDropHandler] Camera.main was null, fallback found: {cam?.name ?? "NULL"}");
+            return cam;
+        }
+
         private bool RaycastToGroundPlane(Vector2 screenPos, out Vector3 worldPos)
         {
             worldPos = Vector3.zero;
 
-            Camera cam = Camera.main;
+            Camera cam = GetActiveCamera();
             if (cam == null) return false;
 
             Ray ray = cam.ScreenPointToRay(screenPos);
-            Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+
+            // Ground plane at tile surface Y=0 (constant, not read from tile transform
+            // which may be mid-animation due to TileFog).
+            Plane groundPlane = new Plane(Vector3.up, new Vector3(0f, GetTileSurfaceY(), 0f));
 
             if (groundPlane.Raycast(ray, out float distance))
             {
@@ -426,3 +523,4 @@ namespace ClockworkGrid
         }
     }
 }
+
