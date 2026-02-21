@@ -37,6 +37,12 @@ namespace LittleCafe
         public bool isFunctional = false;
         public bool isWalkable = true;          // Units are walkable by default
 
+        [Header("Combat Stats")]
+        [Tooltip("Health points. When HP reaches 0, triggers an event (removal, completion, etc.).")]
+        public int hp = 1;
+        [Tooltip("Damage dealt to target's HP per successful interaction.")]
+        public int attackPower = 1;
+
         [Header("Draw Weight")]
         [Tooltip("Relative likelihood of being drawn. Default 1. Higher = more likely.")]
         public float drawWeight = 1f;

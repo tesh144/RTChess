@@ -170,6 +170,11 @@ Animation clips:
 
 All databases follow the same pattern: a `[Serializable]` data class + a `ScriptableObject` database with list, query methods, and an editor "Scan PEPO Folder" context menu.
 
+**Universal Combat Stats** — Worker, Unit, Building, and Environment databases all include:
+- `hp` (int) — Health points. When HP reaches 0 it triggers an event: usually removal/destruction for resources, but can mean completion for buildings or other custom behavior. Fixed from database, not modified at runtime.
+- `attackPower` (int) — Damage dealt to a target's HP per successful interaction. A worker with attackPower=1 hitting a tree with hp=10 reduces the tree to 9 HP.
+- Defaults: Workers/Units default to hp=1, attackPower=1. Buildings default to hp=10, attackPower=0. Environment defaults to hp=5, attackPower=0.
+
 ### FurnitureDatabase (`LittleCafe/Furniture Database`)
 - **Data class:** `FurnitureData` — assetName, FurnitureType, isFunctional, isWalkable, drawWeight, gridSize, visualScale, prefab, icon
 - **Types:** Decoration, Table, Chair, Wall, Countertop, Sink, Cooker

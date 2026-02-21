@@ -12,4 +12,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09aac91ca3a864122ba7f982e1923220, type: 3}
   m_Name: BuildingDatabase
   m_EditorClassIdentifier: 
-  buildingList: []
+  buildingList:
+  - assetName: ConeTent
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    hp: 10
+    attackPower: 0
+    drawWeight: 0
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    prefab: {fileID: 4760405268050885137, guid: 2f41e9bf7cf6d4fccb70a1e8398e442a, type: 3}
+    icon: {fileID: 0}
+  - assetName: Tent
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    hp: 10
+    attackPower: 0
+    drawWeight: 0
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    prefab: {fileID: 8133433249270061933, guid: cb82691b7beec4337beefbd1515101ed, type: 3}
+    icon: {fileID: 0}
+  - assetName: Torch
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    hp: 10
+    attackPower: 0
+    drawWeight: 0
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    prefab: {fileID: 5555927305428753834, guid: 471a7dabafbc84b92b19de4645e04a6a, type: 3}
+    icon: {fileID: 0}
