@@ -1,6 +1,6 @@
 # Clockwork Craft — Game Design Document
 
-**Version:** 1.0
+**Version:** 1.1
 **Working Title:** Clockwork Craft
 **Last Updated:** February 2026
 **Platform:** PC (desktop first), Mobile planned
@@ -21,6 +21,8 @@
 9. [Technical Architecture](#9-technical-architecture)
 10. [Design Principles](#10-design-principles)
 11. [Development Phases](#11-development-phases)
+
+> **Changelog:** v1.1 — Added Tile Takeover mechanic (Section 2), full environmental generation spec (Section 6), tile type interactability table (Section 3), and MapGenerationSettings ScriptableObject spec (Section 9).
 
 ---
 
@@ -67,6 +69,25 @@ This mechanic is inherited directly from the RTChess game jam project and is the
 | Building | No interaction unless the building has a worker slot |
 | Enemy Unit | Deals attack damage — **future scope, see Section 8** |
 
+### Tile Takeover — The Chain-Clear Mechanic
+
+> **THIS IS CORE FEEL.** The tile takeover is what makes Clockwork Craft satisfying to play. It must be implemented correctly and must never be changed without a full design review.
+
+When a worker reduces a resource node to 0 HP, instead of simply destroying the node and staying in place, **the worker physically advances onto the cleared tile** — exactly like a chess piece capturing.
+
+**Step by step:**
+1. Worker faces a tree (for example) and deals damage each tick.
+2. Tree HP reaches 0. The tree is removed. A loot drop is awarded.
+3. The worker moves forward one cell, now occupying the tile the tree was on.
+4. The worker's facing direction does not change — it still faces the same direction.
+5. On the very next tick, the worker faces the cell ahead of its new position.
+6. If another tree (or any interactable node) is there, it immediately starts attacking it.
+7. This continues tick after tick — the worker **chains through an entire row of trees** with no player input.
+
+**Why this matters for map design:** Trees must be generated in strings and clusters, not isolated singles. A lone tree gives one loot drop. A string of five trees in a line, with a worker placed at one end, gives five loot drops in sequence and feels spectacular. This is the satisfying visual the maps must be built to enable.
+
+**Non-interactable tiles do NOT trigger takeover.** If a worker faces water or a locked rock node, it does nothing and rotates on the next tick. It does not advance.
+
 ### Player Actions (Between Ticks)
 
 The player interacts with the game between interval ticks. All of the following actions are available at any time and take effect on the next tick:
@@ -77,13 +98,31 @@ The player interacts with the game between interval ticks. All of the following 
 - Place a building / construction site on an empty cell
 - Remove a building (if not occupied)
 
-> **CLOCKWORK RULE:** Units are never moved by the player once placed — only placed and removed. All movement is rotation. The player arranges units; the clock does the work.
+> **CLOCKWORK RULE:** Units are never moved by the player — except via the tile takeover mechanic when a node is cleared. All other movement is rotation. The player arranges units; the clock does the work.
 
 ---
 
 ## 3. Resource System
 
 There are four resources in Clockwork Craft. All four are equal currencies — there is no population cap or hard limit. Each resource has distinct uses to ensure all four remain relevant throughout a run.
+
+### Tile Interactability
+
+Not all map tiles can be harvested from the start. Tiles fall into three categories:
+
+| Tile Type | Interactable at Start | Resource | Behaviour | Chain-Clear? |
+|-----------|----------------------|----------|-----------|--------------|
+| Grass / Empty | — | — | Passable, buildable | — |
+| Tree | ✅ Yes | Wood | Worker damages each facing tick. On death: worker advances (chain-clear). | ✅ Yes |
+| Gold Mine | ✅ Yes | Gold | Worker harvests each facing tick. On death: worker advances. | ✅ Yes |
+| Wild Farm (Berry / Field) | ✅ Yes | Food | Worker harvests each facing tick. On death: worker advances. | ✅ Yes |
+| Rock / Quarry | ❌ Locked | Stone | Worker skips (no interaction). Unlockable later via research. | — |
+| Water | ❌ Locked | — | Impassable barrier. Worker skips. Unlockable later via research. | — |
+| Town Hall | Special | — | Pre-placed. Cannot be harvested or removed. | — |
+
+> **RULE:** If a tile is not interactable, a worker facing it does nothing for that tick and rotates normally on the next. It does not advance. The tile takeover only triggers on a confirmed kill of an interactable node.
+
+### Resource Table
 
 | Resource | Node Type | Primary Uses | Tier Yield |
 |----------|-----------|--------------|------------|
@@ -193,34 +232,128 @@ Each building has up to three upgrade levels. Upgrading requires:
 
 ## 6. Map & World Generation
 
-Each run generates a new procedural map. The map is a grid of configurable size (default: 40x40, adjustable per session/difficulty). The Town Hall spawns at the center.
+Each run generates a new procedural map. The map is a grid of configurable size (default: 40×40). The Town Hall spawns at the center. All map generation parameters are exposed on a `MapGenerationSettings` ScriptableObject so designers can tune probabilities directly in the Unity Inspector without touching code.
 
-### Map Zones
+### Fog of War
 
-The map is divided into loose radial zones radiating outward from the Town Hall:
+The entire map starts fogged. Only the area within `startingRevealRadius` cells of the Town Hall is visible at the beginning of each run. As the player places workers and buildings further from the base, the fog recedes around them. This creates exploration pressure and prevents players from immediately optimising the whole map.
 
-- **Starting Zone (radius 0–6):** Sparse resource nodes, guaranteed Wood + Food nodes for early economy. Safe in current scope.
-- **Mid Zone (radius 7–15):** Denser resources, mix of all four types, predominantly Tier 1 and 2 nodes.
-- **Outer Zone (radius 16+):** High-density resources, more Tier 2 and 3 nodes. Future scope: hostile territory with enemies.
-
-### Procedural Generation Rules
-
-- Town Hall always placed at grid center.
-- Starting Wood nodes: 2–4 trees within 3 cells of Town Hall.
-- Starting Food nodes: 1–2 farms within 4 cells of Town Hall.
-- Gold and Stone nodes are rarer in the starting zone; become more common further out.
-- Nodes are never placed on the center cell or the 8 cells directly adjacent to it (player needs immediate build space).
-- Obstacle tiles (impassable rocks, water) are scattered procedurally to create natural choke points.
-- Resource clusters: Nodes of the same type tend to appear near each other (cluster radius: 2–3 cells).
+> **DESIGN NOTE:** Fog of war is important not just for atmosphere but for pacing. Players discover high-tier nodes gradually, which keeps the early game focused on the starting area and prevents analysis paralysis on a fully-visible 40×40 map.
 
 ### Map Size Options
 
 | Size | Grid | Notes |
 |------|------|-------|
-| Small | 20x20 | Fast run (~15 min). Tight resource competition. Good for testing. |
-| Medium | 40x40 | Standard run (~30–45 min). Balanced expansion. |
-| Large | 60x60 | Long run (60+ min). Epic village scale. Future scope for full combat. |
-| Custom | Configurable | Via game settings or debug menu. |
+| Small | 20×20 | Fast games (~15 min). Tight, intense. Best for testing and tuning. |
+| Medium | 40×40 | **Default.** Standard run (~30–45 min). Balanced expansion. |
+| Large | 60×60 | Long sessions (60+ min). Intended for late-game combat content. |
+| Custom | Configurable | Via `MapGenerationSettings` ScriptableObject or debug menu. |
+
+### Generation Order
+
+The map is generated in a fixed pass order. Each pass respects the cleared zones set by previous passes.
+
+**Pass 1 — Clear Zone**
+A circular area of radius `clearRadius` (default: 3) around the Town Hall center is marked as reserved. No resource nodes can be placed here. This guarantees the player has immediate build space.
+
+**Pass 2 — Guaranteed Starting Resources**
+These are always placed regardless of random seed:
+- 1× Gold Mine at a random empty cell between `goldMineMinDist` and `goldMineMaxDist` cells from center (default: 4–7 cells). Always Tier 1.
+- 2–3× Tree clusters directly bordering the clear zone (distance 4–6 cells). This ensures the chain-clear mechanic is immediately available.
+- 1× Wild Farm within 6 cells of center (for Food income).
+
+**Pass 3 — River Generation (Water)**
+Rivers are generated using a random-walk algorithm starting from a random map edge:
+1. Pick a random cell on any edge of the map.
+2. Walk toward the opposite side, with a weighted random direction bias that keeps the path moving generally "across" the map.
+3. Each step has a `riverWidenChance` probability of also marking the adjacent orthogonal cell as Water, creating a river 1–2 tiles wide.
+4. Repeat for each river (default: 1–2 rivers per map).
+
+Rivers create natural territory divisions that encourage interesting worker placement decisions around their banks.
+
+**Pass 4 — Forest Generation (Trees)**
+Trees are placed using Unity's `Mathf.PerlinNoise` with a per-run random offset (derived from the run seed):
+1. For each cell (outside the clear zone), sample Perlin noise at `(x / treeNoiseScale, y / treeNoiseScale)`.
+2. If the sample value exceeds `treeDensityThreshold`, place a Tree node.
+3. Apply a post-process string pass: for each tree, check if there is another tree in a straight line within 2 cells. If so, fill any gap between them to ensure strings of 3–5+ trees in a row. This maximises chain-clear opportunities.
+
+Trees should be the most common environmental tile type. Dense forests in the mid and outer zones are intentional — they are the primary source of Wood and the primary arena for chain-clearing.
+
+**Pass 5 — Gold Mine Scatter**
+Scatter additional Gold Mines (beyond the guaranteed starting one) across the map:
+- Use `goldMineDensity` as the probability of any given cell becoming a Gold Mine.
+- Enforce `goldMineMinSpacing` — no two Gold Mines closer than this distance (prevents clustering).
+- Gold Mines become more common further from the center (outer zone bias).
+- Assign tier: cells within radius 10 = Tier 1; radius 10–20 = mix of Tier 1/2; beyond radius 20 = mix of Tier 2/3.
+
+**Pass 6 — Wild Farm Scatter**
+Scatter additional Wild Farm nodes (Food resource) with the same pattern as Gold Mines but slightly higher density. Farms can exist at any radius. They are Tier 1 always in the starting zone; outer farms can be Tier 2.
+
+**Pass 7 — Rock / Stone Scatter (Locked)**
+Rocks are placed sparsely across the map:
+- Use `rockDensity` as the probability per cell.
+- Enforce `rockMinSpacing` between rocks.
+- Rocks are **non-interactable** at game start. Workers do nothing when facing them. They exist as obstacles and future unlock targets.
+- Rocks can be clustered in 2–3 adjacent groups to form "stone outcroppings."
+
+**Pass 8 — Final Validation**
+After all passes, run a validation sweep:
+- Verify the guaranteed Gold Mine was placed (retry if blocked).
+- Verify no node overlaps with the Town Hall cell.
+- Verify no node was placed on a Water tile.
+- Verify the starting area is accessible (no water fully surrounding the Town Hall).
+
+### Inspector-Configurable Settings (MapGenerationSettings ScriptableObject)
+
+All of the following fields are tunable in the Unity Inspector:
+
+```
+[Header("Map Settings")]
+mapWidth            int         = 40
+mapHeight           int         = 40
+seed                int         = 0     // 0 = random per run
+
+[Header("Clear Zone")]
+clearRadius         int         = 3     // empty cell radius around Town Hall
+
+[Header("Guaranteed Starting Resources")]
+goldMineMinDist     int         = 4     // min distance from center
+goldMineMaxDist     int         = 7     // max distance from center
+
+[Header("Trees")]
+treeDensityThreshold  float (0–1)  = 0.42    // Perlin threshold — higher = fewer trees
+treeNoiseScale        float        = 6.0     // larger = bigger forest blobs
+enableStringPass      bool         = true    // post-process to fill gaps in tree rows
+
+[Header("Rivers / Water")]
+riverCount          int (0–4)    = 2
+riverMinLength      int          = 12
+riverMaxLength      int          = 30
+riverWidenChance    float (0–1)  = 0.15    // chance each step also marks adjacent cell
+
+[Header("Gold Mines")]
+goldMineDensity     float (0–0.1) = 0.015   // per-cell probability after clear zone
+goldMineMinSpacing  int           = 6
+
+[Header("Wild Farms")]
+farmDensity         float (0–0.1) = 0.020
+farmMinSpacing      int           = 5
+
+[Header("Rocks (Locked)")]
+rockDensity         float (0–0.1) = 0.012
+rockMinSpacing      int           = 4
+
+[Header("Fog of War")]
+startingRevealRadius  int         = 4     // cells revealed around Town Hall at run start
+```
+
+### Map Zones (Radial)
+
+Even though generation is noise-based rather than hard-zoned, the effective radial distribution produces these zones naturally:
+
+- **Starting Zone (radius 0–6):** Clear area, guaranteed resources, sparse trees. The player's safe base.
+- **Mid Zone (radius 7–18):** Dense forests, mix of all resource types, Tier 1–2 nodes. Primary expansion area.
+- **Outer Zone (radius 19+):** High-density resources, Tier 2–3 nodes, more rivers and rock outcroppings. Future scope: enemies spawn here.
 
 ---
 
@@ -308,11 +441,13 @@ Clockwork Craft is a second game built in the same Unity project as RTChess. **T
 | System | Purpose |
 |--------|---------|
 | `BuildingManager` | Singleton. Tracks all placed buildings. Handles construction progress per tick. |
-| `MapGenerator` | Generates procedural grid layout: Town Hall placement, node scattering, obstacles. |
+| `MapGenerator` | Generates procedural grid layout using `MapGenerationSettings`. Runs all 8 passes in order. Exposes `RegenerateMap(int seed)` for testing. |
+| `MapGenerationSettings` | ScriptableObject. All map tuning parameters (density, noise scale, distances, fog radius). Lives in `Assets/ClockworkCraft/Data/`. |
 | `ResourceManager` | Replaces single-currency ResourceTokenManager. Tracks Gold, Wood, Food, Stone independently. |
-| `WorkerManager` | Tracks all workers, their states (idle, harvesting, constructing). |
+| `WorkerManager` | Tracks all workers, their states (idle, harvesting, constructing, advancing via takeover). |
 | `BuildingCatalogue` | ScriptableObject list of all building definitions (cost, HP, construction ticks, effects). |
-| `NodeManager` | Tracks all resource nodes on the map. Handles depletion and removal. |
+| `NodeManager` | Tracks all resource nodes on the map. Handles per-tick damage, depletion, loot drop, tile takeover trigger. |
+| `FogManager` | Tracks revealed/fogged cells. Reveals on unit placement, building placement, or worker advance. |
 | `UpgradeSystem` | Manages building upgrade state per instance. Reads from BuildingCatalogue. |
 | `MapCamera` | Extends RTChess IsometricCamera with zoom-to-fit and drag-to-pan for large maps. |
 
@@ -380,13 +515,19 @@ No `Update()` frame logic for gameplay. Everything happens at `OnIntervalTick`. 
 
 ## 11. Development Phases
 
-### Phase 1 — Foundation & Resource Gathering
-- Configurable grid (default 40x40), procedural map generation
-- Four resource types with corresponding nodes and tiers
-- Worker unit: placement, clockwise rotation, harvest-on-face mechanic
-- Resource HUD (Gold, Wood, Food, Stone counters)
-- Node depletion and bonus loot
-- Worker dock (draw/drag from RTChess)
+### Phase 1 — Procedural Map & Environmental Generation ← CURRENT PHASE
+- `MapGenerationSettings` ScriptableObject with all inspector-tunable parameters
+- `MapGenerator` singleton implementing all 8 generation passes
+- Tile type system: Grass, Tree, Gold Mine, Wild Farm, Rock (locked), Water (locked)
+- Perlin noise forest generation with string-fill post-process pass
+- River generation via random walk with widening
+- Guaranteed starting conditions (Gold Mine, trees, farm within reach of Town Hall)
+- Radial zone bias (density increases with distance from center)
+- Fog of war from the start, with starting reveal radius around Town Hall
+- Resource node HP, depletion, and loot drop
+- Tile takeover: worker advances onto cleared tile and chains into next node
+- Worker dock (draw/drag from RTChess — reused)
+- Resource HUD: Gold, Wood, Food, Stone counters
 
 ### Phase 2 — Building System
 - Construction site placement and worker-driven build progress
@@ -416,4 +557,4 @@ No `Update()` frame logic for gameplay. Everything happens at `OnIntervalTick`. 
 
 ---
 
-*End of Document — Clockwork Craft GDD v1.0*
+*End of Document — Clockwork Craft GDD v1.1*
