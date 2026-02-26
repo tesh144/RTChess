@@ -124,6 +124,10 @@ namespace LittleCafe
 
             if (!gm.WorldToGridPosition(worldHit, out int gx, out int gy)) return;
 
+            // Don't allow interaction with fogged (unrevealed) cells
+            if (FogManager.Instance != null && !FogManager.Instance.IsCellRevealed(gx, gy))
+                return;
+
             // Look up the occupant on this cell
             GameObject occupantObj = gm.GetOccupant(gx, gy);
             if (occupantObj == null) return;
@@ -193,6 +197,10 @@ namespace LittleCafe
                 StartCoroutine(DisableAnimatorAfterDelay(holdTargetAnimator, interactAnimDuration));
             }
 
+            // SFX: tap interaction
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayHitWeak();
+
             Debug.Log($"[FurnitureRemoval] Interact animation on {furniture.name}");
         }
 
@@ -222,12 +230,18 @@ namespace LittleCafe
             // Clean up grid state and connectivity immediately
             furniture.OnRemoved();
 
+            // Unregister from building production if tracked
+            if (BuildingProductionManager.Instance != null)
+                BuildingProductionManager.Instance.UnregisterBuilding(furniture.gameObject);
+
             // Destroy the GameObject after the animation plays
             Destroy(furniture.gameObject, destroyAnimDuration + 0.1f);
 
             // Play SFX
-            if (SFXManager.Instance != null)
-                SFXManager.Instance.PlayPlayerPlacement(); // TODO: Add removal SFX
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayRemoval();
+            else if (SFXManager.Instance != null)
+                SFXManager.Instance.PlayPlayerPlacement();
 
             // Camera shake for feedback
             CameraSystemLocator.Current?.Shake(0.08f, 0.15f);

@@ -51,10 +51,6 @@ namespace ClockworkGrid
             currentTokens += amount;
             OnTokensChanged?.Invoke(currentTokens);
 
-            // Track gold collection for objectives
-            if (WaveManager.Instance != null)
-                WaveManager.Instance.OnGoldCollected(amount);
-
             // Spawn coin fly effect toward the token UI
             if (worldPosition.HasValue && CoinFlyEffect.Instance != null)
             {

@@ -74,5 +74,8 @@ Thumbs.db
 # Rider
 .idea/
 
+# Large PSD source files
+*.psd
+
 # Claude Code
 .claude/

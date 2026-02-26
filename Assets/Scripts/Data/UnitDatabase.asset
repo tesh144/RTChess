@@ -14,22 +14,36 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitList:
   - assetName: Dinosaur
-    type: 0
-    isEnemy: 0
+    type: 10
+    isEnemy: 1
     isFunctional: 0
     isWalkable: 0
-    drawWeight: 0
-    gridSize: {x: 0, y: 0}
-    visualScale: 0
+    isActive: 1
+    behaviorType: 1
+    lootResourceType: 24
+    lootHpCost: 1
+    lootYield: 1
+    hp: 10
+    attackPower: 1
+    drawWeight: 1
+    gridSize: {x: 1, y: 1}
+    visualScale: 1
     prefab: {fileID: 1395761798497100501, guid: ccc072202be124d27bf1b9afb5c70af7, type: 3}
     icon: {fileID: 0}
   - assetName: Mammoth
-    type: 0
-    isEnemy: 0
+    type: 10
+    isEnemy: 1
     isFunctional: 0
     isWalkable: 0
-    drawWeight: 0
-    gridSize: {x: 0, y: 0}
-    visualScale: 0
+    isActive: 1
+    behaviorType: 2
+    lootResourceType: 25
+    lootHpCost: 1
+    lootYield: 1
+    hp: 10
+    attackPower: 1
+    drawWeight: 1
+    gridSize: {x: 1, y: 1}
+    visualScale: 1
     prefab: {fileID: 6590751639944413424, guid: 2d7d7c51be8df4d9687c1bd61c7eec01, type: 3}
     icon: {fileID: 0}

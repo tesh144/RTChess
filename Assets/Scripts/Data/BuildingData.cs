@@ -1,4 +1,5 @@
 using UnityEngine;
+using ClockworkCraft;
 
 namespace LittleCafe
 {
@@ -15,6 +16,16 @@ namespace LittleCafe
         Civic,          // Town hall, fountain, well
         Military,       // Barracks, watchtower
         Religious       // Temple, shrine
+    }
+
+    /// <summary>
+    /// What a building produces when its production timer completes.
+    /// </summary>
+    public enum ProductionOutputType
+    {
+        None,       // No production
+        Worker,     // Produces a worker card for the player's hand
+        Currency    // Produces currency that flies to the currency bar
     }
 
     /// <summary>
@@ -40,9 +51,11 @@ namespace LittleCafe
         [Tooltip("Damage dealt to target's HP per successful interaction.")]
         public int attackPower = 0;
 
-        [Header("Draw Weight")]
+        [Header("Economy")]
         [Tooltip("Relative likelihood of being drawn. Default 1. Higher = more likely.")]
         public float drawWeight = 1f;
+        [Tooltip("Resource cost to place this building. 0 = free.")]
+        public int placementCost = 0;
 
         [Header("Grid & Visual")]
         public Vector2Int gridSize = Vector2Int.one;
@@ -51,6 +64,22 @@ namespace LittleCafe
         [Header("Prefab & Icon")]
         public GameObject prefab;
         public Sprite icon;
+
+        [Header("Production")]
+        [Tooltip("Base seconds between production cycles. 0 = no production.")]
+        public float productionInterval = 0f;
+
+        [Tooltip("Extra seconds added to the interval each time a reward is collected. Prevents worker spam.")]
+        public float productionIntervalBonus = 0f;
+
+        [Tooltip("What this building produces when its timer completes.")]
+        public ProductionOutputType productionOutputType = ProductionOutputType.None;
+
+        [Tooltip("For Currency output: which resource type to award.")]
+        public ResourceType producedResourceType = ResourceType.None;
+
+        [Tooltip("How many units of the reward per production cycle.")]
+        public int productionAmount = 1;
 
         /// <summary>
         /// Get clean asset name without file extension.

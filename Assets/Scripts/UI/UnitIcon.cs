@@ -33,12 +33,28 @@ namespace ClockworkGrid
 
         private void Awake()
         {
-            rectTransform = GetComponent<RectTransform>();
-            originalScale = rectTransform.localScale;
+            EnsureRectTransform();
+        }
+
+        /// <summary>
+        /// Ensures rectTransform is cached. Safe to call multiple times.
+        /// Needed because Initialize() may be called before Awake() runs.
+        /// </summary>
+        private void EnsureRectTransform()
+        {
+            if (rectTransform == null)
+            {
+                rectTransform = GetComponent<RectTransform>();
+                if (rectTransform != null)
+                {
+                    originalScale = rectTransform.localScale;
+                }
+            }
         }
 
         public void Initialize(GameObject prefab, DockBarManager manager)
         {
+            EnsureRectTransform();
             unitPrefab = prefab;
             dockManager = manager;
             originalPosition = rectTransform.anchoredPosition;
@@ -49,6 +65,7 @@ namespace ClockworkGrid
         /// </summary>
         public void Initialize(UnitStats stats, DockBarManager manager)
         {
+            EnsureRectTransform();
             unitStats = stats;
             unitPrefab = stats.unitPrefab;
             dockManager = manager;

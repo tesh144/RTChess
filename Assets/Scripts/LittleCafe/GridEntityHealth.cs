@@ -1,6 +1,5 @@
 using UnityEngine;
 using System;
-using System.Collections;
 using ClockworkGrid;
 
 namespace LittleCafe
@@ -17,14 +16,15 @@ namespace LittleCafe
         [SerializeField] private int maxHP = 3;
         [SerializeField] private int attackPower = 1;
 
+        [Header("Interaction")]
+        [Tooltip("Can workers interact with / attack this entity? Set at spawn time from InteractionRegistry.")]
+        [SerializeField] private bool workerCanInteract = true;
+
+        [Tooltip("Allied entities (workers, buildings) are never attacked by the player's own workers.")]
+        [SerializeField] private bool isAllied = false;
+
         private int currentHP;
         private bool isDestroyed = false;
-
-        // Damage flash
-        private Renderer[] renderers;
-        private Color[] originalColors;
-        private Coroutine flashCoroutine;
-        private const float FLASH_DURATION = 0.15f;
 
         // Animator reference (cached)
         private Animator animator;
@@ -36,6 +36,8 @@ namespace LittleCafe
 
         // --- Public accessors ---
         public int AttackPower => attackPower;
+        public bool WorkerCanInteract => workerCanInteract;
+        public bool IsAllied => isAllied;
 
         // --- Events ---
         /// <summary>
@@ -61,28 +63,18 @@ namespace LittleCafe
         /// <summary>
         /// Configure health from database values. Called by GridEntityManager after attaching.
         /// </summary>
-        public void Initialize(int hp, int atkPower)
+        public void Initialize(int hp, int atkPower, bool canInteract = true, bool allied = false)
         {
             maxHP = hp;
             attackPower = atkPower;
             currentHP = maxHP;
             isDestroyed = false;
+            workerCanInteract = canInteract;
+            isAllied = allied;
 
-            CacheRenderers();
             CacheAnimator();
 
-            Debug.Log($"[GridEntityHealth] {gameObject.name} initialized: HP={maxHP}, ATK={attackPower}");
-        }
-
-        private void CacheRenderers()
-        {
-            renderers = GetComponentsInChildren<Renderer>();
-            originalColors = new Color[renderers.Length];
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                if (renderers[i].material != null)
-                    originalColors[i] = renderers[i].material.color;
-            }
+            Debug.Log($"[GridEntityHealth] {gameObject.name} initialized: HP={maxHP}, ATK={attackPower}, workerCanInteract={workerCanInteract}");
         }
 
         private void CacheAnimator()
@@ -106,10 +98,19 @@ namespace LittleCafe
 
             Debug.Log($"[GridEntityHealth] {gameObject.name} took {actualDamage} damage. HP: {currentHP}/{maxHP}");
 
-            // Visual feedback: damage flash
-            if (flashCoroutine != null)
-                StopCoroutine(flashCoroutine);
-            flashCoroutine = StartCoroutine(DamageFlashCoroutine());
+            // Play interact_weak animation on the target being hit (jiggle feedback)
+            if (animator != null && currentHP > 0)
+            {
+                animator.SetTrigger("interact_weak");
+            }
+
+            // SFX: damage impact feedback
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayDamageImpact();
+
+            // Mini poof on each hit (small burst of 4-5 spheres at contact point)
+            Vector3 hitPos = transform.position + Vector3.up * 0.5f;
+            PoofEffect.Spawn(hitPos, count: 4, color: Color.white, minSize: 0.04f, maxSize: 0.1f);
 
             // Notify listeners
             OnDamaged?.Invoke(actualDamage, currentHP, maxHP);
@@ -134,6 +135,10 @@ namespace LittleCafe
 
             Debug.Log($"[GridEntityHealth] {gameObject.name} destroyed (HP reached 0)");
 
+            // SFX: entity death
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayEntityDeath();
+
             // Play remove animation if we have an animator
             if (animator != null)
             {
@@ -145,50 +150,5 @@ namespace LittleCafe
             OnAnyEntityDestroyed?.Invoke(this);
         }
 
-        // ---------------------------------------------------------------
-        // Damage Flash
-        // ---------------------------------------------------------------
-
-        private IEnumerator DamageFlashCoroutine()
-        {
-            // Flash red
-            SetRenderersColor(Color.red);
-            yield return new WaitForSeconds(FLASH_DURATION);
-            RestoreRendererColors();
-            flashCoroutine = null;
-        }
-
-        private void SetRenderersColor(Color color)
-        {
-            if (renderers == null) return;
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                if (renderers[i] != null && renderers[i].material != null)
-                    renderers[i].material.color = color;
-            }
-        }
-
-        private void RestoreRendererColors()
-        {
-            if (renderers == null || originalColors == null) return;
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                if (renderers[i] != null && renderers[i].material != null)
-                    renderers[i].material.color = originalColors[i];
-            }
-        }
-
-        // ---------------------------------------------------------------
-        // Cleanup
-        // ---------------------------------------------------------------
-
-        private void OnDisable()
-        {
-            if (flashCoroutine != null)
-            {
-                StopCoroutine(flashCoroutine);
-                flashCoroutine = null;
-            }
-        }
     }
 }

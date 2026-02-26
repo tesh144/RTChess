@@ -2,21 +2,13 @@ namespace ClockworkGrid
 {
     /// <summary>
     /// Static service locator for the active camera system.
-    /// Returns the registered ICameraSystem (GridCamera in cafe scene),
-    /// or falls back to CameraController.Instance (RTChess scene).
+    /// Returns the registered ICameraSystem (GridCamera).
     /// </summary>
     public static class CameraSystemLocator
     {
         private static ICameraSystem _override;
 
-        public static ICameraSystem Current
-        {
-            get
-            {
-                if (_override != null) return _override;
-                return CameraController.Instance;
-            }
-        }
+        public static ICameraSystem Current => _override;
 
         public static void Register(ICameraSystem system)
         {

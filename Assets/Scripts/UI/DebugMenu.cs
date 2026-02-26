@@ -271,13 +271,6 @@ namespace ClockworkGrid
             isDebugMode = !isDebugMode;
             UpdateUI();
 
-            // Notify CellDebugPlacer
-            CellDebugPlacer placer = FindObjectOfType<CellDebugPlacer>();
-            if (placer != null)
-            {
-                placer.SetDebugMode(isDebugMode);
-            }
-
             Debug.Log($"Debug Mode: {(isDebugMode ? "ENABLED" : "DISABLED")}");
         }
 

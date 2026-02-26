@@ -45,7 +45,7 @@ namespace LittleCafe
 
         [Header("Auto Rotation")]
         [SerializeField] private bool autoRotateOnStart = true;
-        [SerializeField] private float autoRotateSpeed = 12f;
+        [SerializeField] private float autoRotateSpeed = 6f;
 
         [Header("Center of Interest")]
         [SerializeField] private float coiBlendSpeed = 3f;
@@ -78,6 +78,7 @@ namespace LittleCafe
 
         // Pan state
         private bool isPlayerPanning;
+        private bool panOverridesCOI;  // Once player pans, stop pulling back to center of interest
 
         // Manual rotation state
         private bool isRightDragging;
@@ -287,6 +288,9 @@ namespace LittleCafe
 
             if (isPlayerPanning)
             {
+                // Player is actively panning — stop center-of-interest pull
+                panOverridesCOI = true;
+
                 Vector3 right = transform.right;
                 Vector3 forward = Vector3.Cross(right, Vector3.up).normalized;
                 Vector3 panDelta = (right * h + forward * v) * panSpeed * Time.deltaTime;
@@ -303,10 +307,11 @@ namespace LittleCafe
 
         private void UpdateCenterOfInterest()
         {
-            if (!isPlayerPanning)
-            {
-                targetLookPoint = Vector3.Lerp(targetLookPoint, centerOfInterest, Time.deltaTime * coiBlendSpeed);
-            }
+            // Once the player has panned with WASD, stop pulling back to center of interest.
+            // The override is cleared when FocusOnPosition/FocusOnCell is called (e.g. after placement).
+            if (isPlayerPanning || panOverridesCOI) return;
+
+            targetLookPoint = Vector3.Lerp(targetLookPoint, centerOfInterest, Time.deltaTime * coiBlendSpeed);
         }
 
         private void SmoothApplyOrbit()
@@ -389,6 +394,7 @@ namespace LittleCafe
             pos.y = 0f;
             targetLookPoint = pos;
             centerOfInterest = pos;
+            panOverridesCOI = false; // Re-anchor to this new focus point
         }
 
         public void FocusOnPosition(Vector3 worldPos)
@@ -396,6 +402,7 @@ namespace LittleCafe
             worldPos.y = 0f;
             targetLookPoint = worldPos;
             centerOfInterest = worldPos;
+            panOverridesCOI = false; // Re-anchor to this new focus point
         }
 
         public void Shake(float intensity = 0.15f, float duration = 0.25f)
@@ -416,6 +423,7 @@ namespace LittleCafe
         {
             targetLookPoint = gridCenter;
             centerOfInterest = gridCenter;
+            panOverridesCOI = false;
             targetYaw = 45f;
             targetPitch = 35f;
 

@@ -78,6 +78,11 @@ namespace ClockworkGrid
             {
                 revealedCells[x, y] = true;
                 OnCellRevealed?.Invoke(x, y);
+
+                // SFX: fog reveal (debounced inside GameSFXManager)
+                if (GameSFXManager.Instance != null)
+                    GameSFXManager.Instance.PlayFogReveal();
+
                 Debug.Log($"Revealed cell ({x}, {y})");
             }
         }

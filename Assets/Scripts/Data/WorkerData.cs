@@ -1,4 +1,5 @@
 using UnityEngine;
+using ClockworkGrid;
 
 namespace LittleCafe
 {
@@ -33,6 +34,10 @@ namespace LittleCafe
         public bool isWalkable = true;          // Workers are walkable by default
         [Tooltip("Active objects perform an action each interval tick. Workers act by default.")]
         public bool isActive = true;
+
+        [Header("Behavior")]
+        [Tooltip("Clockwork behavior pattern. RotateAndInteract = worker-style (attack). RotateAndMove = animal-style (wander).")]
+        public BehaviorType behaviorType = BehaviorType.RotateAndInteract;
 
         [Header("Combat Stats")]
         [Tooltip("Health points. When HP reaches 0, triggers an event (removal, completion, etc.).")]

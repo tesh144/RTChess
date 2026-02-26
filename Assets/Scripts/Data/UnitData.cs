@@ -1,4 +1,6 @@
 using UnityEngine;
+using ClockworkCraft;
+using ClockworkGrid;
 
 namespace LittleCafe
 {
@@ -38,6 +40,18 @@ namespace LittleCafe
         public bool isWalkable = true;          // Units are walkable by default
         [Tooltip("Active objects perform an action each interval tick. Units act by default.")]
         public bool isActive = true;
+
+        [Header("Behavior")]
+        [Tooltip("Clockwork behavior pattern. RotateAndInteract = worker-style (attack). RotateAndMove = animal-style (wander).")]
+        public BehaviorType behaviorType = BehaviorType.RotateAndMove;
+
+        [Header("Loot Settings")]
+        [Tooltip("What resource currency this unit drops when hit/killed. None = no loot. Assign from CurrencyDatabase entries.")]
+        public ResourceType lootResourceType = ResourceType.None;
+        [Tooltip("HP removed per loot trigger. e.g. 2 means every 2 HP of damage triggers a loot drop.")]
+        [Min(1)] public int lootHpCost = 1;
+        [Tooltip("How many resource particles burst out each time lootHpCost HP has been removed.")]
+        [Range(1, 10)] public int lootYield = 1;
 
         [Header("Combat Stats")]
         [Tooltip("Health points. When HP reaches 0, triggers an event (removal, completion, etc.).")]

@@ -56,10 +56,6 @@ namespace LittleCafe
             }
             else
             {
-                // Auto-save before entering play mode
-                if (LayoutManager.Instance != null)
-                    LayoutManager.Instance.SaveToFile();
-
                 if (buildModeUI != null) buildModeUI.SetActive(false);
                 if (playModeUI != null) playModeUI.SetActive(true);
                 if (buildModeSystems != null) buildModeSystems.SetActive(false);

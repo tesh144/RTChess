@@ -1,4 +1,6 @@
 using UnityEngine;
+using ClockworkCraft;
+using LittleCafe;
 
 namespace ClockworkGrid
 {
@@ -55,11 +57,25 @@ namespace ClockworkGrid
         [Tooltip("Whether this object acts each interval tick (workers/units = true, furniture/buildings = false)")]
         public bool isActive = false;
 
+        [Tooltip("Clockwork behavior pattern. RotateAndInteract = worker-style (attack). RotateAndMove = animal-style (wander).")]
+        public BehaviorType behaviorType = BehaviorType.RotateAndInteract;
+
+        [Tooltip("Allied entities (workers, buildings) are never attacked by the player's own workers.")]
+        public bool isAllied = false;
+
         [Header("Combat Stats")]
         public int maxHP = 10;
         public int attackDamage = 3;
         public int attackRange = 1; // Cells away from unit
         public int attackIntervalMultiplier = 2; // Attacks every X intervals
+
+        [Header("Loot Settings")]
+        [Tooltip("What resource currency this unit drops when hit/killed. None = no loot.")]
+        public ResourceType lootResourceType = ResourceType.None;
+        [Tooltip("HP removed per loot trigger. e.g. 2 means every 2 HP of damage triggers a loot drop.")]
+        [Min(1)] public int lootHpCost = 1;
+        [Tooltip("How many resource particles burst out each time lootHpCost HP has been removed.")]
+        [Range(1, 10)] public int lootYield = 1;
 
         [Header("Economy")]
         public int resourceCost = 3; // Currently unused (placement is free)
@@ -73,6 +89,18 @@ namespace ClockworkGrid
 
         [Header("Grid Footprint")]
         public Vector2Int gridSize = new Vector2Int(1, 1); // Cells occupied (e.g. 2x1 table, 2x2 cooking station)
+
+        [Header("Building Production")]
+        [Tooltip("What this building produces when its timer completes.")]
+        public ProductionOutputType productionOutputType = ProductionOutputType.None;
+        [Tooltip("Base seconds between production cycles. 0 = no production.")]
+        public float productionInterval = 0f;
+        [Tooltip("Extra seconds added to the interval each time a reward is collected.")]
+        public float productionIntervalBonus = 0f;
+        [Tooltip("For Currency output: which resource type to award.")]
+        public ResourceType producedResourceType = ResourceType.None;
+        [Tooltip("How many units of the reward per production cycle.")]
+        public int productionAmount = 1;
 
         [Header("Visuals")]
         public Color unitColor = Color.blue;

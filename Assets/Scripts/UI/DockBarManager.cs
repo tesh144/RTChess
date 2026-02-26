@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
+using LittleCafe;
+using ClockworkCraft;
 
 namespace ClockworkGrid
 {
@@ -27,6 +29,17 @@ namespace ClockworkGrid
         [Header("Draw Cost Settings")]
         [SerializeField] private int baseDrawCost = 6; // Starting cost for the first draw
         [SerializeField] private int costIncrement = 1; // How much cost increases per draw
+
+        /// <summary>
+        /// Override the draw cost settings at runtime (e.g., free draws in ClockworkCraft mode).
+        /// </summary>
+        public void SetDrawCost(int baseCost, int increment)
+        {
+            baseDrawCost = baseCost;
+            costIncrement = increment;
+            drawCount = 0;
+            Debug.Log($"[DockBarManager] Draw cost set to base={baseCost}, increment={increment}");
+        }
         [SerializeField] private int costDecreaseInterval = 0; // Intervals between cost decreases (0 = disabled)
 
         [Header("Runtime Creation Settings (if no UI references assigned)")]
@@ -68,14 +81,7 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            // Hide ONLY the gatcha button at start if WaveManager exists and wave hasn't started.
-            // If no WaveManager (e.g. LittleCafe), gacha button stays visible.
-            if (gatchaButtonHolder != null && WaveManager.Instance != null && !WaveManager.Instance.HasWaveStarted)
-            {
-                Debug.Log("[DockBarManager] Hiding gatcha button holder at start (wave not started)");
-                gatchaButtonHolder.SetActive(false);
-            }
-            else if (gatchaButtonHolder == null)
+            if (gatchaButtonHolder == null)
             {
                 Debug.LogError("[DockBarManager] gatchaButtonHolder is not assigned! Please assign it in the Inspector.");
             }
@@ -127,33 +133,34 @@ namespace ClockworkGrid
                 originalAnchoredPosition = dockBarContainer.anchoredPosition;
             }
 
-            // Add starting soldier card to dock
-            AddStartingCard();
+            // Starting worker card is added via AddStartingWorker() after Initialize
         }
 
         /// <summary>
-        /// Add a starting soldier card to the dock at game start.
+        /// Add a starting worker card to the dock.
+        /// Picks the first valid worker from the given database.
+        /// Called by MapGeneratorV2 after deck setup.
         /// </summary>
-        private void AddStartingCard()
+        public void AddStartingWorker(WorkerDatabase workerDB)
         {
-            if (RaritySystem.Instance != null)
+            if (workerDB == null || workerDB.Count == 0)
             {
-                // Get Soldier unit stats
-                UnitStats soldierStats = RaritySystem.Instance.GetUnitStats(UnitType.Soldier);
-                if (soldierStats != null)
+                Debug.LogWarning("[DockBarManager] No WorkerDatabase — can't add starting worker");
+                return;
+            }
+
+            // Pick the first worker with a valid prefab
+            foreach (WorkerData wd in workerDB.AllWorkers)
+            {
+                if (wd.prefab != null)
                 {
-                    AddUnitToDock(soldierStats);
-                    Debug.Log("[DockBarManager] Added starting Soldier card to dock");
-                }
-                else
-                {
-                    Debug.LogWarning("[DockBarManager] Could not find Soldier stats for starting card");
+                    AddWorkerCard(wd);
+                    Debug.Log($"[DockBarManager] Added starting worker '{wd.GetCleanName()}' to dock");
+                    return;
                 }
             }
-            else
-            {
-                Debug.LogWarning("[DockBarManager] RaritySystem.Instance is null, cannot add starting card");
-            }
+
+            Debug.LogWarning("[DockBarManager] No workers with valid prefabs found in WorkerDatabase");
         }
 
         private void OnDestroy()
@@ -402,6 +409,11 @@ namespace ClockworkGrid
             {
                 Debug.Log($"Failed to draw unit - not enough tokens (need {cost})");
                 ShowErrorFeedback($"Not Enough Tokens! ({cost} needed)");
+
+                // SFX: can't afford draw
+                if (GameSFXManager.Instance != null)
+                    GameSFXManager.Instance.PlayError();
+
                 return;
             }
 
@@ -421,6 +433,10 @@ namespace ClockworkGrid
                 {
                     AddUnitToDock(drawnStats);
                     Debug.Log($"Drew {drawnStats.unitName} ({drawnStats.rarity}) - Cost was {cost}T");
+
+                    // SFX: card drawn
+                    if (GameSFXManager.Instance != null)
+                        GameSFXManager.Instance.PlayCardDraw();
 
                     // Screen shake feedback on successful draw
                     CameraSystemLocator.Current?.Shake(0.12f, 0.2f);
@@ -473,10 +489,51 @@ namespace ClockworkGrid
             icon.Initialize(unitStats, this);
             unitIcons.Add(icon);
 
+            // SFX: card slides into dock
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayCardSlideIn();
+
             // Update spacing
             UpdateLayoutSpacing();
+        }
 
-            // TODO: Animate icon sliding in from right
+        /// <summary>
+        /// Add a worker card to the dock from WorkerData (produced by buildings).
+        /// Creates a UnitStats on-the-fly and calls AddUnitToDock.
+        /// </summary>
+        public void AddWorkerCard(WorkerData workerData)
+        {
+            if (workerData == null) return;
+
+            // Check hand limit
+            if (unitIcons.Count >= 10)
+            {
+                Debug.LogWarning("[DockBarManager] Hand full — can't add worker card");
+                return;
+            }
+
+            // Create UnitStats from WorkerData (same pattern as MapGeneratorV2.SetupDeck)
+            UnitStats stats       = ScriptableObject.CreateInstance<UnitStats>();
+            stats.unitType        = UnitType.Soldier;
+            stats.unitName        = workerData.GetCleanName();
+            stats.rarity          = Rarity.Common;
+            stats.drawWeight      = workerData.drawWeight;
+            stats.iconSprite      = workerData.icon;
+            stats.unitColor       = Color.white;
+            stats.unitPrefab      = workerData.prefab;
+            stats.resourceCost    = 0;
+            stats.gridSize        = workerData.gridSize;
+            stats.modelScale      = workerData.visualScale;
+            stats.enemyPrefab     = null;
+            stats.isActive        = workerData.isActive;
+            stats.behaviorType    = workerData.behaviorType;
+            stats.maxHP           = workerData.hp;
+            stats.attackDamage    = workerData.attackPower;
+            stats.furnitureTypeOverride = -1;
+            stats.isAllied        = true;
+
+            AddUnitToDock(stats);
+            Debug.Log($"[DockBarManager] Added worker card '{workerData.GetCleanName()}' from building production");
         }
 
         // REMOVED: OnHandChanged() - No longer needed (Iteration 10: Self-sufficient)
@@ -672,7 +729,7 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Get the current number of units in the dock/hand.
-        /// Used by WaveManager for lose condition checking.
+        /// Returns the number of unit cards currently in the dock.
         /// </summary>
         public int GetUnitCount()
         {

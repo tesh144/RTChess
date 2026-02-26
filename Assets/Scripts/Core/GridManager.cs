@@ -47,14 +47,24 @@ namespace ClockworkGrid
 
         private void Start()
         {
-            // Initialize in Start so GameSetup.Awake can set fields first
+            // Initialize in Start so scene setup scripts can set fields first
             if (cellStates == null)
                 InitializeGrid();
         }
 
+        /// <summary>
+        /// Initialize grid with explicit dimensions (called by MapGeneratorV2).
+        /// </summary>
+        public void InitializeGrid(int width, int height)
+        {
+            gridWidth = width;
+            gridHeight = height;
+            InitializeGrid();
+        }
+
         public void InitializeGrid()
         {
-            // Ensure singleton is set (GameSetup may call this before our Awake runs)
+            // Ensure singleton is set (scene setup may call this before our Awake runs)
             if (Instance == null) Instance = this;
 
             cellStates = new CellState[gridWidth, gridHeight];
@@ -355,193 +365,5 @@ namespace ClockworkGrid
             return (anchor + far) * 0.5f;
         }
 
-        /// <summary>
-        /// Resize grid to new dimensions (Iteration 9: Grid Expansion).
-        /// Preserves existing cells by centering them in the new grid.
-        /// </summary>
-        public void ResizeGrid(Vector2Int newSize)
-        {
-            if (newSize.x <= 0 || newSize.y <= 0)
-            {
-                Debug.LogWarning($"Invalid grid size: {newSize}");
-                return;
-            }
-
-            Debug.Log($"Resizing grid from {gridWidth}×{gridHeight} to {newSize.x}×{newSize.y}");
-
-            // Create new arrays
-            CellState[,] newCellStates = new CellState[newSize.x, newSize.y];
-            GameObject[,] newCellOccupants = new GameObject[newSize.x, newSize.y];
-
-            // Initialize all new cells as empty
-            for (int x = 0; x < newSize.x; x++)
-            {
-                for (int y = 0; y < newSize.y; y++)
-                {
-                    newCellStates[x, y] = CellState.Empty;
-                    newCellOccupants[x, y] = null;
-                }
-            }
-
-            // Copy existing cells (centered expansion)
-            if (cellStates != null)
-            {
-                int offsetX = (newSize.x - gridWidth) / 2;
-                int offsetY = (newSize.y - gridHeight) / 2;
-
-                // Track which GameObjects we've already updated to avoid processing multi-cell resources multiple times
-                System.Collections.Generic.HashSet<GameObject> processedObjects = new System.Collections.Generic.HashSet<GameObject>();
-
-                for (int x = 0; x < gridWidth; x++)
-                {
-                    for (int y = 0; y < gridHeight; y++)
-                    {
-                        int newX = x + offsetX;
-                        int newY = y + offsetY;
-
-                        if (newX >= 0 && newX < newSize.x && newY >= 0 && newY < newSize.y)
-                        {
-                            newCellStates[newX, newY] = cellStates[x, y];
-                            newCellOccupants[newX, newY] = cellOccupants[x, y];
-
-                            // Update unit/resource grid positions (only once per GameObject)
-                            GameObject occupant = cellOccupants[x, y];
-                            if (occupant != null && !processedObjects.Contains(occupant))
-                            {
-                                processedObjects.Add(occupant);
-
-                                Unit unit = occupant.GetComponent<Unit>();
-                                if (unit != null)
-                                {
-                                    unit.GridX = newX;
-                                    unit.GridY = newY;
-                                }
-
-                                ResourceNode resource = occupant.GetComponent<ResourceNode>();
-                                if (resource != null)
-                                {
-                                    // Update anchor position (top-left corner for multi-cell resources)
-                                    resource.GridX = newX;
-                                    resource.GridY = newY;
-
-                                    // For multi-cell resources, copy all occupied cells to new grid
-                                    Vector2Int gridSize = resource.GridSize;
-                                    for (int dx = 0; dx < gridSize.x; dx++)
-                                    {
-                                        for (int dy = 0; dy < gridSize.y; dy++)
-                                        {
-                                            int oldCellX = x + dx;
-                                            int oldCellY = y + dy;
-                                            int newCellX = newX + dx;
-                                            int newCellY = newY + dy;
-
-                                            // Ensure all cells are within bounds and mapped correctly
-                                            if (oldCellX < gridWidth && oldCellY < gridHeight &&
-                                                newCellX >= 0 && newCellX < newSize.x &&
-                                                newCellY >= 0 && newCellY < newSize.y)
-                                            {
-                                                newCellStates[newCellX, newCellY] = cellStates[oldCellX, oldCellY];
-                                                newCellOccupants[newCellX, newCellY] = occupant;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Update world positions of all units/resources
-                UpdateAllWorldPositions();
-            }
-
-            // Destroy old grid tiles
-            if (gridTiles != null)
-            {
-                for (int x = 0; x < gridWidth; x++)
-                {
-                    for (int y = 0; y < gridHeight; y++)
-                    {
-                        if (gridTiles[x, y] != null)
-                        {
-                            Destroy(gridTiles[x, y]);
-                        }
-                    }
-                }
-            }
-
-            // Update grid dimensions
-            gridWidth = newSize.x;
-            gridHeight = newSize.y;
-            cellStates = newCellStates;
-            cellOccupants = newCellOccupants;
-
-            // Ensure tile prefabs exist before creating new tiles
-            EnsureTilePrefabs();
-
-            // Create new grid tiles
-            gridTiles = new GameObject[gridWidth, gridHeight];
-            for (int x = 0; x < gridWidth; x++)
-            {
-                for (int y = 0; y < gridHeight; y++)
-                {
-                    // Determine which prefab to use (checkerboard pattern)
-                    bool useA = (x + y) % 2 == 0;
-                    GameObject prefabToUse = useA ? gridTilePrefabA : gridTilePrefabB;
-
-                    // Fallback: if B is null, use A for both
-                    if (prefabToUse == null) prefabToUse = gridTilePrefabA;
-
-                    if (prefabToUse != null)
-                    {
-                        Vector3 tilePos = GridToWorldPosition(x, y);
-                        // Position tile so top surface is at Y=0 (units walk on top)
-                        tilePos.y = -cellSize / 2f;
-
-                        GameObject tile = Instantiate(prefabToUse, tilePos, Quaternion.identity, gridTilesContainer);
-                        tile.name = $"GridTile_{x}_{y}";
-                        tile.SetActive(true);
-                        // Use prefab's natural proportions — scale uniformly by cellSize
-                        tile.transform.localScale = Vector3.one * cellSize;
-
-                        // Attach fog component
-                        TileFog tileFog = tile.AddComponent<TileFog>();
-                        tileFog.InitializeFog(-cellSize / 2f, fogDropDistance);
-
-                        // If FogManager knows this cell is revealed, reveal immediately
-                        if (FogManager.Instance != null && FogManager.Instance.IsCellRevealed(x, y))
-                        {
-                            tileFog.RevealImmediate();
-                        }
-
-                        gridTiles[x, y] = tile;
-                    }
-                }
-            }
-
-            Debug.Log($"Grid resized successfully to {gridWidth}×{gridHeight}");
-        }
-
-        /// <summary>
-        /// Update world positions of all units and resources after grid resize.
-        /// </summary>
-        private void UpdateAllWorldPositions()
-        {
-            if (cellOccupants == null) return;
-
-            for (int x = 0; x < gridWidth; x++)
-            {
-                for (int y = 0; y < gridHeight; y++)
-                {
-                    GameObject occupant = cellOccupants[x, y];
-                    if (occupant != null)
-                    {
-                        // Recalculate world position with new grid size
-                        Vector3 newWorldPos = GridToWorldPosition(x, y);
-                        occupant.transform.position = newWorldPos;
-                    }
-                }
-            }
-        }
     }
 }

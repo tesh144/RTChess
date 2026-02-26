@@ -132,6 +132,10 @@ namespace ClockworkGrid
             isDragging = true;
             isValidPlacement = false; // Reset - must hover a valid cell to place
 
+            // SFX: card picked up from dock
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayDragStart();
+
             // Get grid size from GridObject component on the prefab (not UnitStats)
             GridObject gridObj = currentUnitPrefab.GetComponent<GridObject>();
             currentGridSize = (gridObj != null) ? gridObj.GridSize : new Vector2Int(1, 1);
@@ -208,6 +212,10 @@ namespace ClockworkGrid
 
             if (!isValidPlacement)
             {
+                // SFX: drag cancelled / invalid drop
+                if (GameSFXManager.Instance != null)
+                    GameSFXManager.Instance.PlayDragCancel();
+
                 // Invalid placement - snap back to dock and restore camera
                 currentDraggingIcon.SnapBackToOriginalPosition();
                 var snapCam = CameraSystemLocator.Current;
@@ -228,6 +236,10 @@ namespace ClockworkGrid
             {
                 if (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.SpendTokens(placementCost))
                 {
+                    // SFX: can't afford
+                    if (GameSFXManager.Instance != null)
+                        GameSFXManager.Instance.PlayError();
+
                     // Can't afford - snap back to dock
                     currentDraggingIcon.SnapBackToOriginalPosition();
                     CleanupDragVisuals();
@@ -261,49 +273,45 @@ namespace ClockworkGrid
                 furniture.OnPlaced(targetGridX, targetGridY, currentGridSize);
                 placedWithFurniture = true;
 
-                // Attach GridEntity components (health, actor) based on database stats
+                // Attach GridEntity components (health, actor, loot) based on database stats
                 if (LittleCafe.GridEntityManager.Instance != null && currentDraggingIcon?.UnitStats != null)
                 {
                     var stats = currentDraggingIcon.UnitStats;
-                    // Read entity stats from UnitStats — defaults to furniture (no HP, not active)
                     int hp = stats.maxHP > 0 ? stats.maxHP : 0;
                     int attackPower = stats.attackDamage > 0 ? stats.attackDamage : 0;
                     bool isActive = stats.isActive;
-                    LittleCafe.GridEntityManager.Instance.AttachComponents(unitObj, hp, attackPower, isActive);
+                    LittleCafe.GridEntityManager.Instance.AttachComponents(unitObj, hp, attackPower, isActive,
+                        stats.lootResourceType, stats.lootHpCost, stats.lootYield, stats.behaviorType,
+                        registryName: stats.unitName, allied: stats.isAllied);
                 }
             }
 
-            // LEGACY: Initialize Unit with UnitStats (RTChess combat system)
-            Unit unit = unitObj.GetComponent<Unit>();
-            if (unit != null && currentDraggingIcon != null && currentDraggingIcon.UnitStats != null)
-            {
-                unit.Initialize(Team.Player, targetGridX, targetGridY, currentDraggingIcon.UnitStats);
-            }
-
-            // LEGACY: Initialize CafeEquipment (old system, kept for backwards compatibility)
+            // Non-furniture path (workers, units — no FurnitureObject component)
             if (!placedWithFurniture)
             {
-                LittleCafe.CafeEquipment equip = unitObj.GetComponent<LittleCafe.CafeEquipment>();
-                if (equip == null)
-                    equip = unitObj.AddComponent<LittleCafe.CafeEquipment>();
-                equip.Initialize(targetGridX, targetGridY, currentGridSize);
-
                 // Register with grid (multi-cell: all footprint cells point to same object)
                 GridManager.Instance.PlaceMultiCell(targetGridX, targetGridY, currentGridSize, unitObj, CellState.PlayerUnit);
-            }
-            // Note: FurnitureObject.OnPlaced() already handles grid registration
 
-            // Notify WaveManager that player placed a unit (for lose condition tracking)
-            if (WaveManager.Instance != null)
-            {
-                WaveManager.Instance.OnPlayerUnitPlaced();
-            }
+                // Reveal surrounding fog (same as FurnitureObject.OnPlaced)
+                if (FogManager.Instance != null)
+                {
+                    int revealRadius = 1;
+                    for (int dx = -revealRadius; dx <= revealRadius + currentGridSize.x - 1; dx++)
+                    for (int dy = -revealRadius; dy <= revealRadius + currentGridSize.y - 1; dy++)
+                        FogManager.Instance.RevealCell(targetGridX + dx, targetGridY + dy);
+                }
 
-            // Trigger wave start on first player unit placement
-            if (WaveManager.Instance != null && !WaveManager.Instance.HasWaveStarted)
-            {
-                WaveManager.Instance.StartWave();
-                Debug.Log("[DragDropHandler] First player unit placed - wave started!");
+                // Attach GridEntity components (health, actor, loot) from UnitStats
+                if (LittleCafe.GridEntityManager.Instance != null && currentDraggingIcon?.UnitStats != null)
+                {
+                    var stats = currentDraggingIcon.UnitStats;
+                    int hp = stats.maxHP > 0 ? stats.maxHP : 0;
+                    int attackPower = stats.attackDamage > 0 ? stats.attackDamage : 0;
+                    bool isActive = stats.isActive;
+                    LittleCafe.GridEntityManager.Instance.AttachComponents(unitObj, hp, attackPower, isActive,
+                        stats.lootResourceType, stats.lootHpCost, stats.lootYield, stats.behaviorType,
+                        registryName: stats.unitName, allied: stats.isAllied);
+                }
             }
 
             // Update furniture connectivity after placement
@@ -312,8 +320,18 @@ namespace ClockworkGrid
                 LittleCafe.FurnitureConnectivityManager.Instance.UpdateConnectivity();
             }
 
+            // Register building with production manager if it has production data
+            if (currentDraggingIcon?.UnitStats != null &&
+                currentDraggingIcon.UnitStats.productionOutputType != LittleCafe.ProductionOutputType.None &&
+                LittleCafe.BuildingProductionManager.Instance != null)
+            {
+                LittleCafe.BuildingProductionManager.Instance.RegisterBuilding(unitObj, currentDraggingIcon.UnitStats);
+            }
+
             // Play placement SFX
-            if (SFXManager.Instance != null)
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayPlacement();
+            else if (SFXManager.Instance != null)
                 SFXManager.Instance.PlayPlayerPlacement();
 
             // Remove from dock

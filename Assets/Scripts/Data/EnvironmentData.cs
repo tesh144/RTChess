@@ -1,4 +1,5 @@
 using UnityEngine;
+using ClockworkCraft;
 
 namespace LittleCafe
 {
@@ -34,15 +35,19 @@ namespace LittleCafe
         [Tooltip("Active objects perform an action each interval tick. Environment objects are passive by default.")]
         public bool isActive = false;
 
+        [Header("Loot Settings")]
+        [Tooltip("What resource currency this environment drops when hit. None = no loot. Assign from CurrencyDatabase entries.")]
+        public ResourceType lootResourceType = ResourceType.None;
+        [Tooltip("HP removed per loot trigger. e.g. 2 means every 2 HP of damage triggers a loot drop.")]
+        [Min(1)] public int lootHpCost = 1;
+        [Tooltip("How many resource particles burst out each time lootHpCost HP has been removed.")]
+        [Range(1, 10)] public int lootYield = 1;
+
         [Header("Combat Stats")]
         [Tooltip("Health points. When HP reaches 0, triggers an event (removal, completion, etc.).")]
         public int hp = 5;
         [Tooltip("Damage dealt to target's HP per successful interaction.")]
         public int attackPower = 0;
-
-        [Header("Draw Weight")]
-        [Tooltip("Relative likelihood of being drawn. Default 1. Higher = more likely.")]
-        public float drawWeight = 1f;
 
         [Header("Grid & Visual")]
         public Vector2Int gridSize = Vector2Int.one;

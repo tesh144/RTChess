@@ -110,10 +110,11 @@ namespace LittleCafe
         /// </summary>
         protected void RevealSurroundingTiles()
         {
-            GridManager gm = GridManager.Instance;
-            if (gm == null) return;
+            // Route through FogManager so that BOTH tile visuals (TileFog)
+            // and hidden objects (FogHideable) get notified via OnCellRevealed.
+            // GridManager already subscribes to OnCellRevealed → RevealTile.
+            if (FogManager.Instance == null) return;
 
-            // Reveal a 3x3 area around the furniture
             int revealRadius = 1;
 
             for (int dx = -revealRadius; dx <= revealRadius + gridSize.x - 1; dx++)
@@ -122,7 +123,7 @@ namespace LittleCafe
                 {
                     int checkX = gridX + dx;
                     int checkY = gridY + dy;
-                    gm.RevealTile(checkX, checkY, immediate: false);
+                    FogManager.Instance.RevealCell(checkX, checkY);
                 }
             }
         }

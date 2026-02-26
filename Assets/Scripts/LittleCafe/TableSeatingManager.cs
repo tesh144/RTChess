@@ -66,13 +66,21 @@ namespace LittleCafe
         private void RefreshAllChairAttachments()
         {
             ChairObject[] allChairs = FindObjectsOfType<ChairObject>();
+            int processed = 0;
 
             foreach (ChairObject chair in allChairs)
             {
+                // Skip objects that use a chair prefab but aren't actually chairs
+                // (e.g., water tiles using blue chair variant as visual)
+                FurnitureObject furniture = chair.GetComponent<FurnitureObject>();
+                if (furniture != null && furniture.Type != FurnitureType.Chair)
+                    continue;
+
                 UpdateChairAttachment(chair);
+                processed++;
             }
 
-            Debug.Log($"[TableSeatingManager] ✓ Refreshed {allChairs.Length} chairs");
+            Debug.Log($"[TableSeatingManager] ✓ Refreshed {processed} chairs (skipped {allChairs.Length - processed} non-chair objects)");
         }
 
         /// <summary>

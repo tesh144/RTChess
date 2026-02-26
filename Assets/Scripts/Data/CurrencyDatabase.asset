@@ -1,0 +1,201 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee85f1eaba6104f52a0ea3919b025a04, type: 3}
+  m_Name: CurrencyDatabase
+  m_EditorClassIdentifier: 
+  currencyList:
+  - currencyName: Gold
+    resourceType: 1
+    icon: {fileID: 21300000, guid: 711617057e9e144579acb586fc6b1184, type: 3}
+    fallbackEmoji: "\U0001F4B0"
+    startingAmount: 20
+    unlockedAtStart: 1
+  - currencyName: Wood
+    resourceType: 2
+    icon: {fileID: 21300000, guid: 31d730a9274f44ca4ad2ed19f1489069, type: 3}
+    fallbackEmoji: "\U0001F332"
+    startingAmount: 0
+    unlockedAtStart: 1
+  - currencyName: Food
+    resourceType: 3
+    icon: {fileID: 21300000, guid: 7f79143c2468a4103888c0bd904f6a7f, type: 3}
+    fallbackEmoji: "\U0001F344"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Stone
+    resourceType: 4
+    icon: {fileID: 21300000, guid: eedbfeb65edf042eb8437dec0d323ad6, type: 3}
+    fallbackEmoji: "\U0001FAA8"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Water
+    resourceType: 5
+    icon: {fileID: 21300000, guid: 598d993a02b92434a97fa907a1cbb83f, type: 3}
+    fallbackEmoji: "\U0001F4A7"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Clay
+    resourceType: 6
+    icon: {fileID: 21300000, guid: ab8988cd3f92249bbadf4363defc0550, type: 3}
+    fallbackEmoji: "\U0001F9F1"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Flowers
+    resourceType: 7
+    icon: {fileID: 21300000, guid: 3225daefaf71e4f7eb52f2bed9995434, type: 3}
+    fallbackEmoji: "\U0001F33B"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Gem
+    resourceType: 8
+    icon: {fileID: 21300000, guid: 0854600a3c8b4456cb2812f3f702d5bc, type: 3}
+    fallbackEmoji: "\U0001F48E"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Copper
+    resourceType: 9
+    icon: {fileID: 21300000, guid: 926aa8cba9327498490679756d4bb25e, type: 3}
+    fallbackEmoji: "\U0001FA99"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Ore
+    resourceType: 10
+    icon: {fileID: 21300000, guid: 136c3b13bce2b4feebcae1146c122b76, type: 3}
+    fallbackEmoji: "\u2692"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: White Marble
+    resourceType: 11
+    icon: {fileID: 21300000, guid: 1b268a5ffea514b898f194963c1838cf, type: 3}
+    fallbackEmoji: "\U0001F9CA"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Moonstone
+    resourceType: 12
+    icon: {fileID: 21300000, guid: 97ca09f7870bd4030abd22b47d931f90, type: 3}
+    fallbackEmoji: "\U0001F319"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Bark
+    resourceType: 13
+    icon: {fileID: 21300000, guid: 295c7895e99e64ab284626db2d8173f7, type: 3}
+    fallbackEmoji: "\U0001FAB5"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Twig
+    resourceType: 14
+    icon: {fileID: 21300000, guid: e820ad9e5522f429592e4443563c8698, type: 3}
+    fallbackEmoji: "\U0001FAB9"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Acorn
+    resourceType: 15
+    icon: {fileID: 21300000, guid: 23b7f9989ecde46f5b2995d7b59e012c, type: 3}
+    fallbackEmoji: "\U0001F330"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Leaf
+    resourceType: 16
+    icon: {fileID: 21300000, guid: 44a2c2e36a59a4eba9986c83f34a7bd3, type: 3}
+    fallbackEmoji: "\U0001F343"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Grass
+    resourceType: 17
+    icon: {fileID: 21300000, guid: dcceb7956328742f5bf173c1a5f75ffe, type: 3}
+    fallbackEmoji: "\U0001F33F"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Petal
+    resourceType: 18
+    icon: {fileID: 21300000, guid: 3225daefaf71e4f7eb52f2bed9995434, type: 3}
+    fallbackEmoji: "\U0001F338"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Rice
+    resourceType: 19
+    icon: {fileID: 21300000, guid: faef549c591264803aad6139955b1a92, type: 3}
+    fallbackEmoji: "\U0001F33E"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Coconut
+    resourceType: 20
+    icon: {fileID: 21300000, guid: 8f8422a706e8d457da12a6c1b17f0935, type: 3}
+    fallbackEmoji: "\U0001F965"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Carrot
+    resourceType: 21
+    icon: {fileID: 21300000, guid: 1598fed10882b4112bc90b897669c1c2, type: 3}
+    fallbackEmoji: "\U0001F955"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Tomato
+    resourceType: 22
+    icon: {fileID: 21300000, guid: 449d36d16b1e147f69db99ae696c7e27, type: 3}
+    fallbackEmoji: "\U0001F345"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Meat
+    resourceType: 23
+    icon: {fileID: 21300000, guid: 200c066bf1d5f4305b0bb91296deb3b9, type: 3}
+    fallbackEmoji: "\U0001F356"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Meat II
+    resourceType: 24
+    icon: {fileID: 21300000, guid: 64171ea40abf54c488d3c333a38d908c, type: 3}
+    fallbackEmoji: "\U0001F969"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Meat III
+    resourceType: 25
+    icon: {fileID: 21300000, guid: 5ed154262d25b4b4f8f8799dbacacbc1, type: 3}
+    fallbackEmoji: "\U0001F357"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Boar
+    resourceType: 26
+    icon: {fileID: 21300000, guid: c6ad9e25e74d2450f8d9dff3ea2280e7, type: 3}
+    fallbackEmoji: "\U0001F417"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Fish
+    resourceType: 27
+    icon: {fileID: 21300000, guid: 0cff6366e858f43d48eb02fa1d8d5b5b, type: 3}
+    fallbackEmoji: "\U0001F41F"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Pumpkin
+    resourceType: 28
+    icon: {fileID: 21300000, guid: 7da0ef814f779498196846334d273bac, type: 3}
+    fallbackEmoji: "\U0001F383"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Gold Bag
+    resourceType: 29
+    icon: {fileID: 21300000, guid: 2efe9d432680d49368142bd4eeb3ffb7, type: 3}
+    fallbackEmoji: "\U0001F4B0"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Approval
+    resourceType: 30
+    icon: {fileID: 21300000, guid: 90eb9321e70634ac1adc951a49869da9, type: 3}
+    fallbackEmoji: "\U0001F44D"
+    startingAmount: 0
+    unlockedAtStart: 0
+  - currencyName: Heart
+    resourceType: 31
+    icon: {fileID: 21300000, guid: 7da41fe1bafb743138e708a6436c1017, type: 3}
+    fallbackEmoji: "\U0001F49C"
+    startingAmount: 0
+    unlockedAtStart: 0

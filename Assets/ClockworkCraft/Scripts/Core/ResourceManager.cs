@@ -1,34 +1,37 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ClockworkCraft
 {
     /// <summary>
-    /// Tracks all four resource currencies: Gold, Wood, Food, Stone.
+    /// Tracks all resource currencies defined in the CurrencyDatabase.
+    /// Starting amounts, unlock states, names, and emojis all come from the database.
+    ///
+    /// If no CurrencyDatabase is assigned, falls back to hardcoded defaults
+    /// so the game still runs without the database asset.
+    ///
+    /// Buildings can call UnlockResource() at runtime to enable new types.
     /// Fires OnResourceChanged when any total changes so UI can react.
+    /// Fires OnResourceUnlocked when a new type becomes available.
     /// </summary>
     public class ResourceManager : MonoBehaviour
     {
         public static ResourceManager Instance { get; private set; }
 
-        [Header("Starting Resources (GDD Section 7)")]
-        public int startingGold  = 20;
-        public int startingWood  = 10;
-        public int startingFood  =  5;
-        public int startingStone =  0;
-
-        private int gold;
-        private int wood;
-        private int food;
-        private int stone;
-
-        public int Gold  => gold;
-        public int Wood  => wood;
-        public int Food  => food;
-        public int Stone => stone;
+        [Header("Currency Source")]
+        [Tooltip("Assign the CurrencyDatabase asset. Defines all currencies, starting amounts, and unlock states.")]
+        public CurrencyDatabase currencyDatabase;
 
         /// <summary>Fired whenever a resource total changes. Args: type, new total.</summary>
         public event Action<ResourceType, int> OnResourceChanged;
+
+        /// <summary>Fired when a resource type is unlocked. Arg: the newly unlocked type.</summary>
+        public event Action<ResourceType> OnResourceUnlocked;
+
+        // Runtime state — driven by CurrencyDatabase
+        private Dictionary<ResourceType, int> resources = new Dictionary<ResourceType, int>();
+        private Dictionary<ResourceType, bool> unlocked = new Dictionary<ResourceType, bool>();
 
         void Awake()
         {
@@ -38,53 +41,190 @@ namespace ClockworkCraft
 
         void Start()
         {
-            gold  = startingGold;
-            wood  = startingWood;
-            food  = startingFood;
-            stone = startingStone;
+            InitializeFromDatabase();
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // Initialization
+        // ─────────────────────────────────────────────────────────────────
+
+        private void InitializeFromDatabase()
+        {
+            resources.Clear();
+            unlocked.Clear();
+
+            if (currencyDatabase != null && currencyDatabase.AllCurrencies.Count > 0)
+            {
+                // Initialize from CurrencyDatabase — single source of truth
+                foreach (var entry in currencyDatabase.AllCurrencies)
+                {
+                    if (entry.resourceType == ResourceType.None) continue;
+
+                    resources[entry.resourceType] = entry.startingAmount;
+                    unlocked[entry.resourceType] = entry.unlockedAtStart;
+                }
+
+                Debug.Log($"[ResourceManager] Initialized {resources.Count} currencies from CurrencyDatabase");
+            }
+            else
+            {
+                // Fallback defaults when no database assigned
+                Debug.LogWarning("[ResourceManager] No CurrencyDatabase assigned — using hardcoded defaults");
+                resources[ResourceType.Gold]    = 20;
+                resources[ResourceType.Wood]    = 0;
+                resources[ResourceType.Food]    = 5;
+                resources[ResourceType.Stone]   = 0;
+                resources[ResourceType.Water]   = 0;
+                resources[ResourceType.Clay]    = 0;
+                resources[ResourceType.Flowers] = 0;
+
+                unlocked[ResourceType.Gold] = true;
+                unlocked[ResourceType.Wood] = true;
+                unlocked[ResourceType.Food] = false;
+                unlocked[ResourceType.Stone] = false;
+                unlocked[ResourceType.Water] = false;
+                unlocked[ResourceType.Clay] = false;
+                unlocked[ResourceType.Flowers] = false;
+            }
 
             // Broadcast initial values so UI initialises correctly
-            OnResourceChanged?.Invoke(ResourceType.Gold,  gold);
-            OnResourceChanged?.Invoke(ResourceType.Wood,  wood);
-            OnResourceChanged?.Invoke(ResourceType.Food,  food);
-            OnResourceChanged?.Invoke(ResourceType.Stone, stone);
+            foreach (var kvp in resources)
+            {
+                OnResourceChanged?.Invoke(kvp.Key, kvp.Value);
+            }
+
+            // Log unlock state
+            var unlockedNames = new List<string>();
+            foreach (var kvp in unlocked)
+            {
+                if (kvp.Value) unlockedNames.Add(kvp.Key.ToString());
+            }
+            Debug.Log($"[ResourceManager] Unlocked at start: {string.Join(", ", unlockedNames)}");
         }
+
+        // ─────────────────────────────────────────────────────────────────
+        // Public Accessors (backwards-compatible)
+        // ─────────────────────────────────────────────────────────────────
+
+        public int Gold    => GetResource(ResourceType.Gold);
+        public int Wood    => GetResource(ResourceType.Wood);
+        public int Food    => GetResource(ResourceType.Food);
+        public int Stone   => GetResource(ResourceType.Stone);
+        public int Water   => GetResource(ResourceType.Water);
+        public int Clay    => GetResource(ResourceType.Clay);
+        public int Flowers => GetResource(ResourceType.Flowers);
+
+        // ─────────────────────────────────────────────────────────────────
+        // Resource Unlock System
+        // ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Check whether workers are allowed to interact with this resource type.
+        /// </summary>
+        public bool IsResourceUnlocked(ResourceType type)
+        {
+            return unlocked.TryGetValue(type, out bool val) && val;
+        }
+
+        /// <summary>
+        /// Unlock a resource type so workers can interact with it.
+        /// Typically called by a building when placed (e.g. Lumber Mill unlocks Wood).
+        /// Safe to call multiple times — no-ops if already unlocked.
+        /// </summary>
+        public void UnlockResource(ResourceType type)
+        {
+            bool wasLocked = !IsResourceUnlocked(type);
+            unlocked[type] = true;
+
+            // Ensure the resource has an entry
+            if (!resources.ContainsKey(type))
+                resources[type] = 0;
+
+            if (wasLocked)
+            {
+                Debug.Log($"[ResourceManager] Unlocked {type}! Workers can now interact with {type} nodes.");
+                OnResourceUnlocked?.Invoke(type);
+            }
+        }
+
+        /// <summary>
+        /// Lock a resource type (e.g. if a building is destroyed).
+        /// </summary>
+        public void LockResource(ResourceType type)
+        {
+            unlocked[type] = false;
+            Debug.Log($"[ResourceManager] Locked {type} — workers can no longer interact with {type} nodes.");
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // Resource Tracking
+        // ─────────────────────────────────────────────────────────────────
 
         public void AddResource(ResourceType type, int amount)
         {
-            if (amount == 0) return;
-            switch (type)
-            {
-                case ResourceType.Gold:  gold  += amount; OnResourceChanged?.Invoke(type, gold);  break;
-                case ResourceType.Wood:  wood  += amount; OnResourceChanged?.Invoke(type, wood);  break;
-                case ResourceType.Food:  food  += amount; OnResourceChanged?.Invoke(type, food);  break;
-                case ResourceType.Stone: stone += amount; OnResourceChanged?.Invoke(type, stone); break;
-            }
-            Debug.Log($"[ResourceManager] +{amount} {type}  |  G={gold}  W={wood}  F={food}  S={stone}");
+            if (amount == 0 || type == ResourceType.None) return;
+
+            if (!resources.ContainsKey(type))
+                resources[type] = 0;
+
+            resources[type] += amount;
+            OnResourceChanged?.Invoke(type, resources[type]);
+
+            Debug.Log($"[ResourceManager] +{amount} {type} → total {resources[type]}");
         }
 
-        public int GetResource(ResourceType type) => type switch
+        public int GetResource(ResourceType type)
         {
-            ResourceType.Gold  => gold,
-            ResourceType.Wood  => wood,
-            ResourceType.Food  => food,
-            ResourceType.Stone => stone,
-            _                  => 0
-        };
+            return resources.TryGetValue(type, out int val) ? val : 0;
+        }
 
+        /// <summary>
+        /// Check if the player can afford a set of costs. Pass a dictionary of type → amount.
+        /// </summary>
+        public bool CanAfford(Dictionary<ResourceType, int> costs)
+        {
+            foreach (var kvp in costs)
+            {
+                if (GetResource(kvp.Key) < kvp.Value) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Legacy overload for simple gold/wood/food/stone costs.
+        /// </summary>
         public bool CanAfford(int goldCost, int woodCost, int foodCost, int stoneCost)
-            => gold >= goldCost && wood >= woodCost && food >= foodCost && stone >= stoneCost;
+            => GetResource(ResourceType.Gold)  >= goldCost
+            && GetResource(ResourceType.Wood)  >= woodCost
+            && GetResource(ResourceType.Food)  >= foodCost
+            && GetResource(ResourceType.Stone) >= stoneCost;
 
         /// <summary>
         /// Deducts costs atomically. Returns false and makes no change if not affordable.
         /// </summary>
+        public bool SpendResources(Dictionary<ResourceType, int> costs)
+        {
+            if (!CanAfford(costs)) return false;
+
+            foreach (var kvp in costs)
+            {
+                resources[kvp.Key] -= kvp.Value;
+                OnResourceChanged?.Invoke(kvp.Key, resources[kvp.Key]);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Legacy overload for simple gold/wood/food/stone costs.
+        /// </summary>
         public bool SpendResources(int goldCost, int woodCost, int foodCost, int stoneCost)
         {
             if (!CanAfford(goldCost, woodCost, foodCost, stoneCost)) return false;
-            gold  -= goldCost;  OnResourceChanged?.Invoke(ResourceType.Gold,  gold);
-            wood  -= woodCost;  OnResourceChanged?.Invoke(ResourceType.Wood,  wood);
-            food  -= foodCost;  OnResourceChanged?.Invoke(ResourceType.Food,  food);
-            stone -= stoneCost; OnResourceChanged?.Invoke(ResourceType.Stone, stone);
+
+            AddResource(ResourceType.Gold,  -goldCost);
+            AddResource(ResourceType.Wood,  -woodCost);
+            AddResource(ResourceType.Food,  -foodCost);
+            AddResource(ResourceType.Stone, -stoneCost);
             return true;
         }
     }

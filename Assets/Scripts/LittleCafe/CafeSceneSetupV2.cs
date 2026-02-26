@@ -25,47 +25,50 @@ namespace LittleCafe
         [SerializeField] private int baseDrawCost = 0;
         [SerializeField] private int costIncrement = 0;
 
+        [Header("Game Systems")]
+        [Tooltip("Interaction unlock registry — controls which objects workers can target. Add as a component on this GameObject or a child.")]
+        [SerializeField] private ClockworkCraft.InteractionRegistry interactionRegistry;
+
+        /// <summary>True when MapGeneratorV2 is in the scene and owns grid/deck/fog.</summary>
+        private bool deferToMapGen = false;
+
         private void Awake()
         {
-            // Remove GameSetup if it exists (we're replacing it)
-            GameSetup gs = FindObjectOfType<GameSetup>(true);
-            if (gs != null)
-                DestroyImmediate(gs);
+            deferToMapGen = FindObjectOfType<ClockworkCraft.MapGeneratorV2>(true) != null;
 
-            // Remove old CafeSceneSetup if it exists (we're using V2 instead)
-            CafeSceneSetup oldSetup = FindObjectOfType<CafeSceneSetup>(true);
-            if (oldSetup != null && oldSetup != this)
-                DestroyImmediate(oldSetup.gameObject);
-
-            // Remove combat/wave systems (keep FogManager for grid reveal mechanics)
-            DestroyComponent<WaveManager>();
-            DestroyComponent<GridExpansionManager>();
-            DestroyComponent<GameOverManager>();
-            DestroyComponent<ControlSchemeOverlay>();
-            DestroyComponent<IntervalUI>(); // Remove tick counter UI (combat system)
-
+            // Shared infrastructure — always needed regardless of mode
             SetupGrid();
             SetupCamera();
             EnsureIntervalTimer();
             SetupTokenManager();
-            SetupRaritySystem();
             EnsureEventSystem();
             EnsureDragDropHandler();
             SetupLighting();
             SetupFurnitureSystems();
+            EnsureInteractionRegistry();
 
-            Debug.Log("[CafeSceneSetupV2] Awake complete — using FurnitureDatabase");
+            // Deck setup — only in standalone cafe mode (MapGeneratorV2 owns it in ClockworkCraft)
+            if (!deferToMapGen)
+            {
+                SetupRaritySystem();
+            }
+
+            Debug.Log($"[CafeSceneSetupV2] Awake complete — deferToMapGen={deferToMapGen}");
         }
 
         private void Start()
         {
-            InitializeDockBar();
+            // Dock bar init — only in standalone cafe mode
+            if (!deferToMapGen)
+            {
+                InitializeDockBar();
+            }
 
             // Hide UI and pause timer until player starts
-            DockBarManager.Instance.HideUI();
-            IntervalTimer.Instance.Pause();
+            if (DockBarManager.Instance != null) DockBarManager.Instance.HideUI();
+            if (IntervalTimer.Instance != null) IntervalTimer.Instance.Pause();
 
-            // Wait for first click / keypress
+            // Wait for first click / keypress — always create GameStartGate
             GameObject gateObj = new GameObject("GameStartGate");
             GameStartGate gate = gateObj.AddComponent<GameStartGate>();
             gate.OnGameStart += OnGameStarted;
@@ -75,7 +78,16 @@ namespace LittleCafe
 
         private void OnGameStarted()
         {
-            // Initialize grid now that game is starting (hidden grid is now revealed)
+            if (deferToMapGen)
+            {
+                // MapGeneratorV2 owns grid init, fog, and deck — just show UI and resume clock
+                if (DockBarManager.Instance != null) DockBarManager.Instance.ShowWithAnimation();
+                if (IntervalTimer.Instance != null) IntervalTimer.Instance.Resume();
+                Debug.Log("[CafeSceneSetupV2] Game started! (MapGeneratorV2 handles grid/fog/deck)");
+                return;
+            }
+
+            // Standalone cafe mode — initialize grid now
             GridManager gm = GridManager.Instance;
             if (gm != null)
             {
@@ -84,8 +96,8 @@ namespace LittleCafe
             }
 
             RevealStartingTiles();
-            DockBarManager.Instance.ShowWithAnimation();
-            IntervalTimer.Instance.Resume();
+            if (DockBarManager.Instance != null) DockBarManager.Instance.ShowWithAnimation();
+            if (IntervalTimer.Instance != null) IntervalTimer.Instance.Resume();
             Debug.Log("[CafeSceneSetupV2] Game started!");
         }
 
@@ -138,11 +150,6 @@ namespace LittleCafe
                 Debug.LogError("[CafeSceneSetupV2] No camera found in scene!");
                 return;
             }
-
-            // Remove RTChess camera systems
-            CameraController oldCC = cam.GetComponent<CameraController>();
-            if (oldCC != null)
-                DestroyImmediate(oldCC);
 
             GridCamera oldGridCam = cam.GetComponent<GridCamera>();
             if (oldGridCam != null)
@@ -348,6 +355,35 @@ namespace LittleCafe
             Debug.Log("[CafeSceneSetupV2] Furniture systems initialized");
         }
 
+        /// <summary>
+        /// Ensure the InteractionRegistry exists. Prefers a serialized scene reference;
+        /// falls back to finding one in the scene; creates one as a last resort.
+        /// </summary>
+        private void EnsureInteractionRegistry()
+        {
+            // Already assigned in Inspector
+            if (interactionRegistry != null && ClockworkCraft.InteractionRegistry.Instance != null)
+            {
+                Debug.Log("[CafeSceneSetupV2] InteractionRegistry already assigned and active");
+                return;
+            }
+
+            // Try to find one in the scene
+            var found = FindObjectOfType<ClockworkCraft.InteractionRegistry>(true);
+            if (found != null)
+            {
+                interactionRegistry = found;
+                Debug.Log("[CafeSceneSetupV2] Found existing InteractionRegistry in scene");
+                return;
+            }
+
+            // Create one as fallback (shouldn't normally happen if scene is set up properly)
+            Debug.LogWarning("[CafeSceneSetupV2] No InteractionRegistry in scene — creating one at runtime. " +
+                "For best results, add InteractionRegistry as a component on this GameObject via Tools > ClockworkCraft > Setup Interaction Registry.");
+            var registry = gameObject.AddComponent<ClockworkCraft.InteractionRegistry>();
+            interactionRegistry = registry;
+        }
+
         private void SetupLighting()
         {
             if (FindObjectsOfType<Light>().Length == 0)
@@ -384,13 +420,6 @@ namespace LittleCafe
         }
 
         // --- Helpers ---
-
-        private void DestroyComponent<T>() where T : MonoBehaviour
-        {
-            T comp = FindObjectOfType<T>(true);
-            if (comp != null)
-                DestroyImmediate(comp);
-        }
 
         private static void SetPrivateField(object target, string fieldName, object value)
         {

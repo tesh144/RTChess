@@ -3,8 +3,8 @@ using UnityEngine;
 namespace ClockworkGrid
 {
     /// <summary>
-    /// Shared camera API implemented by both CameraController (RTChess) and GridCamera (Cafe).
-    /// Allows DragDropHandler and other UI to work with either camera system.
+    /// Shared camera API implemented by GridCamera.
+    /// Allows DragDropHandler and other UI to work with the camera system.
     /// </summary>
     public interface ICameraSystem
     {

@@ -108,24 +108,23 @@ namespace ClockworkGrid
 
         private void ClearAll()
         {
-            // Find all units and resource nodes
-            Unit[] units = FindObjectsOfType<Unit>();
-            foreach (Unit u in units)
+            if (GridManager.Instance == null) return;
+
+            // Walk the grid and destroy all occupants
+            int cleared = 0;
+            for (int x = 0; x < GridManager.Instance.Width; x++)
+            for (int y = 0; y < GridManager.Instance.Height; y++)
             {
-                if (GridManager.Instance != null)
-                    GridManager.Instance.RemoveUnit(u.GridX, u.GridY);
-                Destroy(u.gameObject);
+                GameObject occupant = GridManager.Instance.GetOccupant(x, y);
+                if (occupant != null)
+                {
+                    GridManager.Instance.RemoveUnit(x, y);
+                    Destroy(occupant);
+                    cleared++;
+                }
             }
 
-            ResourceNode[] nodes = FindObjectsOfType<ResourceNode>();
-            foreach (ResourceNode n in nodes)
-            {
-                if (GridManager.Instance != null)
-                    GridManager.Instance.RemoveUnit(n.GridX, n.GridY);
-                Destroy(n.gameObject);
-            }
-
-            Debug.Log("Cleared all units and resources");
+            Debug.Log($"[DebugPanel] Cleared {cleared} grid occupants");
         }
 
         private void AddTokens(int amount)
