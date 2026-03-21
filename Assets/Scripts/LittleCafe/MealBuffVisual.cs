@@ -48,7 +48,16 @@ namespace LittleCafe
             }
 
             IntervalTimer.Instance.OnIntervalTick += OnTick;
-            buffMaterial = new Material(Shader.Find("Unlit/Color")) { color = BUFF_COLOR };
+            Shader buffShader = Shader.Find("Unlit/Color");
+            if (buffShader == null)
+            {
+                Debug.LogError("[MealBuffVisual] Shader 'Unlit/Color' not found. Add it to Always Included Shaders in Project Settings > Graphics.");
+                buffMaterial = new Material(Shader.Find("Sprites/Default")) { color = BUFF_COLOR };
+            }
+            else
+            {
+                buffMaterial = new Material(buffShader) { color = BUFF_COLOR };
+            }
         }
 
         void OnDestroy()
