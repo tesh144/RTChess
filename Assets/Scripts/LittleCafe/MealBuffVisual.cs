@@ -27,6 +27,7 @@ namespace LittleCafe
         private bool isFlickering = false;  // one-way latch; set when ticksRemaining <= 3
         private bool isExpiring   = false;  // set when HasMealBuff becomes false
         private float timeSinceLastSpawn = 0f;
+        private Material buffMaterial;
 
         // ── Lifecycle ──────────────────────────────────────────────────────
 
@@ -47,17 +48,28 @@ namespace LittleCafe
             }
 
             IntervalTimer.Instance.OnIntervalTick += OnTick;
+            buffMaterial = new Material(Shader.Find("Unlit/Color")) { color = BUFF_COLOR };
         }
 
         void OnDestroy()
         {
+            if (buffMaterial != null) Destroy(buffMaterial);
             if (IntervalTimer.Instance != null)
                 IntervalTimer.Instance.OnIntervalTick -= OnTick;
         }
 
         void Update()
         {
-            if (isExpiring || actor == null) return;
+            if (actor == null) return;
+            if (isExpiring) return;
+
+            // Detect buff expiry every frame — avoids tick ordering race with GridEntityActor
+            if (!actor.HasMealBuff)
+            {
+                isExpiring = true;
+                StartCoroutine(ExpireAfterDelay());
+                return;
+            }
 
             float interval = isFlickering ? FLICKER_INTERVAL : NORMAL_INTERVAL;
             timeSinceLastSpawn += Time.deltaTime;
@@ -73,21 +85,13 @@ namespace LittleCafe
 
         private void OnTick(int intervalCount)
         {
-            if (actor == null) return;
+            if (actor == null || isExpiring) return;
 
-            // Expiry check first — takes priority over flicker
-            if (!actor.HasMealBuff && !isExpiring)
-            {
-                isExpiring = true;
-                StartCoroutine(ExpireAfterDelay());
-                return;
-            }
-
-            // Flicker check (only while not expiring)
-            if (!isExpiring && actor.MealBuffTicksRemaining <= 3 && !isFlickering)
+            // Flicker: one-way latch when ticks remaining drops to 3
+            if (actor.MealBuffTicksRemaining <= 3 && !isFlickering)
             {
                 isFlickering = true;
-                timeSinceLastSpawn = 0f; // spawn a flicker particle immediately on next Update
+                timeSinceLastSpawn = 0f; // reset so full FLICKER_INTERVAL elapses before first flicker particle
             }
         }
 
@@ -121,9 +125,7 @@ namespace LittleCafe
             Renderer rend = sphere.GetComponent<Renderer>();
             if (rend != null)
             {
-                Material mat = new Material(Shader.Find("Unlit/Color"));
-                mat.color = BUFF_COLOR;
-                rend.material = mat;
+                rend.sharedMaterial = buffMaterial;
                 rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 rend.receiveShadows = false;
             }
