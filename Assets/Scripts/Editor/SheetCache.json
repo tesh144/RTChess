@@ -1,38 +1,37 @@
 {
-  "lastSynced": "2026-03-21T18:00:00Z",
+  "lastSynced": "2026-03-22T14:00:00Z",
   "spreadsheetId": "1UvfldgEvr3dM_OqHfNyDHi_8qGoiO72CwTDrCRbUNy0",
   "sheets": {
     "Buildings & Production": {
-      "headers": ["Icon", "Building", "Prod. Interval (s)", "Interval Bonus (s)", "Input", "Output", "Output Amt", "Killer's Behavior", "Reveal Radius", "Ally Interactible", "HP", "Attack"],
+      "headers": ["Icon", "Building", "Tier (button)", "isRandomBuilding", "DrawWeight", "Prod. Interval (s)", "Interval Bonus (s)", "Input", "Output", "Output Amt", "Killer's Behavior", "Reveal Radius", "Ally Interactible", "Enemy Interactible", "Wild Animal Interactible", "HP", "Attack"],
       "rows": [
-        {"Icon": "🏕", "Building": "ConeTent", "Prod. Interval (s)": "5", "Interval Bonus (s)": "15", "Input": "None", "Output": "👷 Worker", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "🔥", "Building": "Torch", "Prod. Interval (s)": "0", "Interval Bonus (s)": "0", "Input": "None", "Output": "None", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "2", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "🗿", "Building": "Statue", "Prod. Interval (s)": "10", "Interval Bonus (s)": "30", "Input": "None", "Output": "🏠 RandomBuilding", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "⚔️", "Building": "TrainingFacility", "Prod. Interval (s)": "15", "Interval Bonus (s)": "30", "Input": "👷 Worker", "Output": "⚔️ Fighter", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "🍳", "Building": "Kitchen", "Prod. Interval (s)": "15", "Interval Bonus (s)": "15", "Input": "None", "Output": "🍖 Meal", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "🍖", "Building": "Feast", "Prod. Interval (s)": "0", "Interval Bonus (s)": "0", "Input": "None", "Output": "None", "Output Amt": "0", "Killer's Behavior": "Stay", "Reveal Radius": "1", "Ally Interactible": "TRUE", "HP": "10", "Attack": "0"}
+        {"Icon": "🏕", "Building": "ConeTent", "Tier (button)": "Tier 0", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "5", "Interval Bonus (s)": "15", "Input": "None", "Output": "👷 Worker", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "🔥", "Building": "Torch", "Tier (button)": "Tier 0", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "0", "Interval Bonus (s)": "0", "Input": "None", "Output": "None", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "2", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "🗿", "Building": "Statue", "Tier (button)": "Tier 0", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "10", "Interval Bonus (s)": "30", "Input": "None", "Output": "🏠 RandomBuilding", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "⚔️", "Building": "TrainingFacility", "Tier (button)": "Tier 1", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "15", "Interval Bonus (s)": "30", "Input": "👷 Worker", "Output": "⚔️ Fighter", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "🍳", "Building": "Kitchen", "Tier (button)": "Tier 1", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "15", "Interval Bonus (s)": "15", "Input": "None", "Output": "🍖 Meal", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "🍖", "Building": "Feast", "Tier (button)": "-", "isRandomBuilding": "FALSE", "DrawWeight": "", "Prod. Interval (s)": "0", "Interval Bonus (s)": "0", "Input": "None", "Output": "None", "Output Amt": "0", "Killer's Behavior": "Stay", "Reveal Radius": "1", "Ally Interactible": "TRUE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "TRUE", "HP": "5", "Attack": "0"}
       ]
     },
     "Workers & Entities": {
-      "headers": ["Icon", "Entity", "Type", "HP", "Attack Power", "Movement Behavior", "Attack Behavior", "Killer's Behavior", "Draw Weight", "Slot Takeable"],
+      "headers": ["Icon", "Entity", "Type", "Tier (button)", "HP", "Attack Power", "Movement Behavior", "Attack Behavior", "Killer's Behavior", "Draw Weight", "Slot Takeable"],
       "rows": [
-        {"Icon": "👷", "Entity": "Worker (Generic)", "Type": "Worker", "HP": "5", "Attack Power": "1", "Movement Behavior": "RotateAndInteract", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "0", "Slot Takeable": "FALSE"},
-        {"Icon": "⚔️", "Entity": "Fighter", "Type": "Worker", "HP": "5", "Attack Power": "1", "Movement Behavior": "RotateAndInteract", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "0", "Slot Takeable": "FALSE"},
-        {"Icon": "🦕", "Entity": "Dinosaur", "Type": "Wild Animal", "HP": "10", "Attack Power": "1", "Movement Behavior": "RotateAndMove", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "1", "Slot Takeable": "TRUE"},
-        {"Icon": "🦣", "Entity": "Mammoth", "Type": "Wild Animal", "HP": "10", "Attack Power": "1", "Movement Behavior": "RotateRotateMove", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "1", "Slot Takeable": "TRUE"}
+        {"Icon": "👷", "Entity": "Worker (Generic)", "Type": "Worker", "Tier (button)": "Tier 0", "HP": "2", "Attack Power": "1", "Movement Behavior": "RotateAndInteract", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "0", "Slot Takeable": "FALSE"},
+        {"Icon": "⚔️", "Entity": "Fighter", "Type": "Worker", "Tier (button)": "Tier 3", "HP": "10", "Attack Power": "1", "Movement Behavior": "RotateAndInteract", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "0", "Slot Takeable": "FALSE"},
+        {"Icon": "🦕", "Entity": "Dinosaur", "Type": "Wild Animal", "Tier (button)": "-", "HP": "10", "Attack Power": "1", "Movement Behavior": "RotateAndMove", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "1", "Slot Takeable": "TRUE"},
+        {"Icon": "🦣", "Entity": "Mammoth", "Type": "Wild Animal", "Tier (button)": "-", "HP": "10", "Attack Power": "1", "Movement Behavior": "RotateRotateMove", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "1", "Slot Takeable": "TRUE"}
       ]
     },
     "Environment & Loot": {
-      "headers": ["Object", "Drops", "Loot per Hit", "HP", "Total Yield", "Killer's Behavior"],
+      "headers": ["Object", "Drops", "Loot per Hit", "HP", "Total Yield", "Ally Interactible", "Enemy Interactible", "Wild Animal Interactible", "Killer's Behavior"],
       "rows": [
-        {"Object": "Goldmine", "Drops": "💰 Gold", "Loot per Hit": "1", "HP": "300", "Total Yield": "300", "Killer's Behavior": "Advance"},
-        {"Object": "Tree", "Drops": "🌲 Wood", "Loot per Hit": "1", "HP": "5", "Total Yield": "5", "Killer's Behavior": "Advance"},
-        {"Object": "Rock", "Drops": "🪨 Stone", "Loot per Hit": "1", "HP": "5", "Total Yield": "5", "Killer's Behavior": "Advance"},
-        {"Object": "Mountain", "Drops": "⚒ Ore", "Loot per Hit": "1", "HP": "5", "Total Yield": "5", "Killer's Behavior": "Advance"},
-        {"Object": "Water", "Drops": "💧 Water", "Loot per Hit": "1", "HP": "100", "Total Yield": "100", "Killer's Behavior": "Advance"},
-        {"Object": "Flowers", "Drops": "🌻 Flowers", "Loot per Hit": "1", "HP": "5", "Total Yield": "5", "Killer's Behavior": "Advance"},
-        {"Object": "Bone", "Drops": "🧊 White Marble", "Loot per Hit": "1", "HP": "3", "Total Yield": "3", "Killer's Behavior": "Advance"},
-        {"Object": "Grave", "Drops": "🧊 White Marble", "Loot per Hit": "1", "HP": "3", "Total Yield": "3", "Killer's Behavior": "Advance"}
+        {"Object": "Goldmine", "Drops": "💰 Gold", "Loot per Hit": "1", "HP": "300", "Total Yield": "300", "Ally Interactible": "TRUE", "Enemy Interactible": "FALSE", "Wild Animal Interactible": "FALSE", "Killer's Behavior": "Advance"},
+        {"Object": "Tree", "Drops": "🌲 Wood", "Loot per Hit": "1", "HP": "5", "Total Yield": "5", "Ally Interactible": "TRUE", "Enemy Interactible": "FALSE", "Wild Animal Interactible": "FALSE", "Killer's Behavior": "Advance"},
+        {"Object": "Rock", "Drops": "🪨 Stone", "Loot per Hit": "1", "HP": "5", "Total Yield": "5", "Ally Interactible": "TRUE", "Enemy Interactible": "FALSE", "Wild Animal Interactible": "FALSE", "Killer's Behavior": "Advance"},
+        {"Object": "Mountain", "Drops": "⚒ Ore", "Loot per Hit": "1", "HP": "5", "Total Yield": "5", "Ally Interactible": "TRUE", "Enemy Interactible": "FALSE", "Wild Animal Interactible": "FALSE", "Killer's Behavior": "Advance"},
+        {"Object": "Water", "Drops": "💧 Water", "Loot per Hit": "1", "HP": "100", "Total Yield": "100", "Ally Interactible": "TRUE", "Enemy Interactible": "FALSE", "Wild Animal Interactible": "FALSE", "Killer's Behavior": "Advance"},
+        {"Object": "Flowers", "Drops": "🌻 Flowers", "Loot per Hit": "1", "HP": "5", "Total Yield": "5", "Ally Interactible": "TRUE", "Enemy Interactible": "FALSE", "Wild Animal Interactible": "FALSE", "Killer's Behavior": "Advance"},
+        {"Object": "Bone", "Drops": "🧊 White Marble", "Loot per Hit": "1", "HP": "3", "Total Yield": "3", "Ally Interactible": "TRUE", "Enemy Interactible": "FALSE", "Wild Animal Interactible": "FALSE", "Killer's Behavior": "Advance"}
       ]
     }
   }

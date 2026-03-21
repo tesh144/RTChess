@@ -949,9 +949,10 @@ namespace LittleCafe
                 return false;
             }
 
-            if (dock.GetCardCount() >= DockBarManager.MAX_HAND_SIZE)
+            // Use IsHandFull which includes reservedSlots (in-flight cards count toward capacity)
+            if (dock.IsHandFull)
             {
-                Debug.Log("[BuildingProduction] Hand full — pop-up stays until there's room");
+                Debug.Log("[BuildingProduction] Hand full (including in-flight) — pop-up stays until there's room");
                 return false;
             }
 
@@ -965,8 +966,16 @@ namespace LittleCafe
             WorkerCardFlyFX flyFX = WorkerCardFlyFX.Instance;
             if (flyFX != null)
             {
+                bool anyReserved = false;
                 for (int i = 0; i < entry.amount; i++)
-                    flyFX.SpawnWorkerFly(worldPos, wd, i);
+                {
+                    if (flyFX.SpawnWorkerFly(worldPos, wd, i))
+                        anyReserved = true;
+                    else
+                        break; // Hand full mid-batch — stop trying
+                }
+                // Only consume the production entry if at least one card was reserved
+                return anyReserved;
             }
             else
             {
@@ -1024,9 +1033,10 @@ namespace LittleCafe
                 return false;
             }
 
-            if (dock.GetCardCount() >= DockBarManager.MAX_HAND_SIZE)
+            // Use IsHandFull which includes reservedSlots (in-flight cards count toward capacity)
+            if (dock.IsHandFull)
             {
-                Debug.Log("[BuildingProduction] Hand full — pop-up stays until there's room");
+                Debug.Log("[BuildingProduction] Hand full (including in-flight) — pop-up stays until there's room");
                 return false;
             }
 
@@ -1042,7 +1052,9 @@ namespace LittleCafe
             WorkerCardFlyFX flyFX = WorkerCardFlyFX.Instance;
             if (flyFX != null)
             {
-                flyFX.SpawnCardFly(worldPos, card, 0);
+                // Only consume production if the slot was actually reserved
+                if (!flyFX.SpawnCardFly(worldPos, card, 0))
+                    return false;
             }
             else
             {
@@ -1078,9 +1090,10 @@ namespace LittleCafe
                 return false;
             }
 
-            if (dock.GetCardCount() >= DockBarManager.MAX_HAND_SIZE)
+            // Use IsHandFull which includes reservedSlots (in-flight cards count toward capacity)
+            if (dock.IsHandFull)
             {
-                Debug.Log("[BuildingProduction] Hand full — pop-up stays until there's room");
+                Debug.Log("[BuildingProduction] Hand full (including in-flight) — pop-up stays until there's room");
                 return false;
             }
 
@@ -1094,7 +1107,9 @@ namespace LittleCafe
             WorkerCardFlyFX flyFX = WorkerCardFlyFX.Instance;
             if (flyFX != null)
             {
-                flyFX.SpawnCardFly(worldPos, card, 0);
+                // Only consume production if the slot was actually reserved
+                if (!flyFX.SpawnCardFly(worldPos, card, 0))
+                    return false;
             }
             else
             {

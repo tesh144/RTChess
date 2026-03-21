@@ -22,10 +22,6 @@ namespace LittleCafe
         private List<GridEntityHealth> allHealth = new List<GridEntityHealth>();
         private List<GridEntityActor> allActors = new List<GridEntityActor>();
 
-        [Header("Corpse Settings")]
-        [Tooltip("Name of the EnvironmentDatabase entry to spawn when a worker dies (e.g. 'Grave').")]
-        [SerializeField] private string corpseEnvironmentName = "Grave";
-
         [Tooltip("EnvironmentDatabase reference — auto-found from MapGeneratorV2 if not assigned.")]
         public EnvironmentDatabase environmentDatabase;
 
@@ -235,8 +231,6 @@ namespace LittleCafe
             // Check if this was a worker (allied entity with an actor)
             GridEntityActor actor = health.GetComponent<GridEntityActor>();
             bool isWorker = health.IsAllied && actor != null;
-            bool wasStarvation = actor != null && actor.IsStarving;
-
             // Workers get body-part debris burst; everything else gets the poof
             if (isWorker)
             {
@@ -248,16 +242,8 @@ namespace LittleCafe
                 PoofEffect.Spawn(poofPos);
             }
 
-            // Remember grid position before cleanup (for corpse spawning)
-            int corpseX = -1, corpseY = -1;
-            FurnitureObject furniture = health.GetComponent<FurnitureObject>();
-            if (wasStarvation && furniture != null)
-            {
-                corpseX = furniture.GridX;
-                corpseY = furniture.GridY;
-            }
-
             // Remove from registries
+            FurnitureObject furniture = health.GetComponent<FurnitureObject>();
             allHealth.Remove(health);
 
             if (actor != null)
@@ -302,90 +288,6 @@ namespace LittleCafe
                 Destroy(health.gameObject, 0.6f);
             }
 
-            // Spawn corpse at the worker's position if it was a starvation death
-            if (wasStarvation && corpseX >= 0 && corpseY >= 0)
-            {
-                // Delay corpse spawn slightly so the old object is gone first
-                StartCoroutine(SpawnCorpseDelayed(corpseX, corpseY, 0.7f));
-            }
-        }
-
-        /// <summary>
-        /// Spawn a corpse (Grave) at the given grid cell after a delay.
-        /// Looks up the entry by name from EnvironmentDatabase for all stats.
-        /// </summary>
-        private System.Collections.IEnumerator SpawnCorpseDelayed(int gridX, int gridY, float delay)
-        {
-            yield return new WaitForSeconds(delay);
-
-            GridManager gm = GridManager.Instance;
-            if (gm == null) yield break;
-
-            // Only spawn if the cell is now empty
-            if (!gm.IsCellEmpty(gridX, gridY))
-            {
-                Debug.Log($"[GridEntityManager] Can't spawn corpse at ({gridX},{gridY}) — cell occupied");
-                yield break;
-            }
-
-            // Auto-find EnvironmentDatabase from MapGeneratorV2 if not assigned
-            if (environmentDatabase == null && MapGeneratorV2.Instance != null)
-                environmentDatabase = MapGeneratorV2.Instance.environmentDatabase;
-
-            if (environmentDatabase == null)
-            {
-                Debug.LogWarning("[GridEntityManager] No EnvironmentDatabase — can't spawn corpse");
-                yield break;
-            }
-
-            // Look up the corpse entry by name
-            EnvironmentData envData = environmentDatabase.GetByName(corpseEnvironmentName);
-            if (envData == null || envData.prefab == null)
-            {
-                Debug.LogWarning($"[GridEntityManager] '{corpseEnvironmentName}' not found in EnvironmentDatabase or has no prefab — can't spawn corpse");
-                yield break;
-            }
-
-            // Instantiate corpse at grid position
-            Vector3 worldPos = gm.GridToWorldPosition(gridX, gridY);
-            worldPos.y += 0.01f; // Shadow clipping offset
-
-            GameObject corpse = Instantiate(envData.prefab, worldPos, Quaternion.identity);
-            corpse.name = $"{corpseEnvironmentName}_{gridX}_{gridY}";
-
-            // Scale from database
-            if (envData.visualScale > 0f)
-                corpse.transform.localScale = Vector3.one * envData.visualScale;
-
-            // Add FurnitureObject for grid registration
-            FurnitureObject corpseF = corpse.GetComponent<FurnitureObject>();
-            if (corpseF == null)
-                corpseF = corpse.AddComponent<FurnitureObject>();
-            corpseF.GridX = gridX;
-            corpseF.GridY = gridY;
-
-            // Register in grid
-            gm.PlaceUnit(gridX, gridY, corpse, CellState.Resource);
-
-            // Attach health + loot from database values
-            AttachComponents(corpse, envData.hp, attackPower: envData.attackPower, isActive: envData.isActive,
-                envData.lootResourceType, lootHpCost: envData.lootHpCost, lootYield: envData.lootYield,
-                BehaviorType.RotateAndInteract, registryName: corpseEnvironmentName, allied: false,
-                killerAdvances: envData.killerAdvances);
-
-            // Play appear animation if available
-            Transform animHolder = corpse.transform.Find("AnimatorHolder");
-            if (animHolder != null)
-            {
-                Animator anim = animHolder.GetComponent<Animator>();
-                if (anim != null)
-                    anim.SetTrigger("appear");
-            }
-
-            // Poof! Small spawn effect
-            PoofEffect.Spawn(worldPos + Vector3.up * 0.3f, count: 5, color: new Color(0.9f, 0.85f, 0.7f));
-
-            Debug.Log($"[GridEntityManager] Spawned {corpseEnvironmentName} at ({gridX},{gridY}): HP={envData.hp}, loot={envData.lootResourceType}x{envData.lootYield}");
         }
 
         // ---------------------------------------------------------------

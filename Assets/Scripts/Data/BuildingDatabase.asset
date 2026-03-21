@@ -21,7 +21,7 @@ MonoBehaviour:
     killerAdvances: 1
     hp: 10
     attackPower: 0
-    drawWeight: 0
+    drawWeight: 1
     placementCost: 0
     gridSize: {x: 0, y: 0}
     visualScale: 0
@@ -47,7 +47,7 @@ MonoBehaviour:
     killerAdvances: 1
     hp: 10
     attackPower: 0
-    drawWeight: 0
+    drawWeight: 1
     placementCost: 0
     gridSize: {x: 0, y: 0}
     visualScale: 0
@@ -73,7 +73,7 @@ MonoBehaviour:
     killerAdvances: 1
     hp: 10
     attackPower: 0
-    drawWeight: 0
+    drawWeight: 1
     placementCost: 0
     gridSize: {x: 0, y: 0}
     visualScale: 0

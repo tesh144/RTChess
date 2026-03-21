@@ -67,6 +67,7 @@ MonoBehaviour:
   gridX: 0
   gridY: 0
   gridSize: {x: 1, y: 1}
+  fogRevealRadius: 1
   groupedTables: []
   interactionSlotsPerTable: 4
 --- !u!1 &4409164664083314224
@@ -136,7 +137,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &8770756747757831524
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -150,6 +151,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -163,6 +165,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8139162907859171989}
     m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 92d4ec0b199b243a5b03cfec9b5e9794, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.46967
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92d4ec0b199b243a5b03cfec9b5e9794, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.46967
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92d4ec0b199b243a5b03cfec9b5e9794, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.46967
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 92d4ec0b199b243a5b03cfec9b5e9794, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -206,6 +220,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 92d4ec0b199b243a5b03cfec9b5e9794, type: 3}
       propertyPath: m_Name
       value: MeatTable_FBX
+      objectReference: {fileID: 0}
+    - target: {fileID: 7887587906704532359, guid: 92d4ec0b199b243a5b03cfec9b5e9794, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

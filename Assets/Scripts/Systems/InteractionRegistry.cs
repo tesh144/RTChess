@@ -81,7 +81,11 @@ namespace ClockworkCraft
         public bool CanInteract(string objectName, InteractorType interactorType)
         {
             if (string.IsNullOrEmpty(objectName)) return true;
-            if (!lookup.TryGetValue(objectName, out var entry)) return true; // Unknown = allow
+            if (!lookup.TryGetValue(objectName, out var entry))
+            {
+                // Unknown objects: allies/enemies default allow (legacy), wild animals default deny
+                return interactorType != InteractorType.WildAnimal;
+            }
 
             switch (interactorType)
             {
@@ -157,13 +161,23 @@ namespace ClockworkCraft
                 foreach (var env in envDB.AllEnvironment)
                 {
                     if (string.IsNullOrEmpty(env.assetName)) continue;
-                    if (!lookup.ContainsKey(env.assetName))
+                    if (lookup.TryGetValue(env.assetName, out var existing))
+                    {
+                        // Update per-faction flags on existing entry
+                        existing.allyInteractible = env.allyInteractible;
+                        existing.enemyInteractible = env.enemyInteractible;
+                        existing.wildAnimalInteractible = env.wildAnimalInteractible;
+                    }
+                    else
                     {
                         var entry = new InteractionEntry
                         {
                             objectName = env.assetName,
                             source = InteractionSource.Environment,
-                            unlocked = true // Environment objects default to interactable
+                            unlocked = env.allyInteractible, // Legacy compat: workers interact if ally-interactible
+                            allyInteractible = env.allyInteractible,
+                            enemyInteractible = env.enemyInteractible,
+                            wildAnimalInteractible = env.wildAnimalInteractible
                         };
                         entries.Add(entry);
                         lookup[env.assetName] = entry;

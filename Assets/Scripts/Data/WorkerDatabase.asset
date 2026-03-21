@@ -20,7 +20,7 @@ MonoBehaviour:
     isActive: 1
     killerAdvances: 0
     behaviorType: 0
-    hp: 5
+    hp: 2
     attackPower: 1
     drawWeight: 0
     gridSize: {x: 0, y: 0}
@@ -34,7 +34,7 @@ MonoBehaviour:
     isActive: 1
     killerAdvances: 0
     behaviorType: 0
-    hp: 5
+    hp: 10
     attackPower: 1
     drawWeight: 0
     gridSize: {x: 0, y: 0}

@@ -79,10 +79,10 @@ namespace ClockworkGrid
         private const float FOG_REVEAL_DEBOUNCE = 0.15f; // Only play once per 150ms
 
         private float lastCoinCollectTime = -1f;
-        private const float COIN_COLLECT_DEBOUNCE = 0.06f;
+        private const float COIN_COLLECT_DEBOUNCE = 0.015f;  // 15ms — very tight, lets rapid arrivals layer
         private int coinCollectBurstCount = 0;
-        private const int MAX_COIN_COLLECT_BURST = 5;
-        private const float COIN_BURST_RESET_TIME = 0.4f;
+        private const int MAX_COIN_COLLECT_BURST = 15;       // High cap — big hauls should keep escalating
+        private const float COIN_BURST_RESET_TIME = 1.5f;    // 1.5s — loot particles arrive spread over ~1s, don't reset mid-batch
 
         // ─────────────────────────────────────────────────────────────────
         // Lifecycle
@@ -221,8 +221,9 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Play when a single loot particle arrives at the resource bar.
-        /// Uses ascending pitch within a burst to convey quantity, capped at MAX_COIN_COLLECT_BURST
-        /// so large batches don't get ridiculous.
+        /// Uses ascending pitch within a burst to convey quantity — collecting
+        /// many items produces a satisfying escalating "ding-ding-ding" scale.
+        /// Volume also swells slightly with burst count for impact.
         /// </summary>
         public void PlayCoinCollect()
         {
@@ -235,19 +236,23 @@ namespace ClockworkGrid
             // Cap how many sounds play per batch
             if (coinCollectBurstCount >= MAX_COIN_COLLECT_BURST) return;
 
-            // Still debounce rapid-fire calls
+            // Still debounce rapid-fire calls (but tighter than before)
             if (timeSinceLast < COIN_COLLECT_DEBOUNCE) return;
 
             lastCoinCollectTime = Time.unscaledTime;
             coinCollectBurstCount++;
 
-            // Ascending pitch: each successive coin in a burst goes slightly higher
-            float basePitch = 0.9f + (coinCollectBurstCount * 0.06f);
+            // Ascending pitch: each successive coin steps up a clear musical interval.
+            // Starts at 0.8 and climbs ~0.12 per step → very noticeable scale over a burst.
+            float basePitch = 0.8f + (coinCollectBurstCount * 0.12f);
             float pitch = basePitch + Random.Range(-0.02f, 0.02f);
+
+            // Volume swell: later items in a burst play noticeably louder (up to 1.6x)
+            float burstVolume = masterVolume * Mathf.Lerp(0.85f, 1.6f, (float)coinCollectBurstCount / MAX_COIN_COLLECT_BURST);
 
             if (coinCollect == null || sfxSource == null) return;
             sfxSource.pitch = pitch;
-            sfxSource.PlayOneShot(coinCollect, masterVolume);
+            sfxSource.PlayOneShot(coinCollect, burstVolume);
         }
 
         /// <summary>Play when a loot particle reaches its final destination.</summary>

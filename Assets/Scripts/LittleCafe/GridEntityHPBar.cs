@@ -89,6 +89,13 @@ namespace LittleCafe
             if (!health.IsAllied)
                 showHPLabel = false;
 
+            // Buildings (allied, non-environment) get red damage popups when attacked.
+            // Environment objects (goldmines, trees) are excluded — constant interaction
+            // would make the popups noisy and unhelpful.
+            bool isEnvironmentObject = GetComponent<ClockworkCraft.ResourceNode>() != null;
+            if (health.IsAllied && !isEnvironmentObject)
+                showDamagePopup = true;
+
             // Resolve entity-type tint from ResourceNode (if present)
             ResolveEntityTint();
 
@@ -333,9 +340,14 @@ namespace LittleCafe
             GameObject popupObj = new GameObject("DamagePopup");
             popupObj.transform.position = spawnPos;
 
+            // Buildings (allied entities) show remaining HP in starvation-countdown style.
+            // Everything else shows damage dealt as "-N".
+            bool isBuilding = entityHealth != null && entityHealth.IsAllied;
+            string popupText = isBuilding ? currentHP.ToString() : $"-{damageDealt}";
+
             TextMeshPro tmp = popupObj.AddComponent<TextMeshPro>();
-            tmp.text = $"-{damageDealt}";
-            tmp.fontSize = damageFontSize;
+            tmp.text = popupText;
+            tmp.fontSize = isBuilding ? damageFontSize * 1.2f : damageFontSize;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.sortingOrder = 200;
             tmp.enableWordWrapping = false;
@@ -349,16 +361,19 @@ namespace LittleCafe
                     font.material.HasProperty("_OutlineColor");
             }
 
-            tmp.color = entityDamageColor;
+            // Buildings use the aggressive starvation-countdown red; others use softer damage color
+            tmp.color = isBuilding ? new Color(0.9f, 0.15f, 0.15f, 1f) : entityDamageColor;
 
             if (damageFontSupportsOutline)
             {
-                tmp.outlineWidth = 0.12f;
-                tmp.outlineColor = new Color32(
-                    (byte)(outlineColor.r * 255),
-                    (byte)(outlineColor.g * 255),
-                    (byte)(outlineColor.b * 255),
-                    (byte)(outlineColor.a * 180));
+                tmp.outlineWidth = isBuilding ? 0.25f : 0.12f;
+                tmp.outlineColor = isBuilding
+                    ? new Color32(40, 10, 0, 220)
+                    : new Color32(
+                        (byte)(outlineColor.r * 255),
+                        (byte)(outlineColor.g * 255),
+                        (byte)(outlineColor.b * 255),
+                        (byte)(outlineColor.a * 180));
             }
 
             RectTransform rect = popupObj.GetComponent<RectTransform>();

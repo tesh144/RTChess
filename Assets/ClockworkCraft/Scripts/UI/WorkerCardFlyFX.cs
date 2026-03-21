@@ -71,26 +71,55 @@ namespace LittleCafe
         /// <summary>
         /// Spawn a worker icon that flies from worldPosition to the dock bar.
         /// On arrival, adds the worker card to DockBarManager.
+        /// Returns true if a slot was reserved and the fly-in started, false if hand is full.
+        /// Callers should NOT consume production entries when this returns false.
         /// </summary>
-        public void SpawnWorkerFly(Vector3 worldPosition, WorkerData workerData, int index = 0)
+        public bool SpawnWorkerFly(Vector3 worldPosition, WorkerData workerData, int index = 0)
         {
-            if (canvas == null || mainCamera == null) return;
-            if (workerData == null) return;
+            if (canvas == null || mainCamera == null) return false;
+            if (workerData == null) return false;
+
+            // Reserve a hand slot BEFORE starting the fly animation.
+            // If the hand is full, show the popup immediately and don't start the fly-in.
+            var dock = ClockworkGrid.DockBarManager.Instance;
+            if (dock != null && !dock.TryReserveSlot())
+            {
+                Debug.LogWarning("[WorkerCardFlyFX] Hand full — can't fly worker card");
+                if (ClockworkGrid.GameSFXManager.Instance != null)
+                    ClockworkGrid.GameSFXManager.Instance.PlayHandFull();
+                dock.ShowHandFullPopup(mainCamera.WorldToScreenPoint(worldPosition));
+                return false;
+            }
 
             StartCoroutine(WorkerFlyCoroutine(worldPosition, workerData, index));
+            return true;
         }
 
         /// <summary>
         /// Spawn a card icon that flies from worldPosition to the dock bar.
         /// On arrival, adds the UnitStats card directly to DockBarManager.
         /// Used by RandomBuilding production output (Statue building).
+        /// Returns true if a slot was reserved and the fly-in started, false if hand is full.
+        /// Callers should NOT consume production entries when this returns false.
         /// </summary>
-        public void SpawnCardFly(Vector3 worldPosition, ClockworkGrid.UnitStats cardStats, int index = 0)
+        public bool SpawnCardFly(Vector3 worldPosition, ClockworkGrid.UnitStats cardStats, int index = 0)
         {
-            if (canvas == null || mainCamera == null) return;
-            if (cardStats == null) return;
+            if (canvas == null || mainCamera == null) return false;
+            if (cardStats == null) return false;
+
+            // Reserve a hand slot BEFORE starting the fly animation.
+            var dock = ClockworkGrid.DockBarManager.Instance;
+            if (dock != null && !dock.TryReserveSlot())
+            {
+                Debug.LogWarning("[WorkerCardFlyFX] Hand full — can't fly card");
+                if (ClockworkGrid.GameSFXManager.Instance != null)
+                    ClockworkGrid.GameSFXManager.Instance.PlayHandFull();
+                dock.ShowHandFullPopup(mainCamera.WorldToScreenPoint(worldPosition));
+                return false;
+            }
 
             StartCoroutine(CardFlyCoroutine(worldPosition, cardStats, index));
+            return true;
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -105,7 +134,12 @@ namespace LittleCafe
 
             // Convert world position to screen position
             Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
-            if (screenPos.z < 0) yield break; // Behind camera
+            if (screenPos.z < 0)
+            {
+                // Behind camera — release the reserved slot
+                if (DockBarManager.Instance != null) DockBarManager.Instance.ReleaseSlot();
+                yield break;
+            }
 
             // Create or reuse particle
             GameObject obj = GetFromPool();
@@ -146,7 +180,7 @@ namespace LittleCafe
                 float t = Mathf.Clamp01(elapsed / burstDuration);
                 float eased = 1f - (1f - t) * (1f - t); // Ease-out
 
-                if (obj == null) yield break;
+                if (obj == null) { if (DockBarManager.Instance != null) DockBarManager.Instance.ReleaseSlot(); yield break; }
                 rect.anchoredPosition = Vector2.Lerp(startLocal, burstTarget, eased);
 
                 float scale = Mathf.Lerp(0.3f, 1.1f, eased);
@@ -155,42 +189,31 @@ namespace LittleCafe
                 yield return null;
             }
 
-            if (obj == null) yield break;
+            if (obj == null) { if (DockBarManager.Instance != null) DockBarManager.Instance.ReleaseSlot(); yield break; }
             rect.anchoredPosition = burstTarget;
             rect.localScale = Vector3.one;
 
             // ── Phase 2: Hang briefly ─────────────────────────────────────
             yield return new WaitForSeconds(hangDuration);
 
-            if (obj == null) yield break;
+            if (obj == null) { if (DockBarManager.Instance != null) DockBarManager.Instance.ReleaseSlot(); yield break; }
 
-            // ── Phase 3: Fly to dock bar (card container area) ─────────────
+            // ── Phase 3: Fly to dock bar (next card slot position) ─────────
             Vector2 flyStart = burstTarget;
 
-            // Target: where the next card will appear in the hand
+            // Target: the specific slot where this card will land
             Vector2 flyEnd;
-            DockBarManager dock = DockBarManager.Instance;
-            if (dock != null && dock.CardContainer != null)
+            DockBarManager dockRef = DockBarManager.Instance;
+            if (dockRef != null)
             {
-                // Target the card container — that's where cards actually live
-                RectTransform containerRect = dock.CardContainer.GetComponent<RectTransform>();
-                if (containerRect != null)
-                {
-                    // Aim for the right edge of existing cards (where the new card will appear)
-                    // Use the container's world position, offset right by the number of cards
-                    Vector3 targetWorldPos = containerRect.position;
-                    Vector3 targetScreenPos = RectTransformUtility.WorldToScreenPoint(
-                        canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
-                        targetWorldPos);
-                    RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                        canvasRect, targetScreenPos,
-                        canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
-                        out flyEnd);
-                }
-                else
-                {
-                    flyEnd = new Vector2(0f, -canvasRect.rect.height * 0.4f);
-                }
+                Vector3 slotWorldPos = dockRef.GetNextSlotWorldPosition();
+                Vector3 slotScreenPos = RectTransformUtility.WorldToScreenPoint(
+                    canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
+                    slotWorldPos);
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    canvasRect, slotScreenPos,
+                    canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
+                    out flyEnd);
             }
             else
             {
@@ -203,7 +226,12 @@ namespace LittleCafe
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / flyDuration);
 
-                if (obj == null) yield break;
+                if (obj == null)
+                {
+                    // Object destroyed mid-flight — release the reservation
+                    if (DockBarManager.Instance != null) DockBarManager.Instance.ReleaseSlot();
+                    yield break;
+                }
 
                 // Smooth ease-in-out
                 float eased = t * t * (3f - 2f * t);
@@ -224,10 +252,10 @@ namespace LittleCafe
                 yield return null;
             }
 
-            // ── Phase 4: Arrival — add worker card ────────────────────────
+            // ── Phase 4: Arrival — add worker card (consumes the reserved slot) ─
             if (DockBarManager.Instance != null)
             {
-                DockBarManager.Instance.AddWorkerCard(workerData);
+                DockBarManager.Instance.AddWorkerCard(workerData, consumeReservation: true);
             }
 
             // SFX: worker card acquired
@@ -254,7 +282,11 @@ namespace LittleCafe
                 yield return new WaitForSeconds(index * 0.08f);
 
             Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
-            if (screenPos.z < 0) yield break;
+            if (screenPos.z < 0)
+            {
+                if (ClockworkGrid.DockBarManager.Instance != null) ClockworkGrid.DockBarManager.Instance.ReleaseSlot();
+                yield break;
+            }
 
             GameObject obj = GetFromPool();
             RectTransform rect = obj.GetComponent<RectTransform>();
@@ -290,44 +322,36 @@ namespace LittleCafe
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / burstDuration);
                 float eased = 1f - (1f - t) * (1f - t);
-                if (obj == null) yield break;
+                if (obj == null) { if (DockBarManager.Instance != null) DockBarManager.Instance.ReleaseSlot(); yield break; }
                 rect.anchoredPosition = Vector2.Lerp(startLocal, burstTarget, eased);
                 float scale = Mathf.Lerp(0.3f, 1.1f, eased);
                 rect.localScale = Vector3.one * scale;
                 yield return null;
             }
 
-            if (obj == null) yield break;
+            if (obj == null) { if (ClockworkGrid.DockBarManager.Instance != null) ClockworkGrid.DockBarManager.Instance.ReleaseSlot(); yield break; }
             rect.anchoredPosition = burstTarget;
             rect.localScale = Vector3.one;
 
             // Phase 2: Hang
             yield return new WaitForSeconds(hangDuration);
 
-            if (obj == null) yield break;
+            if (obj == null) { if (ClockworkGrid.DockBarManager.Instance != null) ClockworkGrid.DockBarManager.Instance.ReleaseSlot(); yield break; }
 
-            // Phase 3: Fly to dock
+            // Phase 3: Fly to dock (next card slot position)
             Vector2 flyStart = burstTarget;
             Vector2 flyEnd;
-            ClockworkGrid.DockBarManager dock = ClockworkGrid.DockBarManager.Instance;
-            if (dock != null && dock.CardContainer != null)
+            ClockworkGrid.DockBarManager dockRef = ClockworkGrid.DockBarManager.Instance;
+            if (dockRef != null)
             {
-                RectTransform containerRect = dock.CardContainer.GetComponent<RectTransform>();
-                if (containerRect != null)
-                {
-                    Vector3 targetWorldPos = containerRect.position;
-                    Vector3 targetScreenPos = RectTransformUtility.WorldToScreenPoint(
-                        canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
-                        targetWorldPos);
-                    RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                        canvasRect, targetScreenPos,
-                        canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
-                        out flyEnd);
-                }
-                else
-                {
-                    flyEnd = new Vector2(0f, -canvasRect.rect.height * 0.4f);
-                }
+                Vector3 slotWorldPos = dockRef.GetNextSlotWorldPosition();
+                Vector3 slotScreenPos = RectTransformUtility.WorldToScreenPoint(
+                    canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
+                    slotWorldPos);
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    canvasRect, slotScreenPos,
+                    canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
+                    out flyEnd);
             }
             else
             {
@@ -339,7 +363,12 @@ namespace LittleCafe
             {
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / flyDuration);
-                if (obj == null) yield break;
+                if (obj == null)
+                {
+                    if (ClockworkGrid.DockBarManager.Instance != null)
+                        ClockworkGrid.DockBarManager.Instance.ReleaseSlot();
+                    yield break;
+                }
                 float eased = t * t * (3f - 2f * t);
                 Vector2 pos = Vector2.Lerp(flyStart, flyEnd, eased);
                 float arc = Mathf.Sin(t * Mathf.PI) * flyCurveHeight;
@@ -351,10 +380,10 @@ namespace LittleCafe
                 yield return null;
             }
 
-            // Phase 4: Arrival — add drawn card to hand
+            // Phase 4: Arrival — add drawn card to hand (consumes the reserved slot)
             if (ClockworkGrid.DockBarManager.Instance != null)
             {
-                ClockworkGrid.DockBarManager.Instance.AddCard(cardStats, markAsNew: true);
+                ClockworkGrid.DockBarManager.Instance.AddCard(cardStats, markAsNew: true, consumeReservation: true);
             }
 
             if (ClockworkGrid.GameSFXManager.Instance != null)

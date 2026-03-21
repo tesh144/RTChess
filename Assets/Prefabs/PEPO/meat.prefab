@@ -67,6 +67,7 @@ MonoBehaviour:
   gridX: 0
   gridY: 0
   gridSize: {x: 1, y: 1}
+  fogRevealRadius: 1
 --- !u!1 &5772787099098013029
 GameObject:
   m_ObjectHideFlags: 0
@@ -204,19 +205,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -1917654069603724943, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.56595874
+      value: 0.450905
       objectReference: {fileID: 0}
     - target: {fileID: -1917654069603724943, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.56595874
+      value: 0.450905
       objectReference: {fileID: 0}
     - target: {fileID: -1917654069603724943, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.56595874
+      value: 0.450905
       objectReference: {fileID: 0}
     - target: {fileID: -1917654069603724943, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.597
+      value: -0.508
       objectReference: {fileID: 0}
     - target: {fileID: -1917654069603724943, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
       propertyPath: m_LocalPosition.z

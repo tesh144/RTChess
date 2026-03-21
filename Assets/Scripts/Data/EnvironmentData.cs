@@ -39,6 +39,14 @@ namespace LittleCafe
         [Tooltip("When this object is destroyed, does the attacker advance into its cell? Advance = true, Stay = false.")]
         public bool killerAdvances = true;
 
+        [Header("Interaction Categories")]
+        [Tooltip("Can allied workers interact with this object? Maps to 'Ally Interactible' sheet column.")]
+        public bool allyInteractible = true;
+        [Tooltip("Can enemy entities attack this object? Maps to 'Enemy Interactible' sheet column.")]
+        public bool enemyInteractible = false;
+        [Tooltip("Can wild animals (Dinosaur, Mammoth) interact with this object? Maps to 'Wild Animal Interactible' sheet column.")]
+        public bool wildAnimalInteractible = false;
+
         [Header("Loot Settings")]
         [Tooltip("What resource currency this environment drops when hit. None = no loot. Assign from CurrencyDatabase entries.")]
         public ResourceType lootResourceType = ResourceType.None;

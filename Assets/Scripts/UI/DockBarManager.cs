@@ -49,6 +49,10 @@ namespace ClockworkGrid
         // Hand size limit
         public const int MAX_HAND_SIZE = 5;
 
+        // Reserved slots: count of in-flight cards that haven't arrived yet.
+        // Prevents the race condition where multiple fly-ins exceed hand capacity.
+        private int reservedSlots = 0;
+
         // Draw cost tracking
         private int drawCount = 0;
         private int ticksSinceCostDecrease = 0;
@@ -225,13 +229,91 @@ namespace ClockworkGrid
 
         // ── Card Management ─────────────────────────────────────────
 
-        /// <summary>Whether the hand is at maximum capacity.</summary>
-        public bool IsHandFull => handCards.Count >= MAX_HAND_SIZE;
+        /// <summary>Whether the hand is at maximum capacity (including reserved in-flight slots).</summary>
+        public bool IsHandFull => (handCards.Count + reservedSlots) >= MAX_HAND_SIZE;
+
+        /// <summary>
+        /// Reserve a hand slot BEFORE starting a fly-in animation.
+        /// Returns true if a slot was reserved, false if the hand is full.
+        /// The caller MUST either call AddCard/AddWorkerCard (which consumes the reservation)
+        /// or call ReleaseSlot() if the card is cancelled.
+        /// </summary>
+        public bool TryReserveSlot()
+        {
+            if ((handCards.Count + reservedSlots) >= MAX_HAND_SIZE)
+                return false;
+            reservedSlots++;
+            return true;
+        }
+
+        /// <summary>Release a previously reserved slot (e.g. if fly-in was cancelled).</summary>
+        public void ReleaseSlot()
+        {
+            reservedSlots = Mathf.Max(0, reservedSlots - 1);
+        }
+
+        /// <summary>
+        /// Get the target world position for the next card slot in the dock bar.
+        /// Uses temporary placeholders + LayoutRebuilder so the HorizontalLayoutGroup
+        /// calculates the real position (accounts for alignment, spacing, padding, card size).
+        /// </summary>
+        public Vector3 GetNextSlotWorldPosition()
+        {
+            if (cardContainer == null) return Vector3.zero;
+            RectTransform containerRect = cardContainer.GetComponent<RectTransform>();
+            if (containerRect == null) return Vector3.zero;
+
+            // Determine card size from the prefab
+            float cardWidth = 70f, cardHeight = 70f;
+            if (cardPrefab != null)
+            {
+                RectTransform prefabRect = cardPrefab.GetComponent<RectTransform>();
+                if (prefabRect != null)
+                {
+                    cardWidth = prefabRect.sizeDelta.x;
+                    cardHeight = prefabRect.sizeDelta.y;
+                }
+            }
+
+            // Add invisible placeholder children for each reserved slot.
+            // The layout group will position them where the real cards will land.
+            var placeholders = new List<GameObject>();
+            for (int i = 0; i < reservedSlots; i++)
+            {
+                var ph = new GameObject("_SlotTarget");
+                var rt = ph.AddComponent<RectTransform>();
+                rt.SetParent(cardContainer, false);
+                rt.sizeDelta = new Vector2(cardWidth, cardHeight);
+                placeholders.Add(ph);
+            }
+
+            // Force the layout group to recalculate with the placeholders present
+            LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
+
+            // The LAST placeholder is where our most-recently-reserved card will land
+            Vector3 targetPos;
+            if (placeholders.Count > 0)
+                targetPos = placeholders[placeholders.Count - 1].GetComponent<RectTransform>().position;
+            else
+                targetPos = containerRect.position; // Fallback to container center
+
+            // Clean up all placeholders and restore the original layout
+            foreach (var ph in placeholders)
+                DestroyImmediate(ph);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
+
+            return targetPos;
+        }
 
         /// <summary>Add a new card to the hand. Optionally mark it as "new" with a badge.</summary>
         /// <param name="animateFromDraw">If true, card flies in from the draw button position.</param>
-        public void AddCard(UnitStats unitStats, bool markAsNew = false, bool animateFromDraw = false)
+        /// <param name="consumeReservation">If true, consumes a previously reserved slot (from TryReserveSlot).</param>
+        public void AddCard(UnitStats unitStats, bool markAsNew = false, bool animateFromDraw = false, bool consumeReservation = false)
         {
+            // Consume the reservation first (reduces reservedSlots so the count stays accurate)
+            if (consumeReservation)
+                reservedSlots = Mathf.Max(0, reservedSlots - 1);
+
             if (handCards.Count >= MAX_HAND_SIZE)
             {
                 Debug.LogWarning("[DockBarManager] Hand full — can't add card");
@@ -375,9 +457,14 @@ namespace ClockworkGrid
         }
 
         /// <summary>Add a worker card from WorkerData (produced by buildings).</summary>
-        public void AddWorkerCard(WorkerData workerData)
+        /// <param name="consumeReservation">If true, consumes a previously reserved slot.</param>
+        public void AddWorkerCard(WorkerData workerData, bool consumeReservation = false)
         {
             if (workerData == null) return;
+
+            // Consume the reservation first
+            if (consumeReservation)
+                reservedSlots = Mathf.Max(0, reservedSlots - 1);
 
             if (handCards.Count >= MAX_HAND_SIZE)
             {
@@ -590,6 +677,10 @@ namespace ClockworkGrid
 
             while (elapsed < duration)
             {
+                // Guard against destroyed UI objects (e.g. scene reload mid-animation)
+                if (rt == null || obj == null)
+                    yield break;
+
                 elapsed += Time.deltaTime;
                 float t = elapsed / duration;
 
@@ -598,12 +689,14 @@ namespace ClockworkGrid
 
                 // Fade out in second half
                 float alpha = t < 0.5f ? 1f : 1f - ((t - 0.5f) * 2f);
-                tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, alpha);
+                if (tmp != null)
+                    tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, alpha);
 
                 yield return null;
             }
 
-            Destroy(obj);
+            if (obj != null)
+                Destroy(obj);
         }
     }
 }
