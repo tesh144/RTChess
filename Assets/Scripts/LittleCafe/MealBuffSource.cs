@@ -13,6 +13,12 @@ namespace LittleCafe
     /// </summary>
     public class MealBuffSource : MonoBehaviour
     {
+        /// <summary>
+        /// Icon sprite shown flying from this Feast to a worker when the buff is granted.
+        /// Assign the food/meat sprite in the Inspector on the Feast prefab.
+        /// </summary>
+        public Sprite icon;
+
         [Tooltip("Radius (in grid cells) within which workers receive the buff aura")]
         public float buffRadius = 3f;
 
