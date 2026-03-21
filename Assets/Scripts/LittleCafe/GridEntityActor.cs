@@ -718,6 +718,15 @@ namespace LittleCafe
                 if (mealSource != null && !hasMealBuff)
                 {
                     GrantMealBuff(10); // ~10 interval ticks (~20 seconds at 2s base interval)
+
+                    // Visual: food icon arcs from feast to this worker
+                    if (mealSource.icon != null)
+                        ClockworkCraft.IconFlyFX.Instance?.SpawnArc(mealSource.icon, target.transform.position, transform.position);
+
+                    // Visual: attach particle aura (guard prevents duplicate on re-grant)
+                    if (GetComponent<MealBuffVisual>() == null)
+                        gameObject.AddComponent<MealBuffVisual>();
+
                     if (verboseLogging)
                         Debug.Log($"[GridEntityActor] {gameObject.name} received meal buff ({mealBuffTicksRemaining} ticks)");
                 }
