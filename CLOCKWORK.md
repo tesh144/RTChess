@@ -1,5 +1,92 @@
 # ClockworkCraft — Project Documentation
 
+## Standing Rules
+
+### Google Sheets — Formatting & Structure Rules
+
+**Spreadsheet ID:** `1UvfldgEvr3dM_OqHfNyDHi_8qGoiO72CwTDrCRbUNy0`
+
+**Sheet IDs (needed for batch_update):**
+| Sheet | sheetId |
+|-------|---------|
+| Currencies | 0 |
+| Environment & Loot | 1027353443 |
+| Buildings & Production | 2122729009 |
+| Placement Costs | 1854940026 |
+| Workers & Entities | 1256997970 |
+| Cards & Deck | 1675160473 |
+| Map Generation | 1697855788 |
+| Timers & Animations | 1150895612 |
+
+**Visual Style (MUST follow for all sheets):**
+- **Header row:** Dark bg `rgb(0.157, 0.157, 0.2)`, white text, Arial 11, bold, center-aligned. Frozen.
+- **Data rows:** White background, black text. Do NOT apply dark backgrounds to data rows — it makes emojis and text illegible.
+- **Alternating row stripes:** Use conditional formatting (`=MOD(ROW(),2)=0` → light purple `rgb(0.949, 0.949, 0.969)`, odd rows → white). These MUST cover ALL columns including any newly added ones.
+- **Booleans:** ALWAYS use checkboxes (`dataValidation` with `BOOLEAN` type + `boolValue`). Never use TRUE/FALSE text.
+- **Enum columns:** Use `ONE_OF_LIST` data validation dropdowns matching code enum values.
+- **No borders/outlines** on any sheet. Stripped as of 2026-03-21.
+
+**Critical Gotchas (hard-won from painful 2026-03-21 audit session):**
+
+1. **Conditional formatting overrides cell formatting.** If a sheet has alternating row rules, your `repeatCell` background changes will be invisible. Always check for and update existing conditional format rules rather than fighting them with cell formatting.
+
+2. **When inserting columns, ALL existing data validations shift.** If column C has a Type dropdown and you insert a new column B, that dropdown now lives on column D — but the validation ALSO gets copied to the new column B. You MUST re-apply `setDataValidation` with `rule: null` on the inserted column AND re-verify all other columns' validations are on the correct indices. This caused entity names to show as "invalid" because the Type dropdown leaked onto the Entity column.
+
+3. **When inserting columns, update conditional formatting ranges.** The `endColumnIndex` on alternating stripe rules must be extended to include the new column, or it'll have no stripes.
+
+4. **`TEXT_EQ` condition type DOES NOT WORK for conditional formatting text color.** Use `CUSTOM_FORMULA` instead. Example: to grey out "None" values, use `=A2="None"` as a CUSTOM_FORMULA (the cell reference is relative and shifts for each cell in the range). TEXT_EQ silently does nothing — the API accepts it without error but the format never applies.
+
+5. **Conditional format rule INDEX controls priority.** Index 0 = highest priority. If you add a text-color-only rule at index 0, it can prevent the stripe rules (now at index 1, 2) from applying their backgrounds. Always add text-color rules AFTER stripe rules (use a high index like 99 to append to the end).
+
+6. **Emoji-prefixed dropdown values** (e.g. "💰 Gold", "👷 Worker") are used throughout. The sync tool has a `StripEmoji()` helper that strips everything before the first ASCII letter. Always use this when parsing sheet values to code enums.
+
+7. **NEVER use `add_rows`/`add_columns`** without explicit start positions — they default to inserting at the BEGINNING, pushing all data down/right. Use `batch_update` → `insertDimension` with explicit `startIndex`.
+
+8. **Before ANY sheet write, read the current data first** (`include_grid_data: true`) to verify row/column positions, check for conditional formatting rules, and inspect existing data validations. Reading values-only is not enough — you need the grid data to see validations and conditional formats.
+
+9. **ALWAYS verify after making changes.** Re-fetch the affected range with `include_grid_data: true` and check `effectiveFormat` to confirm your changes actually applied. Never claim a fix is done based on a successful API response alone — the API returns success even when formatting silently fails to render (see TEXT_EQ above). This is the single most important rule.
+
+10. **Watch for stray BOOLEAN validations.** When applying checkbox validation to a column, double-check the column index. A BOOLEAN validation on a numeric column (like Start Amt) creates a broken checkbox overlay that changes text color and cell appearance unpredictably. If you see weird formatting on a cell, check for accidental data validation first.
+
+**Column-to-Code Mappings (Workers & Entities):**
+| Sheet Column | Code Field | Notes |
+|---|---|---|
+| Entity | assetName | Strip parenthetical e.g. "Worker (Generic)" → "Worker" |
+| Type | WorkerType / GameUnitType | Dropdown: Worker, Wild Animal |
+| HP | hp | int |
+| Attack Power | attackPower | int |
+| Movement Behavior | behaviorType | Dropdown: RotateAndInteract, RotateAndMove, RotateRotateMove |
+| Attack Behavior | → isEnemy | Hostile = isEnemy:true, Peaceful = isEnemy:false. NOT a code enum yet. |
+| Killer's Behavior | (sheet-only) | Stay / Advance. Future feature — not in code yet. |
+| Draw Weight | drawWeight | float |
+| Slot Takeable | isSlotTakeable | Checkbox boolean |
+
+**Column-to-Code Mappings (Buildings & Production):**
+| Sheet Column | Code Field | Notes |
+|---|---|---|
+| Building | assetName | |
+| Prod. Interval (s) | productionInterval | float |
+| Interval Bonus (s) | productionIntervalBonus | float |
+| Input | productionInputType | Dropdown with emoji: None, 👷 Worker, ⚔️ Fighter |
+| Output | productionOutputType | Dropdown with emoji: None, 👷 Worker, 💰 Currency, 🏠 RandomBuilding, ⚔️ Fighter, 🍖 Meal |
+| Output Amt | productionAmount | int |
+| Reveal Radius | fogRevealRadius | int |
+| Ally Interactible | isMealSource | Checkbox boolean |
+| HP | hp | int |
+| Attack | attackPower | int |
+
+**Column-to-Code Mappings (Environment & Loot):**
+| Sheet Column | Code Field | Notes |
+|---|---|---|
+| Object | assetName | |
+| Drops | lootResourceType | Dropdown with emoji (e.g. "💰 Gold"). StripEmoji → Enum.TryParse |
+| Loot per Hit | lootYield | int |
+| HP | hp | int |
+| Total Yield | (formula) | =Loot per Hit × HP. Not a code field. |
+| Killer's Behavior | (sheet-only) | Stay / Advance. Future feature. |
+
+**Sync Tool:** `Assets/Scripts/Editor/SheetSyncEditor.cs` reads `Assets/Scripts/Editor/SheetCache.json` (written by Claude via MCP) and updates ScriptableObject .asset files. Open via ClockworkCraft → Sheet Sync in Unity.
+
 ## Project Overview
 A Unity-based grid strategy game that evolved from a real-time chess prototype (RTChess) through a cafe builder (LittleCafe) into a world-building simulation (ClockworkCraft). All three share a common core of grid, camera, and placement systems.
 

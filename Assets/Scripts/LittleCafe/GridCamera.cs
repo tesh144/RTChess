@@ -83,6 +83,8 @@ namespace LittleCafe
         // Manual rotation state
         private bool isRightDragging;
         private Vector3 lastMousePos;
+        private float lastDragDeltaX;           // Last frame's horizontal drag delta
+        private float autoRotateDirection = 1f; // +1 = clockwise, -1 = counter-clockwise
 
         // Auto-rotation
         private bool isAutoRotating;
@@ -256,10 +258,14 @@ namespace LittleCafe
             if (Input.GetMouseButtonUp(1))
             {
                 isRightDragging = false;
+                // Match auto-rotation direction to the player's last swipe
+                if (Mathf.Abs(lastDragDeltaX) > 0.01f)
+                    autoRotateDirection = Mathf.Sign(lastDragDeltaX);
             }
             if (isRightDragging)
             {
                 Vector3 delta = Input.mousePosition - lastMousePos;
+                lastDragDeltaX = delta.x;
                 targetYaw += delta.x * manualRotateSpeed;
 
                 float pitchMin = 20f;
@@ -301,8 +307,9 @@ namespace LittleCafe
         private void UpdateAutoRotation()
         {
             if (!isAutoRotating || isRightDragging) return;
-            targetYaw += autoRotateSpeed * Time.deltaTime;
+            targetYaw += autoRotateDirection * autoRotateSpeed * Time.deltaTime;
             if (targetYaw > 360f) targetYaw -= 360f;
+            if (targetYaw < 0f) targetYaw += 360f;
         }
 
         private void UpdateCenterOfInterest()

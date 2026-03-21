@@ -102,7 +102,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &9178825482240531801
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -116,6 +116,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -200,6 +201,26 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1917654069603724943, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.56595874
+      objectReference: {fileID: 0}
+    - target: {fileID: -1917654069603724943, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.56595874
+      objectReference: {fileID: 0}
+    - target: {fileID: -1917654069603724943, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.56595874
+      objectReference: {fileID: 0}
+    - target: {fileID: -1917654069603724943, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.597
+      objectReference: {fileID: 0}
+    - target: {fileID: -1917654069603724943, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 817b8ec62e24b433d9e5426429b1f057, type: 3}
       propertyPath: m_Name

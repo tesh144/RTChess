@@ -24,8 +24,11 @@ MonoBehaviour:
     placementCost: 0
     gridSize: {x: 0, y: 0}
     visualScale: 0
+    fogRevealRadius: 1
     prefab: {fileID: 4760405268050885137, guid: 2f41e9bf7cf6d4fccb70a1e8398e442a, type: 3}
     icon: {fileID: 21300000, guid: 10ee5d5e55d1b4296ba901f70537cb11, type: 3}
+    isMealSource: 0
+    productionInputType: 0
     productionInterval: 5
     productionIntervalBonus: 15
     productionOutputType: 1
@@ -42,8 +45,11 @@ MonoBehaviour:
     placementCost: 0
     gridSize: {x: 0, y: 0}
     visualScale: 0
+    fogRevealRadius: 2
     prefab: {fileID: 5555927305428753834, guid: 471a7dabafbc84b92b19de4645e04a6a, type: 3}
     icon: {fileID: 21300000, guid: b563bf17c7d14435dacdf47712dd94e9, type: 3}
+    isMealSource: 0
+    productionInputType: 0
     productionInterval: 0
     productionIntervalBonus: 0
     productionOutputType: 0
@@ -60,10 +66,76 @@ MonoBehaviour:
     placementCost: 0
     gridSize: {x: 0, y: 0}
     visualScale: 0
+    fogRevealRadius: 1
     prefab: {fileID: 8342170868413443855, guid: 9f7736c07d2744d04b0f1d11ae3b4e6f, type: 3}
     icon: {fileID: 21300000, guid: 50d71c0a9f632478ebbd1ff2d6448173, type: 3}
+    isMealSource: 0
+    productionInputType: 0
     productionInterval: 10
     productionIntervalBonus: 30
     productionOutputType: 3
     producedResourceType: 0
     productionAmount: 1
+  - assetName: TrainingFacility
+    type: 6
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 0
+    hp: 10
+    attackPower: 0
+    drawWeight: 1
+    placementCost: 0
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    fogRevealRadius: 1
+    prefab: {fileID: 3714466066767155304, guid: 17966925df26345e791a6054e1650882, type: 3}
+    icon: {fileID: 21300000, guid: b28ec26716a334556841083ff4875213, type: 3}
+    isMealSource: 0
+    productionInputType: 1
+    productionInterval: 15
+    productionIntervalBonus: 30
+    productionOutputType: 4
+    producedResourceType: 0
+    productionAmount: 1
+  - assetName: Kitchen
+    type: 3
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 0
+    hp: 10
+    attackPower: 0
+    drawWeight: 1
+    placementCost: 0
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    fogRevealRadius: 1
+    prefab: {fileID: 0}
+    icon: {fileID: 0}
+    isMealSource: 0
+    productionInputType: 0
+    productionInterval: 15
+    productionIntervalBonus: 15
+    productionOutputType: 5
+    producedResourceType: 0
+    productionAmount: 1
+  - assetName: Feast
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 0
+    hp: 10
+    attackPower: 0
+    drawWeight: 0
+    placementCost: 0
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    fogRevealRadius: 1
+    prefab: {fileID: 4069388665601599064, guid: 5cfe09c1bdd804de3a2fa60089dad974, type: 3}
+    icon: {fileID: 21300000, guid: 8a401058293854ec38fc11f322ac7245, type: 3}
+    isMealSource: 0
+    productionInputType: 0
+    productionInterval: 0
+    productionIntervalBonus: 0
+    productionOutputType: 0
+    producedResourceType: 0
+    productionAmount: 0

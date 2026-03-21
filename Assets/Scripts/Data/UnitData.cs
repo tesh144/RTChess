@@ -45,6 +45,9 @@ namespace LittleCafe
         [Tooltip("Clockwork behavior pattern. RotateAndInteract = worker-style (attack). RotateAndMove = animal-style (wander).")]
         public BehaviorType behaviorType = BehaviorType.RotateAndMove;
 
+        [Tooltip("When this unit is killed, can the attacker advance into its cell? False for mobile units (dinos), true for static targets.")]
+        public bool isSlotTakeable = false;
+
         [Header("Loot Settings")]
         [Tooltip("What resource currency this unit drops when hit/killed. None = no loot. Assign from CurrencyDatabase entries.")]
         public ResourceType lootResourceType = ResourceType.None;

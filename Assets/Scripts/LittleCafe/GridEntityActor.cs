@@ -74,6 +74,10 @@ namespace LittleCafe
         private int idleTickCount = 0;
         private bool isStarving = false;
 
+        // Meal buff state
+        private bool hasMealBuff = false;
+        private int mealBuffTicksRemaining = 0;
+
         // Starvation countdown — no persistent object; each tick spawns a popup
 
         // --- Public Accessors ---
@@ -83,6 +87,9 @@ namespace LittleCafe
 
         /// <summary>True if this worker is dying from starvation (idle too long).</summary>
         public bool IsStarving => isStarving;
+
+        /// <summary>True if this worker currently has a meal buff active.</summary>
+        public bool HasMealBuff => hasMealBuff;
 
         /// <summary>Current consecutive idle ticks (resets on any interaction).</summary>
         public int IdleTickCount => idleTickCount;
@@ -247,6 +254,19 @@ namespace LittleCafe
         {
             if (!isInitialized) return;
             if (health != null && health.IsDestroyed) return;
+
+            // Decay meal buff each tick
+            if (hasMealBuff)
+            {
+                mealBuffTicksRemaining--;
+                if (mealBuffTicksRemaining <= 0)
+                {
+                    hasMealBuff = false;
+                    mealBuffTicksRemaining = 0;
+                    if (verboseLogging)
+                        Debug.Log($"[GridEntityActor] {gameObject.name} meal buff expired");
+                }
+            }
 
             // Respect interval multiplier (e.g., only act every 2nd tick)
             if (attackIntervalMultiplier > 1 && intervalCount % attackIntervalMultiplier != 0)
@@ -567,6 +587,14 @@ namespace LittleCafe
                     if (targetHealth.IsAllied)
                         continue;
 
+                    // Smart meal interaction: skip meals if we already have the buff
+                    if (hasMealBuff && occupant.GetComponent<MealBuffSource>() != null)
+                    {
+                        if (verboseLogging)
+                            Debug.Log($"[GridEntityActor] {gameObject.name} skipping meal (already buffed, {mealBuffTicksRemaining} ticks left)");
+                        continue;
+                    }
+
                     if (!targetHealth.WorkerCanInteract)
                     {
                         // Can't interact yet — weak bump animation
@@ -660,6 +688,15 @@ namespace LittleCafe
                     }
                 }
 
+                // Grant meal buff if target is a MealBuffSource
+                MealBuffSource mealSource = target.GetComponent<MealBuffSource>();
+                if (mealSource != null && !hasMealBuff)
+                {
+                    GrantMealBuff(8); // 8 interval ticks
+                    if (verboseLogging)
+                        Debug.Log($"[GridEntityActor] {gameObject.name} received meal buff ({mealBuffTicksRemaining} ticks)");
+                }
+
                 // Allied units (workers) reveal fog around their targets
                 if (health != null && health.IsAllied && FogManager.Instance != null)
                 {
@@ -675,14 +712,14 @@ namespace LittleCafe
                     Debug.Log($"[GridEntityActor] {gameObject.name} → STRONG interact → {target.gameObject.name} for {damageDealt} damage (target HP: {target.CurrentHP}/{target.MaxHP}){(targetKilled ? " [KILLED]" : "")}");
             }
 
-            // If the target was killed, advance into its cell — but only for
-            // static environment kills (trees, rocks, etc.), NOT moving units.
-            // Moving targets (units/animals with GridEntityActor) vacate their cell
-            // on their own and the worker should stay put.
+            // If the target was killed, advance into its cell — but only if the
+            // target is slot-takeable (static environment like trees, rocks).
+            // Mobile units (dinos, monsters) are NOT slot-takeable by default —
+            // they vacate their cell on death and the worker should stay put.
             if (targetKilled && furnitureObject != null)
             {
-                bool targetWasMovingUnit = target != null && target.GetComponent<GridEntityActor>() != null;
-                if (!targetWasMovingUnit)
+                bool canTakeSlot = target == null || target.IsSlotTakeable;
+                if (canTakeSlot)
                 {
                     yield return StartCoroutine(AdvanceIntoCell(targetX, targetY));
                 }
@@ -798,6 +835,26 @@ namespace LittleCafe
         /// <summary>
         /// Reset the idle counter completely. Called on any successful interaction.
         /// </summary>
+        // ---------------------------------------------------------------
+        // Meal Buff
+        // ---------------------------------------------------------------
+
+        /// <summary>
+        /// Grant a meal buff lasting the specified number of interval ticks.
+        /// While active, the worker skips MealBuffSource targets during scan.
+        /// The buff is currently a flag with no mechanical effect — future iterations
+        /// may add speed boost, damage bonus, etc.
+        /// </summary>
+        public void GrantMealBuff(int durationTicks)
+        {
+            hasMealBuff = true;
+            mealBuffTicksRemaining = durationTicks;
+        }
+
+        // ---------------------------------------------------------------
+        // Starvation
+        // ---------------------------------------------------------------
+
         private void ResetIdleCounter()
         {
             if (idleTickCount > 0 && verboseLogging)

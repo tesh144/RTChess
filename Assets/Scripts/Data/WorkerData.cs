@@ -15,7 +15,8 @@ namespace LittleCafe
         Builder,        // Construction
         Merchant,       // Trading
         Guard,          // Defense / patrol
-        Crafter         // Artisan / crafting
+        Crafter,        // Artisan / crafting
+        Fighter         // Combat unit (trained from worker)
     }
 
     /// <summary>

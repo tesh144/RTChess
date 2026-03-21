@@ -96,7 +96,13 @@ namespace ClockworkGrid
         [Header("Grid Footprint")]
         public Vector2Int gridSize = new Vector2Int(1, 1); // Cells occupied (e.g. 2x1 table, 2x2 cooking station)
 
+        [Header("Meal Buff")]
+        [Tooltip("When true, this object grants a meal buff to workers that interact with it.")]
+        public bool isMealSource = false;
+
         [Header("Building Production")]
+        [Tooltip("What must be dragged onto this building to start production. None = auto-produce.")]
+        public ProductionInputType productionInputType = ProductionInputType.None;
         [Tooltip("What this building produces when its timer completes.")]
         public ProductionOutputType productionOutputType = ProductionOutputType.None;
         [Tooltip("Base seconds between production cycles. 0 = no production.")]

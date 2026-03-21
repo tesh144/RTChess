@@ -562,6 +562,10 @@ namespace ClockworkGrid
         /// </summary>
         public void PlayAppearAnimation()
         {
+            // Ensure the GameObject is active — StartCoroutine fails on inactive objects
+            if (!gameObject.activeSelf)
+                gameObject.SetActive(true);
+
             if (appearCoroutine != null) StopCoroutine(appearCoroutine);
             appearCoroutine = StartCoroutine(AppearAnimationRoutine());
         }

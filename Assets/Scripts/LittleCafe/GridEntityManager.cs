@@ -95,7 +95,11 @@ namespace LittleCafe
                 if (ClockworkCraft.InteractionRegistry.Instance != null)
                     canInteract = ClockworkCraft.InteractionRegistry.Instance.IsUnlocked(lookupName);
 
-                health.Initialize(hp, attackPower, canInteract, allied);
+                // Static objects (buildings, environment) are slot-takeable;
+                // Active mobile units (workers, dinos) are not — workers won't advance into their cell on kill.
+                bool slotTakeable = !isActive;
+
+                health.Initialize(hp, attackPower, canInteract, allied, slotTakeable);
                 allHealth.Add(health);
 
                 // Attach HP bar (shows on damage, fades after timeout)
