@@ -12,7 +12,7 @@ namespace ClockworkGrid
         public static DragDropHandler Instance { get; private set; }
 
         // Drag state
-        private UnitIcon currentDraggingIcon;
+        private GameCardUI currentDraggingIcon;
         private GameObject currentUnitPrefab;
         private bool isDragging = false;
         public bool IsDragging => isDragging;
@@ -44,8 +44,8 @@ namespace ClockworkGrid
         private Vector3 preDragCameraTarget;
         private float preDragZoomDistance;
         private bool preDragAutoRotate;
-        private float dragZoomRatio = 0.5f; // Zoom to 50% of current distance during drag
-        private float dragCameraEaseSpeed = 5f; // How fast camera eases toward target
+        private float dragZoomRatio = 0.75f; // Zoom to 75% of current distance during drag (gentler)
+        private float dragCameraEaseSpeed = 3f; // How fast camera eases toward target
 
         private void Awake()
         {
@@ -117,7 +117,7 @@ namespace ClockworkGrid
         /// <summary>
         /// Start dragging a unit from the dock
         /// </summary>
-        public bool StartDrag(UnitIcon icon, GameObject unitPrefab)
+        public bool StartDrag(GameCardUI icon, GameObject unitPrefab)
         {
             Debug.Log($"[DragDropHandler] StartDrag called — isDragging={isDragging}, unitPrefab={unitPrefab?.name ?? "NULL"}");
             if (isDragging) return false;
@@ -159,6 +159,14 @@ namespace ClockworkGrid
             arcLine.enabled = true;
             // Highlights are activated per-cell in UpdateCellHighlights
 
+            // Pre-create placement cost display entries (hidden until hovering a valid cell)
+            if (LittleCafe.PlacementCostDisplay.Instance != null && icon.UnitStats != null)
+            {
+                LittleCafe.PlacementCostDisplay.Instance.ResetOrbit();
+                LittleCafe.PlacementCostDisplay.Instance.Show(icon.UnitStats);
+                LittleCafe.PlacementCostDisplay.Instance.SetEntriesVisible(false);
+            }
+
             return true;
         }
 
@@ -187,7 +195,7 @@ namespace ClockworkGrid
                 var dragCam = CameraSystemLocator.Current;
                 if (dragCam != null)
                 {
-                    Vector3 blendTarget = Vector3.Lerp(preDragCameraTarget, footprintCenter, 0.8f);
+                    Vector3 blendTarget = Vector3.Lerp(preDragCameraTarget, footprintCenter, 0.5f);
                     Vector3 current = dragCam.CurrentTarget;
                     Vector3 eased = Vector3.Lerp(current, blendTarget, Time.deltaTime * dragCameraEaseSpeed);
                     dragCam.SetTarget(eased);
@@ -195,6 +203,15 @@ namespace ClockworkGrid
 
                 // Update arc line (target = footprint center)
                 UpdateArcLine(footprintCenter);
+
+                // Show/hide placement cost display based on cell validity (empty + revealed)
+                // Show even when player can't afford — they need to see what it costs
+                if (LittleCafe.PlacementCostDisplay.Instance != null)
+                {
+                    bool cellValid = IsCellValid(worldPos, out _, out _);
+                    LittleCafe.PlacementCostDisplay.Instance.SetWorldCenter(footprintCenter);
+                    LittleCafe.PlacementCostDisplay.Instance.SetEntriesVisible(cellValid);
+                }
             }
             else
             {
@@ -231,27 +248,58 @@ namespace ClockworkGrid
             }
 
             // Check and spend placement cost
-            int placementCost = currentDraggingIcon.UnitStats != null ? currentDraggingIcon.UnitStats.resourceCost : 0;
-            if (placementCost > 0)
-            {
-                if (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.SpendTokens(placementCost))
-                {
-                    // SFX: can't afford
-                    if (GameSFXManager.Instance != null)
-                        GameSFXManager.Instance.PlayError();
+            // Priority 1: EconomyManager (multi-resource, escalating costs)
+            // Priority 2: Legacy single-token cost (ResourceTokenManager)
+            string placementItemName = currentDraggingIcon?.UnitStats?.unitName;
+            bool usesEconomyManager = !string.IsNullOrEmpty(placementItemName) &&
+                ClockworkGrid.EconomyManager.Instance != null &&
+                ClockworkGrid.EconomyManager.Instance.HasConfiguredCost(placementItemName);
 
-                    // Can't afford - snap back to dock
+            if (usesEconomyManager)
+            {
+                if (!ClockworkGrid.EconomyManager.Instance.SpendForPlacement(placementItemName))
+                {
+                    // SFX: can't afford placement
+                    if (GameSFXManager.Instance != null)
+                        GameSFXManager.Instance.PlayPlacementError();
+
                     currentDraggingIcon.SnapBackToOriginalPosition();
                     CleanupDragVisuals();
                     isDragging = false;
                     return;
                 }
             }
+            else
+            {
+                int placementCost = currentDraggingIcon.UnitStats != null ? currentDraggingIcon.UnitStats.resourceCost : 0;
+                if (placementCost > 0)
+                {
+                    if (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.SpendTokens(placementCost))
+                    {
+                        // SFX: can't afford placement
+                        if (GameSFXManager.Instance != null)
+                            GameSFXManager.Instance.PlayPlacementError();
+
+                        currentDraggingIcon.SnapBackToOriginalPosition();
+                        CleanupDragVisuals();
+                        isDragging = false;
+                        return;
+                    }
+                }
+            }
 
             // Place unit on grid — center on footprint
             Vector3 worldPos = GridManager.Instance.GetFootprintCenter(targetGridX, targetGridY, currentGridSize);
             worldPos.y = GetTileSurfaceY() + 0.05f; // Offset to prevent shadow clipping into grid
-            GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, currentUnitPrefab.transform.rotation);
+            // Randomize facing direction for non-active objects (buildings, furniture)
+            // Active entities (workers, animals) get their facing from GridEntityActor.Initialize()
+            Quaternion spawnRotation = currentUnitPrefab.transform.rotation;
+            if (currentDraggingIcon?.UnitStats != null && !currentDraggingIcon.UnitStats.isActive)
+            {
+                float randomY = 90f * Random.Range(0, 4); // 0, 90, 180, or 270
+                spawnRotation = Quaternion.Euler(0f, randomY, 0f);
+            }
+            GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, spawnRotation);
             unitObj.SetActive(true);
 
             // Placement animation handled by Animator component (Unit_Appear animation)
@@ -328,6 +376,10 @@ namespace ClockworkGrid
                 LittleCafe.BuildingProductionManager.Instance.RegisterBuilding(unitObj, currentDraggingIcon.UnitStats);
             }
 
+            // Record placement for cost escalation
+            if (usesEconomyManager)
+                ClockworkGrid.EconomyManager.Instance.RecordPlacement(placementItemName);
+
             // Play placement SFX
             if (GameSFXManager.Instance != null)
                 GameSFXManager.Instance.PlayPlacement();
@@ -335,7 +387,7 @@ namespace ClockworkGrid
                 SFXManager.Instance.PlayPlayerPlacement();
 
             // Remove from dock
-            DockBarManager.Instance.RemoveUnitIcon(currentDraggingIcon);
+            DockBarManager.Instance.RemoveCard(currentDraggingIcon);
 
             // Restore camera settings and re-center on the newly placed object
             var placeCam = CameraSystemLocator.Current;
@@ -480,6 +532,10 @@ namespace ClockworkGrid
                 if (cellHighlights[i] != null)
                     cellHighlights[i].SetActive(false);
             }
+
+            // Hide placement cost display
+            if (LittleCafe.PlacementCostDisplay.Instance != null)
+                LittleCafe.PlacementCostDisplay.Instance.Hide();
         }
 
         private bool ValidatePlacement(Vector3 worldPos, out int gridX, out int gridY)
@@ -487,23 +543,48 @@ namespace ClockworkGrid
             gridX = 0;
             gridY = 0;
 
-            if (GridManager.Instance == null) return false;
-
-            // Convert world position to anchor grid coordinates
-            if (!GridManager.Instance.WorldToGridPosition(worldPos, out gridX, out gridY))
-                return false;
-
-            // Check ALL cells in the footprint are available (empty + revealed)
-            if (!GridManager.Instance.AreAllCellsAvailable(gridX, gridY, currentGridSize))
+            if (!IsCellValid(worldPos, out gridX, out gridY))
                 return false;
 
             // Check if player can afford placement cost
+            // Priority 1: EconomyManager (multi-resource, escalating costs)
+            // Priority 2: Legacy single-token cost (ResourceTokenManager)
             if (currentDraggingIcon != null && currentDraggingIcon.UnitStats != null)
             {
-                int cost = currentDraggingIcon.UnitStats.resourceCost;
-                if (cost > 0 && (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost)))
-                    return false;
+                string itemName = currentDraggingIcon.UnitStats.unitName;
+                if (ClockworkGrid.EconomyManager.Instance != null &&
+                    ClockworkGrid.EconomyManager.Instance.HasConfiguredCost(itemName))
+                {
+                    if (!ClockworkGrid.EconomyManager.Instance.CanAfford(itemName))
+                        return false;
+                }
+                else
+                {
+                    int cost = currentDraggingIcon.UnitStats.resourceCost;
+                    if (cost > 0 && (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost)))
+                        return false;
+                }
             }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Check if the hovered cell is a valid drop location (empty + revealed),
+        /// WITHOUT checking affordability. Used to decide whether to show cost icons.
+        /// </summary>
+        private bool IsCellValid(Vector3 worldPos, out int gridX, out int gridY)
+        {
+            gridX = 0;
+            gridY = 0;
+
+            if (GridManager.Instance == null) return false;
+
+            if (!GridManager.Instance.WorldToGridPosition(worldPos, out gridX, out gridY))
+                return false;
+
+            if (!GridManager.Instance.AreAllCellsAvailable(gridX, gridY, currentGridSize))
+                return false;
 
             return true;
         }

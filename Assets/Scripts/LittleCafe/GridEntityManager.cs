@@ -119,6 +119,13 @@ namespace LittleCafe
 
                 Debug.Log($"[GridEntityManager] Attached actor to {go.name}: behavior={behaviorType}");
             }
+            else if (allied)
+            {
+                // Allied non-active objects (buildings) get a subtle bounce each interval tick
+                BuildingBounceEffect bounce = go.GetComponent<BuildingBounceEffect>();
+                if (bounce == null)
+                    go.AddComponent<BuildingBounceEffect>();
+            }
         }
 
         /// <summary>

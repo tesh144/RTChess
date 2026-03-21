@@ -142,24 +142,10 @@ namespace ClockworkGrid
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            originalScale = rectTransform.localScale / hoverScale; // Account for hover scale
-            rectTransform.localScale = originalScale;
-
-            // Capture current layout position (not the stale one from Initialize)
-            originalPosition = rectTransform.anchoredPosition;
-
-            Debug.Log($"[UnitIcon] OnBeginDrag — DragDropHandler.Instance={DragDropHandler.Instance != null}, unitPrefab={unitPrefab?.name ?? "NULL"}");
-
-            // Notify DragDropHandler to create ghost preview
-            if (DragDropHandler.Instance != null && DragDropHandler.Instance.StartDrag(this, unitPrefab))
-            {
-                isDragging = true;
-            }
-            else
-            {
-                Debug.LogWarning($"[UnitIcon] Drag NOT started — Instance null? {DragDropHandler.Instance == null}, unitPrefab null? {unitPrefab == null}");
-                isDragging = false;
-            }
+            // DEPRECATED: UnitIcon drag is replaced by GameCardUI.
+            // This class is kept for backwards compatibility but should not be used for new cards.
+            Debug.LogWarning("[UnitIcon] OnBeginDrag — UnitIcon is deprecated, use GameCardUI instead.");
+            isDragging = false;
         }
 
         public void OnDrag(PointerEventData eventData)

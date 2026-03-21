@@ -113,17 +113,21 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Reveal a + shaped pattern: center cell plus cardinal neighbors (N, S, E, W).
+        /// Reveal a + shaped pattern with configurable arm length.
+        /// Reveals the center cell plus cardinal arms (N, S, E, W) extending 'armLength' cells.
         /// </summary>
-        public void RevealCross(int centerX, int centerY)
+        public void RevealCross(int centerX, int centerY, int armLength = 1)
         {
             RevealCell(centerX, centerY);
-            RevealCell(centerX + 1, centerY);
-            RevealCell(centerX - 1, centerY);
-            RevealCell(centerX, centerY + 1);
-            RevealCell(centerX, centerY - 1);
+            for (int i = 1; i <= armLength; i++)
+            {
+                RevealCell(centerX + i, centerY); // East
+                RevealCell(centerX - i, centerY); // West
+                RevealCell(centerX, centerY + i); // North
+                RevealCell(centerX, centerY - i); // South
+            }
 
-            Debug.Log($"Revealed + pattern around ({centerX}, {centerY})");
+            Debug.Log($"Revealed + pattern (arm={armLength}) around ({centerX}, {centerY})");
         }
 
         /// <summary>

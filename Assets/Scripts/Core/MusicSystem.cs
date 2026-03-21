@@ -2,6 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Background music controller with lobby/battle crossfade.
+///
+/// Respects GameStateManager:
+///   TitleScreen → silent (or optional title track)
+///   Playing     → starts lobby track, then SwitchToBattleTrack() when ready
+///
+/// If no GameStateManager exists, falls back to auto-playing lobby track.
+/// </summary>
 public class MusicSystem : MonoBehaviour
 {
     public static MusicSystem instance;
@@ -9,8 +18,12 @@ public class MusicSystem : MonoBehaviour
     public AudioSource source;
 
     [Header("Music Tracks")]
-    public AudioClip lobbyTrack;   // Pared-down track that plays before wave starts
-    public AudioClip battleTrack;  // Main theme that plays once wave begins
+    [Tooltip("Plays during early gameplay (before battle wave).")]
+    public AudioClip lobbyTrack;
+    [Tooltip("Main gameplay track. Crossfades from lobby when battle starts.")]
+    public AudioClip battleTrack;
+    [Tooltip("Optional: ambient track for the title screen. Leave empty to use procedural ambient pad.")]
+    public AudioClip titleTrack;
 
     [Header("Crossfade")]
     public float crossfadeDuration = 1f;
@@ -21,6 +34,7 @@ public class MusicSystem : MonoBehaviour
     public AudioClip mine_destroyed_sfx;
 
     private bool isPlayingBattle = false;
+    private AudioClip generatedTitleTrack = null;
 
     private void Awake()
     {
@@ -32,20 +46,102 @@ public class MusicSystem : MonoBehaviour
             source.playOnAwake = false;
             source.Stop();
         }
+
+        // Pre-generate ambient title track if no dedicated one is assigned
+        if (titleTrack == null)
+        {
+            generatedTitleTrack = TitleMusicGenerator.Generate();
+            Debug.Log("[MusicSystem] Generated procedural ambient title track");
+        }
     }
 
     private void Start()
     {
-        // Auto-start lobby music (Start runs after all Awake calls, so order is safe)
-        StartMusic();
+        // Subscribe to game state changes
+        if (ClockworkGrid.GameStateManager.Instance != null)
+        {
+            ClockworkGrid.GameStateManager.Instance.OnStateChanged += OnGameStateChanged;
+
+            // Handle current state
+            if (ClockworkGrid.GameStateManager.Instance.IsTitleScreen)
+            {
+                PlayTitleMusic();
+            }
+            else if (ClockworkGrid.GameStateManager.Instance.IsPlaying)
+            {
+                StartMusic();
+            }
+
+            Debug.Log("[MusicSystem] Listening to GameStateManager — music respects game state");
+        }
+        else
+        {
+            // No GameStateManager — fall back to old behavior
+            Debug.Log("[MusicSystem] No GameStateManager found — auto-starting lobby track");
+            StartMusic();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (ClockworkGrid.GameStateManager.Instance != null)
+            ClockworkGrid.GameStateManager.Instance.OnStateChanged -= OnGameStateChanged;
+    }
+
+    private void OnGameStateChanged(ClockworkGrid.GameState oldState, ClockworkGrid.GameState newState)
+    {
+        if (newState == ClockworkGrid.GameState.Playing)
+        {
+            Debug.Log("[MusicSystem] Game state → Playing — starting lobby track");
+            StartMusic();
+        }
+        else if (newState == ClockworkGrid.GameState.TitleScreen)
+        {
+            PlayTitleMusic();
+        }
     }
 
     /// <summary>
-    /// Start playing the lobby track.
+    /// Play title screen music (ambient/quiet) or stay silent.
+    /// </summary>
+    public void PlayTitleMusic()
+    {
+        if (source == null) return;
+
+        if (titleTrack != null)
+        {
+            // Dedicated title track assigned in Inspector
+            source.clip = titleTrack;
+            source.loop = true;
+            source.volume = 0.6f;
+            source.Play();
+            Debug.Log("[MusicSystem] Playing assigned title track");
+        }
+        else if (generatedTitleTrack != null)
+        {
+            // No dedicated title track — use procedural ambient pad (distinct from lobby/battle)
+            source.clip = generatedTitleTrack;
+            source.loop = true;
+            source.volume = 0.5f;
+            source.Play();
+            Debug.Log("[MusicSystem] Playing procedural ambient title music");
+        }
+        else
+        {
+            source.Stop();
+            Debug.Log("[MusicSystem] Title screen — no music available");
+        }
+    }
+
+    /// <summary>
+    /// Start playing the lobby track. Called when game transitions to Playing state.
     /// </summary>
     public void StartMusic()
     {
         if (source == null) return;
+
+        // Restore full volume (title screen may have lowered it)
+        source.volume = 1f;
 
         if (lobbyTrack != null)
         {

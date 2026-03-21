@@ -26,8 +26,8 @@ MonoBehaviour:
     visualScale: 0
     prefab: {fileID: 4760405268050885137, guid: 2f41e9bf7cf6d4fccb70a1e8398e442a, type: 3}
     icon: {fileID: 21300000, guid: 10ee5d5e55d1b4296ba901f70537cb11, type: 3}
-    productionInterval: 30
-    productionIntervalBonus: 6
+    productionInterval: 5
+    productionIntervalBonus: 15
     productionOutputType: 1
     producedResourceType: 0
     productionAmount: 1
@@ -47,5 +47,23 @@ MonoBehaviour:
     productionInterval: 0
     productionIntervalBonus: 0
     productionOutputType: 0
+    producedResourceType: 0
+    productionAmount: 1
+  - assetName: Statue
+    type: 0
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 0
+    hp: 10
+    attackPower: 0
+    drawWeight: 0
+    placementCost: 0
+    gridSize: {x: 0, y: 0}
+    visualScale: 0
+    prefab: {fileID: 8342170868413443855, guid: 9f7736c07d2744d04b0f1d11ae3b4e6f, type: 3}
+    icon: {fileID: 21300000, guid: 50d71c0a9f632478ebbd1ff2d6448173, type: 3}
+    productionInterval: 10
+    productionIntervalBonus: 30
+    productionOutputType: 3
     producedResourceType: 0
     productionAmount: 1

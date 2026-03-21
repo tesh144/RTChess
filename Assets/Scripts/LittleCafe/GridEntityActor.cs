@@ -43,6 +43,9 @@ namespace LittleCafe
         [Tooltip("Number of countdown ticks after grace before death (visible red numbers).")]
         [SerializeField] private int countdownThreshold = 4;
 
+        [Header("Debug")]
+        [SerializeField] private bool verboseLogging = false;
+
         // Cached references
         private FurnitureObject furnitureObject;
         private GridEntityHealth health;
@@ -116,7 +119,8 @@ namespace LittleCafe
             ApplyFacingRotation(instant: true);
 
             isInitialized = true;
-            Debug.Log($"[GridEntityActor] {gameObject.name} initialized: behavior={behaviorType}, facing={currentFacing}, range={attackRange}, clockwise={rotateClockwise}");
+            if (verboseLogging)
+                Debug.Log($"[GridEntityActor] {gameObject.name} initialized: behavior={behaviorType}, facing={currentFacing}, range={attackRange}, clockwise={rotateClockwise}");
         }
 
         /// <summary>
@@ -585,7 +589,8 @@ namespace LittleCafe
                 }
             }
 
-            // Nothing found in range — do nothing (idle)
+            // Nothing found in range — play idle bounce and track idle ticks
+            if (animator != null) animator.SetTrigger("idle_bounce");
             IncrementIdleCounter();
         }
 
@@ -635,7 +640,8 @@ namespace LittleCafe
                     int lootCount = resourceNode.AccumulateDamage(damageDealt);
                     if (lootCount > 0)
                     {
-                        Vector3 hitPos = target.transform.position + Vector3.up * 0.5f;
+                        float topY = GridEntityHPBar.GetTopOfObject(target.transform, 0.5f);
+                        Vector3 hitPos = target.transform.position + Vector3.up * topY;
 
                         var lootFX = ClockworkCraft.ResourceLootFX.Instance;
                         if (lootFX != null)
@@ -665,13 +671,21 @@ namespace LittleCafe
                 }
 
                 targetKilled = target.IsDestroyed;
-                Debug.Log($"[GridEntityActor] {gameObject.name} → STRONG interact → {target.gameObject.name} for {damageDealt} damage (target HP: {target.CurrentHP}/{target.MaxHP}){(targetKilled ? " [KILLED]" : "")}");
+                if (verboseLogging)
+                    Debug.Log($"[GridEntityActor] {gameObject.name} → STRONG interact → {target.gameObject.name} for {damageDealt} damage (target HP: {target.CurrentHP}/{target.MaxHP}){(targetKilled ? " [KILLED]" : "")}");
             }
 
-            // If the target was killed, advance into its cell
+            // If the target was killed, advance into its cell — but only for
+            // static environment kills (trees, rocks, etc.), NOT moving units.
+            // Moving targets (units/animals with GridEntityActor) vacate their cell
+            // on their own and the worker should stay put.
             if (targetKilled && furnitureObject != null)
             {
-                yield return StartCoroutine(AdvanceIntoCell(targetX, targetY));
+                bool targetWasMovingUnit = target != null && target.GetComponent<GridEntityActor>() != null;
+                if (!targetWasMovingUnit)
+                {
+                    yield return StartCoroutine(AdvanceIntoCell(targetX, targetY));
+                }
             }
         }
 
@@ -702,11 +716,13 @@ namespace LittleCafe
                 if (occupantHealth != null && occupantHealth.IsDestroyed)
                 {
                     gm.RemoveUnit(targetX, targetY);
-                    Debug.Log($"[GridEntityActor] Force-freed cell ({targetX},{targetY}) — occupant was already dead");
+                    if (verboseLogging)
+                        Debug.Log($"[GridEntityActor] Force-freed cell ({targetX},{targetY}) — occupant was already dead");
                 }
                 else
                 {
-                    Debug.Log($"[GridEntityActor] {gameObject.name} can't advance to ({targetX},{targetY}) — cell still occupied by {occupant.name}");
+                    if (verboseLogging)
+                        Debug.Log($"[GridEntityActor] {gameObject.name} can't advance to ({targetX},{targetY}) — cell still occupied by {occupant.name}");
                     yield break;
                 }
             }
@@ -753,7 +769,8 @@ namespace LittleCafe
             }
             transform.position = endPos;
 
-            Debug.Log($"[GridEntityActor] {gameObject.name} advanced into killed target's cell ({targetX},{targetY})");
+            if (verboseLogging)
+                Debug.Log($"[GridEntityActor] {gameObject.name} advanced into killed target's cell ({targetX},{targetY})");
         }
 
         /// <summary>
@@ -770,7 +787,8 @@ namespace LittleCafe
                 animator.SetTrigger("interact_weak");
             }
 
-            Debug.Log($"[GridEntityActor] {gameObject.name} → WEAK interact → cell ({targetX},{targetY})");
+            if (verboseLogging)
+                Debug.Log($"[GridEntityActor] {gameObject.name} → WEAK interact → cell ({targetX},{targetY})");
         }
 
         // ---------------------------------------------------------------
@@ -782,7 +800,7 @@ namespace LittleCafe
         /// </summary>
         private void ResetIdleCounter()
         {
-            if (idleTickCount > 0)
+            if (idleTickCount > 0 && verboseLogging)
             {
                 Debug.Log($"[GridEntityActor] {gameObject.name} idle counter reset (was {idleTickCount})");
             }
@@ -821,7 +839,8 @@ namespace LittleCafe
                 // So: displayNumber = graceThreshold + countdownThreshold - idleTickCount + 1
                 int displayNumber = totalThreshold - idleTickCount + 1;
 
-                Debug.Log($"[GridEntityActor] {gameObject.name} starving! Countdown: {displayNumber} (idle ticks: {idleTickCount}/{totalThreshold})");
+                if (verboseLogging)
+                    Debug.Log($"[GridEntityActor] {gameObject.name} starving! Countdown: {displayNumber} (idle ticks: {idleTickCount}/{totalThreshold})");
                 SpawnCountdownPopup(displayNumber);
 
                 // SFX: warning tick
@@ -831,7 +850,8 @@ namespace LittleCafe
             else if (idleTickCount > totalThreshold)
             {
                 // Death by starvation
-                Debug.Log($"[GridEntityActor] {gameObject.name} STARVED TO DEATH after {idleTickCount} idle ticks!");
+                if (verboseLogging)
+                    Debug.Log($"[GridEntityActor] {gameObject.name} STARVED TO DEATH after {idleTickCount} idle ticks!");
                 isStarving = true;
 
                 // Kill through normal death pipeline
@@ -843,7 +863,8 @@ namespace LittleCafe
             else
             {
                 // Phase 1: Grace period — silent
-                Debug.Log($"[GridEntityActor] {gameObject.name} idle tick {idleTickCount}/{graceThreshold} (grace period)");
+                if (verboseLogging)
+                    Debug.Log($"[GridEntityActor] {gameObject.name} idle tick {idleTickCount}/{graceThreshold} (grace period)");
             }
         }
 
@@ -854,7 +875,8 @@ namespace LittleCafe
         /// </summary>
         private void SpawnCountdownPopup(int number)
         {
-            float spawnHeight = 2.2f;
+            // Use RefHeight system so the popup appears above the actual model
+            float spawnHeight = GridEntityHPBar.GetTopOfObject(transform, 2.2f) + 0.3f;
             float spreadX = Random.Range(-0.3f, 0.3f);
             Vector3 spawnPos = transform.position + new Vector3(spreadX, spawnHeight, 0f);
 
@@ -869,17 +891,28 @@ namespace LittleCafe
             tmp.fontStyle = FontStyles.Bold;
             tmp.sortingOrder = 100;
             tmp.enableWordWrapping = false;
+            tmp.richText = false; // Prevent underline glyph lookup on bitmap fonts
 
-            // Use shared font loading from GridEntityHPBar
-            TMP_FontAsset font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+            // Try GUI Pro Kit MuseoModerno font first, then fall back to TMP default
+            TMP_FontAsset font = null;
+            GUIProKitAssets guiKit = GUIProKitAssets.Instance;
+            if (guiKit != null && guiKit.criticalNumberFont != null)
+                font = guiKit.criticalNumberFont;
+            if (font == null)
+                font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
             if (font == null && TMP_Settings.defaultFontAsset != null)
                 font = TMP_Settings.defaultFontAsset;
             if (font != null)
                 tmp.font = font;
 
-            // Dark outline for readability
-            tmp.outlineWidth = 0.25f;
-            tmp.outlineColor = new Color32(40, 10, 0, 220);
+            // Dark outline for readability (skip if font doesn't support it, e.g. bitmap atlas)
+            bool hasOutline = font != null && font.material != null &&
+                font.material.HasProperty("_OutlineColor");
+            if (hasOutline)
+            {
+                tmp.outlineWidth = 0.25f;
+                tmp.outlineColor = new Color32(40, 10, 0, 220);
+            }
 
             RectTransform rect = popupObj.GetComponent<RectTransform>();
             rect.sizeDelta = new Vector2(3f, 2f);
@@ -932,6 +965,7 @@ namespace LittleCafe
         private TextMeshPro tmp;
         private Color startColor;
         private Color32 startOutlineColor;
+        private bool hasOutline;
 
         public void Initialize(float distance, float totalDuration)
         {
@@ -942,7 +976,10 @@ namespace LittleCafe
             if (tmp != null)
             {
                 startColor = tmp.color;
-                startOutlineColor = tmp.outlineColor;
+                hasOutline = tmp.font != null && tmp.font.material != null &&
+                    tmp.font.material.HasProperty("_OutlineColor");
+                if (hasOutline)
+                    startOutlineColor = tmp.outlineColor;
             }
         }
 
@@ -977,10 +1014,13 @@ namespace LittleCafe
                 c.a = 1f - fadeT;
                 tmp.color = c;
 
-                byte outlineAlpha = (byte)(startOutlineColor.a * (1f - fadeT));
-                tmp.outlineColor = new Color32(
-                    startOutlineColor.r, startOutlineColor.g,
-                    startOutlineColor.b, outlineAlpha);
+                if (hasOutline)
+                {
+                    byte outlineAlpha = (byte)(startOutlineColor.a * (1f - fadeT));
+                    tmp.outlineColor = new Color32(
+                        startOutlineColor.r, startOutlineColor.g,
+                        startOutlineColor.b, outlineAlpha);
+                }
             }
 
             if (elapsed >= duration)

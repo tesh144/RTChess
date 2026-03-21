@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eda7c2b61be0749eb91a1d89342ad543, type: 3}
+  m_Name: GUIProKitAssets
+  m_EditorClassIdentifier: 
+  sliderFrame: {fileID: 21300000, guid: 53e1c44b89da9404398104177f904849, type: 3}
+  sliderFill: {fileID: 21300000, guid: bf2e2364575b8409da7c1539d51c38ff, type: 3}
+  criticalNumberFont: {fileID: 11400000, guid: d64dc76e624254135b7471c7fd5644cf, type: 2}
+  neutralNumberFont: {fileID: 11400000, guid: bb1579285119e4060978448a0182b9bb, type: 2}
+  uiNumberFont: {fileID: 11400000, guid: dc2cc93475f76427c86a8262bee36b88, type: 2}
+  uiLabelFont: {fileID: 11400000, guid: 5f58c05479cb14f588efcdfcbdab347c, type: 2}
+  circleFrame116: {fileID: 21300000, guid: 11e93247eb19648ec93fbb9710266af4, type: 3}
+  circleFrame154: {fileID: 21300000, guid: 56b5e618e2d964f6ebb76484c1fc8bb1, type: 3}

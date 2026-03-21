@@ -32,6 +32,7 @@ namespace ClockworkCraft
         // Runtime state — driven by CurrencyDatabase
         private Dictionary<ResourceType, int> resources = new Dictionary<ResourceType, int>();
         private Dictionary<ResourceType, bool> unlocked = new Dictionary<ResourceType, bool>();
+        private Dictionary<ResourceType, int> startingAmounts = new Dictionary<ResourceType, int>();
 
         void Awake()
         {
@@ -52,31 +53,37 @@ namespace ClockworkCraft
         {
             resources.Clear();
             unlocked.Clear();
+            startingAmounts.Clear();
 
             if (currencyDatabase != null && currencyDatabase.AllCurrencies.Count > 0)
             {
                 // Initialize from CurrencyDatabase — single source of truth
+                // All resources start at 0; starting amounts are granted later via GrantStartingResources()
                 foreach (var entry in currencyDatabase.AllCurrencies)
                 {
                     if (entry.resourceType == ResourceType.None) continue;
 
-                    resources[entry.resourceType] = entry.startingAmount;
+                    resources[entry.resourceType] = 0;
+                    startingAmounts[entry.resourceType] = entry.startingAmount;
                     unlocked[entry.resourceType] = entry.unlockedAtStart;
                 }
 
-                Debug.Log($"[ResourceManager] Initialized {resources.Count} currencies from CurrencyDatabase");
+                Debug.Log($"[ResourceManager] Initialized {resources.Count} currencies from CurrencyDatabase (all at 0, waiting for game start)");
             }
             else
             {
                 // Fallback defaults when no database assigned
                 Debug.LogWarning("[ResourceManager] No CurrencyDatabase assigned — using hardcoded defaults");
-                resources[ResourceType.Gold]    = 20;
+                resources[ResourceType.Gold]    = 0;
                 resources[ResourceType.Wood]    = 0;
-                resources[ResourceType.Food]    = 5;
+                resources[ResourceType.Food]    = 0;
                 resources[ResourceType.Stone]   = 0;
                 resources[ResourceType.Water]   = 0;
                 resources[ResourceType.Clay]    = 0;
                 resources[ResourceType.Flowers] = 0;
+
+                startingAmounts[ResourceType.Gold] = 20;
+                startingAmounts[ResourceType.Food] = 5;
 
                 unlocked[ResourceType.Gold] = true;
                 unlocked[ResourceType.Wood] = true;
@@ -87,7 +94,7 @@ namespace ClockworkCraft
                 unlocked[ResourceType.Flowers] = false;
             }
 
-            // Broadcast initial values so UI initialises correctly
+            // Broadcast initial values (all 0) so UI initialises correctly
             foreach (var kvp in resources)
             {
                 OnResourceChanged?.Invoke(kvp.Key, kvp.Value);
@@ -100,6 +107,22 @@ namespace ClockworkCraft
                 if (kvp.Value) unlockedNames.Add(kvp.Key.ToString());
             }
             Debug.Log($"[ResourceManager] Unlocked at start: {string.Join(", ", unlockedNames)}");
+        }
+
+        /// <summary>
+        /// Grants the starting amounts defined in the CurrencyDatabase.
+        /// Call this when the game actually starts (after GameStartGate fires).
+        /// </summary>
+        public void GrantStartingResources()
+        {
+            foreach (var kvp in startingAmounts)
+            {
+                if (kvp.Value > 0)
+                {
+                    AddResource(kvp.Key, kvp.Value);
+                }
+            }
+            Debug.Log("[ResourceManager] Starting resources granted");
         }
 
         // ─────────────────────────────────────────────────────────────────

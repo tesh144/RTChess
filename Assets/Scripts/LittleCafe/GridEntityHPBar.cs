@@ -8,37 +8,49 @@ namespace LittleCafe
     ///
     /// 1. PERSISTENT HP LABEL — Shows current HP above the entity.
     ///    Fades in when hit, stays visible while taking damage, then fades out
-    ///    5 seconds after the last interaction. Color shifts white→red as HP drops.
+    ///    5 seconds after the last interaction. Color is tinted by entity type
+    ///    (green for trees/water, warm yellow for gold, neutral gray for others)
+    ///    and shifts toward a dim red as HP drops.
     ///
-    /// 2. QUICK DAMAGE NUMBER — A "-N" popup that appears on each hit,
-    ///    floats upward, and vanishes quickly (~0.8s).
+    /// 2. QUICK DAMAGE NUMBER — A small "-N" popup that appears on each hit,
+    ///    floats upward, and vanishes quickly (~0.8s). Kept subtle so it doesn't
+    ///    dominate the scene.
     ///
     /// Billboarding runs in LateUpdate so it stays in sync with the orbiting camera.
     /// </summary>
     public class GridEntityHPBar : MonoBehaviour
     {
         [Header("Persistent HP Label")]
+        [Tooltip("When false, the white HP number above entities is hidden. Red damage popups still show.")]
+        [SerializeField] private bool showHPLabel = true;
+
+        [Header("Damage Popup Toggle")]
+        [Tooltip("When false, the red -N damage popups are disabled. Loot particles provide enough feedback.")]
+        [SerializeField] private bool showDamagePopup = false;
+
         [SerializeField] private float labelHeight = 2.0f;
-        [SerializeField] private float labelFontSize = 5f;
+        [SerializeField] private float labelFontSize = 3.5f;
         [SerializeField] private float fadeInDuration = 0.3f;
         [SerializeField] private float lingerDuration = 5.0f;
         [SerializeField] private float fadeOutDuration = 1.0f;
 
         [Header("Damage Popup")]
-        [SerializeField] private float damageHeight = 2.2f;
-        [SerializeField] private float damageFloatDistance = 1.2f;
+        [SerializeField] private float damageFloatDistance = 1.0f;
         [SerializeField] private float damageDuration = 0.8f;
-        [SerializeField] private float damageFontSize = 5f;
-        [SerializeField] private float randomSpreadX = 0.4f;
+        [SerializeField] private float damageFontSize = 3.5f;
+        [SerializeField] private float randomSpreadX = 0.3f;
 
         [Header("Colors")]
-        [SerializeField] private Color healthyColor = new Color(1f, 1f, 1f, 1f);
-        [SerializeField] private Color lowHPColor = new Color(1f, 0.3f, 0.2f, 1f);
-        [SerializeField] private Color damageNumberColor = new Color(1f, 0.25f, 0.15f, 1f);
-        [SerializeField] private Color outlineColor = new Color(0.15f, 0.05f, 0f, 1f);
+        [SerializeField] private Color lowHPColor = new Color(0.8f, 0.35f, 0.3f, 1f);
+        [SerializeField] private Color outlineColor = new Color(0.1f, 0.1f, 0.1f, 0.5f);
 
         [Header("Font Override")]
         [SerializeField] private TMP_FontAsset overrideFont;
+
+        // Entity-type tint — resolved once at Initialize
+        // These should be almost white with just a hint of color
+        private Color entityTintColor = new Color(0.92f, 0.92f, 0.90f, 1f); // neutral near-white default
+        private Color entityDamageColor = new Color(0.75f, 0.4f, 0.35f, 1f); // soft red default
 
         // Internal — persistent label
         private GridEntityHealth entityHealth;
@@ -50,9 +62,13 @@ namespace LittleCafe
         private enum LabelState { Hidden, FadingIn, Visible, FadingOut }
         private LabelState labelState = LabelState.Hidden;
 
-        // Static font cache
-        private static TMP_FontAsset cachedFont;
-        private static bool fontSearchDone = false;
+        // Static font caches — separate for neutral (HP labels) and red (damage popups)
+        private static TMP_FontAsset cachedNeutralFont;
+        private static bool neutralFontSearchDone = false;
+        private static TMP_FontAsset cachedRedFont;
+        private static bool redFontSearchDone = false;
+        private bool labelFontSupportsOutline = true;
+        private bool damageFontSupportsOutline = true;
 
         // ---------------------------------------------------------------
         // Setup
@@ -63,19 +79,85 @@ namespace LittleCafe
             entityHealth = health;
             entityHealth.OnDamaged += OnEntityDamaged;
 
+            // Force soft colors — overrides any stale serialized values from older prefabs
+            lowHPColor = new Color(0.85f, 0.55f, 0.5f, 1f);  // Warm muted rose, not screaming red
+            outlineColor = new Color(0.1f, 0.1f, 0.1f, 0.35f); // Very soft outline
+
+            // HP labels only show on allied entities (buildings, workers).
+            // Environment objects (trees, rocks, gold) don't need HP labels —
+            // the loot particles flying out provide enough feedback.
+            if (!health.IsAllied)
+                showHPLabel = false;
+
+            // Resolve entity-type tint from ResourceNode (if present)
+            ResolveEntityTint();
+
             // Calculate label height from actual model bounds so the label
             // always appears above tall objects like trees, not inside them.
             actualLabelHeight = CalculateLabelHeight();
 
-            CreatePersistentLabel();
+            if (showHPLabel)
+                CreatePersistentLabel();
         }
 
         /// <summary>
-        /// Measure the entity's actual rendered height and place the label above it.
-        /// Falls back to the serialized labelHeight if no renderers are found.
+        /// Pick a subtle tint color based on what kind of entity this is.
+        /// Trees/water → soft green, gold → warm yellow, rock → cool gray, etc.
+        /// </summary>
+        private void ResolveEntityTint()
+        {
+            var resourceNode = GetComponent<ClockworkCraft.ResourceNode>();
+            if (resourceNode != null)
+            {
+                // Almost white with just a subtle tint — blends into the scene
+                switch (resourceNode.resourceType)
+                {
+                    case ClockworkCraft.ResourceType.Wood:
+                        entityTintColor = new Color(0.88f, 0.95f, 0.87f, 1f);    // near-white, hint of green
+                        entityDamageColor = new Color(0.65f, 0.5f, 0.35f, 1f);   // brownish
+                        break;
+                    case ClockworkCraft.ResourceType.Water:
+                        entityTintColor = new Color(0.87f, 0.93f, 0.96f, 1f);    // near-white, hint of blue
+                        entityDamageColor = new Color(0.45f, 0.55f, 0.7f, 1f);   // muted blue
+                        break;
+                    case ClockworkCraft.ResourceType.Gold:
+                        entityTintColor = new Color(0.96f, 0.94f, 0.85f, 1f);    // near-white, hint of yellow
+                        entityDamageColor = new Color(0.85f, 0.65f, 0.35f, 1f);  // amber
+                        break;
+                    case ClockworkCraft.ResourceType.Stone:
+                        entityTintColor = new Color(0.90f, 0.90f, 0.92f, 1f);    // near-white, hint of cool
+                        entityDamageColor = new Color(0.6f, 0.5f, 0.48f, 1f);    // warm gray
+                        break;
+                    case ClockworkCraft.ResourceType.WhiteMarble:
+                        entityTintColor = new Color(0.94f, 0.94f, 0.92f, 1f);    // near-white, warm
+                        entityDamageColor = new Color(0.7f, 0.55f, 0.5f, 1f);    // dusty rose
+                        break;
+                    default:
+                        // Neutral near-white
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determine the height above the entity where labels/popups should appear.
+        ///
+        /// Priority:
+        /// 1. RefHeight child transform — manually placed reference point on each prefab
+        /// 2. Renderer bounds calculation — auto-measured from the model
+        /// 3. Serialized labelHeight fallback
         /// </summary>
         private float CalculateLabelHeight()
         {
+            // 1. Try RefHeight — the manually placed reference point
+            Transform refHeight = FindRefHeight(transform);
+            if (refHeight != null)
+            {
+                float height = refHeight.position.y - transform.position.y;
+                return Mathf.Max(height, 0.5f);
+            }
+
+            // 2. Fall back to renderer bounds
             Renderer[] renderers = GetComponentsInChildren<Renderer>();
             if (renderers.Length == 0)
                 return labelHeight;
@@ -87,12 +169,13 @@ namespace LittleCafe
                 combinedBounds.Encapsulate(renderers[i].bounds);
             }
 
-            // Label goes above the top of the model + small padding
+            // Label goes just above the top of the model
             float topY = combinedBounds.max.y - transform.position.y;
-            float calculatedHeight = topY + 0.4f; // 0.4 units above the model top
+            // Small proportional padding: 15% of object height, clamped 0.15–0.4
+            float padding = Mathf.Clamp(topY * 0.15f, 0.15f, 0.4f);
+            float calculatedHeight = topY + padding;
 
-            // Use whichever is higher — the calculated value or the default
-            return Mathf.Max(calculatedHeight, labelHeight);
+            return Mathf.Max(calculatedHeight, 0.5f); // Absolute minimum so it's not underground
         }
 
         private void CreatePersistentLabel()
@@ -108,17 +191,25 @@ namespace LittleCafe
             labelTMP.alignment = TextAlignmentOptions.Center;
             labelTMP.sortingOrder = 150;
             labelTMP.enableWordWrapping = false;
+            labelTMP.richText = false;
 
-            TMP_FontAsset font = GetFont();
+            TMP_FontAsset font = GetNeutralFont();
             if (font != null)
+            {
                 labelTMP.font = font;
+                labelFontSupportsOutline = font.material != null &&
+                    font.material.HasProperty("_OutlineColor");
+            }
 
-            labelTMP.outlineWidth = 0.2f;
-            labelTMP.outlineColor = new Color32(
-                (byte)(outlineColor.r * 255),
-                (byte)(outlineColor.g * 255),
-                (byte)(outlineColor.b * 255),
-                200);
+            if (labelFontSupportsOutline)
+            {
+                labelTMP.outlineWidth = 0.15f;
+                labelTMP.outlineColor = new Color32(
+                    (byte)(outlineColor.r * 255),
+                    (byte)(outlineColor.g * 255),
+                    (byte)(outlineColor.b * 255),
+                    (byte)(outlineColor.a * 255));
+            }
 
             RectTransform rect = labelTMP.GetComponent<RectTransform>();
             rect.sizeDelta = new Vector2(5f, 2f);
@@ -133,8 +224,10 @@ namespace LittleCafe
 
         private void OnEntityDamaged(int damageDealt, int currentHP, int maxHP)
         {
-            UpdateHPLabel(currentHP, maxHP);
-            SpawnDamagePopup(damageDealt, currentHP, maxHP);
+            if (showHPLabel)
+                UpdateHPLabel(currentHP, maxHP);
+            if (showDamagePopup)
+                SpawnDamagePopup(damageDealt, currentHP, maxHP);
         }
 
         // ---------------------------------------------------------------
@@ -151,7 +244,7 @@ namespace LittleCafe
             labelTMP.text = currentHP.ToString();
 
             float hpFraction = maxHP > 0 ? (float)currentHP / maxHP : 0f;
-            Color textColor = Color.Lerp(lowHPColor, healthyColor, hpFraction);
+            Color textColor = Color.Lerp(lowHPColor, entityTintColor, hpFraction);
             labelTMP.color = new Color(textColor.r, textColor.g, textColor.b, currentAlpha);
 
             if (labelState == LabelState.Hidden || labelState == LabelState.FadingOut)
@@ -170,9 +263,12 @@ namespace LittleCafe
             c.a = alpha;
             labelTMP.color = c;
 
-            Color32 oc = labelTMP.outlineColor;
-            oc.a = (byte)(200 * alpha);
-            labelTMP.outlineColor = oc;
+            if (labelFontSupportsOutline)
+            {
+                Color32 oc = labelTMP.outlineColor;
+                oc.a = (byte)(200 * alpha);
+                labelTMP.outlineColor = oc;
+            }
         }
 
         /// <summary>
@@ -230,8 +326,8 @@ namespace LittleCafe
         private void SpawnDamagePopup(int damageDealt, int currentHP, int maxHP)
         {
             float offsetX = Random.Range(-randomSpreadX, randomSpreadX);
-            // Use actual label height + small offset so damage numbers appear above the model
-            float popupY = Mathf.Max(actualLabelHeight + 0.2f, damageHeight);
+            // Spawn damage popup just above the HP label — tight to the object
+            float popupY = actualLabelHeight + 0.15f;
             Vector3 spawnPos = transform.position + new Vector3(offsetX, popupY, 0f);
 
             GameObject popupObj = new GameObject("DamagePopup");
@@ -243,19 +339,27 @@ namespace LittleCafe
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.sortingOrder = 200;
             tmp.enableWordWrapping = false;
+            tmp.richText = false; // Prevent underline glyph lookup on bitmap fonts
 
-            TMP_FontAsset font = GetFont();
+            TMP_FontAsset font = GetRedFont();
             if (font != null)
+            {
                 tmp.font = font;
+                damageFontSupportsOutline = font.material != null &&
+                    font.material.HasProperty("_OutlineColor");
+            }
 
-            tmp.color = damageNumberColor;
+            tmp.color = entityDamageColor;
 
-            tmp.outlineWidth = 0.25f;
-            tmp.outlineColor = new Color32(
-                (byte)(outlineColor.r * 255),
-                (byte)(outlineColor.g * 255),
-                (byte)(outlineColor.b * 255),
-                220);
+            if (damageFontSupportsOutline)
+            {
+                tmp.outlineWidth = 0.12f;
+                tmp.outlineColor = new Color32(
+                    (byte)(outlineColor.r * 255),
+                    (byte)(outlineColor.g * 255),
+                    (byte)(outlineColor.b * 255),
+                    (byte)(outlineColor.a * 180));
+            }
 
             RectTransform rect = popupObj.GetComponent<RectTransform>();
             rect.sizeDelta = new Vector2(4f, 2f);
@@ -271,25 +375,122 @@ namespace LittleCafe
         // Font Resolution
         // ---------------------------------------------------------------
 
-        private TMP_FontAsset GetFont()
+        /// <summary>
+        /// Proper SDF font for HP labels — fully tintable via tmp.color.
+        /// Uses Quicksand Bold (GUI Pro Kit's number font), NOT the MuseoModerno
+        /// transparent variant which is an outline-only overlay font.
+        /// </summary>
+        private TMP_FontAsset GetNeutralFont()
         {
             if (overrideFont != null) return overrideFont;
-            if (fontSearchDone) return cachedFont;
+            if (neutralFontSearchDone) return cachedNeutralFont;
 
-            fontSearchDone = true;
+            neutralFontSearchDone = true;
 
-            // TMP's built-in default font (in TextMesh Pro/Resources/)
-            cachedFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
-            if (cachedFont != null) return cachedFont;
-
-            // TMP_Settings fallback
-            if (TMP_Settings.defaultFontAsset != null)
+            GUIProKitAssets guiKit = GUIProKitAssets.Instance;
+            // Use uiNumberFont (Quicksand Bold) — proper SDF, fully tintable
+            if (guiKit != null && guiKit.uiNumberFont != null)
             {
-                cachedFont = TMP_Settings.defaultFontAsset;
-                return cachedFont;
+                cachedNeutralFont = guiKit.uiNumberFont;
+                return cachedNeutralFont;
             }
 
+            // Fall back to TMP default
+            cachedNeutralFont = GetFallbackFont();
+            return cachedNeutralFont;
+        }
+
+        /// <summary>
+        /// Red pre-baked font for damage popups — bold and eye-catching.
+        /// Falls back to TMP default.
+        /// </summary>
+        private TMP_FontAsset GetRedFont()
+        {
+            if (overrideFont != null) return overrideFont;
+            if (redFontSearchDone) return cachedRedFont;
+
+            redFontSearchDone = true;
+
+            GUIProKitAssets guiKit = GUIProKitAssets.Instance;
+            if (guiKit != null && guiKit.criticalNumberFont != null)
+            {
+                cachedRedFont = guiKit.criticalNumberFont;
+                return cachedRedFont;
+            }
+
+            // Fall back to TMP default
+            cachedRedFont = GetFallbackFont();
+            return cachedRedFont;
+        }
+
+        private static TMP_FontAsset GetFallbackFont()
+        {
+            TMP_FontAsset font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+            if (font != null) return font;
+            return TMP_Settings.defaultFontAsset;
+        }
+
+        // ---------------------------------------------------------------
+        // RefHeight Utilities
+        // ---------------------------------------------------------------
+
+        /// <summary>
+        /// Searches the hierarchy for a child named "RefHeight".
+        /// Checks immediate children first, then does a recursive search.
+        /// </summary>
+        private static Transform FindRefHeight(Transform root)
+        {
+            // Fast path: check immediate children
+            for (int i = 0; i < root.childCount; i++)
+            {
+                if (root.GetChild(i).name == "RefHeight")
+                    return root.GetChild(i);
+            }
+
+            // Recursive: check deeper children (e.g. inside AnimatorHolder/Recenter)
+            return FindChildRecursive(root, "RefHeight");
+        }
+
+        private static Transform FindChildRecursive(Transform parent, string name)
+        {
+            foreach (Transform child in parent)
+            {
+                if (child.name == name) return child;
+                var found = FindChildRecursive(child, name);
+                if (found != null) return found;
+            }
             return null;
+        }
+
+        /// <summary>
+        /// Public static utility: get the world-space Y position of the top of an object.
+        /// Uses RefHeight if available, falls back to renderer bounds, then a default.
+        ///
+        /// Call from anywhere:
+        ///   float topY = GridEntityHPBar.GetTopOfObject(someTransform);
+        ///   Vector3 topPos = someTransform.position + Vector3.up * topY;
+        /// </summary>
+        public static float GetTopOfObject(Transform objectRoot, float fallback = 1.5f)
+        {
+            // 1. RefHeight
+            Transform refHeight = FindRefHeight(objectRoot);
+            if (refHeight != null)
+                return Mathf.Max(refHeight.position.y - objectRoot.position.y, 0.3f);
+
+            // 2. Renderer bounds
+            Renderer[] renderers = objectRoot.GetComponentsInChildren<Renderer>();
+            if (renderers.Length > 0)
+            {
+                Bounds combinedBounds = renderers[0].bounds;
+                for (int i = 1; i < renderers.Length; i++)
+                    combinedBounds.Encapsulate(renderers[i].bounds);
+
+                float topY = combinedBounds.max.y - objectRoot.position.y;
+                return Mathf.Max(topY, 0.3f);
+            }
+
+            // 3. Fallback
+            return fallback;
         }
 
         // ---------------------------------------------------------------
@@ -320,6 +521,7 @@ namespace LittleCafe
         private TextMeshPro tmp;
         private Color startColor;
         private bool isCritical;
+        private bool hasOutline;
 
         public void Initialize(float distance, float totalDuration, bool critical)
         {
@@ -329,7 +531,11 @@ namespace LittleCafe
             startPos = transform.position;
             tmp = GetComponent<TextMeshPro>();
             if (tmp != null)
+            {
                 startColor = tmp.color;
+                hasOutline = tmp.font != null && tmp.font.material != null &&
+                    tmp.font.material.HasProperty("_OutlineColor");
+            }
         }
 
         private void Update()
@@ -346,17 +552,17 @@ namespace LittleCafe
             if (t < 0.12f)
             {
                 float popT = t / 0.12f;
-                float overshoot = isCritical ? 1.8f : 1.5f;
+                float overshoot = isCritical ? 1.3f : 1.15f;
                 scale = Mathf.Lerp(0f, overshoot, popT);
             }
             else if (t < 0.25f)
             {
                 float settleT = (t - 0.12f) / 0.13f;
-                float overshoot = isCritical ? 1.8f : 1.5f;
+                float overshoot = isCritical ? 1.3f : 1.15f;
                 scale = Mathf.Lerp(overshoot, 1f, settleT);
             }
 
-            if (isCritical) scale *= 1.3f;
+            if (isCritical) scale *= 1.1f;
             transform.localScale = Vector3.one * scale;
 
             // Fade out in the last 40%
@@ -367,12 +573,15 @@ namespace LittleCafe
                 c.a = 1f - fadeT;
                 tmp.color = c;
 
-                byte outlineAlpha = (byte)(220 * (1f - fadeT));
-                tmp.outlineColor = new Color32(
-                    tmp.outlineColor.r,
-                    tmp.outlineColor.g,
-                    tmp.outlineColor.b,
-                    outlineAlpha);
+                if (hasOutline)
+                {
+                    byte outlineAlpha = (byte)(220 * (1f - fadeT));
+                    tmp.outlineColor = new Color32(
+                        tmp.outlineColor.r,
+                        tmp.outlineColor.g,
+                        tmp.outlineColor.b,
+                        outlineAlpha);
+                }
             }
 
             if (elapsed >= duration)

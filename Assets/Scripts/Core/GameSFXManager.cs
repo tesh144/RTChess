@@ -79,7 +79,10 @@ namespace ClockworkGrid
         private const float FOG_REVEAL_DEBOUNCE = 0.15f; // Only play once per 150ms
 
         private float lastCoinCollectTime = -1f;
-        private const float COIN_COLLECT_DEBOUNCE = 0.08f;
+        private const float COIN_COLLECT_DEBOUNCE = 0.06f;
+        private int coinCollectBurstCount = 0;
+        private const int MAX_COIN_COLLECT_BURST = 5;
+        private const float COIN_BURST_RESET_TIME = 0.4f;
 
         // ─────────────────────────────────────────────────────────────────
         // Lifecycle
@@ -104,6 +107,9 @@ namespace ClockworkGrid
             uiSource.playOnAwake = false;
             uiSource.spatialBlend = 0f;
             uiSource.ignoreListenerPause = true;
+
+            // Generate procedural fallback clips for critical sounds
+            GenerateProceduralFallbacks();
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -113,7 +119,8 @@ namespace ClockworkGrid
         /// <summary>Play when an object is successfully placed on the grid.</summary>
         public void PlayPlacement()
         {
-            PlaySFX(placementDrop, randomPitch: true);
+            AudioClip clip = placementDrop != null ? placementDrop : proceduralPlacementClip;
+            PlaySFX(clip, randomPitch: true);
         }
 
         /// <summary>Play when placement validation fails (invalid cell, can't afford).</summary>
@@ -212,12 +219,35 @@ namespace ClockworkGrid
             PlaySFX(lootBurst);
         }
 
-        /// <summary>Play when a single loot particle arrives at the resource bar (debounced).</summary>
+        /// <summary>
+        /// Play when a single loot particle arrives at the resource bar.
+        /// Uses ascending pitch within a burst to convey quantity, capped at MAX_COIN_COLLECT_BURST
+        /// so large batches don't get ridiculous.
+        /// </summary>
         public void PlayCoinCollect()
         {
-            if (Time.unscaledTime - lastCoinCollectTime < COIN_COLLECT_DEBOUNCE) return;
+            float timeSinceLast = Time.unscaledTime - lastCoinCollectTime;
+
+            // Reset burst after a quiet period
+            if (timeSinceLast > COIN_BURST_RESET_TIME)
+                coinCollectBurstCount = 0;
+
+            // Cap how many sounds play per batch
+            if (coinCollectBurstCount >= MAX_COIN_COLLECT_BURST) return;
+
+            // Still debounce rapid-fire calls
+            if (timeSinceLast < COIN_COLLECT_DEBOUNCE) return;
+
             lastCoinCollectTime = Time.unscaledTime;
-            PlaySFX(coinCollect, randomPitch: true, pitchRange: 0.1f);
+            coinCollectBurstCount++;
+
+            // Ascending pitch: each successive coin in a burst goes slightly higher
+            float basePitch = 0.9f + (coinCollectBurstCount * 0.06f);
+            float pitch = basePitch + Random.Range(-0.02f, 0.02f);
+
+            if (coinCollect == null || sfxSource == null) return;
+            sfxSource.pitch = pitch;
+            sfxSource.PlayOneShot(coinCollect, masterVolume);
         }
 
         /// <summary>Play when a loot particle reaches its final destination.</summary>
@@ -303,6 +333,59 @@ namespace ClockworkGrid
             float vol = (volume > 0f) ? volume : uiVolume;
             uiSource.pitch = 1f;
             uiSource.PlayOneShot(clip, vol);
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // Procedural Fallback Clips
+        // ─────────────────────────────────────────────────────────────────
+
+        private AudioClip proceduralPlacementClip;
+
+        /// <summary>
+        /// Generate simple procedural audio clips for critical sounds that
+        /// MUST play even when Inspector AudioClip fields are unassigned.
+        /// </summary>
+        private void GenerateProceduralFallbacks()
+        {
+            proceduralPlacementClip = GeneratePlacementSound();
+        }
+
+        /// <summary>
+        /// Generates a satisfying "thump + sparkle" placement sound.
+        /// Short percussive hit (60ms) with a bright high-frequency tail (100ms).
+        /// </summary>
+        private static AudioClip GeneratePlacementSound()
+        {
+            int sampleRate = 44100;
+            float duration = 0.18f;
+            int sampleCount = Mathf.RoundToInt(sampleRate * duration);
+            float[] samples = new float[sampleCount];
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleRate;
+                float tNorm = t / duration;
+
+                // Layer 1: Low thump (80 Hz sine, fast decay)
+                float thumpEnv = Mathf.Exp(-t * 35f);
+                float thump = Mathf.Sin(2f * Mathf.PI * 80f * t) * thumpEnv * 0.5f;
+
+                // Layer 2: Mid knock (200 Hz sine, medium decay)
+                float knockEnv = Mathf.Exp(-t * 50f);
+                float knock = Mathf.Sin(2f * Mathf.PI * 200f * t) * knockEnv * 0.3f;
+
+                // Layer 3: High sparkle (800 Hz + 1200 Hz, delayed start, slow decay)
+                float sparkleDelay = Mathf.Max(0f, t - 0.03f);
+                float sparkleEnv = Mathf.Exp(-sparkleDelay * 20f) * Mathf.Clamp01(sparkleDelay * 50f);
+                float sparkle = (Mathf.Sin(2f * Mathf.PI * 800f * t) +
+                                 Mathf.Sin(2f * Mathf.PI * 1200f * t) * 0.5f) * sparkleEnv * 0.15f;
+
+                samples[i] = Mathf.Clamp(thump + knock + sparkle, -1f, 1f);
+            }
+
+            AudioClip clip = AudioClip.Create("ProceduralPlacement", sampleCount, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
         }
     }
 }
