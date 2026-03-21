@@ -21,8 +21,8 @@ public class GameSFXAutoAssign : Editor
         int assigned = 0;
         SerializedObject so = new SerializedObject(sfx);
 
-        // Placement — coin ching (you're spending currency)
-        assigned += TryAssign(so, "placementDrop", "ThirdParty/InterfaceSounds/V1.0/Items & Collectables/Coins (5)");
+        // Placement — purchase thud (distinct from coin collect jingle)
+        assigned += TryAssign(so, "placementDrop", "ThirdParty/InterfaceSounds/V1.0/Interface/Item Purchase (1)");
         assigned += TryAssign(so, "placementError", "ThirdParty/InterfaceSounds/V1.0/Interface/Buzz Error (1)");
         assigned += TryAssign(so, "objectRemove", "ThirdParty/InterfaceSounds/V1.0/Interface/Pops/Pop (6)");
 

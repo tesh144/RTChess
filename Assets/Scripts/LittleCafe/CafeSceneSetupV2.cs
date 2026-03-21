@@ -36,6 +36,10 @@ namespace LittleCafe
         {
             deferToMapGen = FindObjectOfType<ClockworkCraft.MapGeneratorV2>(true) != null;
 
+            // Ensure GameStateManager exists (execution order -110 should have created it,
+            // but if it's not in the scene we create one as fallback)
+            EnsureGameStateManager();
+
             // Shared infrastructure — always needed regardless of mode
             SetupGrid();
             SetupCamera();
@@ -53,6 +57,14 @@ namespace LittleCafe
                 SetupRaritySystem();
             }
 
+            // Disable GUI Pro Kit's demo PanelControl — we manage panels ourselves
+            var panelControl = FindObjectOfType<LayerLab.PanelControl>(true);
+            if (panelControl != null)
+            {
+                panelControl.enabled = false;
+                panelControl.gameObject.SetActive(false);
+            }
+
             Debug.Log($"[CafeSceneSetupV2] Awake complete — deferToMapGen={deferToMapGen}");
         }
 
@@ -64,20 +76,50 @@ namespace LittleCafe
                 InitializeDockBar();
             }
 
-            // Hide UI and pause timer until player starts
-            if (DockBarManager.Instance != null) DockBarManager.Instance.HideUI();
+            // Hide Lobby panel entirely until game starts (Title screen is the only visible panel)
+            if (UIThemeManager.Instance != null)
+                UIThemeManager.Instance.HidePanel("Lobby");
+
             if (IntervalTimer.Instance != null) IntervalTimer.Instance.Pause();
 
-            // Wait for first click / keypress — always create GameStartGate
-            GameObject gateObj = new GameObject("GameStartGate");
-            GameStartGate gate = gateObj.AddComponent<GameStartGate>();
-            gate.OnGameStart += OnGameStarted;
+            // TitleScreenController must already exist in the scene with all serialized references
+            // wired via: Tools > ClockworkCraft > Setup Title Screen
+            // No runtime creation, no runtime AddListener — everything is in the Inspector.
+            var titleScreen = FindObjectOfType<TitleScreenController>(true);
 
-            Debug.Log("[CafeSceneSetupV2] Waiting for player to start...");
+            if (titleScreen != null)
+            {
+                titleScreen.Initialize();
+                Debug.Log("[CafeSceneSetupV2] TitleScreenController found — waiting for Play button...");
+            }
+            else
+            {
+                Debug.LogWarning("[CafeSceneSetupV2] No TitleScreenController in scene! " +
+                    "Run 'Tools > ClockworkCraft > Setup Title Screen' to create one.");
+            }
         }
 
-        private void OnGameStarted()
+        /// <summary>
+        /// Called when the game should start (title screen exit, or click-to-start).
+        /// Wire this to TitleScreenController's onGameStart UnityEvent in the Inspector.
+        /// </summary>
+        public void OnGameStarted()
         {
+            // Transition game state — this notifies MusicSystem and all other listeners
+            if (GameStateManager.Instance != null)
+            {
+                GameStateManager.Instance.TransitionTo(GameState.Playing);
+            }
+
+            // Grant starting resources NOW (not during init) so the
+            // currency bar doesn't show gold before the player clicks to start
+            if (ClockworkCraft.ResourceManager.Instance != null)
+                ClockworkCraft.ResourceManager.Instance.GrantStartingResources();
+
+            // Show Lobby panel (was hidden in Start)
+            if (UIThemeManager.Instance != null)
+                UIThemeManager.Instance.ShowPanel("Lobby");
+
             if (deferToMapGen)
             {
                 // MapGeneratorV2 owns grid init, fog, and deck — just show UI and resume clock
@@ -276,7 +318,7 @@ namespace LittleCafe
                     UnitStats startingStats = RaritySystem.Instance.GetUnitStats(UnitType.Soldier); // TODO: Fix this mapping
                     if (startingStats != null)
                     {
-                        dockManager.AddUnitToDock(startingStats);
+                        dockManager.AddCard(startingStats);
                         Debug.Log($"[CafeSceneSetupV2] Added starting furniture card to dock");
                     }
                 }
@@ -284,6 +326,19 @@ namespace LittleCafe
         }
 
         // --- Infrastructure ---
+
+        private void EnsureGameStateManager()
+        {
+            if (GameStateManager.Instance == null)
+            {
+                var existing = FindObjectOfType<GameStateManager>(true);
+                if (existing == null)
+                {
+                    new GameObject("GameStateManager").AddComponent<GameStateManager>();
+                    Debug.Log("[CafeSceneSetupV2] Created GameStateManager (initial state: TitleScreen)");
+                }
+            }
+        }
 
         private void EnsureIntervalTimer()
         {

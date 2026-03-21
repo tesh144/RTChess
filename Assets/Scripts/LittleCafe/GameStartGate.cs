@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using ClockworkGrid;
 
 namespace LittleCafe
 {
@@ -39,8 +40,8 @@ namespace LittleCafe
 
             // Center on screen
             RectTransform rt = promptGO.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0.4f);
-            rt.anchorMax = new Vector2(0.5f, 0.4f);
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2(600f, 60f);
             rt.anchoredPosition = Vector2.zero;
@@ -68,6 +69,10 @@ namespace LittleCafe
 
         private void TriggerStart()
         {
+            // Play a satisfying click sound when the player starts the game
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayButtonClick();
+
             OnGameStart?.Invoke();
 
             if (promptGO != null)

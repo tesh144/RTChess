@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using ClockworkGrid;
@@ -63,6 +64,10 @@ namespace LittleCafe
         [Tooltip("WorkerDatabase — a random worker is chosen each production cycle.")]
         public WorkerDatabase workerDatabase;
 
+        // ─── Debug ──────────────────────────────────────────────────────
+        [Header("Debug")]
+        [SerializeField] private bool verboseLogging = false;
+
         // ─────────────────────────────────────────────────────────────────
         // Internal State
         // ─────────────────────────────────────────────────────────────────
@@ -81,10 +86,18 @@ namespace LittleCafe
             public int collectCount;
             public bool isReady;
             public WorkerData pendingWorker;
+            public UnitStats pendingCard; // For RandomBuilding output
+
+            // Delay: timer starts hidden, reveals after first tick
+            public bool timerRevealed;
 
             // World-space timer canvas
             public GameObject timerCanvasObj;
             public Image timerFillImage;
+            public TextMeshProUGUI timerCountText;
+
+            // Cached height from RefHeight (for popup/timer positioning)
+            public float objectTopHeight = -1f;
 
             // World-space popup canvas
             public GameObject popupCanvasObj;
@@ -160,10 +173,20 @@ namespace LittleCafe
                 pendingWorker = null
             };
 
+            // Cache RefHeight for positioning timer/popup above the object
+            entry.objectTopHeight = GridEntityHPBar.GetTopOfObject(buildingObj.transform, 1.5f);
+            entry.timerRevealed = false;
+
             CreateTimerCanvas(entry);
+
+            // Start timer hidden — will reveal after 1 tick so the player can appreciate the object
+            if (entry.timerCanvasObj != null)
+                entry.timerCanvasObj.SetActive(false);
+
             entries.Add(entry);
 
-            Debug.Log($"[BuildingProduction] Registered '{buildingObj.name}' — produces {stats.productionOutputType} every {stats.productionInterval}s (bonus +{stats.productionIntervalBonus}s per collect)");
+            if (verboseLogging)
+                Debug.Log($"[BuildingProduction] Registered '{buildingObj.name}' — produces {stats.productionOutputType} every {stats.productionInterval}s (bonus +{stats.productionIntervalBonus}s per collect, topHeight={entry.objectTopHeight:F1})");
         }
 
         public void UnregisterBuilding(GameObject buildingObj)
@@ -174,7 +197,8 @@ namespace LittleCafe
                 {
                     DestroyEntryVisuals(entries[i]);
                     entries.RemoveAt(i);
-                    Debug.Log($"[BuildingProduction] Unregistered '{buildingObj.name}'");
+                    if (verboseLogging)
+                        Debug.Log($"[BuildingProduction] Unregistered '{buildingObj.name}'");
                     return;
                 }
             }
@@ -189,6 +213,22 @@ namespace LittleCafe
         // ─────────────────────────────────────────────────────────────────
         // World-Space Timer Canvas
         // ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Get the world-space height for timer/popup above a building.
+        /// Uses cached RefHeight, plus an offset.
+        /// </summary>
+        private float GetTimerY(ProductionEntry entry)
+        {
+            float baseHeight = entry.objectTopHeight > 0f ? entry.objectTopHeight : timerHeight;
+            return baseHeight + 0.3f; // Small gap above the object top
+        }
+
+        private float GetPopupY(ProductionEntry entry)
+        {
+            float baseHeight = entry.objectTopHeight > 0f ? entry.objectTopHeight : popupHeight;
+            return baseHeight + 0.5f; // Slightly higher than timer
+        }
 
         private void CreateTimerCanvas(ProductionEntry entry)
         {
@@ -207,9 +247,12 @@ namespace LittleCafe
                 canvasObj = CreateDefaultTimerCanvas(entry);
             }
 
-            // Position above building
-            canvasObj.transform.position = entry.buildingObj.transform.position + Vector3.up * timerHeight;
+            // Position above building using RefHeight
+            canvasObj.transform.position = entry.buildingObj.transform.position + Vector3.up * GetTimerY(entry);
             entry.timerCanvasObj = canvasObj;
+
+            // Update count text to show initial collect count
+            UpdateCountText(entry);
         }
 
         private GameObject CreateDefaultTimerCanvas(ProductionEntry entry)
@@ -266,7 +309,51 @@ namespace LittleCafe
 
             entry.timerFillImage = fillImage;
 
+            // Collection count text in the center of the donut
+            GameObject countObj = new GameObject("CountText");
+            RectTransform countRect = countObj.AddComponent<RectTransform>();
+            countRect.SetParent(canvasRect, false);
+            // Center within the donut hole (inner 55% of radius)
+            countRect.anchorMin = new Vector2(0.25f, 0.25f);
+            countRect.anchorMax = new Vector2(0.75f, 0.75f);
+            countRect.sizeDelta = Vector2.zero;
+
+            TextMeshProUGUI countText = countObj.AddComponent<TextMeshProUGUI>();
+            countText.text = "0";
+            countText.fontSize = 42;
+            countText.color = Color.white;
+            countText.alignment = TextAlignmentOptions.Center;
+            countText.fontStyle = FontStyles.Bold;
+            countText.enableAutoSizing = false;
+            countText.raycastTarget = false;
+            // Outline for readability against the ring
+            countText.outlineWidth = 0.2f;
+            countText.outlineColor = new Color(0f, 0f, 0f, 0.6f);
+
+            entry.timerCountText = countText;
+
             return root;
+        }
+
+        /// <summary>
+        /// Update the collection count text shown in the center of the donut timer.
+        /// Color shifts white → yellow → orange → red as collect count rises,
+        /// giving a clear visual signal that the timer is getting slower.
+        /// </summary>
+        private void UpdateCountText(ProductionEntry entry)
+        {
+            if (entry.timerCountText == null) return;
+
+            entry.timerCountText.text = entry.collectCount.ToString();
+
+            // Color escalation: white → yellow → orange → red over 6 collections
+            float t = Mathf.Clamp01(entry.collectCount / 6f);
+            Color countColor;
+            if (t < 0.5f)
+                countColor = Color.Lerp(Color.white, new Color(1f, 0.85f, 0.2f), t * 2f); // white → yellow
+            else
+                countColor = Color.Lerp(new Color(1f, 0.85f, 0.2f), new Color(0.9f, 0.4f, 0.25f), (t - 0.5f) * 2f); // yellow → orange-red
+            entry.timerCountText.color = countColor;
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -279,13 +366,14 @@ namespace LittleCafe
             {
                 if (entry.buildingObj == null || entry.timerCanvasObj == null) continue;
 
-                // Hide timer when ready (popup showing instead)
-                entry.timerCanvasObj.SetActive(!entry.isReady);
-                if (entry.isReady) continue;
+                // Hide timer when ready (popup showing instead), or if not yet revealed
+                bool shouldShow = entry.timerRevealed && !entry.isReady;
+                entry.timerCanvasObj.SetActive(shouldShow);
+                if (!shouldShow) continue;
 
-                // Keep timer above building (in case building moves)
+                // Keep timer above building (in case building moves) — uses RefHeight
                 entry.timerCanvasObj.transform.position =
-                    entry.buildingObj.transform.position + Vector3.up * timerHeight;
+                    entry.buildingObj.transform.position + Vector3.up * GetTimerY(entry);
 
                 // Update fill
                 float progress = Mathf.Clamp01(entry.elapsedTime / entry.EffectiveInterval);
@@ -343,6 +431,14 @@ namespace LittleCafe
 
                 if (entry.isReady) continue;
 
+                // Reveal timer after first tick (delayed so player can appreciate the object)
+                if (!entry.timerRevealed && entry.timerCanvasObj != null)
+                {
+                    entry.timerRevealed = true;
+                    entry.timerCanvasObj.SetActive(true);
+                    StartCoroutine(TimerAppearAnimation(entry.timerCanvasObj));
+                }
+
                 entry.elapsedTime += tickDuration;
 
                 if (entry.elapsedTime >= entry.EffectiveInterval)
@@ -352,6 +448,8 @@ namespace LittleCafe
 
                     if (entry.outputType == ProductionOutputType.Worker)
                         entry.pendingWorker = PickRandomWorker();
+                    else if (entry.outputType == ProductionOutputType.RandomBuilding)
+                        entry.pendingCard = DrawRandomBuilding();
 
                     // SFX: production timer complete
                     if (GameSFXManager.Instance != null)
@@ -398,6 +496,8 @@ namespace LittleCafe
                 rewardIcon = entry.pendingWorker.icon;
             else if (entry.outputType == ProductionOutputType.Currency)
                 rewardIcon = ResourceDisplayUI.GetIconForResource(entry.producedResourceType);
+            else if (entry.outputType == ProductionOutputType.RandomBuilding && entry.pendingCard != null)
+                rewardIcon = entry.pendingCard.iconSprite;
 
             GameObject canvasObj;
 
@@ -412,7 +512,7 @@ namespace LittleCafe
                 canvasObj = CreateDefaultPopupCanvas(entry);
             }
 
-            canvasObj.transform.position = entry.buildingObj.transform.position + Vector3.up * popupHeight;
+            canvasObj.transform.position = entry.buildingObj.transform.position + Vector3.up * GetPopupY(entry);
 
             // Set the icon sprite
             if (entry.popupIconImage != null && rewardIcon != null)
@@ -443,11 +543,18 @@ namespace LittleCafe
 
             StartCoroutine(PopupSpawnAnimation(canvasObj));
 
-            string workerName = entry.pendingWorker != null ? entry.pendingWorker.GetCleanName() : "";
-            float nextInterval = entry.baseInterval + (entry.intervalBonus * (entry.collectCount + 1));
-            Debug.Log($"[BuildingProduction] Pop-up ready on '{entry.buildingObj.name}'" +
-                      (entry.outputType == ProductionOutputType.Worker ? $" (worker: {workerName})" : "") +
-                      $" — next interval will be {nextInterval}s");
+            if (verboseLogging)
+            {
+                string rewardName = "";
+                if (entry.outputType == ProductionOutputType.Worker && entry.pendingWorker != null)
+                    rewardName = $" (worker: {entry.pendingWorker.GetCleanName()})";
+                else if (entry.outputType == ProductionOutputType.RandomBuilding && entry.pendingCard != null)
+                    rewardName = $" (card: {entry.pendingCard.unitName})";
+
+                float nextInterval = entry.baseInterval + (entry.intervalBonus * (entry.collectCount + 1));
+                Debug.Log($"[BuildingProduction] Pop-up ready on '{entry.buildingObj.name}'{rewardName}" +
+                          $" — next interval will be {nextInterval}s");
+            }
         }
 
         private GameObject CreateDefaultPopupCanvas(ProductionEntry entry)
@@ -523,6 +630,39 @@ namespace LittleCafe
             return root;
         }
 
+        /// <summary>
+        /// Animate the timer bubble into existence: scale 0 → overshoot → settle.
+        /// Called on first tick after building placement.
+        /// </summary>
+        private IEnumerator TimerAppearAnimation(GameObject timerObj)
+        {
+            if (timerObj == null) yield break;
+
+            float baseScale = timerObj.transform.localScale.x;
+            float duration = 0.3f;
+            float elapsed = 0f;
+
+            timerObj.transform.localScale = Vector3.zero;
+
+            while (elapsed < duration && timerObj != null)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+
+                float scale;
+                if (t < 0.6f)
+                    scale = Mathf.Lerp(0f, baseScale * 1.2f, t / 0.6f);
+                else
+                    scale = Mathf.Lerp(baseScale * 1.2f, baseScale, (t - 0.6f) / 0.4f);
+
+                timerObj.transform.localScale = Vector3.one * scale;
+                yield return null;
+            }
+
+            if (timerObj != null)
+                timerObj.transform.localScale = Vector3.one * baseScale;
+        }
+
         private IEnumerator PopupSpawnAnimation(GameObject popup)
         {
             if (popup == null) yield break;
@@ -565,7 +705,7 @@ namespace LittleCafe
             {
                 if (!entry.isReady || entry.popupCanvasObj == null || entry.buildingObj == null) continue;
 
-                Vector3 basePos = entry.buildingObj.transform.position + Vector3.up * popupHeight;
+                Vector3 basePos = entry.buildingObj.transform.position + Vector3.up * GetPopupY(entry);
                 entry.popupCanvasObj.transform.position = basePos + Vector3.up * bob;
             }
         }
@@ -644,7 +784,9 @@ namespace LittleCafe
         {
             if (entry.buildingObj == null) return;
 
-            Vector3 buildingWorldPos = entry.buildingObj.transform.position;
+            // Use RefHeight for loot/worker spawn position (top of object, not base)
+            float topY = entry.objectTopHeight > 0f ? entry.objectTopHeight : 1.5f;
+            Vector3 buildingWorldPos = entry.buildingObj.transform.position + Vector3.up * topY;
             bool collected = false;
 
             switch (entry.outputType)
@@ -657,13 +799,19 @@ namespace LittleCafe
                     CollectCurrencyReward(entry, buildingWorldPos);
                     collected = true;
                     break;
+
+                case ProductionOutputType.RandomBuilding:
+                    collected = CollectRandomBuildingReward(entry, buildingWorldPos);
+                    break;
             }
 
             if (!collected)
             {
-                // SFX: hand full or can't collect
+                // SFX + visual alert: hand full
                 if (GameSFXManager.Instance != null)
                     GameSFXManager.Instance.PlayHandFull();
+                if (DockBarManager.Instance != null)
+                    DockBarManager.Instance.ShowHandFullPopup(Camera.main.WorldToScreenPoint(buildingWorldPos));
                 return;
             }
 
@@ -681,16 +829,31 @@ namespace LittleCafe
             entry.isReady = false;
             entry.elapsedTime = 0f;
             entry.pendingWorker = null;
+            entry.pendingCard = null;
+            entry.timerRevealed = false; // Re-delay the timer by 1 tick
+
+            // Hide timer until next tick reveals it
+            if (entry.timerCanvasObj != null)
+                entry.timerCanvasObj.SetActive(false);
 
             // Reset the timer fill
             if (entry.timerFillImage != null)
                 entry.timerFillImage.fillAmount = 0f;
 
+            // Update collection count text in donut center
+            UpdateCountText(entry);
+
             Animator anim = entry.buildingObj.GetComponentInChildren<Animator>();
             if (anim != null)
                 anim.SetTrigger("interact");
 
-            Debug.Log($"[BuildingProduction] Collected from '{entry.buildingObj.name}' (collect #{entry.collectCount}, base={entry.baseInterval}s + bonus={entry.intervalBonus}s x {entry.collectCount} = next interval: {entry.EffectiveInterval}s)");
+            if (verboseLogging)
+            {
+                float prevInterval = entry.baseInterval + (entry.intervalBonus * (entry.collectCount - 1));
+                Debug.Log($"[BuildingProduction] Collected #{entry.collectCount} from '{entry.buildingObj.name}' — " +
+                          $"previous interval was {prevInterval}s, NEXT interval = {entry.EffectiveInterval}s " +
+                          $"(base {entry.baseInterval} + bonus {entry.intervalBonus} x {entry.collectCount} collections)");
+            }
         }
 
         private bool CollectWorkerReward(ProductionEntry entry, Vector3 worldPos)
@@ -702,7 +865,7 @@ namespace LittleCafe
                 return false;
             }
 
-            if (dock.GetUnitCount() >= 10)
+            if (dock.GetCardCount() >= DockBarManager.MAX_HAND_SIZE)
             {
                 Debug.Log("[BuildingProduction] Hand full — pop-up stays until there's room");
                 return false;
@@ -734,12 +897,76 @@ namespace LittleCafe
             ResourceLootFX lootFX = ResourceLootFX.Instance;
             if (lootFX != null)
             {
-                lootFX.SpawnLoot(worldPos + Vector3.up * 1f, entry.producedResourceType, entry.amount);
+                lootFX.SpawnLoot(worldPos, entry.producedResourceType, entry.amount);
             }
             else
             {
                 ResourceManager.Instance?.AddResource(entry.producedResourceType, entry.amount);
             }
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // Random Card Draw (Statue building — replaces draw button)
+        // ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Draw a random card from the RaritySystem pool.
+        /// Same as what the draw button does.
+        /// </summary>
+        private UnitStats DrawRandomBuilding()
+        {
+            if (RaritySystem.Instance == null)
+            {
+                Debug.LogWarning("[BuildingProduction] No RaritySystem — can't draw random card");
+                return null;
+            }
+
+            UnitStats drawn = RaritySystem.Instance.DrawRandomUnit();
+            if (drawn != null && verboseLogging)
+                Debug.Log($"[BuildingProduction] Drew random card: {drawn.unitName} ({drawn.rarity})");
+            return drawn;
+        }
+
+        /// <summary>
+        /// Collect a random card reward: fly the card from the building to the dock bar.
+        /// Returns false if hand is full.
+        /// </summary>
+        private bool CollectRandomBuildingReward(ProductionEntry entry, Vector3 worldPos)
+        {
+            DockBarManager dock = DockBarManager.Instance;
+            if (dock == null)
+            {
+                Debug.LogWarning("[BuildingProduction] No DockBarManager — can't deliver card");
+                return false;
+            }
+
+            if (dock.GetCardCount() >= DockBarManager.MAX_HAND_SIZE)
+            {
+                Debug.Log("[BuildingProduction] Hand full — pop-up stays until there's room");
+                return false;
+            }
+
+            UnitStats card = entry.pendingCard;
+            if (card == null)
+            {
+                // Fallback: draw now if pending card was lost
+                card = DrawRandomBuilding();
+                if (card == null) return false;
+            }
+
+            // Fly the card icon from building to dock bar
+            WorkerCardFlyFX flyFX = WorkerCardFlyFX.Instance;
+            if (flyFX != null)
+            {
+                flyFX.SpawnCardFly(worldPos, card, 0);
+            }
+            else
+            {
+                // Direct add (no fly animation)
+                dock.AddCard(card, markAsNew: true);
+            }
+
+            return true;
         }
 
         // ─────────────────────────────────────────────────────────────────

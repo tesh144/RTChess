@@ -19,17 +19,17 @@ namespace LittleCafe
     public class WorkerDeathBurstFX : MonoBehaviour
     {
         // ─── Tuning ─────────────────────────────────────────────────
-        private const float BURST_FORCE_MIN = 2.0f;
-        private const float BURST_FORCE_MAX = 5.0f;
-        private const float UPWARD_BIAS = 2.5f;          // Extra upward kick
-        private const float TORQUE_MIN = 180f;            // Degrees/sec
-        private const float TORQUE_MAX = 720f;
-        private const float LIFETIME = 1.8f;              // Total effect duration
-        private const float SHRINK_START = 0.55f;         // Fraction of lifetime when shrinking begins
-        private const float DEBRIS_SCALE_MULT = 1.0f;     // Scale relative to original mesh
-        private const float GROUND_Y = 0.01f;             // Ground plane Y
-        private const float BOUNCE_DAMPING = 0.3f;        // Velocity retained after ground bounce
-        private const float GRAVITY = 12f;                // Custom gravity (stronger than default for snappy feel)
+        private const float BURST_FORCE_MIN = 0.8f;       // Tight burst — pieces stay close to the cell
+        private const float BURST_FORCE_MAX = 2.0f;
+        private const float UPWARD_BIAS = 3.0f;           // Mostly upward pop
+        private const float TORQUE_MIN = 120f;             // Degrees/sec
+        private const float TORQUE_MAX = 500f;
+        private const float LIFETIME = 1.6f;               // Total effect duration
+        private const float SHRINK_START = 0.50f;          // Fraction of lifetime when shrinking begins
+        private const float DEBRIS_SCALE_MULT = 1.0f;      // Scale relative to original mesh
+        private const float GROUND_Y = 0.01f;              // Ground plane Y
+        private const float BOUNCE_DAMPING = 0.2f;         // Velocity retained after ground bounce (low = less scatter)
+        private const float GRAVITY = 14f;                 // Stronger gravity pulls pieces down faster
 
         // ─── Internal state ─────────────────────────────────────────
         private DebrisPiece[] pieces;

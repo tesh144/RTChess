@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using LittleCafe;
@@ -8,66 +9,61 @@ using ClockworkCraft;
 namespace ClockworkGrid
 {
     /// <summary>
-    /// Manages the dock bar UI at the bottom of the screen.
-    /// Handles drawing units into the dock and removing them when placed.
-    /// Iteration 11: Now supports editor-created UI elements
+    /// Manages the card hand at the bottom of the screen.
+    /// Responsibilities:
+    ///   - Card hand: instantiating, tracking, and removing GameCardUI cards
+    ///   - Draw cost: calculating escalating cost, spending tokens
+    ///   - Show/hide the card hand area
+    ///
+    /// Does NOT own the draw button UI — that belongs to DrawButtonController.
     /// </summary>
     public class DockBarManager : MonoBehaviour
     {
-        [Header("Prefab References")]
-        [SerializeField] private GameObject unitIconPrefab; // Custom card design prefab
+        [Header("Card Prefab")]
+        [Tooltip("Card_Prefab with GameCardUI component. Instantiated for each drawn card.")]
+        [SerializeField] private GameObject cardPrefab;
 
-        [Header("Editor UI References (Optional - assign to use existing UI)")]
-        [SerializeField] private GameObject dockBarHolder; // The dock bar panel/GameObject to show/hide
-        [SerializeField] private GameObject gatchaButtonHolder; // The gatcha/draw button container to show/hide
-        [SerializeField] private Transform dockIconsContainer; // Parent for red card holders
-        [SerializeField] private Button drawButton; // White button on the right
-        [SerializeField] private TextMeshProUGUI drawButtonText; // Text on draw button
-        [SerializeField] private TextMeshProUGUI costNumberText; // Cost display on gatcha button (CostNumber TMP)
-        [SerializeField] private Image costFillImage; // Fill bar showing time until cost decrease
+        [Header("Card Hand")]
+        [Tooltip("Parent transform where drawn cards are placed (e.g. Button_MainMenu).")]
+        [SerializeField] private Transform cardContainer;
 
-        [Header("Draw Cost Settings")]
-        [SerializeField] private int baseDrawCost = 6; // Starting cost for the first draw
-        [SerializeField] private int costIncrement = 1; // How much cost increases per draw
+        [Header("Draw Cost")]
+        [SerializeField] private int baseDrawCost = 6;
+        [SerializeField] private int costIncrement = 1;
+        [Tooltip("Interval ticks between automatic cost decreases (0 = disabled).")]
+        [SerializeField] private int costDecreaseInterval = 0;
 
-        /// <summary>
-        /// Override the draw cost settings at runtime (e.g., free draws in ClockworkCraft mode).
-        /// </summary>
-        public void SetDrawCost(int baseCost, int increment)
-        {
-            baseDrawCost = baseCost;
-            costIncrement = increment;
-            drawCount = 0;
-            Debug.Log($"[DockBarManager] Draw cost set to base={baseCost}, increment={increment}");
-        }
-        [SerializeField] private int costDecreaseInterval = 0; // Intervals between cost decreases (0 = disabled)
-
-        [Header("Runtime Creation Settings (if no UI references assigned)")]
-        [SerializeField] private bool createUIAtRuntime = false;
-
-        [Header("Animation Settings")]
+        [Header("Slide Animation")]
         [SerializeField] private bool enableSlideAnimation = true;
-        [SerializeField] private float slideUpDistance = 150f; // Distance to slide from below
-        [SerializeField] private float slideUpDuration = 0.6f; // Animation duration
+        [SerializeField] private float slideUpDistance = 150f;
+        [SerializeField] private float slideUpDuration = 0.6f;
 
-        // UI References (assigned from editor OR created at runtime)
-        private RectTransform dockBarContainer;
+        // ── Runtime State ───────────────────────────────────────────
+
+        private List<GameCardUI> handCards = new List<GameCardUI>();
+        private RectTransform dockBarRect;
         private Vector2 originalAnchoredPosition;
-        private Image backgroundImage;
-        private RectTransform dockIconsPanel;
+        private RectTransform cardPanel;
         private HorizontalLayoutGroup layoutGroup;
-        private GameObject dealButtonObj;
 
-        // Unit tracking
-        private List<UnitIcon> unitIcons = new List<UnitIcon>();
-        private GameObject[] availableUnitPrefabs;
+        // Hand size limit
+        public const int MAX_HAND_SIZE = 5;
 
-        // Draw cost tracking (Iteration 10: Self-sufficient, no HandManager)
+        // Draw cost tracking
         private int drawCount = 0;
         private int ticksSinceCostDecrease = 0;
 
-        // Singleton pattern
+        // Cached reference to the draw button controller (found at runtime)
+        private DrawButtonController drawButtonController;
+
+        // ── Singleton ───────────────────────────────────────────────
+
         public static DockBarManager Instance { get; private set; }
+
+        /// <summary>The transform where cards are instantiated (for fly-to targeting).</summary>
+        public Transform CardContainer => cardContainer;
+
+        // ── Lifecycle ───────────────────────────────────────────────
 
         private void Awake()
         {
@@ -79,68 +75,280 @@ namespace ClockworkGrid
             Instance = this;
         }
 
-        private void Start()
+        private void OnDestroy()
         {
-            if (gatchaButtonHolder == null)
-            {
-                Debug.LogError("[DockBarManager] gatchaButtonHolder is not assigned! Please assign it in the Inspector.");
-            }
+            if (ResourceTokenManager.Instance != null)
+                ResourceTokenManager.Instance.OnTokensChanged -= OnTokensChanged;
 
-            // Dock bar holder stays visible throughout (or assign nothing if entire dock bar is one object)
+            if (IntervalTimer.Instance != null)
+                IntervalTimer.Instance.OnIntervalTick -= OnIntervalTickCostDecrease;
         }
 
+        // ── Initialization ──────────────────────────────────────────
+
         /// <summary>
-        /// Initialize the dock bar with UI hierarchy (Iteration 10: No HandManager)
+        /// Initialize the card hand. Sets up card container layout and subscribes to events.
         /// </summary>
         public void Initialize(Canvas canvas)
         {
-            // Use editor UI if assigned, otherwise create at runtime
-            if (dockIconsContainer != null && drawButton != null)
+            if (cardContainer == null)
             {
-                SetupEditorUI();
-            }
-            else if (createUIAtRuntime)
-            {
-                CreateDockBarUI(canvas);
-            }
-            else
-            {
-                Debug.LogError("DockBarManager: No UI references assigned and createUIAtRuntime is false!");
+                Debug.LogError("[DockBarManager] cardContainer is not assigned!");
                 return;
             }
 
-            UpdateDealButtonDisplay();
+            cardPanel = cardContainer.GetComponent<RectTransform>();
 
-            // Subscribe to token changes to update button state
-            if (ResourceTokenManager.Instance != null)
+            // Clear any editor mock-up cards
+            ClearCardContainer();
+
+            // Ensure HorizontalLayoutGroup exists
+            layoutGroup = cardContainer.GetComponent<HorizontalLayoutGroup>();
+            if (layoutGroup == null)
             {
-                ResourceTokenManager.Instance.OnTokensChanged += OnTokensChanged;
+                layoutGroup = cardContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
+                layoutGroup.spacing = 10f;
+                layoutGroup.padding = new RectOffset(10, 10, 10, 10);
+                layoutGroup.childAlignment = TextAnchor.MiddleCenter;
+                layoutGroup.childControlWidth = false;
+                layoutGroup.childControlHeight = false;
+                layoutGroup.childForceExpandWidth = false;
+                layoutGroup.childForceExpandHeight = false;
             }
+
+            // Find DrawButtonController in scene (for cost display updates)
+            drawButtonController = FindObjectOfType<DrawButtonController>(true);
+
+            // Hide draw button — buildings are now produced by map objects, not manual draws
+            if (drawButtonController != null)
+                drawButtonController.gameObject.SetActive(false);
+
+            // Subscribe to token changes
+            if (ResourceTokenManager.Instance != null)
+                ResourceTokenManager.Instance.OnTokensChanged += OnTokensChanged;
 
             // Subscribe to interval timer for cost decrease over time
             if (costDecreaseInterval > 0 && IntervalTimer.Instance != null)
-            {
                 IntervalTimer.Instance.OnIntervalTick += OnIntervalTickCostDecrease;
+
+            // Cache RectTransform for slide animation
+            if (dockBarRect == null)
+                dockBarRect = GetComponent<RectTransform>();
+            if (dockBarRect != null)
+                originalAnchoredPosition = dockBarRect.anchoredPosition;
+
+            NotifyCostChanged();
+            Debug.Log("[DockBarManager] Initialized");
+        }
+
+        // ── Draw Cost ───────────────────────────────────────────────
+
+        /// <summary>Override draw cost at runtime (e.g., free draws in ClockworkCraft).</summary>
+        public void SetDrawCost(int baseCost, int increment)
+        {
+            baseDrawCost = baseCost;
+            costIncrement = increment;
+            drawCount = 0;
+            Debug.Log($"[DockBarManager] Draw cost set to base={baseCost}, increment={increment}");
+            NotifyCostChanged();
+        }
+
+        /// <summary>Calculate the current draw cost.</summary>
+        public int CalculateDrawCost()
+        {
+            return baseDrawCost + (costIncrement * drawCount);
+        }
+
+        /// <summary>Get current draw cost (public accessor).</summary>
+        public int GetCurrentDrawCost()
+        {
+            return CalculateDrawCost();
+        }
+
+        /// <summary>Tell DrawButtonController the cost changed so it can update its display.</summary>
+        private void NotifyCostChanged()
+        {
+            if (drawButtonController != null)
+                drawButtonController.UpdateCostDisplay();
+        }
+
+        // ── Draw Action ─────────────────────────────────────────────
+
+        /// <summary>
+        /// Execute a draw: spend tokens, pull from RaritySystem, add card to hand.
+        /// Called by DrawButtonController.
+        /// </summary>
+        public void OnDrawButtonClicked()
+        {
+            if (IsHandFull)
+            {
+                Debug.Log("[DockBarManager] Draw failed — hand is full");
+                if (GameSFXManager.Instance != null)
+                    GameSFXManager.Instance.PlayHandFull();
+                ShowHandFullPopupAtCursor();
+                return;
             }
 
-            // Cache RectTransform and original position for animation
-            if (dockBarContainer == null)
+            int cost = CalculateDrawCost();
+
+            if (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost))
             {
-                dockBarContainer = GetComponent<RectTransform>();
-            }
-            if (dockBarContainer != null)
-            {
-                originalAnchoredPosition = dockBarContainer.anchoredPosition;
+                Debug.Log($"[DockBarManager] Draw failed — not enough tokens (need {cost})");
+                if (GameSFXManager.Instance != null)
+                    GameSFXManager.Instance.PlayError();
+                return;
             }
 
-            // Starting worker card is added via AddStartingWorker() after Initialize
+            ResourceTokenManager.Instance.SpendTokens(cost);
+
+            drawCount++;
+            ticksSinceCostDecrease = 0;
+            UpdateCostFill();
+
+            if (RaritySystem.Instance != null)
+            {
+                UnitStats drawnStats = RaritySystem.Instance.DrawRandomUnit();
+                if (drawnStats != null)
+                {
+                    AddCard(drawnStats, markAsNew: true, animateFromDraw: true);
+                    Debug.Log($"[DockBarManager] Drew {drawnStats.unitName} ({drawnStats.rarity}) — cost was {cost}T");
+
+                    if (GameSFXManager.Instance != null)
+                        GameSFXManager.Instance.PlayCardDraw();
+
+                    CameraSystemLocator.Current?.Shake(0.12f, 0.2f);
+                }
+            }
+
+            NotifyCostChanged();
+        }
+
+        // ── Card Management ─────────────────────────────────────────
+
+        /// <summary>Whether the hand is at maximum capacity.</summary>
+        public bool IsHandFull => handCards.Count >= MAX_HAND_SIZE;
+
+        /// <summary>Add a new card to the hand. Optionally mark it as "new" with a badge.</summary>
+        /// <param name="animateFromDraw">If true, card flies in from the draw button position.</param>
+        public void AddCard(UnitStats unitStats, bool markAsNew = false, bool animateFromDraw = false)
+        {
+            if (handCards.Count >= MAX_HAND_SIZE)
+            {
+                Debug.LogWarning("[DockBarManager] Hand full — can't add card");
+                if (GameSFXManager.Instance != null)
+                    GameSFXManager.Instance.PlayHandFull();
+                ShowHandFullPopupAtCursor();
+                return;
+            }
+
+            GameObject cardObj;
+            GameCardUI card;
+
+            if (cardPrefab != null)
+            {
+                cardObj = Instantiate(cardPrefab, cardPanel, false);
+                cardObj.name = $"Card_{handCards.Count}";
+
+                card = cardObj.GetComponent<GameCardUI>();
+                if (card == null)
+                    card = cardObj.AddComponent<GameCardUI>();
+            }
+            else
+            {
+                // Minimal fallback
+                cardObj = new GameObject($"Card_{handCards.Count}");
+                RectTransform cardRect = cardObj.AddComponent<RectTransform>();
+                cardRect.SetParent(cardPanel, false);
+                cardRect.sizeDelta = new Vector2(70f, 70f);
+                cardObj.AddComponent<Image>().color = Color.white;
+                card = cardObj.AddComponent<GameCardUI>();
+            }
+
+            card.Initialize(unitStats, this);
+            if (markAsNew) card.SetNew(true);
+            handCards.Add(card);
+
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayCardSlideIn();
+
+            UpdateLayoutSpacing();
+
+            // Fly-in animation from draw button, or appear animation for non-drawn cards
+            if (animateFromDraw && drawButtonController != null)
+            {
+                StartCoroutine(CardFlyInAnimation(card, cardObj.GetComponent<RectTransform>()));
+            }
+            else
+            {
+                // No fly-in — play appear pop + start idle
+                card.PlayAppearAnimation();
+            }
         }
 
         /// <summary>
-        /// Add a starting worker card to the dock.
-        /// Picks the first valid worker from the given database.
-        /// Called by MapGeneratorV2 after deck setup.
+        /// Animates a card flying from the draw button's position into its dock slot.
+        /// Card starts at draw button position, scaled to 0, and flies to final position
+        /// with a slight overshoot bounce.
         /// </summary>
+        private IEnumerator CardFlyInAnimation(GameCardUI card, RectTransform cardRect)
+        {
+            if (cardRect == null) yield break;
+
+            // Get the actual draw button's screen position
+            RectTransform drawBtnRect = drawButtonController.ButtonRect;
+            if (drawBtnRect == null) yield break;
+
+            // Let layout settle for one frame so we know the card's final position
+            yield return null;
+
+            Vector3 finalPos = cardRect.position;
+            Vector3 finalScale = cardRect.localScale;
+
+            // Start position: the draw button's world position
+            Vector3 startPos = drawBtnRect.position;
+
+            float duration = 0.35f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+
+                // Ease-out cubic for smooth deceleration
+                float easeT = 1f - Mathf.Pow(1f - t, 3f);
+
+                // Position: fly from draw button to final slot
+                cardRect.position = Vector3.Lerp(startPos, finalPos, easeT);
+
+                // Scale: grow from small to full with slight overshoot
+                float scaleT;
+                if (t < 0.7f)
+                {
+                    // Grow to 110%
+                    scaleT = Mathf.Lerp(0.2f, 1.1f, t / 0.7f);
+                }
+                else
+                {
+                    // Settle back to 100%
+                    float settleT = (t - 0.7f) / 0.3f;
+                    scaleT = Mathf.Lerp(1.1f, 1f, settleT);
+                }
+                cardRect.localScale = finalScale * scaleT;
+
+                yield return null;
+            }
+
+            // Ensure final state
+            cardRect.position = finalPos;
+            cardRect.localScale = finalScale;
+
+            // Start idle breathing after fly-in settles
+            if (card != null)
+                card.StartIdleAnimation();
+        }
+
+        /// <summary>Add a starting worker to the dock from a WorkerDatabase.</summary>
         public void AddStartingWorker(WorkerDatabase workerDB)
         {
             if (workerDB == null || workerDB.Count == 0)
@@ -149,7 +357,6 @@ namespace ClockworkGrid
                 return;
             }
 
-            // Pick the first worker with a valid prefab
             foreach (WorkerData wd in workerDB.AllWorkers)
             {
                 if (wd.prefab != null)
@@ -160,359 +367,23 @@ namespace ClockworkGrid
                 }
             }
 
-            Debug.LogWarning("[DockBarManager] No workers with valid prefabs found in WorkerDatabase");
+            Debug.LogWarning("[DockBarManager] No workers with valid prefabs found");
         }
 
-        private void OnDestroy()
-        {
-            if (ResourceTokenManager.Instance != null)
-            {
-                ResourceTokenManager.Instance.OnTokensChanged -= OnTokensChanged;
-            }
-            if (IntervalTimer.Instance != null)
-            {
-                IntervalTimer.Instance.OnIntervalTick -= OnIntervalTickCostDecrease;
-            }
-        }
-
-        /// <summary>
-        /// Hide the dock bar UI (keeps component alive and initialized).
-        /// Call ShowWithAnimation() to reveal it again.
-        /// </summary>
-        public void HideUI()
-        {
-            if (dockBarHolder != null) dockBarHolder.SetActive(false);
-            if (gatchaButtonHolder != null) gatchaButtonHolder.SetActive(false);
-        }
-
-        /// <summary>
-        /// Show the dock bar with slide-up animation after countdown completes.
-        /// </summary>
-        public void ShowWithAnimation()
-        {
-            // Show both holders if assigned
-            if (dockBarHolder != null)
-            {
-                dockBarHolder.SetActive(true);
-            }
-
-            if (gatchaButtonHolder != null)
-            {
-                gatchaButtonHolder.SetActive(true);
-            }
-
-            if (enableSlideAnimation && dockBarContainer != null)
-            {
-                StartCoroutine(SlideUpAnimation());
-            }
-        }
-
-        /// <summary>
-        /// Animate dock bar sliding up from below the screen.
-        /// </summary>
-        private System.Collections.IEnumerator SlideUpAnimation()
-        {
-            if (dockBarContainer == null) yield break;
-
-            // Start position (below screen)
-            Vector2 startPos = originalAnchoredPosition - new Vector2(0, slideUpDistance);
-            Vector2 endPos = originalAnchoredPosition;
-
-            dockBarContainer.anchoredPosition = startPos;
-
-            float elapsed = 0f;
-            while (elapsed < slideUpDuration)
-            {
-                elapsed += Time.deltaTime;
-                float t = elapsed / slideUpDuration;
-
-                // Smooth ease-out curve
-                float smoothT = 1f - Mathf.Pow(1f - t, 3f);
-
-                dockBarContainer.anchoredPosition = Vector2.Lerp(startPos, endPos, smoothT);
-                yield return null;
-            }
-
-            // Ensure final position is exact
-            dockBarContainer.anchoredPosition = endPos;
-        }
-
-        /// <summary>
-        /// Setup using editor-created UI elements
-        /// </summary>
-        private void SetupEditorUI()
-        {
-            // Use assigned container for icons
-            dockIconsPanel = dockIconsContainer.GetComponent<RectTransform>();
-
-            // Clear any pre-existing mock-up cards from editor
-            ClearDockContainerChildren();
-
-            // Ensure HorizontalLayoutGroup exists
-            layoutGroup = dockIconsContainer.GetComponent<HorizontalLayoutGroup>();
-            if (layoutGroup == null)
-            {
-                layoutGroup = dockIconsContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
-                layoutGroup.spacing = 10f;
-                layoutGroup.padding = new RectOffset(10, 10, 10, 10);
-                layoutGroup.childAlignment = TextAnchor.MiddleCenter;
-                layoutGroup.childControlWidth = false;
-                layoutGroup.childControlHeight = false;
-                layoutGroup.childForceExpandWidth = false;
-                layoutGroup.childForceExpandHeight = false;
-            }
-
-            // Setup draw button
-            if (drawButton != null)
-            {
-                drawButton.onClick.AddListener(OnDealButtonClicked);
-
-                // Find or create button text
-                if (drawButtonText == null)
-                {
-                    drawButtonText = drawButton.GetComponentInChildren<TextMeshProUGUI>();
-                }
-
-                if (drawButtonText == null)
-                {
-                    // Create text if it doesn't exist
-                    GameObject textObj = new GameObject("ButtonText");
-                    RectTransform textRect = textObj.AddComponent<RectTransform>();
-                    textRect.SetParent(drawButton.transform, false);
-                    textRect.anchorMin = Vector2.zero;
-                    textRect.anchorMax = Vector2.one;
-                    textRect.sizeDelta = Vector2.zero;
-
-                    drawButtonText = textObj.AddComponent<TextMeshProUGUI>();
-                    drawButtonText.fontSize = 20;
-                    drawButtonText.color = Color.white;
-                    drawButtonText.alignment = TextAlignmentOptions.Center;
-                    drawButtonText.fontStyle = FontStyles.Bold;
-                }
-            }
-
-            Debug.Log("DockBarManager: Using editor-created UI elements");
-        }
-
-        /// <summary>
-        /// Create UI at runtime (legacy mode)
-        /// </summary>
-        private void CreateDockBarUI(Canvas canvas)
-        {
-            // Create main container
-            dockBarContainer = CreateUIObject<RectTransform>("DockBarContainer", canvas.transform);
-            dockBarContainer.anchorMin = new Vector2(0.5f, 0f);
-            dockBarContainer.anchorMax = new Vector2(0.5f, 0f);
-            dockBarContainer.pivot = new Vector2(0.5f, 0f);
-            dockBarContainer.anchoredPosition = new Vector2(0f, 20f);
-            dockBarContainer.sizeDelta = new Vector2(700f, 100f);
-
-            // Add background image
-            backgroundImage = dockBarContainer.gameObject.AddComponent<Image>();
-            backgroundImage.color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
-
-            // Create icons panel (holds unit icons)
-            GameObject iconsPanelObj = new GameObject("DockIconsPanel");
-            dockIconsPanel = iconsPanelObj.AddComponent<RectTransform>();
-            dockIconsPanel.SetParent(dockBarContainer, false);
-            dockIconsPanel.anchorMin = new Vector2(0f, 0f);
-            dockIconsPanel.anchorMax = new Vector2(1f, 1f);
-            dockIconsPanel.pivot = new Vector2(0.5f, 0.5f);
-            dockIconsPanel.anchoredPosition = Vector2.zero;
-            dockIconsPanel.sizeDelta = new Vector2(-150f, 0f); // Leave space for button
-
-            // Add HorizontalLayoutGroup for auto-spacing
-            layoutGroup = iconsPanelObj.AddComponent<HorizontalLayoutGroup>();
-            layoutGroup.spacing = 10f;
-            layoutGroup.padding = new RectOffset(10, 10, 10, 10);
-            layoutGroup.childAlignment = TextAnchor.MiddleCenter;
-            layoutGroup.childControlWidth = false;
-            layoutGroup.childControlHeight = false;
-            layoutGroup.childForceExpandWidth = false;
-            layoutGroup.childForceExpandHeight = false;
-
-            // Create Deal button on the right
-            CreateDealButton();
-
-            Debug.Log("DockBarManager: Created UI at runtime");
-        }
-
-        private void CreateDealButton()
-        {
-            dealButtonObj = new GameObject("DealButton");
-            RectTransform buttonRect = dealButtonObj.AddComponent<RectTransform>();
-            buttonRect.SetParent(dockBarContainer, false);
-            buttonRect.anchorMin = new Vector2(1f, 0.5f);
-            buttonRect.anchorMax = new Vector2(1f, 0.5f);
-            buttonRect.pivot = new Vector2(1f, 0.5f);
-            buttonRect.anchoredPosition = new Vector2(-10f, 0f);
-            buttonRect.sizeDelta = new Vector2(130f, 80f);
-
-            // Add Button component
-            Button button = dealButtonObj.AddComponent<Button>();
-            Image buttonImage = dealButtonObj.AddComponent<Image>();
-            buttonImage.color = new Color(0.2f, 0.4f, 0.2f, 1f);
-
-            // Button colors
-            ColorBlock colors = button.colors;
-            colors.normalColor = new Color(0.2f, 0.6f, 0.2f, 1f);
-            colors.highlightedColor = new Color(0.3f, 0.8f, 0.3f, 1f);
-            colors.pressedColor = new Color(0.1f, 0.4f, 0.1f, 1f);
-            colors.disabledColor = new Color(0.3f, 0.3f, 0.3f, 1f);
-            button.colors = colors;
-
-            // Add click listener
-            button.onClick.AddListener(OnDealButtonClicked);
-
-            // Create button text
-            GameObject textObj = new GameObject("Text");
-            RectTransform textRect = textObj.AddComponent<RectTransform>();
-            textRect.SetParent(buttonRect, false);
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-            textRect.anchoredPosition = Vector2.zero;
-
-            drawButtonText = textObj.AddComponent<TextMeshProUGUI>();
-            drawButtonText.text = "DRAW";
-            drawButtonText.fontSize = 20;
-            drawButtonText.color = Color.white;
-            drawButtonText.alignment = TextAlignmentOptions.Center;
-            drawButtonText.fontStyle = FontStyles.Bold;
-        }
-
-        /// <summary>
-        /// Calculate the current deal cost (Iteration 10: Linear escalation)
-        /// </summary>
-        public int CalculateDealCost()
-        {
-            return baseDrawCost + (costIncrement * drawCount);
-        }
-
-        /// <summary>
-        /// Get current draw cost (public accessor)
-        /// </summary>
-        public int GetCurrentDrawCost()
-        {
-            return CalculateDealCost();
-        }
-
-        /// <summary>
-        /// Called when the Deal button is clicked (Iteration 10: Self-sufficient)
-        /// </summary>
-        public void OnDealButtonClicked()
-        {
-            int cost = CalculateDealCost();
-
-            // Check if player has enough tokens
-            if (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost))
-            {
-                Debug.Log($"Failed to draw unit - not enough tokens (need {cost})");
-                ShowErrorFeedback($"Not Enough Tokens! ({cost} needed)");
-
-                // SFX: can't afford draw
-                if (GameSFXManager.Instance != null)
-                    GameSFXManager.Instance.PlayError();
-
-                return;
-            }
-
-            // Spend tokens
-            ResourceTokenManager.Instance.SpendTokens(cost);
-
-            // Increment draw count AFTER spending
-            drawCount++;
-            ticksSinceCostDecrease = 0; // Reset cost-decrease timer on draw
-            UpdateCostFill(); // Reset fill bar to full
-
-            // Draw a random unit from RaritySystem
-            if (RaritySystem.Instance != null)
-            {
-                UnitStats drawnStats = RaritySystem.Instance.DrawRandomUnit();
-                if (drawnStats != null)
-                {
-                    AddUnitToDock(drawnStats);
-                    Debug.Log($"Drew {drawnStats.unitName} ({drawnStats.rarity}) - Cost was {cost}T");
-
-                    // SFX: card drawn
-                    if (GameSFXManager.Instance != null)
-                        GameSFXManager.Instance.PlayCardDraw();
-
-                    // Screen shake feedback on successful draw
-                    CameraSystemLocator.Current?.Shake(0.12f, 0.2f);
-                }
-            }
-
-            // Update button display
-            UpdateDealButtonDisplay();
-        }
-
-        /// <summary>
-        /// Add a new unit icon to the dock (using UnitStats)
-        /// </summary>
-        public void AddUnitToDock(UnitStats unitStats)
-        {
-            GameObject iconObj;
-            UnitIcon icon;
-
-            // Use prefab if assigned, otherwise create runtime UI
-            if (unitIconPrefab != null)
-            {
-                // Instantiate custom prefab
-                iconObj = Instantiate(unitIconPrefab, dockIconsPanel, false);
-                iconObj.name = $"UnitIcon_{unitIcons.Count}";
-
-                // Get or add UnitIcon component
-                icon = iconObj.GetComponent<UnitIcon>();
-                if (icon == null)
-                {
-                    icon = iconObj.AddComponent<UnitIcon>();
-                }
-            }
-            else
-            {
-                // Fallback: Create runtime UI (legacy behavior)
-                iconObj = new GameObject($"UnitIcon_{unitIcons.Count}");
-                RectTransform iconRect = iconObj.AddComponent<RectTransform>();
-                iconRect.SetParent(dockIconsPanel, false);
-                iconRect.sizeDelta = new Vector2(70f, 70f);
-
-                // Add Image component with unit-specific color
-                Image iconImage = iconObj.AddComponent<Image>();
-                iconImage.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
-                iconImage.color = GetUnitColorByType(unitStats.unitType);
-
-                // Add UnitIcon component
-                icon = iconObj.AddComponent<UnitIcon>();
-            }
-
-            icon.Initialize(unitStats, this);
-            unitIcons.Add(icon);
-
-            // SFX: card slides into dock
-            if (GameSFXManager.Instance != null)
-                GameSFXManager.Instance.PlayCardSlideIn();
-
-            // Update spacing
-            UpdateLayoutSpacing();
-        }
-
-        /// <summary>
-        /// Add a worker card to the dock from WorkerData (produced by buildings).
-        /// Creates a UnitStats on-the-fly and calls AddUnitToDock.
-        /// </summary>
+        /// <summary>Add a worker card from WorkerData (produced by buildings).</summary>
         public void AddWorkerCard(WorkerData workerData)
         {
             if (workerData == null) return;
 
-            // Check hand limit
-            if (unitIcons.Count >= 10)
+            if (handCards.Count >= MAX_HAND_SIZE)
             {
                 Debug.LogWarning("[DockBarManager] Hand full — can't add worker card");
+                if (GameSFXManager.Instance != null)
+                    GameSFXManager.Instance.PlayHandFull();
+                ShowHandFullPopupAtCursor();
                 return;
             }
 
-            // Create UnitStats from WorkerData (same pattern as MapGeneratorV2.SetupDeck)
             UnitStats stats       = ScriptableObject.CreateInstance<UnitStats>();
             stats.unitType        = UnitType.Soldier;
             stats.unitName        = workerData.GetCleanName();
@@ -532,85 +403,71 @@ namespace ClockworkGrid
             stats.furnitureTypeOverride = -1;
             stats.isAllied        = true;
 
-            AddUnitToDock(stats);
-            Debug.Log($"[DockBarManager] Added worker card '{workerData.GetCleanName()}' from building production");
+            AddCard(stats, markAsNew: true);
+            Debug.Log($"[DockBarManager] Added worker card '{workerData.GetCleanName()}'");
         }
 
-        // REMOVED: OnHandChanged() - No longer needed (Iteration 10: Self-sufficient)
-
-        /// <summary>
-        /// Remove a unit icon from the dock (called after placement)
-        /// </summary>
-        public void RemoveUnitIcon(UnitIcon icon)
+        /// <summary>Remove a card from the hand (called after placement).</summary>
+        public void RemoveCard(GameCardUI card)
         {
-            if (unitIcons.Contains(icon))
+            if (handCards.Contains(card))
             {
-                unitIcons.Remove(icon);
-                Destroy(icon.gameObject);
+                handCards.Remove(card);
+                Destroy(card.gameObject);
                 UpdateLayoutSpacing();
             }
         }
 
-        /// <summary>
-        /// Update layout spacing based on number of icons
-        /// </summary>
-        private void UpdateLayoutSpacing()
+        /// <summary>Get the current number of cards in hand.</summary>
+        public int GetCardCount()
         {
-            if (layoutGroup == null) return;
-
-            int count = unitIcons.Count;
-            if (count <= 5)
-                layoutGroup.spacing = 10f;
-            else if (count <= 8)
-                layoutGroup.spacing = 8f;
-            else
-                layoutGroup.spacing = 5f;
+            return handCards.Count;
         }
 
-        /// <summary>
-        /// Update the Deal button text and state
-        /// </summary>
-        private void UpdateDealButtonDisplay()
+        // ── Visibility ──────────────────────────────────────────────
+
+        /// <summary>Hide the card hand and draw button.</summary>
+        public void HideUI()
         {
-            // Use assigned button or created button
-            Button button = drawButton != null ? drawButton : (dealButtonObj != null ? dealButtonObj.GetComponent<Button>() : null);
-            TextMeshProUGUI buttonText = drawButtonText;
-
-            if (button == null || buttonText == null) return;
-
-            int cost = CalculateDealCost();
-            bool canAfford = ResourceTokenManager.Instance != null &&
-                           ResourceTokenManager.Instance.HasEnoughTokens(cost);
-
-            // Check if hand is full (max 10 units in dock)
-            bool handFull = unitIcons.Count >= 10;
-
-            // Update button text
-            if (handFull)
-            {
-                buttonText.text = "Hand\nFull!";
-                buttonText.color = new Color(1f, 0.5f, 0f); // Orange for hand full
-            }
-            else
-            {
-                buttonText.text = "DRAW";
-                buttonText.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
-            }
-
-            // Update button state (disabled if can't afford OR hand is full)
-            button.interactable = canAfford && !handFull;
-
-            // Update cost number text on gatcha button
-            if (costNumberText != null)
-            {
-                costNumberText.text = cost.ToString();
-                costNumberText.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
-            }
+            if (cardContainer != null) cardContainer.gameObject.SetActive(false);
+            if (drawButtonController != null) drawButtonController.Hide();
         }
+
+        /// <summary>Show the card hand and draw button with slide-up animation.</summary>
+        public void ShowWithAnimation()
+        {
+            if (cardContainer != null) cardContainer.gameObject.SetActive(true);
+            if (drawButtonController != null) drawButtonController.Show();
+
+            if (enableSlideAnimation && dockBarRect != null)
+                StartCoroutine(SlideUpAnimation());
+        }
+
+        private System.Collections.IEnumerator SlideUpAnimation()
+        {
+            if (dockBarRect == null) yield break;
+
+            Vector2 startPos = originalAnchoredPosition - new Vector2(0, slideUpDistance);
+            Vector2 endPos = originalAnchoredPosition;
+            dockBarRect.anchoredPosition = startPos;
+
+            float elapsed = 0f;
+            while (elapsed < slideUpDuration)
+            {
+                elapsed += Time.deltaTime;
+                float smoothT = 1f - Mathf.Pow(1f - (elapsed / slideUpDuration), 3f);
+                dockBarRect.anchoredPosition = Vector2.Lerp(startPos, endPos, smoothT);
+                yield return null;
+            }
+
+            dockBarRect.anchoredPosition = endPos;
+        }
+
+        // ── Cost Decrease Over Time ─────────────────────────────────
 
         private void OnTokensChanged(int newTotal)
         {
-            UpdateDealButtonDisplay();
+            NotifyCostChanged();
         }
 
         private void OnIntervalTickCostDecrease(int intervalCount)
@@ -627,113 +484,121 @@ namespace ClockworkGrid
                 ticksSinceCostDecrease = 0;
                 drawCount--;
                 if (drawCount < 0) drawCount = 0;
-                Debug.Log($"[DockBarManager] Cost decreased by interval. drawCount={drawCount}, cost={CalculateDealCost()}");
-                UpdateDealButtonDisplay();
+                Debug.Log($"[DockBarManager] Cost decreased — drawCount={drawCount}, cost={CalculateDrawCost()}");
+                NotifyCostChanged();
             }
 
             UpdateCostFill();
         }
 
-        /// <summary>
-        /// Update the cost fill bar. Fill = remaining time until next cost decrease.
-        /// Full (1) = just drew/reset, depletes toward 0 as ticks pass.
-        /// </summary>
         private void UpdateCostFill()
         {
-            if (costFillImage == null) return;
+            if (drawButtonController == null) return;
 
             if (costDecreaseInterval <= 0 || drawCount <= 0)
             {
-                costFillImage.fillAmount = 0f;
+                drawButtonController.UpdateCostFill(0f);
                 return;
             }
 
             float remaining = (float)(costDecreaseInterval - ticksSinceCostDecrease) / costDecreaseInterval;
-            costFillImage.fillAmount = Mathf.Clamp01(remaining);
+            drawButtonController.UpdateCostFill(remaining);
         }
 
-        /// <summary>
-        /// Show error feedback when draw fails (e.g., not enough tokens).
-        /// </summary>
-        private void ShowErrorFeedback(string message)
+        // ── Internal ────────────────────────────────────────────────
+
+        private void UpdateLayoutSpacing()
         {
-            if (drawButtonText != null)
+            if (layoutGroup == null) return;
+
+            int count = handCards.Count;
+            if (count <= 5) layoutGroup.spacing = 10f;
+            else if (count <= 8) layoutGroup.spacing = 8f;
+            else layoutGroup.spacing = 5f;
+        }
+
+        private void ClearCardContainer()
+        {
+            if (cardContainer == null) return;
+
+            for (int i = cardContainer.childCount - 1; i >= 0; i--)
+                Destroy(cardContainer.GetChild(i).gameObject);
+
+            Debug.Log("[DockBarManager] Cleared mock-up cards from container");
+        }
+
+        // ── Hand Full Popup ──────────────────────────────────────────
+
+        /// <summary>
+        /// Show a brief "Hand Full!" floating text at the given screen position.
+        /// Floats upward and fades out over 1 second.
+        /// </summary>
+        public void ShowHandFullPopup(Vector2 screenPos)
+        {
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            GameObject popupObj = new GameObject("HandFullPopup");
+            popupObj.transform.SetParent(canvas.transform, false);
+
+            RectTransform rt = popupObj.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(200f, 40f);
+
+            // Position at screen point
+            Camera canvasCam = (canvas.renderMode != RenderMode.ScreenSpaceOverlay) ? canvas.worldCamera : null;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                canvas.GetComponent<RectTransform>(), screenPos, canvasCam, out Vector2 localPoint);
+            rt.anchoredPosition = localPoint;
+
+            // Override sorting so it's on top
+            Canvas overrideCanvas = popupObj.AddComponent<Canvas>();
+            overrideCanvas.overrideSorting = true;
+            overrideCanvas.sortingOrder = 100;
+
+            TextMeshProUGUI tmp = popupObj.AddComponent<TextMeshProUGUI>();
+            tmp.text = "Hand Full!";
+            tmp.fontSize = 24f;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = new Color(1f, 0.4f, 0.4f, 1f);
+            tmp.raycastTarget = false;
+            tmp.enableAutoSizing = false;
+            tmp.fontStyle = FontStyles.Bold;
+
+            StartCoroutine(FloatAndFadePopup(rt, tmp, popupObj));
+        }
+
+        /// <summary>Show hand-full popup at the current mouse/touch position.</summary>
+        public void ShowHandFullPopupAtCursor()
+        {
+            Vector2 pos = Input.mousePosition;
+            ShowHandFullPopup(pos);
+        }
+
+        private IEnumerator FloatAndFadePopup(RectTransform rt, TextMeshProUGUI tmp, GameObject obj)
+        {
+            float duration = 1f;
+            float elapsed = 0f;
+            Vector2 startPos = rt.anchoredPosition;
+
+            while (elapsed < duration)
             {
-                StartCoroutine(FlashErrorText(message));
-            }
-        }
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
 
-        /// <summary>
-        /// Flash error message on draw button temporarily.
-        /// </summary>
-        private System.Collections.IEnumerator FlashErrorText(string errorMessage)
-        {
-            if (drawButtonText == null) yield break;
+                // Float upward
+                rt.anchoredPosition = startPos + new Vector2(0f, 40f * t);
 
-            // Store original text and color
-            string originalText = drawButtonText.text;
-            Color originalColor = drawButtonText.color;
+                // Fade out in second half
+                float alpha = t < 0.5f ? 1f : 1f - ((t - 0.5f) * 2f);
+                tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, alpha);
 
-            // Show error in red
-            drawButtonText.text = errorMessage;
-            drawButtonText.color = Color.red;
-
-            yield return new WaitForSeconds(1.5f);
-
-            // Restore original
-            drawButtonText.text = originalText;
-            drawButtonText.color = originalColor;
-        }
-
-        /// <summary>
-        /// Clear pre-existing children from dock container (mock-up cards from editor)
-        /// </summary>
-        private void ClearDockContainerChildren()
-        {
-            if (dockIconsContainer == null) return;
-
-            // Destroy all children (these are editor mock-ups, not runtime cards)
-            for (int i = dockIconsContainer.childCount - 1; i >= 0; i--)
-            {
-                Transform child = dockIconsContainer.GetChild(i);
-                Destroy(child.gameObject);
+                yield return null;
             }
 
-            Debug.Log($"DockBarManager: Cleared {dockIconsContainer.childCount} mock-up cards from dock");
-        }
-
-        /// <summary>
-        /// Get color for unit type
-        /// </summary>
-        private Color GetUnitColorByType(UnitType type)
-        {
-            switch (type)
-            {
-                case UnitType.Soldier:
-                    return new Color(0.3f, 0.5f, 1f); // Blue
-                case UnitType.Ninja:
-                    return new Color(0.3f, 1f, 0.5f); // Green
-                case UnitType.Ogre:
-                    return new Color(1f, 0.3f, 0.3f); // Red
-                default:
-                    return Color.white;
-            }
-        }
-
-        private T CreateUIObject<T>(string name, Transform parent) where T : Component
-        {
-            GameObject obj = new GameObject(name);
-            obj.transform.SetParent(parent, false);
-            return obj.AddComponent<T>();
-        }
-
-        /// <summary>
-        /// Get the current number of units in the dock/hand.
-        /// Returns the number of unit cards currently in the dock.
-        /// </summary>
-        public int GetUnitCount()
-        {
-            return unitIcons.Count;
+            Destroy(obj);
         }
     }
 }

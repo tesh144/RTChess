@@ -7,6 +7,7 @@ namespace ClockworkGrid
     {
         [Header("Interval Settings")]
         [SerializeField] private float baseIntervalDuration = 2.0f;
+        [SerializeField] private bool verboseLogging = false;
 
         private float timer;
         private int currentInterval;
@@ -48,13 +49,17 @@ namespace ClockworkGrid
                 currentInterval++;
 
                 // Debug: Count how many subscribers are listening
-                int subscriberCount = OnIntervalTick != null ? OnIntervalTick.GetInvocationList().Length : 0;
-                Debug.Log($"[IntervalTimer] *** FIRING INTERVAL {currentInterval} *** Subscribers: {subscriberCount}");
+                if (verboseLogging)
+                {
+                    int subscriberCount = OnIntervalTick != null ? OnIntervalTick.GetInvocationList().Length : 0;
+                    Debug.Log($"[IntervalTimer] *** FIRING INTERVAL {currentInterval} *** Subscribers: {subscriberCount}");
+                }
 
                 try
                 {
                     OnIntervalTick?.Invoke(currentInterval);
-                    Debug.Log($"[IntervalTimer] Interval {currentInterval} event completed successfully");
+                    if (verboseLogging)
+                        Debug.Log($"[IntervalTimer] Interval {currentInterval} event completed successfully");
                 }
                 catch (Exception e)
                 {

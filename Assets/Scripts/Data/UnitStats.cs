@@ -78,8 +78,14 @@ namespace ClockworkGrid
         [Range(1, 10)] public int lootYield = 1;
 
         [Header("Economy")]
-        public int resourceCost = 3; // Currently unused (placement is free)
+        public int resourceCost = 3; // Legacy single-cost field
         public int killReward = 2; // Tokens awarded to player when this enemy unit is killed
+
+        [Header("Placement Cost (shown during drag, max 3)")]
+        [Tooltip("Resource costs to place this object. Empty = free. Max 3 entries. " +
+                 "Displayed near the arc line when dragging, NOT on the card.")]
+        public System.Collections.Generic.List<LittleCafe.PlacementCost> placementCosts =
+            new System.Collections.Generic.List<LittleCafe.PlacementCost>();
 
         [Header("Movement")]
         public int chargeDistance = 0; // Tiles to dash forward before attacking (0 = no dash)

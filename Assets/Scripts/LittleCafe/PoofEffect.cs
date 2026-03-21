@@ -114,6 +114,8 @@ namespace LittleCafe
 
         private void Update()
         {
+            if (spheres == null) { Destroy(gameObject); return; }
+
             elapsed += Time.deltaTime;
 
             bool allDone = true;

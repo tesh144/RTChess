@@ -3080,3 +3080,74 @@
 [PLAY_MODE] 2026-02-26 08:48:36
 [ERROR] Assets/Scripts/Editor/GameSFXAutoAssign.cs(33,9): error CS0103: The name 'TryClear' does not exist in the current context
 
+[PLAY_MODE] 2026-02-26 18:51:30
+[ERROR] Assets/Scripts/Data/EconomyBalanceConfig.cs(67,21): error CS0246: The type or namespace name 'PlacementCost' could not be found (are you missing a using directive or an assembly reference?)
+
+[PLAY_MODE] 2026-02-27 13:33:15
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+[EXCEPTION] UnassignedReferenceException: The variable material of TMP_SpriteAsset has not been assigned.
+
+[PLAY_MODE] 2026-02-27 17:17:06
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+
+[PLAY_MODE] 2026-03-20 15:19:54
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+[EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
+

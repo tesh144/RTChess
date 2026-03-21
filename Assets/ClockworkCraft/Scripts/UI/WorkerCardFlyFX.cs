@@ -42,7 +42,7 @@ namespace LittleCafe
 
         [Header("Visual")]
         [Tooltip("Size of the particle icon.")]
-        public float iconSize = 48f;
+        public float iconSize = 96f;
 
         // Pool
         private Canvas canvas;
@@ -78,6 +78,19 @@ namespace LittleCafe
             if (workerData == null) return;
 
             StartCoroutine(WorkerFlyCoroutine(worldPosition, workerData, index));
+        }
+
+        /// <summary>
+        /// Spawn a card icon that flies from worldPosition to the dock bar.
+        /// On arrival, adds the UnitStats card directly to DockBarManager.
+        /// Used by RandomBuilding production output (Statue building).
+        /// </summary>
+        public void SpawnCardFly(Vector3 worldPosition, ClockworkGrid.UnitStats cardStats, int index = 0)
+        {
+            if (canvas == null || mainCamera == null) return;
+            if (cardStats == null) return;
+
+            StartCoroutine(CardFlyCoroutine(worldPosition, cardStats, index));
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -147,29 +160,31 @@ namespace LittleCafe
             // ── Phase 2: Hang briefly ─────────────────────────────────────
             yield return new WaitForSeconds(hangDuration);
 
-            // ── Phase 3: Fly to dock bar ──────────────────────────────────
+            // ── Phase 3: Fly to dock bar (card container area) ─────────────
             Vector2 flyStart = burstTarget;
 
-            // Target: dock bar area (bottom center of screen)
+            // Target: where the next card will appear in the hand
             Vector2 flyEnd;
             DockBarManager dock = DockBarManager.Instance;
-            if (dock != null)
+            if (dock != null && dock.CardContainer != null)
             {
-                // Get dock bar's screen position
-                RectTransform dockRect = dock.GetComponent<RectTransform>();
-                if (dockRect != null)
+                // Target the card container — that's where cards actually live
+                RectTransform containerRect = dock.CardContainer.GetComponent<RectTransform>();
+                if (containerRect != null)
                 {
-                    Vector3 dockScreenPos = RectTransformUtility.WorldToScreenPoint(
+                    // Aim for the right edge of existing cards (where the new card will appear)
+                    // Use the container's world position, offset right by the number of cards
+                    Vector3 targetWorldPos = containerRect.position;
+                    Vector3 targetScreenPos = RectTransformUtility.WorldToScreenPoint(
                         canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
-                        dockRect.position);
+                        targetWorldPos);
                     RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                        canvasRect, dockScreenPos,
+                        canvasRect, targetScreenPos,
                         canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
                         out flyEnd);
                 }
                 else
                 {
-                    // Fallback: bottom center
                     flyEnd = new Vector2(0f, -canvasRect.rect.height * 0.4f);
                 }
             }
@@ -217,6 +232,125 @@ namespace LittleCafe
             CameraSystemLocator.Current?.Shake(0.08f, 0.15f);
 
             // Return to pool
+            cg.alpha = 0f;
+            obj.SetActive(false);
+            pool.Enqueue(obj);
+        }
+
+        /// <summary>
+        /// Fly coroutine for a generic UnitStats card (RandomBuilding output).
+        /// Reuses the same burst → hang → arc-fly → arrival pattern as workers,
+        /// but on arrival adds the card directly via DockBarManager.AddCard().
+        /// </summary>
+        private IEnumerator CardFlyCoroutine(Vector3 worldPos, ClockworkGrid.UnitStats cardStats, int index)
+        {
+            if (index > 0)
+                yield return new WaitForSeconds(index * 0.08f);
+
+            Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+            if (screenPos.z < 0) yield break;
+
+            GameObject obj = GetFromPool();
+            RectTransform rect = obj.GetComponent<RectTransform>();
+            CanvasGroup cg = obj.GetComponent<CanvasGroup>();
+            if (cg == null) cg = obj.AddComponent<CanvasGroup>();
+
+            // Set the card icon
+            Image img = obj.GetComponent<Image>();
+            if (img != null && cardStats.iconSprite != null)
+            {
+                img.sprite = cardStats.iconSprite;
+                img.color = Color.white;
+            }
+
+            cg.alpha = 1f;
+            obj.SetActive(true);
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                canvasRect, screenPos,
+                canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
+                out Vector2 startLocal);
+
+            // Phase 1: Burst upward
+            float angle = Random.Range(-30f, 30f);
+            Vector2 burstOffset = new Vector2(
+                Mathf.Sin(angle * Mathf.Deg2Rad) * burstRadius * 40f,
+                burstHeight * 60f);
+            Vector2 burstTarget = startLocal + burstOffset;
+
+            float elapsed = 0f;
+            while (elapsed < burstDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / burstDuration);
+                float eased = 1f - (1f - t) * (1f - t);
+                rect.anchoredPosition = Vector2.Lerp(startLocal, burstTarget, eased);
+                float scale = Mathf.Lerp(0.3f, 1.1f, eased);
+                rect.localScale = Vector3.one * scale;
+                yield return null;
+            }
+
+            rect.anchoredPosition = burstTarget;
+            rect.localScale = Vector3.one;
+
+            // Phase 2: Hang
+            yield return new WaitForSeconds(hangDuration);
+
+            // Phase 3: Fly to dock
+            Vector2 flyStart = burstTarget;
+            Vector2 flyEnd;
+            ClockworkGrid.DockBarManager dock = ClockworkGrid.DockBarManager.Instance;
+            if (dock != null && dock.CardContainer != null)
+            {
+                RectTransform containerRect = dock.CardContainer.GetComponent<RectTransform>();
+                if (containerRect != null)
+                {
+                    Vector3 targetWorldPos = containerRect.position;
+                    Vector3 targetScreenPos = RectTransformUtility.WorldToScreenPoint(
+                        canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
+                        targetWorldPos);
+                    RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                        canvasRect, targetScreenPos,
+                        canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
+                        out flyEnd);
+                }
+                else
+                {
+                    flyEnd = new Vector2(0f, -canvasRect.rect.height * 0.4f);
+                }
+            }
+            else
+            {
+                flyEnd = new Vector2(0f, -canvasRect.rect.height * 0.4f);
+            }
+
+            elapsed = 0f;
+            while (elapsed < flyDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / flyDuration);
+                float eased = t * t * (3f - 2f * t);
+                Vector2 pos = Vector2.Lerp(flyStart, flyEnd, eased);
+                float arc = Mathf.Sin(t * Mathf.PI) * flyCurveHeight;
+                pos.y += arc;
+                rect.anchoredPosition = pos;
+                float scale = t < 0.8f ? 1f : Mathf.Lerp(1f, 0.5f, (t - 0.8f) / 0.2f);
+                rect.localScale = Vector3.one * scale;
+                cg.alpha = t < 0.9f ? 1f : Mathf.Lerp(1f, 0.7f, (t - 0.9f) / 0.1f);
+                yield return null;
+            }
+
+            // Phase 4: Arrival — add drawn card to hand
+            if (ClockworkGrid.DockBarManager.Instance != null)
+            {
+                ClockworkGrid.DockBarManager.Instance.AddCard(cardStats, markAsNew: true);
+            }
+
+            if (ClockworkGrid.GameSFXManager.Instance != null)
+                ClockworkGrid.GameSFXManager.Instance.PlaySuccess();
+
+            CameraSystemLocator.Current?.Shake(0.08f, 0.15f);
+
             cg.alpha = 0f;
             obj.SetActive(false);
             pool.Enqueue(obj);

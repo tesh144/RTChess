@@ -101,8 +101,8 @@ namespace ClockworkCraft
         // ─────────────────────────────────────────────────────────────────
 
         [Header("Grid Settings")]
-        public int mapWidth = 40;
-        public int mapHeight = 40;
+        public int mapWidth = 80;
+        public int mapHeight = 80;
         public float cellSize = 1.5f;
 
         [Header("Map Settings")]
@@ -122,6 +122,7 @@ namespace ClockworkCraft
         public BuildingDatabase buildingDatabase;
         public FurnitureDatabase furnitureDatabase;
         public CurrencyDatabase currencyDatabase;
+        public ClockworkGrid.EconomyBalanceConfig economyBalanceConfig;
 
         [Tooltip("When true, the dock bar uses FurnitureDatabase (tables, chairs) instead of Workers + Buildings. For demo/testing.")]
         public bool useFurnitureDeck = false;
@@ -164,15 +165,25 @@ namespace ClockworkCraft
             EnsureManagers();
             SetupDeck();
 
-            var gate = FindObjectOfType<LittleCafe.GameStartGate>();
-            if (gate != null)
+            // TitleScreenController's onGameStart UnityEvent should call RunGenerate()
+            // via the Inspector. If no title screen exists, fall back to runtime hookup.
+            var titleScreen = FindObjectOfType<ClockworkGrid.TitleScreenController>(true);
+            if (titleScreen != null)
             {
-                gate.OnGameStart += RunGenerate;
-                Debug.Log("[MapGenV2] Waiting for GameStartGate...");
+                Debug.Log("[MapGenV2] TitleScreenController found — waiting for onGameStart event...");
             }
             else
             {
-                RunGenerate();
+                var gate = FindObjectOfType<LittleCafe.GameStartGate>();
+                if (gate != null)
+                {
+                    gate.OnGameStart += RunGenerate;
+                    Debug.Log("[MapGenV2] Waiting for GameStartGate...");
+                }
+                else
+                {
+                    RunGenerate();
+                }
             }
         }
 
@@ -212,6 +223,32 @@ namespace ClockworkCraft
             if (ResourceTokenManager.Instance == null)
                 new GameObject("ResourceTokenManager").AddComponent<ResourceTokenManager>();
 
+            // Auto-discover EconomyBalanceConfig if not assigned in Inspector
+            if (economyBalanceConfig == null)
+            {
+#if UNITY_EDITOR
+                var guids = UnityEditor.AssetDatabase.FindAssets("t:EconomyBalanceConfig");
+                if (guids.Length > 0)
+                {
+                    string assetPath = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[0]);
+                    economyBalanceConfig = UnityEditor.AssetDatabase.LoadAssetAtPath<ClockworkGrid.EconomyBalanceConfig>(assetPath);
+                    Debug.Log($"[MapGenV2] Auto-discovered EconomyBalanceConfig at {assetPath}");
+                }
+#endif
+            }
+
+            // Ensure economy manager (centralized placement cost balancing)
+            if (ClockworkGrid.EconomyManager.Instance == null)
+            {
+                var em = new GameObject("EconomyManager").AddComponent<ClockworkGrid.EconomyManager>();
+                if (economyBalanceConfig != null)
+                    em.balanceConfig = economyBalanceConfig;
+            }
+            else if (ClockworkGrid.EconomyManager.Instance.balanceConfig == null && economyBalanceConfig != null)
+            {
+                ClockworkGrid.EconomyManager.Instance.balanceConfig = economyBalanceConfig;
+            }
+
             // Ensure resource display UI
             if (FindObjectOfType<ResourceDisplayUI>(true) == null)
                 new GameObject("ResourceDisplayUI").AddComponent<ResourceDisplayUI>();
@@ -219,6 +256,14 @@ namespace ClockworkCraft
             // Ensure loot particle FX
             if (FindObjectOfType<ResourceLootFX>(true) == null)
                 new GameObject("ResourceLootFX").AddComponent<ResourceLootFX>();
+
+            // Ensure placement cost display (floating cost above drop location during drag)
+            if (LittleCafe.PlacementCostDisplay.Instance == null)
+                new GameObject("PlacementCostDisplay").AddComponent<LittleCafe.PlacementCostDisplay>();
+
+            // Ensure gameplay recorder (analytics for balancing)
+            if (LittleCafe.GameplayRecorder.Instance == null)
+                new GameObject("GameplayRecorder").AddComponent<LittleCafe.GameplayRecorder>();
 
             // Ensure building production manager
             if (FindObjectOfType<BuildingProductionManager>(true) == null)
@@ -406,10 +451,33 @@ namespace ClockworkCraft
                 Debug.Log("[MapGenV2] DockBarManager initialized (free draws)");
             }
 
-            // Give the player one starting worker card
+            // ── Starting hand: Worker, Tent, Statue ──────────────────────
+            // Worker comes from WorkerDatabase; Tent and Statue from the
+            // deckStats we just built (which are already registered with
+            // RaritySystem).  We look them up by unitName.
+
             if (workerDatabase != null && workerDatabase.Count > 0)
             {
                 dockManager.AddStartingWorker(workerDatabase);
+            }
+
+            // Add Tent (ConeTent) and Statue as starting cards
+            string[] startingBuildings = { "ConeTent", "Statue" };
+            foreach (string name in startingBuildings)
+            {
+                UnitStats match = deckStats.Find(s => s.unitName == name);
+                if (match != null)
+                {
+                    // Clone so the hand card is independent from the draw pool
+                    UnitStats clone = Instantiate(match);
+                    clone.name = match.unitName;
+                    dockManager.AddCard(clone, markAsNew: true);
+                    Debug.Log($"[MapGenV2] Added starting card '{name}' to hand");
+                }
+                else
+                {
+                    Debug.LogWarning($"[MapGenV2] Starting card '{name}' not found in deck — skipping");
+                }
             }
         }
 
@@ -594,7 +662,10 @@ namespace ClockworkCraft
         // Generation
         // ─────────────────────────────────────────────────────────────────
 
-        void RunGenerate()
+        /// <summary>
+        /// Starts map generation. Wire to TitleScreenController's onGameStart in the Inspector.
+        /// </summary>
+        public void RunGenerate()
         {
             StartCoroutine(RunGenerateCoroutine());
         }
@@ -679,7 +750,7 @@ namespace ClockworkCraft
             FogManager.Instance?.Initialize(width, height);
             if (enableFog)
             {
-                FogManager.Instance?.RevealRadius(center.x, center.y, startingRevealRadius);
+                FogManager.Instance?.RevealCross(center.x, center.y, startingRevealRadius);
             }
             else
             {

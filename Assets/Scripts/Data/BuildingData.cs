@@ -25,7 +25,8 @@ namespace LittleCafe
     {
         None,       // No production
         Worker,     // Produces a worker card for the player's hand
-        Currency    // Produces currency that flies to the currency bar
+        Currency,   // Produces currency that flies to the currency bar
+        RandomBuilding  // Draws a random card from the deck (same as draw button)
     }
 
     /// <summary>

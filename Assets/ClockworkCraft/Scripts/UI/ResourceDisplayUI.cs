@@ -2,38 +2,38 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using ClockworkGrid;
 
 namespace ClockworkCraft
 {
     /// <summary>
-    /// Sprite-icon-based resource display in the bottom-left corner.
-    /// Shows only non-zero resources as [icon] [amount] pairs.
-    /// Uses CurrencyDatabase icons when available, falls back to emoji text.
+    /// Manages the currency display bar.
     ///
-    /// Layout: horizontal row of (Image + TMP_Text) pairs, auto-hidden when empty.
+    /// How it works:
+    /// 1. Finds the "Currency Bar" container in the scene hierarchy (child of the Lobby panel)
+    /// 2. Removes all demo CurrencyHolder children placed in the scene (preserves Button_Add)
+    /// 3. For each currency the player currently owns (amount > 0), clones the CurrencyHolder prefab
+    /// 4. Each clone's TMP text is set to: <sprite name="Gold"> 20  (inline icon + amount)
+    /// 5. Slots appear when a resource is first earned, and hide when it reaches 0
+    ///
+    /// The CurrencyHolder prefab already has font, color, size, and TMP_SpriteAsset baked in.
+    /// We clone it exactly as-is and only change the text content.
+    ///
+    /// Singleton — lives on a scene GameObject (typically alongside MapGeneratorV2).
     /// </summary>
     public class ResourceDisplayUI : MonoBehaviour
     {
         public static ResourceDisplayUI Instance { get; private set; }
 
-        private RectTransform container;
-        private Image backgroundImage;
-        private CanvasGroup canvasGroup;
-        private HorizontalLayoutGroup layoutGroup;
+        [Header("Prefab")]
+        [Tooltip("CurrencyHolder prefab — a TMP text object with sprite asset. Auto-found if not assigned.")]
+        [SerializeField] private GameObject currencyHolderPrefab;
+
+        // ── Runtime State ──────────────────────────────────────────────
+
+        private Transform currencyBarTransform;
         private CurrencyDatabase currencyDB;
-
-        // Per-resource UI elements
-        private class ResourceSlot
-        {
-            public GameObject root;
-            public Image icon;
-            public TextMeshProUGUI label;
-            public TextMeshProUGUI emojiLabel; // Fallback when no sprite
-        }
-        private Dictionary<ResourceType, ResourceSlot> slots = new Dictionary<ResourceType, ResourceSlot>();
-
-        // Cached resource values
-        private Dictionary<ResourceType, int> resourceValues = new Dictionary<ResourceType, int>();
+        private readonly Dictionary<ResourceType, CurrencySlotUI> activeSlots = new Dictionary<ResourceType, CurrencySlotUI>();
         private bool isDirty = true;
 
         // Display order for resources (determines left-to-right ordering)
@@ -50,41 +50,7 @@ namespace ClockworkCraft
             ResourceType.GoldBag, ResourceType.Approval, ResourceType.Heart,
         };
 
-        // Hardcoded emoji fallbacks (used when CurrencyDatabase icon isn't available)
-        private static readonly Dictionary<ResourceType, string> FallbackEmojis = new Dictionary<ResourceType, string>
-        {
-            { ResourceType.Gold,        "\U0001F4B0" }, // 💰
-            { ResourceType.Wood,        "\U0001F332" }, // 🌲
-            { ResourceType.Food,        "\U0001F344" }, // 🍄
-            { ResourceType.Stone,       "\U0001FAA8" }, // 🪨
-            { ResourceType.Water,       "\U0001F4A7" }, // 💧
-            { ResourceType.Clay,        "\U0001F9F1" }, // 🧱
-            { ResourceType.Flowers,     "\U0001F33B" }, // 🌻
-            { ResourceType.Gem,         "\U0001F48E" }, // 💎
-            { ResourceType.Copper,      "\U0001FA99" }, // 🪙
-            { ResourceType.Ore,         "\u2692"      }, // ⚒
-            { ResourceType.WhiteMarble, "\U0001F9CA" }, // 🧊
-            { ResourceType.Moonstone,   "\U0001F319" }, // 🌙
-            { ResourceType.Bark,        "\U0001FAB5" }, // 🪵
-            { ResourceType.Twig,        "\U0001FAB9" }, // 🪹
-            { ResourceType.Acorn,       "\U0001F330" }, // 🌰
-            { ResourceType.Leaf,        "\U0001F343" }, // 🍃
-            { ResourceType.Grass,       "\U0001F33F" }, // 🌿
-            { ResourceType.Petal,       "\U0001F338" }, // 🌸
-            { ResourceType.Rice,        "\U0001F33E" }, // 🌾
-            { ResourceType.Coconut,     "\U0001F965" }, // 🥥
-            { ResourceType.Carrot,      "\U0001F955" }, // 🥕
-            { ResourceType.Tomato,      "\U0001F345" }, // 🍅
-            { ResourceType.Meat,        "\U0001F356" }, // 🍖
-            { ResourceType.Meat2,       "\U0001F969" }, // 🥩
-            { ResourceType.Meat3,       "\U0001F357" }, // 🍗
-            { ResourceType.Boar,        "\U0001F417" }, // 🐗
-            { ResourceType.Fish,        "\U0001F41F" }, // 🐟
-            { ResourceType.Pumpkin,     "\U0001F383" }, // 🎃
-            { ResourceType.GoldBag,     "\U0001F4B0" }, // 💰
-            { ResourceType.Approval,    "\U0001F44D" }, // 👍
-            { ResourceType.Heart,       "\U0001F49C" }, // 💜
-        };
+        // ── Lifecycle ──────────────────────────────────────────────────
 
         void Awake()
         {
@@ -92,86 +58,29 @@ namespace ClockworkCraft
             Instance = this;
         }
 
-        /// <summary>
-        /// Search multiple sources to find the CurrencyDatabase.
-        /// </summary>
-        private CurrencyDatabase FindCurrencyDatabase()
-        {
-            // 1. Try via MapGeneratorV2
-            var mapGen = FindObjectOfType<MapGeneratorV2>();
-            if (mapGen != null && mapGen.currencyDatabase != null)
-                return mapGen.currencyDatabase;
-
-            // 2. Try via ResourceManager
-            if (ResourceManager.Instance != null && ResourceManager.Instance.currencyDatabase != null)
-                return ResourceManager.Instance.currencyDatabase;
-
-            // 3. Try FindObjectOfType on all ScriptableObjects loaded in memory
-            var dbs = Resources.FindObjectsOfTypeAll<CurrencyDatabase>();
-            if (dbs.Length > 0) return dbs[0];
-
-            return null;
-        }
-
-        private int CountIcons(CurrencyDatabase db)
-        {
-            int count = 0;
-            foreach (var c in db.AllCurrencies)
-                if (c.HasIcon) count++;
-            return count;
-        }
-
         void Start()
         {
-            // Find CurrencyDatabase — try multiple sources
             currencyDB = FindCurrencyDatabase();
             if (currencyDB != null)
-                Debug.Log($"[ResourceDisplayUI] Found CurrencyDatabase with {currencyDB.Count} entries, icons: {CountIcons(currencyDB)}");
-            else
-                Debug.LogWarning("[ResourceDisplayUI] No CurrencyDatabase found — icons will be blank");
+                Debug.Log($"[ResourceDisplayUI] Found CurrencyDatabase with {currencyDB.Count} entries");
 
-            BuildUI();
+            // Auto-find CurrencyHolder prefab if not assigned in Inspector
+            if (currencyHolderPrefab == null)
+                currencyHolderPrefab = FindCurrencyHolderPrefab();
 
-            // Subscribe to resource changes
+            FindCurrencyBar();
+
+            if (currencyHolderPrefab == null)
+                Debug.LogError("[ResourceDisplayUI] CurrencyHolder prefab not found! Assign it in Inspector or place it at Assets/Prefabs/UI/CurrencyHolder.");
+
             if (ResourceManager.Instance != null)
             {
                 ResourceManager.Instance.OnResourceChanged += OnResourceChanged;
-                SyncFromManager();
+                SyncAllFromManager();
             }
             else
             {
                 StartCoroutine(WaitForResourceManager());
-            }
-        }
-
-        private void SyncFromManager()
-        {
-            var rm = ResourceManager.Instance;
-            foreach (var type in DisplayOrder)
-            {
-                resourceValues[type] = rm.GetResource(type);
-            }
-            isDirty = true;
-        }
-
-        private System.Collections.IEnumerator WaitForResourceManager()
-        {
-            float timeout = 5f;
-            float elapsed = 0f;
-            while (ResourceManager.Instance == null && elapsed < timeout)
-            {
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
-
-            if (ResourceManager.Instance != null)
-            {
-                ResourceManager.Instance.OnResourceChanged += OnResourceChanged;
-                SyncFromManager();
-            }
-            else
-            {
-                Debug.LogWarning("[ResourceDisplayUI] ResourceManager not found after timeout");
             }
         }
 
@@ -190,62 +99,214 @@ namespace ClockworkCraft
             }
         }
 
-        private void OnResourceChanged(ResourceType type, int newTotal)
-        {
-            resourceValues[type] = newTotal;
-            isDirty = true;
-        }
+        // ── Find Currency Bar ──────────────────────────────────────────
 
-        private void RefreshDisplay()
+        /// <summary>
+        /// Finds the "Currency Bar" Transform in the scene.
+        /// Searches under any Canvas for a GameObject named "Currency Bar".
+        /// </summary>
+        private void FindCurrencyBar()
         {
-            bool hasAny = false;
-
-            foreach (var type in DisplayOrder)
+            // Search all transforms for "Currency Bar"
+            var allTransforms = FindObjectsOfType<Transform>(true);
+            foreach (var t in allTransforms)
             {
-                if (!slots.TryGetValue(type, out ResourceSlot slot)) continue;
-
-                bool show = resourceValues.TryGetValue(type, out int amount) && amount > 0;
-                slot.root.SetActive(show);
-
-                if (show)
+                if (t.name == "Currency Bar")
                 {
-                    slot.label.text = amount.ToString();
-                    hasAny = true;
+                    currencyBarTransform = t;
+                    Debug.Log($"[ResourceDisplayUI] Found 'Currency Bar' under '{t.parent?.name ?? "root"}'");
+
+                    // Remove ALL demo CurrencyHolder children and any previously
+                    // dynamically-created slots. Scene has: "CurrencyHolder",
+                    // "CurrencyHolder (1)", "CurrencyHolder (2)", "CurrencyHolder (3)".
+                    // Preserve Button_Add and anything else that isn't a currency slot.
+                    for (int i = currencyBarTransform.childCount - 1; i >= 0; i--)
+                    {
+                        Transform child = currencyBarTransform.GetChild(i);
+                        if (child.name.StartsWith("Currency"))
+                            Destroy(child.gameObject);
+                    }
+                    return;
                 }
             }
 
-            if (canvasGroup != null)
-                canvasGroup.alpha = hasAny ? 1f : 0f;
-
-            // Auto-size background to fit visible content
-            if (hasAny)
-                LayoutRebuilder.ForceRebuildLayoutImmediate(container);
+            Debug.LogWarning("[ResourceDisplayUI] 'Currency Bar' not found in scene — creating fallback");
+            BuildFallbackCurrencyBar();
         }
 
-        // ─────────────────────────────────────────────────────────────────
-        // Public API
-        // ─────────────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Returns the RectTransform of the container panel (for loot flyout targeting).
-        /// </summary>
-        public RectTransform GetContainerRect() => container;
-
-        /// <summary>
-        /// Get the emoji string for a resource type. Prefers CurrencyDatabase, falls back to hardcoded.
-        /// (Kept for ResourceLootFX and other callers that need emoji text.)
-        /// </summary>
-        public static string GetEmojiForResource(ResourceType type)
+        private void BuildFallbackCurrencyBar()
         {
-            // Try CurrencyDatabase first (via singleton instance)
-            if (Instance != null && Instance.currencyDB != null)
+            Canvas targetCanvas = null;
+            Canvas[] allCanvases = FindObjectsOfType<Canvas>(true);
+            foreach (var c in allCanvases)
             {
-                var data = Instance.currencyDB.GetByType(type);
-                if (data != null && !string.IsNullOrEmpty(data.fallbackEmoji))
-                    return data.fallbackEmoji;
+                if (c.gameObject.activeInHierarchy && c.isRootCanvas)
+                {
+                    targetCanvas = c;
+                    break;
+                }
+            }
+            if (targetCanvas == null && allCanvases.Length > 0)
+                targetCanvas = allCanvases[0];
+            if (targetCanvas == null) return;
+
+            GameObject bar = new GameObject("Currency Bar");
+            bar.transform.SetParent(targetCanvas.transform, false);
+
+            RectTransform barRect = bar.AddComponent<RectTransform>();
+            barRect.anchorMin = new Vector2(1f, 1f);
+            barRect.anchorMax = new Vector2(1f, 1f);
+            barRect.pivot = new Vector2(1f, 1f);
+            barRect.anchoredPosition = new Vector2(-20f, -20f);
+            barRect.sizeDelta = new Vector2(0f, 50f);
+
+            HorizontalLayoutGroup hlg = bar.AddComponent<HorizontalLayoutGroup>();
+            hlg.childAlignment = TextAnchor.MiddleRight;
+            hlg.spacing = 12f;
+            hlg.padding = new RectOffset(8, 8, 4, 4);
+            hlg.childForceExpandWidth = false;
+            hlg.childForceExpandHeight = false;
+
+            ContentSizeFitter fitter = bar.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            currencyBarTransform = bar.transform;
+            Debug.Log("[ResourceDisplayUI] Created fallback 'Currency Bar' on Canvas");
+        }
+
+        // ── Slot Management ─────────────────────────────────────────────
+
+        /// <summary>
+        /// Creates a slot for a resource type by cloning the CurrencyHolder prefab.
+        /// Inserts at the correct position based on DisplayOrder.
+        /// </summary>
+        private CurrencySlotUI CreateSlot(ResourceType type)
+        {
+            if (currencyBarTransform == null || currencyHolderPrefab == null)
+            {
+                if (currencyHolderPrefab == null)
+                    Debug.LogError($"[ResourceDisplayUI] Cannot create slot for {type} — no CurrencyHolder prefab!");
+                return null;
             }
 
-            return FallbackEmojis.TryGetValue(type, out string emoji) ? emoji : "\u2728";
+            // Clone the CurrencyHolder prefab exactly as-is.
+            // The prefab has the correct font, color, size, and TMP_SpriteAsset.
+            GameObject slotObj = Instantiate(currencyHolderPrefab, currencyBarTransform, false);
+            slotObj.name = $"Currency_{type}";
+
+            CurrencySlotUI slot = slotObj.AddComponent<CurrencySlotUI>();
+            slot.Initialize(type);
+
+            // Set sibling index based on display order
+            int targetIndex = GetDisplayOrderIndex(type);
+            int siblingIndex = 0;
+            for (int i = 0; i < currencyBarTransform.childCount; i++)
+            {
+                var existingSlot = currencyBarTransform.GetChild(i).GetComponent<CurrencySlotUI>();
+                if (existingSlot != null && GetDisplayOrderIndex(existingSlot.ResourceType) < targetIndex)
+                    siblingIndex = i + 1;
+            }
+            slotObj.transform.SetSiblingIndex(siblingIndex);
+
+            activeSlots[type] = slot;
+            Debug.Log($"[ResourceDisplayUI] Created slot for {type} at index {siblingIndex}");
+            return slot;
+        }
+
+        private int GetDisplayOrderIndex(ResourceType type)
+        {
+            for (int i = 0; i < DisplayOrder.Length; i++)
+                if (DisplayOrder[i] == type) return i;
+            return DisplayOrder.Length;
+        }
+
+        // ── Resource Change Handling ────────────────────────────────────
+
+        private void OnResourceChanged(ResourceType type, int newTotal)
+        {
+            isDirty = true;
+        }
+
+        private void SyncAllFromManager()
+        {
+            isDirty = true;
+        }
+
+        private System.Collections.IEnumerator WaitForResourceManager()
+        {
+            float timeout = 5f;
+            float elapsed = 0f;
+            while (ResourceManager.Instance == null && elapsed < timeout)
+            {
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            if (ResourceManager.Instance != null)
+            {
+                ResourceManager.Instance.OnResourceChanged += OnResourceChanged;
+                SyncAllFromManager();
+            }
+            else
+            {
+                Debug.LogWarning("[ResourceDisplayUI] ResourceManager not found after timeout");
+            }
+        }
+
+        /// <summary>
+        /// Rebuilds the visible state of the currency bar.
+        /// Creates new slots for newly-earned currencies, updates amounts, hides empty ones.
+        /// </summary>
+        private void RefreshDisplay()
+        {
+            if (ResourceManager.Instance == null) return;
+
+            foreach (var type in DisplayOrder)
+            {
+                int amount = ResourceManager.Instance.GetResource(type);
+
+                if (amount > 0)
+                {
+                    // Ensure slot exists
+                    if (!activeSlots.TryGetValue(type, out CurrencySlotUI slot) || slot == null)
+                    {
+                        slot = CreateSlot(type);
+                        if (slot == null) continue;
+                    }
+
+                    slot.UpdateAmount(amount);
+                    slot.gameObject.SetActive(true);
+                }
+                else
+                {
+                    // Hide slot if it exists
+                    if (activeSlots.TryGetValue(type, out CurrencySlotUI slot) && slot != null)
+                    {
+                        slot.gameObject.SetActive(false);
+                    }
+                }
+            }
+        }
+
+        // ── Public API ─────────────────────────────────────────────────
+
+        /// <summary>
+        /// Returns the RectTransform of the Currency Bar (for loot flyout targeting).
+        /// </summary>
+        public RectTransform GetContainerRect()
+        {
+            return currencyBarTransform != null ? currencyBarTransform.GetComponent<RectTransform>() : null;
+        }
+
+        /// <summary>
+        /// Get the RectTransform of a specific currency slot (for loot fly targeting per-resource).
+        /// </summary>
+        public RectTransform GetSlotRect(ResourceType type)
+        {
+            if (activeSlots.TryGetValue(type, out CurrencySlotUI slot) && slot != null)
+                return slot.GetComponent<RectTransform>();
+            return GetContainerRect();
         }
 
         /// <summary>
@@ -258,154 +319,70 @@ namespace ClockworkCraft
             return null;
         }
 
-        // ─────────────────────────────────────────────────────────────────
-        // UI Construction
-        // ─────────────────────────────────────────────────────────────────
-
-        private void BuildUI()
+        /// <summary>
+        /// Get the emoji string for a resource type.
+        /// </summary>
+        public static string GetEmojiForResource(ResourceType type)
         {
-            Canvas canvas = FindObjectOfType<Canvas>();
-            if (canvas == null)
+            if (Instance != null && Instance.currencyDB != null)
             {
-                Debug.LogWarning("[ResourceDisplayUI] No Canvas found!");
-                return;
+                var data = Instance.currencyDB.GetByType(type);
+                if (data != null && !string.IsNullOrEmpty(data.fallbackEmoji))
+                    return data.fallbackEmoji;
             }
-
-            // ── Container panel (bottom-left) ───────────────────────────
-            GameObject panel = new GameObject("ResourceDisplayPanel");
-            panel.transform.SetParent(canvas.transform, false);
-
-            container = panel.AddComponent<RectTransform>();
-            container.anchorMin = new Vector2(0f, 1f);
-            container.anchorMax = new Vector2(0f, 1f);
-            container.pivot = new Vector2(0f, 1f);
-            container.anchoredPosition = new Vector2(16f, -16f);
-            container.sizeDelta = new Vector2(0f, 44f); // Width auto-sized by layout
-
-            backgroundImage = panel.AddComponent<Image>();
-            backgroundImage.color = new Color(0f, 0f, 0f, 0.45f);
-
-            canvasGroup = panel.AddComponent<CanvasGroup>();
-            canvasGroup.alpha = 0f;
-            canvasGroup.blocksRaycasts = false;
-            canvasGroup.interactable = false;
-
-            // Horizontal layout for icon+amount pairs
-            layoutGroup = panel.AddComponent<HorizontalLayoutGroup>();
-            layoutGroup.childAlignment = TextAnchor.MiddleLeft;
-            layoutGroup.spacing = 12f;
-            layoutGroup.padding = new RectOffset(10, 10, 4, 4);
-            layoutGroup.childForceExpandWidth = false;
-            layoutGroup.childForceExpandHeight = false;
-
-            // Content size fitter to auto-shrink container to content
-            ContentSizeFitter fitter = panel.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            // ── Create a slot for each resource type ────────────────────
-            foreach (var type in DisplayOrder)
-            {
-                var slot = CreateResourceSlot(panel.transform, type);
-                slots[type] = slot;
-                slot.root.SetActive(false); // Hidden until non-zero
-            }
-
-            Debug.Log("[ResourceDisplayUI] UI built — bottom-left sprite icon resource bar");
+            return "\u2728";
         }
 
-        private ResourceSlot CreateResourceSlot(Transform parent, ResourceType type)
+        // ── Prefab Resolution ─────────────────────────────────────────
+
+        /// <summary>
+        /// Auto-finds the CurrencyHolder prefab if not assigned in Inspector.
+        /// Searches loaded assets for a GameObject named "CurrencyHolder".
+        /// </summary>
+        private static GameObject FindCurrencyHolderPrefab()
         {
-            ResourceSlot slot = new ResourceSlot();
-
-            // Root container for this resource pair
-            GameObject root = new GameObject($"Res_{type}");
-            root.transform.SetParent(parent, false);
-
-            RectTransform rootRect = root.AddComponent<RectTransform>();
-            rootRect.sizeDelta = new Vector2(0f, 36f);
-
-            HorizontalLayoutGroup hlg = root.AddComponent<HorizontalLayoutGroup>();
-            hlg.childAlignment = TextAnchor.MiddleLeft;
-            hlg.spacing = 4f;
-            hlg.childForceExpandWidth = false;
-            hlg.childForceExpandHeight = false;
-
-            ContentSizeFitter rootFitter = root.AddComponent<ContentSizeFitter>();
-            rootFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            rootFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            slot.root = root;
-
-            // Try to get sprite from CurrencyDatabase
-            Sprite iconSprite = null;
-            if (currencyDB != null)
-                iconSprite = currencyDB.GetIcon(type);
-
-            if (iconSprite != null)
+            // Search all loaded GameObjects for the prefab
+            var allGOs = Resources.FindObjectsOfTypeAll<GameObject>();
+            foreach (var go in allGOs)
             {
-                // ── Sprite icon ─────────────────────────────────────────
-                GameObject iconObj = new GameObject("Icon");
-                iconObj.transform.SetParent(root.transform, false);
-
-                RectTransform iconRect = iconObj.AddComponent<RectTransform>();
-                iconRect.sizeDelta = new Vector2(28f, 28f);
-
-                LayoutElement iconLayout = iconObj.AddComponent<LayoutElement>();
-                iconLayout.preferredWidth = 28f;
-                iconLayout.preferredHeight = 28f;
-
-                Image iconImage = iconObj.AddComponent<Image>();
-                iconImage.sprite = iconSprite;
-                iconImage.preserveAspect = true;
-
-                slot.icon = iconImage;
-            }
-            else
-            {
-                // ── Emoji text fallback ─────────────────────────────────
-                GameObject emojiObj = new GameObject("Emoji");
-                emojiObj.transform.SetParent(root.transform, false);
-
-                RectTransform emojiRect = emojiObj.AddComponent<RectTransform>();
-                emojiRect.sizeDelta = new Vector2(28f, 28f);
-
-                LayoutElement emojiLayout = emojiObj.AddComponent<LayoutElement>();
-                emojiLayout.preferredWidth = 28f;
-                emojiLayout.preferredHeight = 28f;
-
-                TextMeshProUGUI emojiText = emojiObj.AddComponent<TextMeshProUGUI>();
-                string emoji = FallbackEmojis.TryGetValue(type, out string e) ? e : "\u2728";
-                emojiText.text = emoji;
-                emojiText.fontSize = 20;
-                emojiText.alignment = TextAlignmentOptions.Center;
-                emojiText.enableAutoSizing = false;
-
-                slot.emojiLabel = emojiText;
+                if (go.name == "CurrencyHolder" && go.GetComponent<TextMeshProUGUI>() != null)
+                {
+                    // Verify it's a prefab (not a scene instance) by checking hideFlags
+                    // Prefab assets typically have HideInHierarchy set
+                    if (go.scene.name == null || !go.scene.isLoaded)
+                    {
+                        Debug.Log($"[ResourceDisplayUI] Auto-found CurrencyHolder prefab: {go.name}");
+                        return go;
+                    }
+                }
             }
 
-            // ── Amount text ─────────────────────────────────────────
-            GameObject textObj = new GameObject("Amount");
-            textObj.transform.SetParent(root.transform, false);
+            // Try Resources.Load
+            var loaded = Resources.Load<GameObject>("CurrencyHolder");
+            if (loaded != null)
+            {
+                Debug.Log("[ResourceDisplayUI] Found CurrencyHolder via Resources.Load");
+                return loaded;
+            }
 
-            LayoutElement textLayout = textObj.AddComponent<LayoutElement>();
-            textLayout.preferredHeight = 28f;
+            return null;
+        }
 
-            TextMeshProUGUI amountText = textObj.AddComponent<TextMeshProUGUI>();
-            amountText.text = "0";
-            amountText.fontSize = 20;
-            amountText.color = Color.white;
-            amountText.alignment = TextAlignmentOptions.MidlineLeft;
-            amountText.fontStyle = FontStyles.Bold;
-            amountText.enableAutoSizing = false;
-            amountText.overflowMode = TextOverflowModes.Overflow;
+        // ── Database Resolution ────────────────────────────────────────
 
-            amountText.outlineWidth = 0.15f;
-            amountText.outlineColor = new Color(0f, 0f, 0f, 0.8f);
+        private CurrencyDatabase FindCurrencyDatabase()
+        {
+            var mapGen = FindObjectOfType<MapGeneratorV2>();
+            if (mapGen != null && mapGen.currencyDatabase != null)
+                return mapGen.currencyDatabase;
 
-            slot.label = amountText;
+            if (ResourceManager.Instance != null && ResourceManager.Instance.currencyDatabase != null)
+                return ResourceManager.Instance.currencyDatabase;
 
-            return slot;
+            var dbs = Resources.FindObjectsOfTypeAll<CurrencyDatabase>();
+            if (dbs.Length > 0) return dbs[0];
+
+            return null;
         }
     }
 }

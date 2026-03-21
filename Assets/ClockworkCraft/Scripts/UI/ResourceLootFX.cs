@@ -43,7 +43,7 @@ namespace ClockworkCraft
 
         [Header("Visual")]
         [Tooltip("Size of the particle icon.")]
-        public float iconSize = 64f;
+        public float iconSize = 84f;
 
         // Pool — separate pools for sprite-based and text-based particles
         private Canvas canvas;
@@ -172,9 +172,10 @@ namespace ClockworkCraft
             Vector2 flyStart = burstTarget;
 
             Vector2 flyEnd;
-            if (ResourceDisplayUI.Instance != null && ResourceDisplayUI.Instance.GetContainerRect() != null)
+            if (ResourceDisplayUI.Instance != null && ResourceDisplayUI.Instance.GetSlotRect(resType) != null)
             {
-                RectTransform barRect = ResourceDisplayUI.Instance.GetContainerRect();
+                // Fly to the specific currency slot for this resource type
+                RectTransform barRect = ResourceDisplayUI.Instance.GetSlotRect(resType);
                 Vector3 barScreenPos = RectTransformUtility.WorldToScreenPoint(
                     canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
                     barRect.position);
