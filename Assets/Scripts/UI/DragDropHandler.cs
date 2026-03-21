@@ -505,7 +505,10 @@ namespace ClockworkGrid
             if (currentDraggingIcon?.UnitStats != null && currentDraggingIcon.UnitStats.isMealSource)
             {
                 if (unitObj.GetComponent<LittleCafe.MealBuffSource>() == null)
-                    unitObj.AddComponent<LittleCafe.MealBuffSource>();
+                {
+                    var mbs = unitObj.AddComponent<LittleCafe.MealBuffSource>();
+                    mbs.icon = currentDraggingIcon.UnitStats.iconSprite;
+                }
             }
 
             // Update furniture connectivity after placement

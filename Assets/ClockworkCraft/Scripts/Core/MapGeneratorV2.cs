@@ -257,6 +257,8 @@ namespace ClockworkCraft
             // Ensure loot particle FX
             if (FindFirstObjectByType<ResourceLootFX>() == null)
                 new GameObject("ResourceLootFX").AddComponent<ResourceLootFX>();
+            if (FindObjectOfType<IconFlyFX>(true) == null)
+                new GameObject("IconFlyFX").AddComponent<IconFlyFX>();
 
             // Ensure placement cost display (floating cost above drop location during drag)
             if (LittleCafe.PlacementCostDisplay.Instance == null)
