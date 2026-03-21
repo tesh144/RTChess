@@ -426,6 +426,7 @@ namespace ClockworkCraft
                     stats.productionIntervalBonus = data.productionIntervalBonus;
                     stats.producedResourceType    = data.producedResourceType;
                     stats.productionAmount        = data.productionAmount;
+                    stats.killerAdvances          = data.killerAdvances;
 
                     deckStats.Add(stats);
                     buildingCount++;

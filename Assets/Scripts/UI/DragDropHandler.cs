@@ -428,7 +428,7 @@ namespace ClockworkGrid
                     bool isActive = stats.isActive;
                     LittleCafe.GridEntityManager.Instance.AttachComponents(unitObj, hp, attackPower, isActive,
                         stats.lootResourceType, stats.lootHpCost, stats.lootYield, stats.behaviorType,
-                        registryName: stats.unitName, allied: stats.isAllied);
+                        registryName: stats.unitName, allied: stats.isAllied, killerAdvances: stats.killerAdvances);
                 }
             }
 
@@ -457,7 +457,7 @@ namespace ClockworkGrid
                     bool isActive = stats.isActive;
                     LittleCafe.GridEntityManager.Instance.AttachComponents(unitObj, hp, attackPower, isActive,
                         stats.lootResourceType, stats.lootHpCost, stats.lootYield, stats.behaviorType,
-                        registryName: stats.unitName, allied: stats.isAllied);
+                        registryName: stats.unitName, allied: stats.isAllied, killerAdvances: stats.killerAdvances);
                 }
             }
 

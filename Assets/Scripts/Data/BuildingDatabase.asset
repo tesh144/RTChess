@@ -18,6 +18,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     hp: 10
     attackPower: 0
     drawWeight: 0
@@ -39,6 +40,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     hp: 10
     attackPower: 0
     drawWeight: 0
@@ -60,6 +62,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     hp: 10
     attackPower: 0
     drawWeight: 0
@@ -81,6 +84,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     hp: 10
     attackPower: 0
     drawWeight: 1
@@ -102,6 +106,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     hp: 10
     attackPower: 0
     drawWeight: 1
@@ -123,6 +128,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 0
     hp: 10
     attackPower: 0
     drawWeight: 0
@@ -132,7 +138,7 @@ MonoBehaviour:
     fogRevealRadius: 1
     prefab: {fileID: 4069388665601599064, guid: 5cfe09c1bdd804de3a2fa60089dad974, type: 3}
     icon: {fileID: 21300000, guid: 8a401058293854ec38fc11f322ac7245, type: 3}
-    isMealSource: 0
+    isMealSource: 1
     productionInputType: 0
     productionInterval: 0
     productionIntervalBonus: 0

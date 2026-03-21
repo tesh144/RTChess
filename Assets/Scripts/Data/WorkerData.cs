@@ -40,6 +40,10 @@ namespace LittleCafe
         [Tooltip("Clockwork behavior pattern. RotateAndInteract = worker-style (attack). RotateAndMove = animal-style (wander).")]
         public BehaviorType behaviorType = BehaviorType.RotateAndInteract;
 
+        [Header("Killer's Behavior")]
+        [Tooltip("When this worker is killed, does the attacker advance into its cell? Advance = true, Stay = false.")]
+        public bool killerAdvances = false;
+
         [Header("Combat Stats")]
         [Tooltip("Health points. When HP reaches 0, triggers an event (removal, completion, etc.).")]
         public int hp = 3;

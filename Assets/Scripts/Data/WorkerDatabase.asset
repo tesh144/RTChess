@@ -18,6 +18,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 1
+    killerAdvances: 0
     behaviorType: 0
     hp: 5
     attackPower: 1
@@ -31,6 +32,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 1
+    killerAdvances: 0
     behaviorType: 0
     hp: 5
     attackPower: 1

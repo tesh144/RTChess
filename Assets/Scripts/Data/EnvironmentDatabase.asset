@@ -18,6 +18,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     lootResourceType: 1
     lootHpCost: 1
     lootYield: 1
@@ -32,6 +33,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     lootResourceType: 2
     lootHpCost: 1
     lootYield: 1
@@ -46,6 +48,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     lootResourceType: 4
     lootHpCost: 1
     lootYield: 1
@@ -60,6 +63,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     lootResourceType: 10
     lootHpCost: 1
     lootYield: 1
@@ -74,6 +78,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     lootResourceType: 5
     lootHpCost: 1
     lootYield: 1
@@ -88,6 +93,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     lootResourceType: 7
     lootHpCost: 1
     lootYield: 1
@@ -102,6 +108,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     lootResourceType: 11
     lootHpCost: 1
     lootYield: 1
@@ -116,6 +123,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    killerAdvances: 1
     lootResourceType: 11
     lootHpCost: 1
     lootYield: 1

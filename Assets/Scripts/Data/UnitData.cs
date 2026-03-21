@@ -48,6 +48,9 @@ namespace LittleCafe
         [Tooltip("When this unit is killed, can the attacker advance into its cell? False for mobile units (dinos), true for static targets.")]
         public bool isSlotTakeable = false;
 
+        [Tooltip("When this unit is killed, does the attacker advance into its cell? Advance = true, Stay = false. Mirrors sheet 'Killer's Behavior' column.")]
+        public bool killerAdvances = false;
+
         [Header("Loot Settings")]
         [Tooltip("What resource currency this unit drops when hit/killed. None = no loot. Assign from CurrencyDatabase entries.")]
         public ResourceType lootResourceType = ResourceType.None;

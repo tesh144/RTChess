@@ -359,6 +359,11 @@ namespace LittleCafe.Editor
                     (interactible.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || interactible == "1");
                 if (existing.isMealSource != newMealSource) { existing.isMealSource = newMealSource; changed = true; }
 
+                // Killer's Behavior: Advance = true, Stay = false
+                string killerStr = GetValue(row, "Killer's Behavior");
+                bool newKillerAdvances = killerStr.Equals("Advance", StringComparison.OrdinalIgnoreCase);
+                if (existing.killerAdvances != newKillerAdvances) { existing.killerAdvances = newKillerAdvances; changed = true; }
+
                 if (changed)
                 {
                     updated++;
@@ -432,6 +437,14 @@ namespace LittleCafe.Editor
                     System.Globalization.CultureInfo.InvariantCulture, out dw))
                 {
                     if (Math.Abs(existing.drawWeight - dw) > 0.001f) { existing.drawWeight = dw; changed = true; }
+                }
+
+                // Killer's Behavior: Advance = true, Stay = false
+                string killerStr = GetValue(row, "Killer's Behavior");
+                if (!string.IsNullOrEmpty(killerStr))
+                {
+                    bool newKillerAdvances = killerStr.Equals("Advance", StringComparison.OrdinalIgnoreCase);
+                    if (existing.killerAdvances != newKillerAdvances) { existing.killerAdvances = newKillerAdvances; changed = true; }
                 }
 
                 if (changed)
@@ -530,6 +543,14 @@ namespace LittleCafe.Editor
                     if (Math.Abs(existing.drawWeight - dw) > 0.001f) { existing.drawWeight = dw; changed = true; }
                 }
 
+                // Killer's Behavior: Advance = true, Stay = false
+                string killerStr = GetValue(row, "Killer's Behavior");
+                if (!string.IsNullOrEmpty(killerStr))
+                {
+                    bool newKillerAdvances = killerStr.Equals("Advance", StringComparison.OrdinalIgnoreCase);
+                    if (existing.killerAdvances != newKillerAdvances) { existing.killerAdvances = newKillerAdvances; changed = true; }
+                }
+
                 if (changed)
                 {
                     updated++;
@@ -590,6 +611,14 @@ namespace LittleCafe.Editor
                             changed = true;
                         }
                     }
+                }
+
+                // Killer's Behavior: Advance = true, Stay = false
+                string killerStr = GetValue(row, "Killer's Behavior");
+                if (!string.IsNullOrEmpty(killerStr))
+                {
+                    bool newKillerAdvances = killerStr.Equals("Advance", StringComparison.OrdinalIgnoreCase);
+                    if (existing.killerAdvances != newKillerAdvances) { existing.killerAdvances = newKillerAdvances; changed = true; }
                 }
 
                 if (changed)

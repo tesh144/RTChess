@@ -20,6 +20,7 @@ MonoBehaviour:
     isWalkable: 0
     isActive: 1
     isSlotTakeable: 1
+    killerAdvances: 0
     behaviorType: 1
     lootResourceType: 24
     lootHpCost: 1
@@ -38,6 +39,7 @@ MonoBehaviour:
     isWalkable: 0
     isActive: 1
     isSlotTakeable: 1
+    killerAdvances: 0
     behaviorType: 2
     lootResourceType: 25
     lootHpCost: 1

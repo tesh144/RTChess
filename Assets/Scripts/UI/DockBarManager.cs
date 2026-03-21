@@ -406,6 +406,7 @@ namespace ClockworkGrid
             stats.attackDamage    = workerData.attackPower;
             stats.furnitureTypeOverride = -1;
             stats.isAllied        = true;
+            stats.killerAdvances  = workerData.killerAdvances;
 
             AddCard(stats, markAsNew: true);
             Debug.Log($"[DockBarManager] Added worker card '{workerData.GetCleanName()}'");

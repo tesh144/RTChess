@@ -75,6 +75,10 @@ namespace LittleCafe
         public Vector2Int gridSize = Vector2Int.one;
         public float visualScale = 1.0f;
 
+        [Header("Killer's Behavior")]
+        [Tooltip("When this building is destroyed, does the attacker advance into its cell? Advance = true, Stay = false.")]
+        public bool killerAdvances = true;
+
         [Header("Fog")]
         [Tooltip("How many cells outward this building reveals fog when placed. 1 = standard plus-shape, 2 = wider reveal (e.g. Torch).")]
         public int fogRevealRadius = 1;

@@ -63,6 +63,9 @@ namespace ClockworkGrid
         [Tooltip("Allied entities (workers, buildings) are never attacked by the player's own workers.")]
         public bool isAllied = false;
 
+        [Tooltip("When this entity is killed, does the attacker advance into its cell? Advance = true, Stay = false.")]
+        public bool killerAdvances = true;
+
         [Header("Combat Stats")]
         public int maxHP = 10;
         public int attackDamage = 3;

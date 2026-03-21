@@ -73,9 +73,10 @@ namespace LittleCafe
         /// <param name="isActive">Whether this entity acts each tick</param>
         /// <param name="registryName">Database assetName for InteractionRegistry lookup (avoids prefab name mismatch)</param>
         /// <param name="allied">True for player-owned entities (workers, buildings) that should never be attacked by own workers</param>
+        /// <param name="killerAdvances">When killed, does the attacker advance into this cell? Maps to sheet "Killer's Behavior" (Advance/Stay).</param>
         public void AttachComponents(GameObject go, int hp, int attackPower, bool isActive,
             BehaviorType behaviorType = BehaviorType.RotateAndInteract,
-            string registryName = null, bool allied = false)
+            string registryName = null, bool allied = false, bool killerAdvances = true)
         {
             if (go == null) return;
 
@@ -95,9 +96,8 @@ namespace LittleCafe
                 if (ClockworkCraft.InteractionRegistry.Instance != null)
                     canInteract = ClockworkCraft.InteractionRegistry.Instance.IsUnlocked(lookupName);
 
-                // Static objects (buildings, environment) are slot-takeable;
-                // Active mobile units (workers, dinos) are not — workers won't advance into their cell on kill.
-                bool slotTakeable = !isActive;
+                // killerAdvances from database: Advance = attacker moves into cell, Stay = attacker stays put.
+                bool slotTakeable = killerAdvances;
 
                 health.Initialize(hp, attackPower, canInteract, allied, slotTakeable);
                 allHealth.Add(health);
@@ -138,10 +138,10 @@ namespace LittleCafe
         public void AttachComponents(GameObject go, int hp, int attackPower, bool isActive,
             ResourceType lootResourceType, int lootHpCost = 1, int lootYield = 1,
             BehaviorType behaviorType = BehaviorType.RotateAndInteract,
-            string registryName = null, bool allied = false)
+            string registryName = null, bool allied = false, bool killerAdvances = true)
         {
             // Attach base health + actor
-            AttachComponents(go, hp, attackPower, isActive, behaviorType, registryName, allied);
+            AttachComponents(go, hp, attackPower, isActive, behaviorType, registryName, allied, killerAdvances);
 
             // Attach ResourceNode for loot if a resource type is specified
             if (lootResourceType != ResourceType.None && go != null)
@@ -187,7 +187,7 @@ namespace LittleCafe
         {
             if (data == null) return;
             AttachComponents(go, data.hp, data.attackPower, data.isActive, data.behaviorType,
-                registryName: data.assetName, allied: true);
+                registryName: data.assetName, allied: true, killerAdvances: data.killerAdvances);
         }
 
         /// <summary>
@@ -198,7 +198,7 @@ namespace LittleCafe
             if (data == null) return;
             AttachComponents(go, data.hp, data.attackPower, data.isActive,
                 data.lootResourceType, data.lootHpCost, data.lootYield, data.behaviorType,
-                registryName: data.assetName, allied: false);
+                registryName: data.assetName, allied: false, killerAdvances: data.killerAdvances);
         }
 
         /// <summary>
@@ -208,7 +208,7 @@ namespace LittleCafe
         {
             if (data == null) return;
             AttachComponents(go, data.hp, data.attackPower, data.isActive,
-                registryName: data.assetName, allied: true);
+                registryName: data.assetName, allied: true, killerAdvances: data.killerAdvances);
         }
 
         /// <summary>
@@ -219,7 +219,7 @@ namespace LittleCafe
             if (data == null) return;
             AttachComponents(go, data.hp, data.attackPower, data.isActive,
                 data.lootResourceType, data.lootHpCost, data.lootYield,
-                registryName: data.assetName, allied: false);
+                registryName: data.assetName, allied: false, killerAdvances: data.killerAdvances);
         }
 
         // ---------------------------------------------------------------
@@ -370,7 +370,8 @@ namespace LittleCafe
             // Attach health + loot from database values
             AttachComponents(corpse, envData.hp, attackPower: envData.attackPower, isActive: envData.isActive,
                 envData.lootResourceType, lootHpCost: envData.lootHpCost, lootYield: envData.lootYield,
-                BehaviorType.RotateAndInteract, registryName: corpseEnvironmentName, allied: false);
+                BehaviorType.RotateAndInteract, registryName: corpseEnvironmentName, allied: false,
+                killerAdvances: envData.killerAdvances);
 
             // Play appear animation if available
             Transform animHolder = corpse.transform.Find("AnimatorHolder");

@@ -57,7 +57,7 @@
 | Attack Power | attackPower | int |
 | Movement Behavior | behaviorType | Dropdown: RotateAndInteract, RotateAndMove, RotateRotateMove |
 | Attack Behavior | → isEnemy | Hostile = isEnemy:true, Peaceful = isEnemy:false. NOT a code enum yet. |
-| Killer's Behavior | (sheet-only) | Stay / Advance. Future feature — not in code yet. |
+| Killer's Behavior | killerAdvances | Advance = true, Stay = false. Controls whether attacker moves into this entity's cell on kill. |
 | Draw Weight | drawWeight | float |
 | Slot Takeable | isSlotTakeable | Checkbox boolean |
 
@@ -70,6 +70,7 @@
 | Input | productionInputType | Dropdown with emoji: None, 👷 Worker, ⚔️ Fighter |
 | Output | productionOutputType | Dropdown with emoji: None, 👷 Worker, 💰 Currency, 🏠 RandomBuilding, ⚔️ Fighter, 🍖 Meal |
 | Output Amt | productionAmount | int |
+| Killer's Behavior | killerAdvances | Advance = true, Stay = false. Controls whether attacker moves into cell on kill. |
 | Reveal Radius | fogRevealRadius | int |
 | Ally Interactible | isMealSource | Checkbox boolean |
 | HP | hp | int |
@@ -83,7 +84,7 @@
 | Loot per Hit | lootYield | int |
 | HP | hp | int |
 | Total Yield | (formula) | =Loot per Hit × HP. Not a code field. |
-| Killer's Behavior | (sheet-only) | Stay / Advance. Future feature. |
+| Killer's Behavior | killerAdvances | Advance = true, Stay = false. Controls whether attacker moves into cell on kill. |
 
 **Sync Tool:** `Assets/Scripts/Editor/SheetSyncEditor.cs` reads `Assets/Scripts/Editor/SheetCache.json` (written by Claude via MCP) and updates ScriptableObject .asset files. Open via ClockworkCraft → Sheet Sync in Unity.
 

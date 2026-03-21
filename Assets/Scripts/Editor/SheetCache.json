@@ -3,14 +3,14 @@
   "spreadsheetId": "1UvfldgEvr3dM_OqHfNyDHi_8qGoiO72CwTDrCRbUNy0",
   "sheets": {
     "Buildings & Production": {
-      "headers": ["Icon", "Building", "Prod. Interval (s)", "Interval Bonus (s)", "Input", "Output", "Output Amt", "Reveal Radius", "Ally Interactible", "HP", "Attack"],
+      "headers": ["Icon", "Building", "Prod. Interval (s)", "Interval Bonus (s)", "Input", "Output", "Output Amt", "Killer's Behavior", "Reveal Radius", "Ally Interactible", "HP", "Attack"],
       "rows": [
-        {"Icon": "🏕", "Building": "ConeTent", "Prod. Interval (s)": "5", "Interval Bonus (s)": "15", "Input": "None", "Output": "👷 Worker", "Output Amt": "1", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "🔥", "Building": "Torch", "Prod. Interval (s)": "0", "Interval Bonus (s)": "0", "Input": "None", "Output": "None", "Output Amt": "1", "Reveal Radius": "2", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "🗿", "Building": "Statue", "Prod. Interval (s)": "10", "Interval Bonus (s)": "30", "Input": "None", "Output": "🏠 RandomBuilding", "Output Amt": "1", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "⚔️", "Building": "TrainingFacility", "Prod. Interval (s)": "15", "Interval Bonus (s)": "30", "Input": "👷 Worker", "Output": "⚔️ Fighter", "Output Amt": "1", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "🍳", "Building": "Kitchen", "Prod. Interval (s)": "15", "Interval Bonus (s)": "15", "Input": "None", "Output": "🍖 Meal", "Output Amt": "1", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "🍖", "Building": "Feast", "Prod. Interval (s)": "0", "Interval Bonus (s)": "0", "Input": "None", "Output": "None", "Output Amt": "0", "Reveal Radius": "1", "Ally Interactible": "TRUE", "HP": "10", "Attack": "0"}
+        {"Icon": "🏕", "Building": "ConeTent", "Prod. Interval (s)": "5", "Interval Bonus (s)": "15", "Input": "None", "Output": "👷 Worker", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "🔥", "Building": "Torch", "Prod. Interval (s)": "0", "Interval Bonus (s)": "0", "Input": "None", "Output": "None", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "2", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "🗿", "Building": "Statue", "Prod. Interval (s)": "10", "Interval Bonus (s)": "30", "Input": "None", "Output": "🏠 RandomBuilding", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "⚔️", "Building": "TrainingFacility", "Prod. Interval (s)": "15", "Interval Bonus (s)": "30", "Input": "👷 Worker", "Output": "⚔️ Fighter", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "🍳", "Building": "Kitchen", "Prod. Interval (s)": "15", "Interval Bonus (s)": "15", "Input": "None", "Output": "🍖 Meal", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "🍖", "Building": "Feast", "Prod. Interval (s)": "0", "Interval Bonus (s)": "0", "Input": "None", "Output": "None", "Output Amt": "0", "Killer's Behavior": "Stay", "Reveal Radius": "1", "Ally Interactible": "TRUE", "HP": "10", "Attack": "0"}
       ]
     },
     "Workers & Entities": {
