@@ -19,6 +19,17 @@ namespace LittleCafe
     }
 
     /// <summary>
+    /// What triggers a building's production cycle to start.
+    /// None = auto-produce on timer. Worker/Fighter = requires dragging that unit onto the building.
+    /// </summary>
+    public enum ProductionInputType
+    {
+        None,       // Auto-produce (ConeTent, Statue, Kitchen)
+        Worker,     // Requires a Worker card dragged onto the building (Training Facility)
+        Fighter     // Requires a Fighter card dragged onto the building (future use)
+    }
+
+    /// <summary>
     /// What a building produces when its production timer completes.
     /// </summary>
     public enum ProductionOutputType
@@ -26,7 +37,9 @@ namespace LittleCafe
         None,       // No production
         Worker,     // Produces a worker card for the player's hand
         Currency,   // Produces currency that flies to the currency bar
-        RandomBuilding  // Draws a random card from the deck (same as draw button)
+        RandomBuilding, // Draws a random card from the deck (same as draw button)
+        Fighter,        // Produces a fighter card (from Training Facility)
+        Meal            // Produces a meal card (from Kitchen)
     }
 
     /// <summary>
@@ -62,11 +75,26 @@ namespace LittleCafe
         public Vector2Int gridSize = Vector2Int.one;
         public float visualScale = 1.0f;
 
+        [Header("Killer's Behavior")]
+        [Tooltip("When this building is destroyed, does the attacker advance into its cell? Advance = true, Stay = false.")]
+        public bool killerAdvances = true;
+
+        [Header("Fog")]
+        [Tooltip("How many cells outward this building reveals fog when placed. 1 = standard plus-shape, 2 = wider reveal (e.g. Torch).")]
+        public int fogRevealRadius = 1;
+
         [Header("Prefab & Icon")]
         public GameObject prefab;
         public Sprite icon;
 
+        [Header("Meal Buff")]
+        [Tooltip("When true, workers that interact with this building receive a meal buff.")]
+        public bool isMealSource = false;
+
         [Header("Production")]
+        [Tooltip("What must be dragged onto this building to start production. None = auto-produce on timer.")]
+        public ProductionInputType productionInputType = ProductionInputType.None;
+
         [Tooltip("Base seconds between production cycles. 0 = no production.")]
         public float productionInterval = 0f;
 

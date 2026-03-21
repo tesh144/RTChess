@@ -20,6 +20,9 @@ namespace LittleCafe
         [SerializeField] private int gridY;
         [SerializeField] private Vector2Int gridSize = Vector2Int.one;
 
+        [Header("Fog")]
+        [SerializeField] private int fogRevealRadius = 1;
+
         // Adjacency tracking
         private List<FurnitureObject> adjacentFurniture = new List<FurnitureObject>();
 
@@ -31,6 +34,7 @@ namespace LittleCafe
         public int GridX { get => gridX; set => gridX = value; }
         public int GridY { get => gridY; set => gridY = value; }
         public Vector2Int GridSize { get => gridSize; set => gridSize = value; }
+        public int FogRevealRadius { get => fogRevealRadius; set => fogRevealRadius = value; }
         public List<FurnitureObject> AdjacentFurniture => adjacentFurniture;
 
         /// <summary>
@@ -115,7 +119,7 @@ namespace LittleCafe
             // GridManager already subscribes to OnCellRevealed → RevealTile.
             if (FogManager.Instance == null) return;
 
-            int revealRadius = 1;
+            int revealRadius = fogRevealRadius;
 
             for (int dx = -revealRadius; dx <= revealRadius + gridSize.x - 1; dx++)
             {

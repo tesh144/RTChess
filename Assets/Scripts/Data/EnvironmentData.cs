@@ -35,6 +35,10 @@ namespace LittleCafe
         [Tooltip("Active objects perform an action each interval tick. Environment objects are passive by default.")]
         public bool isActive = false;
 
+        [Header("Killer's Behavior")]
+        [Tooltip("When this object is destroyed, does the attacker advance into its cell? Advance = true, Stay = false.")]
+        public bool killerAdvances = true;
+
         [Header("Loot Settings")]
         [Tooltip("What resource currency this environment drops when hit. None = no loot. Assign from CurrencyDatabase entries.")]
         public ResourceType lootResourceType = ResourceType.None;

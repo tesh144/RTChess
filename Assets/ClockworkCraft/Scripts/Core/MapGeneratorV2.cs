@@ -412,14 +412,21 @@ namespace ClockworkCraft
                     stats.maxHP           = data.hp;
                     stats.attackDamage    = data.attackPower;
                     stats.furnitureTypeOverride = -1;
-                    stats.isAllied        = true; // Buildings are allied — never attacked by own workers
+                    // Meals must NOT be allied so workers can interact with them
+                    stats.isAllied        = !data.isMealSource;
+
+                    // Fog reveal
+                    stats.revealRadius            = data.fogRevealRadius;
+                    stats.isMealSource            = data.isMealSource;
 
                     // Production fields
+                    stats.productionInputType    = data.productionInputType;
                     stats.productionOutputType   = data.productionOutputType;
                     stats.productionInterval      = data.productionInterval;
                     stats.productionIntervalBonus = data.productionIntervalBonus;
                     stats.producedResourceType    = data.producedResourceType;
                     stats.productionAmount        = data.productionAmount;
+                    stats.killerAdvances          = data.killerAdvances;
 
                     deckStats.Add(stats);
                     buildingCount++;

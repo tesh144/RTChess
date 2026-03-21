@@ -301,6 +301,7 @@ namespace ClockworkGrid
             // Let layout settle for one frame so we know the card's final position
             yield return null;
 
+            if (cardRect == null) yield break;
             Vector3 finalPos = cardRect.position;
             Vector3 finalScale = cardRect.localScale;
 
@@ -314,6 +315,8 @@ namespace ClockworkGrid
             {
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
+
+                if (cardRect == null) yield break;
 
                 // Ease-out cubic for smooth deceleration
                 float easeT = 1f - Mathf.Pow(1f - t, 3f);
@@ -340,6 +343,7 @@ namespace ClockworkGrid
             }
 
             // Ensure final state
+            if (cardRect == null) yield break;
             cardRect.position = finalPos;
             cardRect.localScale = finalScale;
 
@@ -402,6 +406,7 @@ namespace ClockworkGrid
             stats.attackDamage    = workerData.attackPower;
             stats.furnitureTypeOverride = -1;
             stats.isAllied        = true;
+            stats.killerAdvances  = workerData.killerAdvances;
 
             AddCard(stats, markAsNew: true);
             Debug.Log($"[DockBarManager] Added worker card '{workerData.GetCleanName()}'");

@@ -562,6 +562,16 @@ namespace ClockworkGrid
         /// </summary>
         public void PlayAppearAnimation()
         {
+            // Ensure the GameObject is active — StartCoroutine fails on inactive objects
+            if (!gameObject.activeSelf)
+                gameObject.SetActive(true);
+
+            // StartCoroutine requires the entire hierarchy to be active.
+            // During startup (SetupDeck), the card panel may still be inactive.
+            // Fall back gracefully — the card will just appear without animation.
+            if (!gameObject.activeInHierarchy)
+                return;
+
             if (appearCoroutine != null) StopCoroutine(appearCoroutine);
             appearCoroutine = StartCoroutine(AppearAnimationRoutine());
         }

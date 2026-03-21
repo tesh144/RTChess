@@ -75,6 +75,7 @@ namespace LittleCafe
         private class ProductionEntry
         {
             public GameObject buildingObj;
+            public ProductionInputType inputType;
             public ProductionOutputType outputType;
             public float baseInterval;
             public float intervalBonus;
@@ -85,6 +86,7 @@ namespace LittleCafe
             public float elapsedTime;
             public int collectCount;
             public bool isReady;
+            public bool waitingForInput; // Input-triggered buildings idle until fed
             public WorkerData pendingWorker;
             public UnitStats pendingCard; // For RandomBuilding output
 
@@ -162,6 +164,7 @@ namespace LittleCafe
             var entry = new ProductionEntry
             {
                 buildingObj = buildingObj,
+                inputType = stats.productionInputType,
                 outputType = stats.productionOutputType,
                 baseInterval = stats.productionInterval,
                 intervalBonus = stats.productionIntervalBonus,
@@ -170,6 +173,7 @@ namespace LittleCafe
                 elapsedTime = 0f,
                 collectCount = 0,
                 isReady = false,
+                waitingForInput = stats.productionInputType != ProductionInputType.None,
                 pendingWorker = null
             };
 
@@ -187,6 +191,66 @@ namespace LittleCafe
 
             if (verboseLogging)
                 Debug.Log($"[BuildingProduction] Registered '{buildingObj.name}' — produces {stats.productionOutputType} every {stats.productionInterval}s (bonus +{stats.productionIntervalBonus}s per collect, topHeight={entry.objectTopHeight:F1})");
+        }
+
+        /// <summary>
+        /// Check if a placed building at the given grid cell accepts the specified input type.
+        /// Used by DragDropHandler to determine valid drop-on-building targets.
+        /// </summary>
+        public bool IsInputBuildingAt(int gridX, int gridY, ProductionInputType requiredInput)
+        {
+            foreach (var entry in entries)
+            {
+                if (entry.buildingObj == null) continue;
+                if (entry.inputType != requiredInput) continue;
+
+                var furniture = entry.buildingObj.GetComponent<FurnitureObject>();
+                if (furniture != null && furniture.GridX == gridX && furniture.GridY == gridY)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Feed a unit into an input-triggered building, consuming the card and starting the timer.
+        /// Returns true if the building accepted the input.
+        /// </summary>
+        public bool FeedBuilding(int gridX, int gridY, ProductionInputType inputType)
+        {
+            foreach (var entry in entries)
+            {
+                if (entry.buildingObj == null) continue;
+                if (entry.inputType != inputType) continue;
+                if (!entry.waitingForInput) continue; // Already processing
+
+                var furniture = entry.buildingObj.GetComponent<FurnitureObject>();
+                if (furniture != null && furniture.GridX == gridX && furniture.GridY == gridY)
+                {
+                    // Start the production timer
+                    entry.waitingForInput = false;
+                    entry.elapsedTime = 0f;
+                    entry.timerRevealed = false;
+
+                    // Show timer
+                    if (entry.timerCanvasObj != null)
+                    {
+                        entry.timerCanvasObj.SetActive(true);
+                        StartCoroutine(TimerAppearAnimation(entry.timerCanvasObj));
+                        entry.timerRevealed = true;
+                    }
+
+                    // Play interact animation on the building
+                    Animator buildingAnimator = entry.buildingObj.GetComponentInChildren<Animator>();
+                    if (buildingAnimator != null)
+                        buildingAnimator.SetTrigger("interact_strong");
+
+                    if (verboseLogging)
+                        Debug.Log($"[BuildingProduction] Fed {inputType} into '{entry.buildingObj.name}' — timer started ({entry.EffectiveInterval}s)");
+
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void UnregisterBuilding(GameObject buildingObj)
@@ -431,6 +495,9 @@ namespace LittleCafe
 
                 if (entry.isReady) continue;
 
+                // Input-triggered buildings wait until fed before starting their timer
+                if (entry.waitingForInput) continue;
+
                 // Reveal timer after first tick (delayed so player can appreciate the object)
                 if (!entry.timerRevealed && entry.timerCanvasObj != null)
                 {
@@ -450,6 +517,10 @@ namespace LittleCafe
                         entry.pendingWorker = PickRandomWorker();
                     else if (entry.outputType == ProductionOutputType.RandomBuilding)
                         entry.pendingCard = DrawRandomBuilding();
+                    else if (entry.outputType == ProductionOutputType.Fighter)
+                        entry.pendingWorker = PickRandomWorker(); // Fighter = upgraded worker (uses same pool for now)
+                    else if (entry.outputType == ProductionOutputType.Meal)
+                        entry.pendingCard = FindMealCard();
 
                     // SFX: production timer complete
                     if (GameSFXManager.Instance != null)
@@ -803,6 +874,15 @@ namespace LittleCafe
                 case ProductionOutputType.RandomBuilding:
                     collected = CollectRandomBuildingReward(entry, buildingWorldPos);
                     break;
+
+                case ProductionOutputType.Fighter:
+                    // Fighter uses same worker card delivery (fighter = upgraded worker for now)
+                    collected = CollectWorkerReward(entry, buildingWorldPos);
+                    break;
+
+                case ProductionOutputType.Meal:
+                    collected = CollectMealReward(entry, buildingWorldPos);
+                    break;
             }
 
             if (!collected)
@@ -831,6 +911,10 @@ namespace LittleCafe
             entry.pendingWorker = null;
             entry.pendingCard = null;
             entry.timerRevealed = false; // Re-delay the timer by 1 tick
+
+            // Input-triggered buildings return to waiting state after collection
+            if (entry.inputType != ProductionInputType.None)
+                entry.waitingForInput = true;
 
             // Hide timer until next tick reveals it
             if (entry.timerCanvasObj != null)
@@ -963,6 +1047,57 @@ namespace LittleCafe
             else
             {
                 // Direct add (no fly animation)
+                dock.AddCard(card, markAsNew: true);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Find the Meal UnitStats from the registered card pool.
+        /// </summary>
+        private UnitStats FindMealCard()
+        {
+            if (RaritySystem.Instance == null) return null;
+            UnitStats meal = RaritySystem.Instance.FindByName("Meal");
+            if (meal == null)
+                Debug.LogWarning("[BuildingProduction] 'Meal' card not found in RaritySystem pool");
+            return meal;
+        }
+
+        /// <summary>
+        /// Collect a Meal card reward: fly the card from the building to the dock bar.
+        /// Returns false if hand is full.
+        /// </summary>
+        private bool CollectMealReward(ProductionEntry entry, Vector3 worldPos)
+        {
+            DockBarManager dock = DockBarManager.Instance;
+            if (dock == null)
+            {
+                Debug.LogWarning("[BuildingProduction] No DockBarManager — can't deliver meal card");
+                return false;
+            }
+
+            if (dock.GetCardCount() >= DockBarManager.MAX_HAND_SIZE)
+            {
+                Debug.Log("[BuildingProduction] Hand full — pop-up stays until there's room");
+                return false;
+            }
+
+            UnitStats card = entry.pendingCard;
+            if (card == null)
+            {
+                card = FindMealCard();
+                if (card == null) return false;
+            }
+
+            WorkerCardFlyFX flyFX = WorkerCardFlyFX.Instance;
+            if (flyFX != null)
+            {
+                flyFX.SpawnCardFly(worldPos, card, 0);
+            }
+            else
+            {
                 dock.AddCard(card, markAsNew: true);
             }
 

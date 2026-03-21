@@ -23,6 +23,9 @@ namespace LittleCafe
         [Tooltip("Allied entities (workers, buildings) are never attacked by the player's own workers.")]
         [SerializeField] private bool isAllied = false;
 
+        [Tooltip("When this entity is killed, can the attacker advance into its cell? True for static objects (trees, rocks), false for mobile units (dinos, monsters).")]
+        [SerializeField] private bool isSlotTakeable = true;
+
         private int currentHP;
         private bool isDestroyed = false;
 
@@ -38,6 +41,7 @@ namespace LittleCafe
         public int AttackPower => attackPower;
         public bool WorkerCanInteract => workerCanInteract;
         public bool IsAllied => isAllied;
+        public bool IsSlotTakeable => isSlotTakeable;
 
         // --- Events ---
         /// <summary>
@@ -63,7 +67,7 @@ namespace LittleCafe
         /// <summary>
         /// Configure health from database values. Called by GridEntityManager after attaching.
         /// </summary>
-        public void Initialize(int hp, int atkPower, bool canInteract = true, bool allied = false)
+        public void Initialize(int hp, int atkPower, bool canInteract = true, bool allied = false, bool slotTakeable = true)
         {
             maxHP = hp;
             attackPower = atkPower;
@@ -71,6 +75,7 @@ namespace LittleCafe
             isDestroyed = false;
             workerCanInteract = canInteract;
             isAllied = allied;
+            isSlotTakeable = slotTakeable;
 
             CacheAnimator();
 

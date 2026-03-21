@@ -146,6 +146,7 @@ namespace LittleCafe
                 float t = Mathf.Clamp01(elapsed / burstDuration);
                 float eased = 1f - (1f - t) * (1f - t); // Ease-out
 
+                if (obj == null) yield break;
                 rect.anchoredPosition = Vector2.Lerp(startLocal, burstTarget, eased);
 
                 float scale = Mathf.Lerp(0.3f, 1.1f, eased);
@@ -154,11 +155,14 @@ namespace LittleCafe
                 yield return null;
             }
 
+            if (obj == null) yield break;
             rect.anchoredPosition = burstTarget;
             rect.localScale = Vector3.one;
 
             // ── Phase 2: Hang briefly ─────────────────────────────────────
             yield return new WaitForSeconds(hangDuration);
+
+            if (obj == null) yield break;
 
             // ── Phase 3: Fly to dock bar (card container area) ─────────────
             Vector2 flyStart = burstTarget;
@@ -198,6 +202,8 @@ namespace LittleCafe
             {
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / flyDuration);
+
+                if (obj == null) yield break;
 
                 // Smooth ease-in-out
                 float eased = t * t * (3f - 2f * t);
@@ -284,17 +290,21 @@ namespace LittleCafe
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / burstDuration);
                 float eased = 1f - (1f - t) * (1f - t);
+                if (obj == null) yield break;
                 rect.anchoredPosition = Vector2.Lerp(startLocal, burstTarget, eased);
                 float scale = Mathf.Lerp(0.3f, 1.1f, eased);
                 rect.localScale = Vector3.one * scale;
                 yield return null;
             }
 
+            if (obj == null) yield break;
             rect.anchoredPosition = burstTarget;
             rect.localScale = Vector3.one;
 
             // Phase 2: Hang
             yield return new WaitForSeconds(hangDuration);
+
+            if (obj == null) yield break;
 
             // Phase 3: Fly to dock
             Vector2 flyStart = burstTarget;
@@ -329,6 +339,7 @@ namespace LittleCafe
             {
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / flyDuration);
+                if (obj == null) yield break;
                 float eased = t * t * (3f - 2f * t);
                 Vector2 pos = Vector2.Lerp(flyStart, flyEnd, eased);
                 float arc = Mathf.Sin(t * Mathf.PI) * flyCurveHeight;

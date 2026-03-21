@@ -104,6 +104,21 @@ namespace ClockworkGrid
         }
 
         /// <summary>
+        /// Find a registered UnitStats by unitName (case-insensitive).
+        /// Returns null if not found.
+        /// </summary>
+        public UnitStats FindByName(string unitName)
+        {
+            if (string.IsNullOrEmpty(unitName)) return null;
+            foreach (UnitStats stats in allUnitStats)
+            {
+                if (string.Equals(stats.unitName, unitName, System.StringComparison.OrdinalIgnoreCase))
+                    return stats;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Get all registered unit stats
         /// </summary>
         public List<UnitStats> GetAllUnitStats()

@@ -39,6 +39,11 @@ namespace ClockworkGrid
         // Colors
         private Color validColor = new Color(1f, 1f, 1f, 0.6f);
         private Color invalidColor = new Color(1f, 0.3f, 0.3f, 0.6f);
+        private Color feedBuildingColor = new Color(0.3f, 1f, 0.5f, 0.75f); // Bright green glow for valid input building
+
+        // Feed-building state (dropping a card onto a production building)
+        private bool isHoveringInputBuilding = false;
+        private int feedTargetGridX, feedTargetGridY;
 
         // Camera tracking during drag
         private Vector3 preDragCameraTarget;
@@ -180,7 +185,50 @@ namespace ClockworkGrid
             // Raycast to ground plane
             if (RaycastToGroundPlane(screenPos, out Vector3 worldPos))
             {
-                // Validate placement and get grid coordinates
+                // Check for feed-building interaction first (dropping a worker/fighter onto a production building)
+                isHoveringInputBuilding = false;
+                LittleCafe.ProductionInputType cardInputType = GetCardInputType();
+                if (cardInputType != LittleCafe.ProductionInputType.None &&
+                    GridManager.Instance != null &&
+                    GridManager.Instance.WorldToGridPosition(worldPos, out int hoveredX, out int hoveredY))
+                {
+                    if (LittleCafe.BuildingProductionManager.Instance != null &&
+                        LittleCafe.BuildingProductionManager.Instance.IsInputBuildingAt(hoveredX, hoveredY, cardInputType))
+                    {
+                        isHoveringInputBuilding = true;
+                        feedTargetGridX = hoveredX;
+                        feedTargetGridY = hoveredY;
+                        isValidPlacement = true; // Allow drop here
+                        targetGridX = hoveredX;
+                        targetGridY = hoveredY;
+
+                        // Show single bright green highlight on the building's cell
+                        UpdateFeedBuildingHighlight(hoveredX, hoveredY);
+
+                        // Camera + arc
+                        Vector3 buildingCenter = GridManager.Instance.GridToWorldPosition(hoveredX, hoveredY);
+                        buildingCenter.y = GetTileSurfaceY();
+
+                        var feedCam = CameraSystemLocator.Current;
+                        if (feedCam != null)
+                        {
+                            Vector3 blendTarget = Vector3.Lerp(preDragCameraTarget, buildingCenter, 0.5f);
+                            Vector3 current = feedCam.CurrentTarget;
+                            Vector3 eased = Vector3.Lerp(current, blendTarget, Time.deltaTime * dragCameraEaseSpeed);
+                            feedCam.SetTarget(eased);
+                        }
+
+                        UpdateArcLine(buildingCenter);
+
+                        // Hide placement cost display when hovering a feed building
+                        if (LittleCafe.PlacementCostDisplay.Instance != null)
+                            LittleCafe.PlacementCostDisplay.Instance.SetEntriesVisible(false);
+
+                        return; // Skip normal placement validation
+                    }
+                }
+
+                // Normal placement validation
                 bool valid = ValidatePlacement(worldPos, out targetGridX, out targetGridY);
                 isValidPlacement = valid;
 
@@ -217,6 +265,7 @@ namespace ClockworkGrid
             {
                 // Mouse is off-screen or raycast failed - not a valid placement
                 isValidPlacement = false;
+                isHoveringInputBuilding = false;
             }
         }
 
@@ -244,6 +293,49 @@ namespace ClockworkGrid
                 }
                 CleanupDragVisuals();
                 isDragging = false;
+                isHoveringInputBuilding = false;
+                return;
+            }
+
+            // ── Feed-building path: drop card onto a production building ──
+            if (isHoveringInputBuilding)
+            {
+                LittleCafe.ProductionInputType cardInput = GetCardInputType();
+                bool fed = LittleCafe.BuildingProductionManager.Instance != null &&
+                           LittleCafe.BuildingProductionManager.Instance.FeedBuilding(feedTargetGridX, feedTargetGridY, cardInput);
+
+                if (fed)
+                {
+                    // SFX: successful interaction
+                    if (GameSFXManager.Instance != null)
+                        GameSFXManager.Instance.PlayPlacement();
+
+                    // Remove card from dock (consumed by the building)
+                    DockBarManager.Instance.RemoveCard(currentDraggingIcon);
+                    Debug.Log($"[DragDropHandler] Fed {cardInput} card into building at ({feedTargetGridX},{feedTargetGridY})");
+                }
+                else
+                {
+                    // Building didn't accept — snap back
+                    if (GameSFXManager.Instance != null)
+                        GameSFXManager.Instance.PlayDragCancel();
+                    currentDraggingIcon.SnapBackToOriginalPosition();
+                }
+
+                // Restore camera
+                var feedCam = CameraSystemLocator.Current;
+                if (feedCam != null)
+                {
+                    feedCam.SetAutoRotate(preDragAutoRotate);
+                    if (LittleCafe.GridCamera.Instance != null)
+                        LittleCafe.GridCamera.Instance.ZoomToDefault();
+                    else
+                        feedCam.ZoomTo(preDragZoomDistance);
+                }
+
+                CleanupDragVisuals();
+                isDragging = false;
+                isHoveringInputBuilding = false;
                 return;
             }
 
@@ -318,6 +410,12 @@ namespace ClockworkGrid
                     furniture.SetType((LittleCafe.FurnitureType)currentDraggingIcon.UnitStats.furnitureTypeOverride);
                 }
 
+                // Set fog reveal radius from database (e.g. Torch = 2)
+                if (currentDraggingIcon?.UnitStats != null)
+                {
+                    furniture.FogRevealRadius = currentDraggingIcon.UnitStats.revealRadius;
+                }
+
                 furniture.OnPlaced(targetGridX, targetGridY, currentGridSize);
                 placedWithFurniture = true;
 
@@ -330,7 +428,7 @@ namespace ClockworkGrid
                     bool isActive = stats.isActive;
                     LittleCafe.GridEntityManager.Instance.AttachComponents(unitObj, hp, attackPower, isActive,
                         stats.lootResourceType, stats.lootHpCost, stats.lootYield, stats.behaviorType,
-                        registryName: stats.unitName, allied: stats.isAllied);
+                        registryName: stats.unitName, allied: stats.isAllied, killerAdvances: stats.killerAdvances);
                 }
             }
 
@@ -343,7 +441,8 @@ namespace ClockworkGrid
                 // Reveal surrounding fog (same as FurnitureObject.OnPlaced)
                 if (FogManager.Instance != null)
                 {
-                    int revealRadius = 1;
+                    int revealRadius = currentDraggingIcon?.UnitStats != null
+                        ? currentDraggingIcon.UnitStats.revealRadius : 1;
                     for (int dx = -revealRadius; dx <= revealRadius + currentGridSize.x - 1; dx++)
                     for (int dy = -revealRadius; dy <= revealRadius + currentGridSize.y - 1; dy++)
                         FogManager.Instance.RevealCell(targetGridX + dx, targetGridY + dy);
@@ -358,8 +457,15 @@ namespace ClockworkGrid
                     bool isActive = stats.isActive;
                     LittleCafe.GridEntityManager.Instance.AttachComponents(unitObj, hp, attackPower, isActive,
                         stats.lootResourceType, stats.lootHpCost, stats.lootYield, stats.behaviorType,
-                        registryName: stats.unitName, allied: stats.isAllied);
+                        registryName: stats.unitName, allied: stats.isAllied, killerAdvances: stats.killerAdvances);
                 }
+            }
+
+            // Attach MealBuffSource marker if flagged in database
+            if (currentDraggingIcon?.UnitStats != null && currentDraggingIcon.UnitStats.isMealSource)
+            {
+                if (unitObj.GetComponent<LittleCafe.MealBuffSource>() == null)
+                    unitObj.AddComponent<LittleCafe.MealBuffSource>();
             }
 
             // Update furniture connectivity after placement
@@ -427,6 +533,7 @@ namespace ClockworkGrid
             }
             CleanupDragVisuals();
             isDragging = false;
+            isHoveringInputBuilding = false;
         }
 
         private void UpdateCellHighlights(int anchorX, int anchorY)
@@ -630,6 +737,47 @@ namespace ClockworkGrid
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Determine what ProductionInputType this dragged card can provide to a building.
+        /// Workers (isActive + isAllied) → Worker. Otherwise None.
+        /// </summary>
+        private LittleCafe.ProductionInputType GetCardInputType()
+        {
+            if (currentDraggingIcon?.UnitStats == null) return LittleCafe.ProductionInputType.None;
+            var stats = currentDraggingIcon.UnitStats;
+
+            // Workers are active, allied entities
+            if (stats.isActive && stats.isAllied)
+                return LittleCafe.ProductionInputType.Worker;
+
+            // Future: fighters could map to ProductionInputType.Fighter
+            return LittleCafe.ProductionInputType.None;
+        }
+
+        /// <summary>
+        /// Show a single bright green highlight on a valid feed-building cell.
+        /// Hides all other highlight quads.
+        /// </summary>
+        private void UpdateFeedBuildingHighlight(int gridX, int gridY)
+        {
+            if (GridManager.Instance == null) return;
+
+            float cellSize = GridManager.Instance.CellSize;
+            float highlightY = GetTileSurfaceY() + 0.02f;
+
+            Vector3 pos = GridManager.Instance.GridToWorldPosition(gridX, gridY);
+            pos.y = highlightY;
+
+            cellHighlights[0].transform.position = pos;
+            cellHighlights[0].transform.localScale = new Vector3(cellSize * 0.95f, cellSize * 0.95f, 1f);
+            cellHighlights[0].SetActive(true);
+            cellHighlightRenderers[0].material.color = feedBuildingColor;
+
+            // Hide remaining quads
+            for (int i = 1; i < MaxFootprintCells; i++)
+                cellHighlights[i].SetActive(false);
         }
     }
 }
