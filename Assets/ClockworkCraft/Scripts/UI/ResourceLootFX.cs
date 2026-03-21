@@ -154,6 +154,8 @@ namespace ClockworkCraft
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / burstDuration);
                 float eased = 1f - (1f - t) * (1f - t); // Ease-out
+
+                if (obj == null) yield break;
                 rect.anchoredPosition = Vector2.Lerp(startLocal, burstTarget, eased);
 
                 float scale = Mathf.Lerp(0.3f, 1.1f, eased);
@@ -162,11 +164,14 @@ namespace ClockworkCraft
                 yield return null;
             }
 
+            if (obj == null) yield break;
             rect.anchoredPosition = burstTarget;
             rect.localScale = Vector3.one;
 
             // ── Phase 2: Hang briefly ────────────────────────────────────
             yield return new WaitForSeconds(hangDuration);
+
+            if (obj == null) yield break;
 
             // ── Phase 3: Fly to currency bar ─────────────────────────────
             Vector2 flyStart = burstTarget;
@@ -193,6 +198,8 @@ namespace ClockworkCraft
             {
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / flyDuration);
+
+                if (obj == null) yield break;
 
                 // Smooth ease-in-out for position — accelerates then decelerates into target
                 float eased = t * t * (3f - 2f * t);
@@ -222,6 +229,8 @@ namespace ClockworkCraft
 
                 yield return null;
             }
+
+            if (obj == null) yield break;
 
             // Snap to exact target position before adding resource
             rect.anchoredPosition = flyEnd;
