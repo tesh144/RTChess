@@ -110,6 +110,13 @@ namespace ClockworkCraft
                 Vector3 fromScreen = mainCamera.WorldToScreenPoint(worldFrom);
                 Vector3 toScreen   = mainCamera.WorldToScreenPoint(worldTo);
 
+                // Guard: if either position is behind the camera, abort the arc
+                if (fromScreen.z < 0f || toScreen.z < 0f)
+                {
+                    if (iconObj != null) Destroy(iconObj);
+                    yield break;
+                }
+
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(
                     canvasRect, fromScreen,
                     canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
