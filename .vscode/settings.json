@@ -56,6 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "RTChess.sln",
+    "dotnet.defaultSolution": "RTChess.slnx",
     "dotnet.preferCSharpExtension": true
 }
