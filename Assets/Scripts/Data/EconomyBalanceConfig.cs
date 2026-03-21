@@ -15,11 +15,16 @@ namespace ClockworkGrid
         [Tooltip("Which resource this cost requires.")]
         public ResourceType resourceType = ResourceType.None;
 
-        [Tooltip("Base cost for the first placement.")]
+        [Tooltip("Base cost for the first placement. Ignored if costTable is populated.")]
         public int baseCost = 0;
 
-        [Tooltip("How much the cost increases per successful placement. 0 = flat cost.")]
+        [Tooltip("How much the cost increases per successful placement. 0 = flat cost. Ignored if costTable is populated.")]
         public int costIncrement = 0;
+
+        [Tooltip("Optional stepped cost table. If populated, overrides baseCost + increment. " +
+                 "Index = number of currently active units of this type. " +
+                 "Last entry is used for any count beyond the table length.")]
+        public List<int> costTable = new List<int>();
     }
 
     /// <summary>
@@ -45,33 +50,58 @@ namespace ClockworkGrid
         public bool HasAnyCost()
         {
             foreach (var c in costs)
-                if (c.resourceType != ResourceType.None && c.baseCost > 0)
-                    return true;
+            {
+                if (c.resourceType == ResourceType.None) continue;
+                if (c.baseCost > 0) return true;
+                if (c.costTable != null)
+                    foreach (var v in c.costTable)
+                        if (v > 0) return true;
+            }
             return false;
         }
 
         /// <summary>
-        /// Get the effective cost for a resource slot after N placements.
-        /// effectiveCost = baseCost + (placementCount * costIncrement)
+        /// Get the effective cost for a resource slot given the current active unit count.
+        /// If a costTable is provided, it is used as a stepped lookup (index = activeCount).
+        /// Otherwise falls back to: baseCost + (activeCount * costIncrement).
         /// </summary>
-        public int GetEffectiveCost(int slotIndex, int placementCount)
+        public int GetEffectiveCost(int slotIndex, int activeCount)
         {
             if (slotIndex < 0 || slotIndex >= costs.Count) return 0;
             var entry = costs[slotIndex];
             if (entry.resourceType == ResourceType.None) return 0;
-            return entry.baseCost + (placementCount * entry.costIncrement);
+
+            if (entry.costTable != null && entry.costTable.Count > 0)
+            {
+                int tableIndex = Mathf.Clamp(activeCount, 0, entry.costTable.Count - 1);
+                return entry.costTable[tableIndex];
+            }
+
+            return entry.baseCost + (activeCount * entry.costIncrement);
         }
 
         /// <summary>
         /// Get all effective costs as PlacementCost structs (for PlacementCostDisplay).
+        /// activeCount is the number of currently active units of this type.
         /// </summary>
-        public List<PlacementCost> GetEffectivePlacementCosts(int placementCount)
+        public List<PlacementCost> GetEffectivePlacementCosts(int activeCount)
         {
             var result = new List<PlacementCost>();
             foreach (var c in costs)
             {
                 if (c.resourceType == ResourceType.None) continue;
-                int effective = c.baseCost + (placementCount * c.costIncrement);
+
+                int effective;
+                if (c.costTable != null && c.costTable.Count > 0)
+                {
+                    int tableIndex = Mathf.Clamp(activeCount, 0, c.costTable.Count - 1);
+                    effective = c.costTable[tableIndex];
+                }
+                else
+                {
+                    effective = c.baseCost + (activeCount * c.costIncrement);
+                }
+
                 if (effective <= 0) continue;
 
                 result.Add(new PlacementCost

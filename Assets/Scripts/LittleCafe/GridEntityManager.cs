@@ -430,5 +430,23 @@ namespace LittleCafe
             allHealth.RemoveAll(h => h == null);
             return new List<GridEntityHealth>(allHealth);
         }
+
+        /// <summary>
+        /// Get the number of currently active worker entities (allied + has actor).
+        /// Used by EconomyManager to determine the correct placement cost tier.
+        /// Automatically reflects deaths and manual removals since both clean up allActors.
+        /// </summary>
+        public int GetActiveWorkerCount()
+        {
+            int count = 0;
+            foreach (var actor in allActors)
+            {
+                if (actor == null) continue;
+                GridEntityHealth health = actor.GetComponent<GridEntityHealth>();
+                if (health != null && health.IsAllied)
+                    count++;
+            }
+            return count;
+        }
     }
 }

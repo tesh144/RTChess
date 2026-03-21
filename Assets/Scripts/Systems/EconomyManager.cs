@@ -69,7 +69,7 @@ namespace ClockworkGrid
             var entry = balanceConfig.GetEntry(itemName);
             if (entry == null) return new List<PlacementCost>();
 
-            int count = GetPlacementCount(itemName);
+            int count = GetActiveCountForEntry(entry);
             return entry.GetEffectivePlacementCosts(count);
         }
 
@@ -83,8 +83,24 @@ namespace ClockworkGrid
             var entry = balanceConfig.GetEntry(itemName, source);
             if (entry == null) return new List<PlacementCost>();
 
-            int count = GetPlacementCount(itemName);
+            int count = GetActiveCountForEntry(entry);
             return entry.GetEffectivePlacementCosts(count);
+        }
+
+        /// <summary>
+        /// Returns the relevant active count for a config entry.
+        /// Workers use the live active worker count from GridEntityManager so costs
+        /// drop correctly when a worker dies. Everything else uses placement tracking.
+        /// </summary>
+        private int GetActiveCountForEntry(ItemEconomyEntry entry)
+        {
+            if (entry.sourceDatabase == ItemSourceDatabase.Worker)
+            {
+                if (LittleCafe.GridEntityManager.Instance != null)
+                    return LittleCafe.GridEntityManager.Instance.GetActiveWorkerCount();
+                return 0;
+            }
+            return GetPlacementCount(entry.itemName);
         }
 
         /// <summary>
