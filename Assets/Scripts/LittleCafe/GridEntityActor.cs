@@ -92,6 +92,9 @@ namespace LittleCafe
         /// <summary>True if this worker currently has a meal buff active.</summary>
         public bool HasMealBuff => hasMealBuff;
 
+        /// <summary>Number of interval ticks remaining on the meal buff.</summary>
+        public int MealBuffTicksRemaining => mealBuffTicksRemaining;
+
         /// <summary>Current consecutive idle ticks (resets on any interaction).</summary>
         public int IdleTickCount => idleTickCount;
 
@@ -223,7 +226,7 @@ namespace LittleCafe
         {
             if (IntervalTimer.Instance != null)
             {
-                IntervalTimer.Instance.OnIntervalTick += OnIntervalTick;
+                IntervalTimer.Instance.OnBar += OnIntervalTick;
             }
         }
 
@@ -231,7 +234,7 @@ namespace LittleCafe
         {
             if (IntervalTimer.Instance != null)
             {
-                IntervalTimer.Instance.OnIntervalTick -= OnIntervalTick;
+                IntervalTimer.Instance.OnBar -= OnIntervalTick;
             }
 
             // Stop any running coroutines
