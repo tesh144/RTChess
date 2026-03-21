@@ -426,9 +426,30 @@ namespace LittleCafe
                 yield break;
             }
 
-            // Check if target cell is empty — bump if occupied
+            // Check if target cell is empty — if occupied, check for wild-animal interaction
             if (!gm.IsCellEmpty(newX, newY))
             {
+                // Wild animals can interact with certain objects (e.g. Feast)
+                // Check the InteractionRegistry for wildAnimalInteractible flag
+                GameObject occupant = gm.GetCellOccupant(newX, newY);
+                if (occupant != null)
+                {
+                    GridEntityHealth targetHealth = occupant.GetComponent<GridEntityHealth>();
+                    if (targetHealth != null && !targetHealth.IsDestroyed)
+                    {
+                        // Look up the occupant name in InteractionRegistry
+                        string targetName = occupant.name.Replace("(Clone)", "").Trim();
+                        if (ClockworkCraft.InteractionRegistry.Instance != null
+                            && ClockworkCraft.InteractionRegistry.Instance.CanInteract(targetName, ClockworkCraft.InteractorType.WildAnimal))
+                        {
+                            // Wild animal can interact — perform attack
+                            yield return StartCoroutine(PerformStrongInteraction(targetHealth, newX, newY));
+                            yield break;
+                        }
+                    }
+                }
+
+                // Not interactible — bump
                 if (animator != null) animator.SetTrigger("interact_weak");
                 yield break;
             }

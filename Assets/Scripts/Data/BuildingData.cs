@@ -87,6 +87,18 @@ namespace LittleCafe
         public GameObject prefab;
         public Sprite icon;
 
+        [Header("Random Pool")]
+        [Tooltip("When true, this building can appear in random building draws (Statue, draw button). Feast = false.")]
+        public bool isRandomBuilding = true;
+
+        [Header("Interaction Categories")]
+        [Tooltip("Can allied workers interact with this building? (e.g., Feast = true for meal buff)")]
+        public bool allyInteractible = false;
+        [Tooltip("Can enemy/hostile entities attack this building?")]
+        public bool enemyInteractible = true;
+        [Tooltip("Can wild animals (Dinosaur, Mammoth) interact with this building?")]
+        public bool wildAnimalInteractible = false;
+
         [Header("Meal Buff")]
         [Tooltip("When true, workers that interact with this building receive a meal buff.")]
         public bool isMealSource = false;

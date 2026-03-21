@@ -53,7 +53,8 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Draw a random unit based on rarity weights
+        /// Draw a random unit based on rarity weights.
+        /// Only considers cards with isRandomBuilding == true (excludes Feast, etc.).
         /// </summary>
         public UnitStats DrawRandomUnit()
         {
@@ -63,20 +64,28 @@ namespace ClockworkGrid
                 return null;
             }
 
-            // Calculate total weight using per-item drawWeight (falls back to rarity-based)
+            // Calculate total weight, skipping cards excluded from the random pool
             float totalWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
+                if (!stats.isRandomBuilding) continue;
                 totalWeight += stats.GetEffectiveDrawWeight();
+            }
+
+            if (totalWeight <= 0f)
+            {
+                Debug.LogWarning("No drawable units in pool (all excluded or zero weight).");
+                return null;
             }
 
             // Roll random value
             float roll = Random.Range(0f, totalWeight);
 
-            // Select unit based on roll
+            // Select unit based on roll (only from eligible pool)
             float currentWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
+                if (!stats.isRandomBuilding) continue;
                 currentWeight += stats.GetEffectiveDrawWeight();
                 if (roll <= currentWeight)
                 {
@@ -85,7 +94,11 @@ namespace ClockworkGrid
                 }
             }
 
-            // Fallback (should never happen)
+            // Fallback — return first eligible
+            foreach (UnitStats stats in allUnitStats)
+            {
+                if (stats.isRandomBuilding) return stats;
+            }
             return allUnitStats[0];
         }
 

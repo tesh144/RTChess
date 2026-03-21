@@ -428,6 +428,12 @@ namespace ClockworkCraft
                     stats.productionAmount        = data.productionAmount;
                     stats.killerAdvances          = data.killerAdvances;
 
+                    // Random pool & interaction categories (from sheet)
+                    stats.isRandomBuilding        = data.isRandomBuilding;
+                    stats.allyInteractible        = data.allyInteractible;
+                    stats.enemyInteractible       = data.enemyInteractible;
+                    stats.wildAnimalInteractible  = data.wildAnimalInteractible;
+
                     deckStats.Add(stats);
                     buildingCount++;
                 }

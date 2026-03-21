@@ -99,6 +99,18 @@ namespace ClockworkGrid
         [Header("Grid Footprint")]
         public Vector2Int gridSize = new Vector2Int(1, 1); // Cells occupied (e.g. 2x1 table, 2x2 cooking station)
 
+        [Header("Random Pool")]
+        [Tooltip("When true, this card can appear in random building draws (Statue output, draw button). Feast = false.")]
+        public bool isRandomBuilding = true;
+
+        [Header("Interaction Categories")]
+        [Tooltip("Can allied workers interact with this object?")]
+        public bool allyInteractible = false;
+        [Tooltip("Can enemy/hostile entities attack this object?")]
+        public bool enemyInteractible = true;
+        [Tooltip("Can wild animals (Dinosaur, Mammoth) interact with this object?")]
+        public bool wildAnimalInteractible = false;
+
         [Header("Meal Buff")]
         [Tooltip("When true, this object grants a meal buff to workers that interact with it.")]
         public bool isMealSource = false;

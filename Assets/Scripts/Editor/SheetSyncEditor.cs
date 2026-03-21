@@ -364,6 +364,34 @@ namespace LittleCafe.Editor
                 bool newKillerAdvances = killerStr.Equals("Advance", StringComparison.OrdinalIgnoreCase);
                 if (existing.killerAdvances != newKillerAdvances) { existing.killerAdvances = newKillerAdvances; changed = true; }
 
+                // isRandomBuilding
+                string randomStr = GetValue(row, "isRandomBuilding");
+                if (!string.IsNullOrEmpty(randomStr))
+                {
+                    bool newIsRandom = randomStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || randomStr == "1";
+                    if (existing.isRandomBuilding != newIsRandom) { existing.isRandomBuilding = newIsRandom; changed = true; }
+                }
+
+                // Interaction categories
+                string allyStr = GetValue(row, "Ally Interactible");
+                if (!string.IsNullOrEmpty(allyStr))
+                {
+                    bool newAlly = allyStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || allyStr == "1";
+                    if (existing.allyInteractible != newAlly) { existing.allyInteractible = newAlly; changed = true; }
+                }
+                string enemyStr = GetValue(row, "Enemy Interactible");
+                if (!string.IsNullOrEmpty(enemyStr))
+                {
+                    bool newEnemy = enemyStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || enemyStr == "1";
+                    if (existing.enemyInteractible != newEnemy) { existing.enemyInteractible = newEnemy; changed = true; }
+                }
+                string wildStr = GetValue(row, "Wild Animal Interactible");
+                if (!string.IsNullOrEmpty(wildStr))
+                {
+                    bool newWild = wildStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || wildStr == "1";
+                    if (existing.wildAnimalInteractible != newWild) { existing.wildAnimalInteractible = newWild; changed = true; }
+                }
+
                 if (changed)
                 {
                     updated++;
