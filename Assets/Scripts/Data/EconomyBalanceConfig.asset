@@ -11,12 +11,138 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9e752aa37823e4fa98965d88f924f9e5, type: 3}
   m_Name: EconomyBalanceConfig
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   entries:
+  - itemName: Worker
+    sourceDatabase: 1
+    icon: {fileID: 21300000, guid: f9441b13b752e428b84afa421b539c3e, type: 3}
+    costs:
+    - resourceType: 1
+      baseCost: 0
+      costIncrement: 0
+      costTable:
+      - 0
+      - 2
+      - 3
+      - 4
+      - 5
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 30
+      - 30
+      - 30
+      - 30
+      - 30
+      - 50
+      - 50
+      - 50
+      - 50
+      - 50
+      - 80
+      - 80
+      - 80
+      - 80
+      - 80
+    - resourceType: 0
+      baseCost: 0
+      costIncrement: 0
+      costTable: []
+    - resourceType: 0
+      baseCost: 0
+      costIncrement: 0
+      costTable: []
+  - itemName: Fighter
+    sourceDatabase: 1
+    icon: {fileID: 0}
+    costs:
+    - resourceType: 1
+      baseCost: 0
+      costIncrement: 0
+      costTable:
+      - 5
+      - 5
+      - 5
+      - 5
+      - 5
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 35
+      - 35
+      - 35
+      - 35
+      - 35
+      - 50
+      - 50
+      - 50
+      - 50
+      - 50
+      - 85
+      - 85
+      - 85
+      - 85
+      - 85
+    - resourceType: 0
+      baseCost: 0
+      costIncrement: 0
+      costTable: []
+    - resourceType: 0
+      baseCost: 0
+      costIncrement: 0
+      costTable: []
   - itemName: ConeTent
     sourceDatabase: 0
     icon: {fileID: 21300000, guid: 10ee5d5e55d1b4296ba901f70537cb11, type: 3}
     costs:
+    - resourceType: 1
+      baseCost: 0
+      costIncrement: 0
+      costTable:
+      - 1
+      - 2
+      - 2
+      - 2
+      - 2
+      - 2
+      - 2
+      - 2
+      - 2
+      - 2
+      - 2
+      - 5
+      - 5
+      - 5
+      - 5
+      - 5
+      - 5
+      - 5
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
     - resourceType: 2
       baseCost: 0
       costIncrement: 0
@@ -69,22 +195,170 @@ MonoBehaviour:
       - 3
       - 3
       - 3
-      - 14
-      - 15
-      - 16
-      - 17
-      - 18
-      - 19
+      - 5
+      - 5
+      - 5
+      - 5
+      - 7
+      - 7
+      - 7
+      - 10
+      - 10
+      - 10
+      - 10
       - 20
-      - 21
-      - 22
-      - 23
-      - 24
-      - 25
-      - 26
-      - 27
-      - 28
-      - 29
+      - 20
+      - 20
+      - 20
+      - 20
+  - itemName: Torch
+    sourceDatabase: 0
+    icon: {fileID: 21300000, guid: b563bf17c7d14435dacdf47712dd94e9, type: 3}
+    costs:
+    - resourceType: 2
+      baseCost: 0
+      costIncrement: 0
+      costTable:
+      - 0
+      - 0
+      - 1
+      - 2
+      - 2
+      - 3
+      - 3
+      - 3
+      - 3
+      - 3
+      - 5
+      - 5
+      - 5
+      - 5
+      - 5
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 30
+      - 30
+      - 30
+      - 30
+      - 30
+    - resourceType: 7
+      baseCost: 0
+      costIncrement: 0
+      costTable:
+      - 0
+      - 1
+      - 1
+      - 2
+      - 2
+      - 3
+      - 3
+      - 3
+      - 3
+      - 3
+      - 5
+      - 5
+      - 5
+      - 5
+      - 5
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 30
+      - 30
+      - 30
+      - 30
+      - 30
+    - resourceType: 0
+      baseCost: 0
+      costIncrement: 0
+      costTable: []
+  - itemName: Statue
+    sourceDatabase: 0
+    icon: {fileID: 21300000, guid: 50d71c0a9f632478ebbd1ff2d6448173, type: 3}
+    costs:
+    - resourceType: 2
+      baseCost: 0
+      costIncrement: 0
+      costTable:
+      - 0
+      - 0
+      - 2
+      - 2
+      - 3
+      - 5
+      - 5
+      - 5
+      - 10
+      - 10
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 35
+      - 35
+      - 35
+      - 35
+      - 35
+      - 50
+      - 50
+      - 50
+      - 50
+      - 50
+      - 85
+      - 85
+      - 85
+      - 85
+      - 85
+    - resourceType: 7
+      baseCost: 0
+      costIncrement: 0
+      costTable:
+      - 0
+      - 0
+      - 1
+      - 1
+      - 1
+      - 2
+      - 2
+      - 3
+      - 3
+      - 3
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 30
+      - 30
+      - 30
+      - 30
+      - 30
     - resourceType: 0
       baseCost: 0
       costIncrement: 0
@@ -95,130 +369,72 @@ MonoBehaviour:
     costs:
     - resourceType: 2
       baseCost: 0
-      costIncrement: 1
-      costTable: []
-    - resourceType: 4
-      baseCost: 0
-      costIncrement: 1
-      costTable: []
-    - resourceType: 0
-      baseCost: 0
-      costIncrement: 0
-      costTable: []
-  - itemName: Fighter
-    sourceDatabase: 1
-    icon: {fileID: 0}
-    costs:
-    - resourceType: 1
-      baseCost: 0
       costIncrement: 0
       costTable:
+      - 3
       - 5
-      - 7
-      - 9
-      - 11
-      - 13
+      - 8
+      - 12
       - 15
-      - 17
-      - 19
+      - 18
       - 21
-      - 23
-      - 25
+      - 24
       - 27
-      - 29
-      - 31
+      - 30
       - 33
-      - 35
-      - 37
+      - 36
       - 39
-      - 41
-      - 43
+      - 42
       - 45
-      - 47
-      - 49
+      - 48
       - 51
-      - 53
-      - 55
+      - 54
       - 57
-      - 59
-      - 61
+      - 60
       - 63
-    - resourceType: 0
-      baseCost: 0
-      costIncrement: 0
-      costTable: []
-    - resourceType: 0
-      baseCost: 0
-      costIncrement: 0
-      costTable: []
-  - itemName: Torch
-    sourceDatabase: 0
-    icon: {fileID: 21300000, guid: b563bf17c7d14435dacdf47712dd94e9, type: 3}
-    costs:
-    - resourceType: 1
-      baseCost: 0
-      costIncrement: 1
-    - resourceType: 2
-      baseCost: 0
-      costIncrement: 1
+      - 66
+      - 69
+      - 72
+      - 75
+      - 78
+      - 81
+      - 84
+      - 87
+      - 90
     - resourceType: 4
-      baseCost: 0
-      costIncrement: 0
-  - itemName: Statue
-    sourceDatabase: 0
-    icon: {fileID: 21300000, guid: 50d71c0a9f632478ebbd1ff2d6448173, type: 3}
-    costs:
-    - resourceType: 1
-      baseCost: 0
-      costIncrement: 1
-    - resourceType: 2
-      baseCost: 0
-      costIncrement: 0
-    - resourceType: 4
-      baseCost: 0
-      costIncrement: 1
-  - itemName: Worker
-    sourceDatabase: 1
-    icon: {fileID: 21300000, guid: f9441b13b752e428b84afa421b539c3e, type: 3}
-    costs:
-    - resourceType: 1
       baseCost: 0
       costIncrement: 0
       costTable:
+      - 3
       - 5
-      - 5
-      - 5
-      - 5
-      - 5
-      - 10
-      - 10
-      - 10
-      - 10
-      - 10
-      - 20
-      - 20
-      - 20
-      - 20
-      - 20
+      - 8
+      - 12
+      - 15
+      - 18
+      - 21
+      - 24
+      - 27
       - 30
-      - 30
-      - 30
-      - 30
-      - 30
-      - 50
-      - 50
-      - 50
-      - 50
-      - 50
-      - 55
+      - 33
+      - 36
+      - 39
+      - 42
+      - 45
+      - 48
+      - 51
+      - 54
       - 57
-      - 59
-      - 61
+      - 60
       - 63
-    - resourceType: 0
-      baseCost: 0
-      costIncrement: 0
-      costTable: []
+      - 66
+      - 69
+      - 72
+      - 75
+      - 78
+      - 81
+      - 84
+      - 87
+      - 90
     - resourceType: 0
       baseCost: 0
       costIncrement: 0
