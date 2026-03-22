@@ -44,6 +44,10 @@ namespace LittleCafe
         [Tooltip("Number of countdown ticks after grace before death (visible red numbers).")]
         [SerializeField] private int countdownThreshold = 4;
 
+        [Header("Meal Buff")]
+        [Tooltip("How long the meal buff lasts in real seconds. Converted to bar ticks on grant.")]
+        [SerializeField] private float mealBuffDurationSeconds = 30f;
+
         [Header("Debug")]
         [SerializeField] private bool verboseLogging = false;
 
@@ -867,6 +871,20 @@ namespace LittleCafe
         // ---------------------------------------------------------------
         // Meal Buff
         // ---------------------------------------------------------------
+
+        private int ConvertDurationToTicks()
+        {
+            if (IntervalTimer.Instance == null)
+            {
+                // IntervalTimer not ready — should not happen in normal play.
+                // FallbackBarDuration must match IntervalTimer.baseIntervalDuration inspector default (2.0f).
+                // If that default changes, update this constant to match.
+                const float FallbackBarDuration = 2f;
+                Debug.LogWarning("[GridEntityActor] IntervalTimer.Instance is null — using fallback bar duration");
+                return Mathf.Max(1, Mathf.RoundToInt(mealBuffDurationSeconds / FallbackBarDuration));
+            }
+            return Mathf.Max(1, Mathf.RoundToInt(mealBuffDurationSeconds / IntervalTimer.Instance.IntervalDuration));
+        }
 
         /// <summary>
         /// Grant a meal buff lasting the specified number of interval ticks.
