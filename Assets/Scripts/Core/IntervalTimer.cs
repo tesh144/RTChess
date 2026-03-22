@@ -11,18 +11,30 @@ namespace ClockworkGrid
         [SerializeField] private bool verboseLogging = false;
 
         private float timer;
-        private int currentInterval;
+        private int currentBeat;   // 1–4, or 0 before first tick
+        private int currentBar;
         private bool isPaused = false; // Iteration 9: Pause during grid expansion
 
         public static IntervalTimer Instance { get; private set; }
 
-        public int CurrentInterval => currentInterval;
+        public float BeatDuration => baseIntervalDuration / 4f;
         public float IntervalDuration => baseIntervalDuration;
-        public float IntervalProgress => timer / baseIntervalDuration;
+        public int CurrentBar => currentBar;
+        public int CurrentBeat => currentBeat;
+        public int CurrentInterval => currentBar;
+        public float IntervalProgress =>
+            (Math.Max(0, currentBeat - 1) * BeatDuration + timer) / baseIntervalDuration;
 
-        /// <summary>
-        /// Fired every interval tick. Passes the current interval count.
-        /// </summary>
+        /// <summary>Fired every beat. Passes (beat 1–4, barNumber).</summary>
+        public event Action<int, int> OnBeat;
+
+        /// <summary>Fired every half-bar (beats 1 and 3). Passes barNumber.</summary>
+        public event Action<int> OnHalfBar;
+
+        /// <summary>Fired every bar (beat 1). Passes barNumber.</summary>
+        public event Action<int> OnBar;
+
+        /// <summary>Backward-compat alias for OnBar — fires at the same moment.</summary>
         public event Action<int> OnIntervalTick;
 
         private void Awake()
@@ -44,27 +56,35 @@ namespace ClockworkGrid
 
             timer += Time.deltaTime;
 
-            if (timer >= baseIntervalDuration)
+            if (timer >= BeatDuration)
             {
-                timer -= baseIntervalDuration;
-                currentInterval++;
-
-                // Debug: Count how many subscribers are listening
-                if (verboseLogging)
+                timer -= BeatDuration;
+                currentBeat++;
+                if (currentBeat > 4)
                 {
-                    int subscriberCount = OnIntervalTick != null ? OnIntervalTick.GetInvocationList().Length : 0;
-                    Debug.Log($"[IntervalTimer] *** FIRING INTERVAL {currentInterval} *** Subscribers: {subscriberCount}");
+                    currentBeat = 1;
+                    currentBar++;
                 }
+
+                if (verboseLogging)
+                    Debug.Log($"[IntervalTimer] Beat {currentBeat} / Bar {currentBar}");
 
                 try
                 {
-                    OnIntervalTick?.Invoke(currentInterval);
-                    if (verboseLogging)
-                        Debug.Log($"[IntervalTimer] Interval {currentInterval} event completed successfully");
+                    OnBeat?.Invoke(currentBeat, currentBar);
+
+                    if (currentBeat == 1 || currentBeat == 3)
+                        OnHalfBar?.Invoke(currentBar);
+
+                    if (currentBeat == 1)
+                    {
+                        OnBar?.Invoke(currentBar);
+                        OnIntervalTick?.Invoke(currentBar);
+                    }
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[IntervalTimer] EXCEPTION during interval tick: {e.Message}\n{e.StackTrace}");
+                    Debug.LogError($"[IntervalTimer] EXCEPTION during beat tick: {e.Message}\n{e.StackTrace}");
                 }
             }
         }

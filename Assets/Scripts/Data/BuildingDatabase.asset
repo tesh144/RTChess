@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 09aac91ca3a864122ba7f982e1923220, type: 3}
   m_Name: BuildingDatabase
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   buildingList:
   - assetName: ConeTent
     type: 0
@@ -31,7 +31,7 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 0
+    wildAnimalInteractible: 1
     isMealSource: 0
     productionInputType: 0
     productionInterval: 5
@@ -57,7 +57,7 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 0
+    wildAnimalInteractible: 1
     isMealSource: 0
     productionInputType: 0
     productionInterval: 0
@@ -83,7 +83,7 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 0
+    wildAnimalInteractible: 1
     isMealSource: 0
     productionInputType: 0
     productionInterval: 10
@@ -98,7 +98,7 @@ MonoBehaviour:
     isActive: 0
     hp: 10
     attackPower: 0
-    drawWeight: 1
+    drawWeight: 0.5
     placementCost: 0
     gridSize: {x: 1, y: 1}
     visualScale: 0
@@ -109,7 +109,7 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 0
+    wildAnimalInteractible: 1
     isMealSource: 0
     productionInputType: 1
     productionInterval: 15
@@ -124,7 +124,7 @@ MonoBehaviour:
     isActive: 0
     hp: 10
     attackPower: 0
-    drawWeight: 1
+    drawWeight: 0.5
     placementCost: 0
     gridSize: {x: 1, y: 1}
     visualScale: 0
@@ -135,12 +135,38 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 0
+    wildAnimalInteractible: 1
     isMealSource: 0
     productionInputType: 0
     productionInterval: 15
     productionIntervalBonus: 15
     productionOutputType: 5
+    producedResourceType: 0
+    productionAmount: 1
+  - assetName: TrainingFacility
+    type: 6
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 0
+    hp: 5
+    attackPower: 0
+    drawWeight: 1
+    placementCost: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 0
+    killerAdvances: 1
+    fogRevealRadius: 1
+    prefab: {fileID: 0}
+    icon: {fileID: 0}
+    isRandomBuilding: 1
+    allyInteractible: 1
+    enemyInteractible: 0
+    wildAnimalInteractible: 1
+    isMealSource: 0
+    productionInputType: 1
+    productionInterval: 30
+    productionIntervalBonus: 0
+    productionOutputType: 4
     producedResourceType: 0
     productionAmount: 1
   - assetName: Feast

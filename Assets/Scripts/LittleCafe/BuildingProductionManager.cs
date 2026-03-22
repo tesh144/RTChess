@@ -132,13 +132,13 @@ namespace LittleCafe
             mainCamera = Camera.main;
 
             if (IntervalTimer.Instance != null)
-                IntervalTimer.Instance.OnIntervalTick += OnIntervalTick;
+                IntervalTimer.Instance.OnBar += OnIntervalTick;
         }
 
         void OnDestroy()
         {
             if (IntervalTimer.Instance != null)
-                IntervalTimer.Instance.OnIntervalTick -= OnIntervalTick;
+                IntervalTimer.Instance.OnBar -= OnIntervalTick;
         }
 
         void Update()

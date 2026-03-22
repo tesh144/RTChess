@@ -3,6 +3,9 @@ CLAUDE_USER_JAI.md
 JAI_AI_SYNC.md
 COWORK_SESSION_*_HANDOFF.md
 
+# MCP server config (contains API credentials)
+.mcp.json
+
 # Unity Generated Files
 [Ll]ibrary/
 [Tt]emp/

@@ -138,7 +138,7 @@ namespace LittleCafe
                 ResourceManager.Instance.OnResourceChanged += OnResourceChanged;
 
             if (IntervalTimer.Instance != null)
-                IntervalTimer.Instance.OnIntervalTick += OnTick;
+                IntervalTimer.Instance.OnBar += OnTick;
 
             Debug.Log($"[GameplayRecorder] Recording started — will save to {sessionFileName}");
         }
@@ -156,7 +156,7 @@ namespace LittleCafe
                 ResourceManager.Instance.OnResourceChanged -= OnResourceChanged;
 
             if (IntervalTimer.Instance != null)
-                IntervalTimer.Instance.OnIntervalTick -= OnTick;
+                IntervalTimer.Instance.OnBar -= OnTick;
 
             // Take a final snapshot
             TakeSnapshot(IntervalTimer.Instance != null ? IntervalTimer.Instance.CurrentInterval : -1);
