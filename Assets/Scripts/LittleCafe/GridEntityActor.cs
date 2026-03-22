@@ -612,14 +612,6 @@ namespace LittleCafe
                     if (targetHealth.IsAllied)
                         continue;
 
-                    // Smart meal interaction: skip meals if we already have the buff
-                    if (hasMealBuff && occupant.GetComponent<MealBuffSource>() != null)
-                    {
-                        if (verboseLogging)
-                            Debug.Log($"[GridEntityActor] {gameObject.name} skipping meal (already buffed, {mealBuffTicksRemaining} ticks left)");
-                        continue;
-                    }
-
                     if (!targetHealth.WorkerCanInteract)
                     {
                         // Can't interact yet — weak bump animation
@@ -723,8 +715,11 @@ namespace LittleCafe
                     if (mealSource.icon != null)
                         ClockworkCraft.IconFlyFX.Instance?.SpawnArc(mealSource.icon, target.transform.position, transform.position);
 
-                    // Visual: attach particle aura (guard prevents duplicate on re-grant)
-                    if (GetComponent<MealBuffVisual>() == null)
+                    // Visual: restart existing aura if expiring, otherwise add fresh one
+                    MealBuffVisual existingVisual = GetComponent<MealBuffVisual>();
+                    if (existingVisual != null)
+                        existingVisual.Restart();
+                    else
                         gameObject.AddComponent<MealBuffVisual>();
 
                     if (verboseLogging)

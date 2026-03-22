@@ -19,7 +19,7 @@ namespace LittleCafe
         private const float FLICKER_INTERVAL  = 0.08f;  // seconds between spawns (~12/sec)
         private const float NORMAL_LIFETIME   = 1.4f;   // particle lifetime in normal mode
         private const float FLICKER_LIFETIME  = 0.7f;   // particle lifetime in flicker mode
-        private const float PARTICLE_RADIUS   = 0.75f;  // ring radius around worker
+        private const float PARTICLE_RADIUS   = 1.1f;   // ring radius around worker
         private const float SPAWN_HEIGHT_MIN  = 0.1f;   // lowest spawn Y offset (feet)
         private const float SPAWN_HEIGHT_MAX  = 1.2f;   // highest spawn Y offset (above head)
         private static readonly Color BUFF_COLOR = new Color(1f, 0.92f, 0.45f);
@@ -104,6 +104,18 @@ namespace LittleCafe
                 isFlickering = true;
                 timeSinceLastSpawn = 0f; // reset so full FLICKER_INTERVAL elapses before first flicker particle
             }
+        }
+
+        /// <summary>
+        /// Called by GridEntityActor when the buff is re-granted while this component
+        /// is still alive but expiring. Cancels the expire coroutine and resets state.
+        /// </summary>
+        public void Restart()
+        {
+            StopAllCoroutines();
+            isExpiring   = false;
+            isFlickering = false;
+            timeSinceLastSpawn = 0f;
         }
 
         private IEnumerator ExpireAfterDelay()
