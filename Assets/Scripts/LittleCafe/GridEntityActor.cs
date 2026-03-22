@@ -872,6 +872,9 @@ namespace LittleCafe
         // Meal Buff
         // ---------------------------------------------------------------
 
+        /// <summary>
+        /// Converts <see cref="mealBuffDurationSeconds"/> to bar ticks using the current IntervalTimer bar duration.
+        /// </summary>
         private int ConvertDurationToTicks()
         {
             if (IntervalTimer.Instance == null)
@@ -903,6 +906,9 @@ namespace LittleCafe
                 IntervalTimer.Instance.OnHalfBar += OnHalfBarTick;
         }
 
+        /// <summary>
+        /// Clears the meal buff and unsubscribes from OnHalfBar, returning the worker to bar-cadence timing.
+        /// </summary>
         private void ExpireMealBuff()
         {
             hasMealBuff = false;
