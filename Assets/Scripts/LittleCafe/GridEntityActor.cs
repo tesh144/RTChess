@@ -230,7 +230,11 @@ namespace LittleCafe
         {
             if (IntervalTimer.Instance != null)
             {
-                IntervalTimer.Instance.OnBar += OnIntervalTick;
+                IntervalTimer.Instance.OnBar += OnBarTick;
+
+                // Re-subscribe half-bar if the worker was disabled while buffed
+                if (hasMealBuff)
+                    IntervalTimer.Instance.OnHalfBar += OnHalfBarTick;
             }
         }
 
@@ -238,7 +242,8 @@ namespace LittleCafe
         {
             if (IntervalTimer.Instance != null)
             {
-                IntervalTimer.Instance.OnBar -= OnIntervalTick;
+                IntervalTimer.Instance.OnBar -= OnBarTick;
+                IntervalTimer.Instance.OnHalfBar -= OnHalfBarTick; // safe no-op if not subscribed
             }
 
             // Stop any running coroutines
@@ -258,29 +263,27 @@ namespace LittleCafe
         // Clockwork Tick
         // ---------------------------------------------------------------
 
-        private void OnIntervalTick(int intervalCount)
+        private void OnBarTick(int bar)
         {
             if (!isInitialized) return;
             if (health != null && health.IsDestroyed) return;
 
-            // Decay meal buff each tick
+            // Decay meal buff on every bar tick
             if (hasMealBuff)
             {
                 mealBuffTicksRemaining--;
                 if (mealBuffTicksRemaining <= 0)
-                {
-                    hasMealBuff = false;
-                    mealBuffTicksRemaining = 0;
-                    if (verboseLogging)
-                        Debug.Log($"[GridEntityActor] {gameObject.name} meal buff expired");
-                }
+                    ExpireMealBuff();
+
+                // Deliberate: no bar-tick action while buffed.
+                // OnHalfBarTick handles actions; last buffed action already fired via OnHalfBarTick.
+                return;
             }
 
-            // Respect interval multiplier (e.g., only act every 2nd tick)
-            if (attackIntervalMultiplier > 1 && intervalCount % attackIntervalMultiplier != 0)
+            // Not buffed — normal action cadence
+            if (attackIntervalMultiplier > 1 && bar % attackIntervalMultiplier != 0)
                 return;
 
-            // Dispatch to behavior-specific tick
             if (interactionCoroutine != null)
                 StopCoroutine(interactionCoroutine);
 
@@ -912,7 +915,40 @@ namespace LittleCafe
                 Debug.Log($"[GridEntityActor] {gameObject.name} meal buff expired");
         }
 
-        private void OnHalfBarTick(int bar) { }
+        /// <summary>
+        /// Only subscribed while the meal buff is active (see GrantMealBuff/ExpireMealBuff).
+        /// Fires at beats 1 and 3, doubling the worker's action rate.
+        /// </summary>
+        private void OnHalfBarTick(int bar)
+        {
+            if (!isInitialized) return;
+            if (health != null && health.IsDestroyed) return;
+
+            // Respect interval multiplier — same barNumber check as OnBarTick.
+            // Both beat-1 and beat-3 of a given bar share the same barNumber,
+            // so both fire or both skip together on multiplier workers.
+            if (attackIntervalMultiplier > 1 && bar % attackIntervalMultiplier != 0)
+                return;
+
+            if (interactionCoroutine != null)
+                StopCoroutine(interactionCoroutine);
+
+            switch (behaviorType)
+            {
+                case BehaviorType.RotateAndInteract:
+                    interactionCoroutine = StartCoroutine(ClockworkTickInteract());
+                    break;
+                case BehaviorType.RotateAndMove:
+                    interactionCoroutine = StartCoroutine(ClockworkTickMove());
+                    break;
+                case BehaviorType.RotateRotateMove:
+                    interactionCoroutine = StartCoroutine(ClockworkTickRotateRotateMove());
+                    break;
+                default:
+                    interactionCoroutine = StartCoroutine(ClockworkTickInteract());
+                    break;
+            }
+        }
 
         // ---------------------------------------------------------------
         // Starvation
