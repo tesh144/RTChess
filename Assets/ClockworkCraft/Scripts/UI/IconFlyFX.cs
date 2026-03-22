@@ -37,7 +37,7 @@ namespace ClockworkCraft
 
         void Start()
         {
-            canvas = FindObjectOfType<Canvas>();
+            canvas = Object.FindFirstObjectByType<Canvas>();
             if (canvas != null)
                 canvasRect = canvas.GetComponent<RectTransform>();
             mainCamera = Camera.main;

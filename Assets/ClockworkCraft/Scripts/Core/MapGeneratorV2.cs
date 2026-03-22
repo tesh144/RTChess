@@ -121,12 +121,8 @@ namespace ClockworkCraft
         public UnitDatabase unitDatabase;
         public WorkerDatabase workerDatabase;
         public BuildingDatabase buildingDatabase;
-        public FurnitureDatabase furnitureDatabase;
         public CurrencyDatabase currencyDatabase;
         public ClockworkGrid.EconomyBalanceConfig economyBalanceConfig;
-
-        [Tooltip("When true, the dock bar uses FurnitureDatabase (tables, chairs) instead of Workers + Buildings. For demo/testing.")]
-        public bool useFurnitureDeck = false;
 
         [Header("Center")]
         [Tooltip("EnvironmentDatabase entry to place at dead center.")]
@@ -335,8 +331,7 @@ namespace ClockworkCraft
 
         /// <summary>
         /// Populate the RaritySystem draw pool, then initialize the DockBarManager.
-        /// When useFurnitureDeck is true, uses FurnitureDatabase (tables, chairs, etc.).
-        /// Otherwise uses WorkerDatabase + BuildingDatabase.
+        /// Uses WorkerDatabase + BuildingDatabase.
         /// </summary>
         void SetupDeck()
         {
@@ -349,42 +344,6 @@ namespace ClockworkCraft
 
             var deckStats = new List<UnitStats>();
 
-            if (useFurnitureDeck)
-            {
-                // ── Furniture deck (demo mode) ────────────────────────────
-                if (furnitureDatabase == null || furnitureDatabase.AllFurniture.Count == 0)
-                {
-                    Debug.LogWarning("[MapGenV2] useFurnitureDeck is true but no FurnitureDatabase assigned!");
-                    return;
-                }
-
-                foreach (FurnitureData data in furnitureDatabase.AllFurniture)
-                {
-                    if (data.prefab == null) continue;
-
-                    UnitStats stats       = ScriptableObject.CreateInstance<UnitStats>();
-                    stats.unitType        = UnitType.Soldier;
-                    stats.unitName        = data.GetCleanName();
-                    stats.rarity          = Rarity.Common;
-                    stats.tier            = data.tier;
-                    stats.drawWeight      = data.drawWeight;
-                    stats.furnitureTypeOverride = (int)data.type;
-                    stats.iconSprite      = data.icon;
-                    stats.unitColor       = Color.white;
-                    stats.unitPrefab      = data.prefab;
-                    stats.resourceCost    = 0;
-                    stats.gridSize        = data.gridSize;
-                    stats.modelScale      = data.visualScale;
-                    stats.enemyPrefab     = null;
-                    stats.isActive        = data.isActive;
-                    stats.maxHP           = 0;
-                    stats.attackDamage    = 0;
-
-                    deckStats.Add(stats);
-                }
-                Debug.Log($"[MapGenV2] Furniture deck: {deckStats.Count} items from FurnitureDatabase");
-            }
-            else
             {
                 // ── Normal deck (Buildings only — workers come from building production) ──
                 bool hasBuildings = buildingDatabase != null && buildingDatabase.AllBuildings.Count > 0;

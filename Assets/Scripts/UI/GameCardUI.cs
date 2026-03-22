@@ -491,6 +491,13 @@ namespace ClockworkGrid
 
             if (isNew) SetNew(false);
 
+            if (unitPrefab == null)
+            {
+                Debug.LogWarning($"[GameCardUI] Cannot drag card '{unitStats?.unitName}' — no prefab assigned");
+                isDragging = false;
+                return;
+            }
+
             if (DragDropHandler.Instance != null && DragDropHandler.Instance.StartDrag(this, unitPrefab))
             {
                 isDragging = true;
