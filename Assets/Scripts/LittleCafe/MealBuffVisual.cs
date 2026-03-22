@@ -15,11 +15,13 @@ namespace LittleCafe
     public class MealBuffVisual : MonoBehaviour
     {
         // ── Tuning constants ───────────────────────────────────────────────
-        private const float NORMAL_INTERVAL  = 0.667f;  // seconds between spawns (~1.5/sec)
-        private const float FLICKER_INTERVAL = 0.222f;  // seconds between spawns (~4.5/sec)
-        private const float NORMAL_LIFETIME  = 1.2f;    // particle lifetime in normal mode
-        private const float FLICKER_LIFETIME = 0.6f;    // particle lifetime in flicker mode
-        private const float PARTICLE_RADIUS  = 0.35f;   // max XZ offset from worker position
+        private const float NORMAL_INTERVAL   = 0.18f;  // seconds between spawns (~5-6/sec)
+        private const float FLICKER_INTERVAL  = 0.08f;  // seconds between spawns (~12/sec)
+        private const float NORMAL_LIFETIME   = 1.4f;   // particle lifetime in normal mode
+        private const float FLICKER_LIFETIME  = 0.7f;   // particle lifetime in flicker mode
+        private const float PARTICLE_RADIUS   = 0.75f;  // ring radius around worker
+        private const float SPAWN_HEIGHT_MIN  = 0.1f;   // lowest spawn Y offset (feet)
+        private const float SPAWN_HEIGHT_MAX  = 1.2f;   // highest spawn Y offset (above head)
         private static readonly Color BUFF_COLOR = new Color(1f, 0.92f, 0.45f);
 
         // ── State ──────────────────────────────────────────────────────────
@@ -115,11 +117,15 @@ namespace LittleCafe
 
         private void SpawnParticle(float lifetime)
         {
-            float offsetX = Random.Range(-PARTICLE_RADIUS, PARTICLE_RADIUS);
-            float offsetZ = Random.Range(-PARTICLE_RADIUS, PARTICLE_RADIUS);
-            Vector3 spawnPos = transform.position + new Vector3(offsetX, 0f, offsetZ);
+            // Spawn in a ring around the worker at a random height — actually surrounds the model
+            float angle   = Random.Range(0f, Mathf.PI * 2f);
+            float radius  = Random.Range(PARTICLE_RADIUS * 0.5f, PARTICLE_RADIUS);
+            float offsetX = Mathf.Cos(angle) * radius;
+            float offsetZ = Mathf.Sin(angle) * radius;
+            float offsetY = Random.Range(SPAWN_HEIGHT_MIN, SPAWN_HEIGHT_MAX);
+            Vector3 spawnPos = transform.position + new Vector3(offsetX, offsetY, offsetZ);
 
-            float size = Random.Range(0.05f, 0.10f);
+            float size = Random.Range(0.12f, 0.22f);
 
             GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphere.name = "MealBuffParticle";
