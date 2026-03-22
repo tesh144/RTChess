@@ -41,32 +41,43 @@ Current single handler `OnIntervalTick(int bar)` is split into two:
 ### Subscription Lifecycle
 
 **`GrantMealBuff(int durationTicks)`** (updated):
-1. `hasMealBuff = true`
-2. `mealBuffTicksRemaining = durationTicks`
-3. Subscribe `OnHalfBarTick` to `IntervalTimer.Instance.OnHalfBar`
+1. Guard: `if (hasMealBuff) return;` — prevents double-subscription since C# `+=` does not deduplicate
+2. `hasMealBuff = true`
+3. `mealBuffTicksRemaining = durationTicks`
+4. Subscribe `OnHalfBarTick` to `IntervalTimer.Instance.OnHalfBar`
+
+Note: `GrantMealBuff` is only reachable from the `RotateAndInteract` scan path (existing call-site guard). No additional `behaviorType` check is needed inside `GrantMealBuff`, but the guard above makes it safe regardless.
 
 **`ExpireMealBuff()`** (new private method):
 1. `hasMealBuff = false`
 2. `mealBuffTicksRemaining = 0`
 3. Unsubscribe `OnHalfBarTick` from `IntervalTimer.Instance.OnHalfBar`
 
-**`OnDisable`** (updated): always unsubscribes both `OnBarTick` and `OnHalfBarTick` to prevent leaks.
+**`OnEnable`** (updated): subscribes `OnBarTick` to `OnBar`. If `hasMealBuff == true` (worker was disabled while buffed), also re-subscribes `OnHalfBarTick` to `OnHalfBar` to restore the doubled speed.
 
-**`OnEnable`** (unchanged): subscribes `OnBarTick` to `OnBar`. Does NOT re-subscribe `OnHalfBarTick` — the buff was not active before disable.
+**`OnDisable`** (updated): always unsubscribes both `OnBarTick` and `OnHalfBarTick` inside the existing `if (IntervalTimer.Instance != null)` null guard (retained from current code). Unsubscribing a delegate that was never subscribed is a safe C# no-op — no `if (hasMealBuff)` guard needed.
 
 ### Duration Conversion
 
 ```csharp
 private int ConvertDurationToTicks()
 {
-    float barDuration = IntervalTimer.Instance != null
-        ? IntervalTimer.Instance.IntervalDuration
-        : 2f; // fallback
-    return Mathf.Max(1, Mathf.RoundToInt(mealBuffDurationSeconds / barDuration));
+    if (IntervalTimer.Instance == null)
+    {
+        // IntervalTimer not ready — this should not happen in normal play.
+        // Fallback matches IntervalTimer.baseIntervalDuration inspector default (2.0f).
+        // If that default changes, update this constant to match.
+        const float FallbackBarDuration = 2f;
+        Debug.LogWarning("[GridEntityActor] IntervalTimer.Instance is null — using fallback bar duration");
+        return Mathf.Max(1, Mathf.RoundToInt(mealBuffDurationSeconds / FallbackBarDuration));
+    }
+    return Mathf.Max(1, Mathf.RoundToInt(mealBuffDurationSeconds / IntervalTimer.Instance.IntervalDuration));
 }
 ```
 
-Called from the `GrantMealBuff` call site (line ~698), replacing `GrantMealBuff(8)`.
+Called from the `GrantMealBuff` call site (~line 690 in current source), replacing `GrantMealBuff(8)`.
+
+Note: tick count is computed once at grant time. If `baseIntervalDuration` changes at runtime, buff duration in wall-clock seconds will drift — this is acceptable and out of scope.
 
 ### OnBarTick Logic
 
@@ -76,7 +87,8 @@ OnBarTick(bar):
   if hasMealBuff:
     decrement mealBuffTicksRemaining
     if mealBuffTicksRemaining <= 0: ExpireMealBuff()
-    return  ← no action; OnHalfBarTick handles it
+    return  ← deliberate: no bar-tick action while buffed (OnHalfBarTick handles it);
+              on the expiry beat, the last buffed action already fired via OnHalfBarTick
   // Not buffed — normal worker action
   respect intervalMultiplier
   dispatch ClockworkTick coroutine
@@ -87,23 +99,31 @@ OnBarTick(bar):
 ```
 OnHalfBarTick(bar):
   if !isInitialized || health.IsDestroyed → return
-  // Only called while buffed (subscription managed by GrantMealBuff/ExpireMealBuff)
+  // Only subscribed while buffed (managed by GrantMealBuff/ExpireMealBuff)
   respect intervalMultiplier
   dispatch ClockworkTick coroutine
 ```
 
-### Beat 1 Overlap
+### Beat 1 Overlap — Actual Firing Order
 
-On beat 1, `IntervalTimer` fires `OnBar` then `OnHalfBar` (in that order). While buffed:
-1. `OnBarTick` → decrement buff, return early (no action)
-2. `OnHalfBarTick` → worker acts
+On beat 1, `IntervalTimer` fires `OnHalfBar` **before** `OnBar` (verified in IntervalTimer.cs lines 75–82). While buffed on beat 1:
+1. `OnHalfBarTick` fires → worker acts
+2. `OnBarTick` fires → decrement buff, return early (no second action)
 
 On beat 3, only `OnHalfBar` fires:
-1. `OnHalfBarTick` → worker acts
+1. `OnHalfBarTick` fires → worker acts
 
 Result: 2 actions per bar while buffed, buff duration decrements once per bar.
 
-On expiry tick: `OnBarTick` decrements to 0, calls `ExpireMealBuff()` (unsubscribes half-bar), `hasMealBuff` is now false → worker acts on that same bar tick. Clean handoff.
+On expiry beat 1: `OnHalfBarTick` fires first → worker acts. Then `OnBarTick` fires → decrements to 0, calls `ExpireMealBuff()` (unsubscribes `OnHalfBar`), `hasMealBuff = false` → returns early (no redundant action). Worker had their last buffed action at beat 1, then transitions to bar timing from the next bar.
+
+### `attackIntervalMultiplier` Interaction
+
+The `intervalMultiplier` check uses `barNumber % attackIntervalMultiplier`. `OnHalfBar` passes the same `barNumber` for both beat 1 and beat 3 of a bar, so both half-bar ticks of a given bar will either both fire or both skip.
+
+Policy: the multiplier check applies identically to half-bar ticks. A worker with `attackIntervalMultiplier = 2` acts twice on even bars and zero times on odd bars — a net rate of 1 action/bar average, matching an unbuffed worker. This is correct: the buff doubles their *relative* rate (2× their normal multiplied cadence), not necessarily 2× an unbuffed worker's rate.
+
+Buff decay still decrements once per bar regardless of the multiplier. This is intentional — duration in wall-clock seconds should be consistent across all workers.
 
 ## What Does NOT Change
 
@@ -117,4 +137,4 @@ On expiry tick: `OnBarTick` decrements to 0, calls `ExpireMealBuff()` (unsubscri
 
 - Different foods granting different buff durations (duration lives on GridEntityActor, not MealBuffSource)
 - Visual changes to indicate the speed increase
-- Stacking or refreshing the buff while active (existing guard `!hasMealBuff` is unchanged)
+- Stacking or refreshing the buff while active (existing guard in `GrantMealBuff` prevents this)
