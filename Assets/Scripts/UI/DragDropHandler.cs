@@ -434,6 +434,10 @@ namespace ClockworkGrid
             GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, spawnRotation);
             unitObj.SetActive(true);
 
+            // Name the object after the UnitStats asset name so InteractionRegistry lookups match
+            if (currentDraggingIcon?.UnitStats != null && !string.IsNullOrEmpty(currentDraggingIcon.UnitStats.unitName))
+                unitObj.name = currentDraggingIcon.UnitStats.unitName;
+
             // Placement animation handled by Animator component (Unit_Appear animation)
             // Objects with PlaceableObject controller will automatically play spawn animation
 

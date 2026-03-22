@@ -408,36 +408,39 @@ namespace ClockworkCraft
             Debug.Log($"[MapGenV2] Registered {deckStats.Count} total items with RaritySystem");
 
             // ── Create and register special production cards ──
-            // Feast card: produced by Kitchen building (a card that represents food)
-            UnitStats feastCard = ScriptableObject.CreateInstance<UnitStats>();
-            feastCard.unitName = "Feast";
-            feastCard.unitType = UnitType.Soldier;
-            feastCard.rarity = Rarity.Common;
-            feastCard.drawWeight = 0f;
-            feastCard.isRandomBuilding = false;
-            UnitStats kitchenStats = deckStats.Find(s => s.unitName == "Kitchen");
-            feastCard.iconSprite = kitchenStats != null ? kitchenStats.iconSprite : (deckStats.Count > 0 ? deckStats[0].iconSprite : null);
-            feastCard.unitPrefab = null;
-            feastCard.isMealSource = false; // This card isn't a meal source, but it represents food
-            deckStats.Add(feastCard);
+            // NOTE: Feast is already in deckStats from BuildingDatabase (with proper icon, prefab, and stats).
+            // FindMealCard() uses FindByName("Feast") which finds the BuildingDatabase version.
 
-            // Fighter card: produced by Barracks building (uses first Worker as template)
-            // TODO: Create proper Fighter prefab and icon in the future
-            UnitStats workerTemplate = deckStats.Find(s => s.unitName == "Worker");
+            // Fighter card: produced by Barracks building — pull from WorkerDatabase for proper icon/prefab
+            WorkerData fighterData = workerDatabase != null ? workerDatabase.GetByName("Fighter") : null;
             UnitStats fighterCard = ScriptableObject.CreateInstance<UnitStats>();
             fighterCard.unitName = "Fighter";
             fighterCard.unitType = UnitType.Soldier;
             fighterCard.rarity = Rarity.Common;
-            fighterCard.drawWeight = 0f; // Not drawable
+            fighterCard.drawWeight = 0f; // Not drawable — produced by Barracks only
             fighterCard.isRandomBuilding = false;
-            fighterCard.iconSprite = workerTemplate != null ? workerTemplate.iconSprite : (deckStats.Count > 0 ? deckStats[0].iconSprite : null);
-            fighterCard.unitPrefab = workerTemplate != null ? workerTemplate.unitPrefab : null; // Use Worker prefab for now
             fighterCard.isMealSource = false;
-            // TODO: Fighters should have higher stats/damage than Workers once their prefab is created
+            if (fighterData != null)
+            {
+                fighterCard.iconSprite      = fighterData.icon;
+                fighterCard.unitPrefab      = fighterData.prefab;
+                fighterCard.isActive        = fighterData.isActive;
+                fighterCard.isAllied        = true; // Player-owned unit
+                fighterCard.maxHP           = fighterData.hp;
+                fighterCard.attackDamage    = fighterData.attackPower;
+                fighterCard.behaviorType    = fighterData.behaviorType;
+                fighterCard.killerAdvances  = fighterData.killerAdvances;
+                fighterCard.gridSize        = fighterData.gridSize;
+                fighterCard.modelScale      = fighterData.visualScale;
+            }
+            else
+            {
+                Debug.LogWarning("[MapGenV2] Fighter not found in WorkerDatabase — card will have no prefab/icon");
+            }
             deckStats.Add(fighterCard);
 
             RaritySystem.Instance.RegisterUnitStats(deckStats);
-            Debug.Log("[MapGenV2] Created and registered 'Feast' and 'Fighter' cards for production buildings");
+            Debug.Log("[MapGenV2] Registered Fighter card for Barracks production (Feast already in deck from BuildingDatabase)");
 
             // ── DockBarManager ───────────────────────────────────────────
             DockBarManager dockManager = FindFirstObjectByType<DockBarManager>();
@@ -460,33 +463,14 @@ namespace ClockworkCraft
                 Debug.Log("[MapGenV2] DockBarManager initialized (free draws)");
             }
 
-            // ── Starting hand: Worker, Tent, Statue ──────────────────────
-            // Worker comes from WorkerDatabase; Tent and Statue from the
-            // deckStats we just built (which are already registered with
-            // RaritySystem).  We look them up by unitName.
+            // ── Starting hand: Worker only ─────────────────────────────────
+            // Player starts with a single Worker card. After placing it,
+            // the draw button reveals and subsequent cards come from draws.
 
             if (workerDatabase != null && workerDatabase.Count > 0)
             {
                 dockManager.AddStartingWorker(workerDatabase);
-            }
-
-            // Add Tent (ConeTent) and Statue as starting cards
-            string[] startingBuildings = { "ConeTent", "Statue" };
-            foreach (string name in startingBuildings)
-            {
-                UnitStats match = deckStats.Find(s => s.unitName == name);
-                if (match != null)
-                {
-                    // Clone so the hand card is independent from the draw pool
-                    UnitStats clone = Instantiate(match);
-                    clone.name = match.unitName;
-                    dockManager.AddCard(clone, markAsNew: true);
-                    Debug.Log($"[MapGenV2] Added starting card '{name}' to hand");
-                }
-                else
-                {
-                    Debug.LogWarning($"[MapGenV2] Starting card '{name}' not found in deck — skipping");
-                }
+                Debug.Log("[MapGenV2] Added starting Worker card to hand (draw button hidden until first placement)");
             }
         }
 
@@ -1412,6 +1396,7 @@ namespace ClockworkCraft
             Vector3 worldPos = GridManager.Instance.GridToWorldPosition(center.x, center.y);
             worldPos.y += 0.01f; // Lift slightly to avoid shadow clipping with ground plane
             GameObject obj = Instantiate(envData.prefab, worldPos, Quaternion.identity);
+            obj.name = envData.assetName; // Match InteractionRegistry lookup key
 
             if (obj.TryGetComponent<ResourceNode>(out var node))
             {
@@ -1459,6 +1444,7 @@ namespace ClockworkCraft
                 // Random 90° rotation for visual variety
                 Quaternion randomRot = Quaternion.Euler(0f, 90f * rng.Next(4), 0f);
                 GameObject obj = Instantiate(envData.prefab, worldPos, randomRot);
+                obj.name = envData.assetName;
 
                 // ── ResourceNode ─────────────────────────────────────
                 if (obj.TryGetComponent<ResourceNode>(out var node))
@@ -1524,6 +1510,7 @@ namespace ClockworkCraft
                 worldPos.y += 0.01f;
                 Quaternion randomRot = Quaternion.Euler(0f, 90f * rng.Next(4), 0f);
                 GameObject obj = Instantiate(envData.prefab, worldPos, randomRot);
+                obj.name = envData.assetName;
 
                 if (obj.TryGetComponent<ResourceNode>(out var node))
                 {
@@ -1590,6 +1577,7 @@ namespace ClockworkCraft
                 worldPos.y += 0.01f;
                 Quaternion randomRot = Quaternion.Euler(0f, 90f * rng.Next(4), 0f);
                 GameObject obj = Instantiate(unitData.prefab, worldPos, randomRot);
+                obj.name = unitData.assetName;
 
                 if (unitData.visualScale != 1f)
                     obj.transform.localScale = Vector3.one * unitData.visualScale;
@@ -1863,6 +1851,7 @@ namespace ClockworkCraft
                 // Random facing for visual variety
                 Quaternion randomRot = Quaternion.Euler(0f, 90f * rng.Next(4), 0f);
                 GameObject obj = Instantiate(unitData.prefab, worldPos, randomRot);
+                obj.name = unitData.assetName;
 
                 // Scale from database
                 if (unitData.visualScale != 1f)
