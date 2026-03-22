@@ -10,7 +10,7 @@
         {"Icon": "🗿", "Building": "Statue", "Tier (button)": "Tier 0", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "10", "Interval Bonus (s)": "30", "Input": "None", "Output": "🏠 RandomBuilding", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
         {"Icon": "⚔️", "Building": "Barracks", "Tier (button)": "Tier 1", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "15", "Interval Bonus (s)": "30", "Input": "👷 Worker", "Output": "⚔️ Fighter", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
         {"Icon": "🍳", "Building": "Kitchen", "Tier (button)": "Tier 1", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "15", "Interval Bonus (s)": "15", "Input": "None", "Output": "🍖 Meal", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
-        {"Icon": "🍖", "Building": "Feast", "Tier (button)": "-", "isRandomBuilding": "FALSE", "DrawWeight": "", "Prod. Interval (s)": "0", "Interval Bonus (s)": "0", "Input": "None", "Output": "None", "Output Amt": "0", "Killer's Behavior": "Stay", "Reveal Radius": "1", "Ally Interactible": "TRUE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "TRUE", "HP": "5", "Attack": "0"}
+        {"Icon": "⚔️", "Building": "Feast", "Tier (button)": "Tier 2", "isRandomBuilding": "TRUE", "DrawWeight": "0.5", "Prod. Interval (s)": "30", "Interval Bonus (s)": "15", "Input": "None", "Output": "None", "Output Amt": "1", "Killer's Behavior": "Stay", "Reveal Radius": "1", "Ally Interactible": "TRUE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "TRUE", "HP": "10", "Attack": "0"}
       ]
     },
     "Workers & Entities": {
@@ -18,8 +18,8 @@
       "rows": [
         {"Icon": "👷", "Entity": "Worker (Generic)", "Type": "Worker", "Tier (button)": "Tier 0", "HP": "2", "Attack Power": "1", "Movement Behavior": "RotateAndInteract", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "0", "Slot Takeable": "FALSE"},
         {"Icon": "⚔️", "Entity": "Fighter", "Type": "Worker", "Tier (button)": "Tier 3", "HP": "10", "Attack Power": "1", "Movement Behavior": "RotateAndInteract", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "0", "Slot Takeable": "FALSE"},
-        {"Icon": "🦕", "Entity": "Dinosaur", "Type": "Wild Animal", "Tier (button)": "-", "HP": "10", "Attack Power": "1", "Movement Behavior": "RotateAndMove", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "1", "Slot Takeable": "TRUE"},
-        {"Icon": "🦣", "Entity": "Mammoth", "Type": "Wild Animal", "Tier (button)": "-", "HP": "10", "Attack Power": "1", "Movement Behavior": "RotateRotateMove", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "1", "Slot Takeable": "TRUE"}
+        {"Icon": "🦕", "Entity": "Dinosaur", "Type": "Wild Animal", "Tier (button)": "-", "HP": "5", "Attack Power": "1", "Movement Behavior": "RotateAndMove", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "1", "Slot Takeable": "TRUE"},
+        {"Icon": "🦣", "Entity": "Mammoth", "Type": "Wild Animal", "Tier (button)": "-", "HP": "5", "Attack Power": "1", "Movement Behavior": "RotateRotateMove", "Attack Behavior": "Hostile", "Killer's Behavior": "Stay", "Draw Weight": "1", "Slot Takeable": "TRUE"}
       ]
     },
     "Environment & Loot": {

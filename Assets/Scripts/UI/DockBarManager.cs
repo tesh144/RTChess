@@ -212,7 +212,7 @@ namespace ClockworkGrid
 
             if (RaritySystem.Instance != null)
             {
-                UnitStats drawnStats = RaritySystem.Instance.DrawRandomUnit();
+                UnitStats drawnStats = RaritySystem.Instance.DrawRandomUnitByTier(0);
                 if (drawnStats != null)
                 {
                     AddCard(drawnStats, markAsNew: true, animateFromDraw: true);

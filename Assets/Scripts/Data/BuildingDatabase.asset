@@ -13,13 +13,14 @@ MonoBehaviour:
   m_Name: BuildingDatabase
   m_EditorClassIdentifier:
   buildingList:
-  - assetName: ConeTent
+  - assetName: Home
     type: 0
     isFunctional: 0
     isWalkable: 0
     isActive: 0
     hp: 10
     attackPower: 0
+    tier: 0
     drawWeight: 1
     placementCost: 0
     gridSize: {x: 1, y: 1}
@@ -46,6 +47,7 @@ MonoBehaviour:
     isActive: 0
     hp: 10
     attackPower: 0
+    tier: 0
     drawWeight: 1
     placementCost: 0
     gridSize: {x: 1, y: 1}
@@ -72,6 +74,7 @@ MonoBehaviour:
     isActive: 0
     hp: 10
     attackPower: 0
+    tier: 0
     drawWeight: 1
     placementCost: 0
     gridSize: {x: 1, y: 1}
@@ -98,6 +101,7 @@ MonoBehaviour:
     isActive: 0
     hp: 10
     attackPower: 0
+    tier: 1
     drawWeight: 0.5
     placementCost: 0
     gridSize: {x: 1, y: 1}
@@ -124,6 +128,7 @@ MonoBehaviour:
     isActive: 0
     hp: 10
     attackPower: 0
+    tier: 1
     drawWeight: 0.5
     placementCost: 0
     gridSize: {x: 1, y: 1}
@@ -174,9 +179,10 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
-    hp: 5
+    hp: 10
     attackPower: 0
-    drawWeight: 0
+    tier: 2
+    drawWeight: 0.5
     placementCost: 0
     gridSize: {x: 1, y: 1}
     visualScale: 0
@@ -184,14 +190,14 @@ MonoBehaviour:
     fogRevealRadius: 1
     prefab: {fileID: 4069388665601599064, guid: 5cfe09c1bdd804de3a2fa60089dad974, type: 3}
     icon: {fileID: 21300000, guid: 8a401058293854ec38fc11f322ac7245, type: 3}
-    isRandomBuilding: 0
+    isRandomBuilding: 1
     allyInteractible: 1
     enemyInteractible: 1
     wildAnimalInteractible: 1
     isMealSource: 1
     productionInputType: 0
-    productionInterval: 0
-    productionIntervalBonus: 0
+    productionInterval: 30
+    productionIntervalBonus: 15
     productionOutputType: 0
     producedResourceType: 0
-    productionAmount: 0
+    productionAmount: 1

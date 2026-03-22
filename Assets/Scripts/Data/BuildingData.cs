@@ -25,7 +25,7 @@ namespace LittleCafe
     /// </summary>
     public enum ProductionInputType
     {
-        None,       // Auto-produce (ConeTent, Statue, Kitchen)
+        None,       // Auto-produce (Home, Statue, Kitchen)
         Worker,     // Requires a Worker card dragged onto the building (Barracks)
         Fighter     // Requires a Fighter card dragged onto the building (future use)
     }
@@ -35,12 +35,16 @@ namespace LittleCafe
     /// </summary>
     public enum ProductionOutputType
     {
-        None,       // No production
-        Worker,     // Produces a worker card for the player's hand
-        Currency,   // Produces currency that flies to the currency bar
-        RandomBuilding, // Draws a random card from the deck (same as draw button)
+        None,           // No production
+        Worker,         // Produces a worker card for the player's hand
+        Currency,       // Produces currency that flies to the currency bar
+        RandomBuilding, // Draws a random card from the deck (legacy — no tier filter)
         Fighter,        // Produces a fighter card (from Barracks)
-        Meal            // Produces a meal card (from Kitchen)
+        Meal,           // Produces a meal card (from Kitchen)
+        RandomTier0,    // Draws a random card from tier 0 pool
+        RandomTier1,    // Draws a random card from tier 1 pool
+        RandomTier2,    // Draws a random card from tier 2 pool
+        RandomTier3     // Draws a random card from tier 3 pool
     }
 
     /// <summary>
@@ -65,6 +69,10 @@ namespace LittleCafe
         public int hp = 10;
         [Tooltip("Damage dealt to target's HP per successful interaction.")]
         public int attackPower = 0;
+
+        [Header("Tier")]
+        [Tooltip("Building tier (0-3). Used by RandomTier0-3 production outputs to filter the draw pool. -1 = excluded from tier pools.")]
+        public int tier = 0;
 
         [Header("Economy")]
         [Tooltip("Relative likelihood of being drawn. Default 1. Higher = more likely.")]

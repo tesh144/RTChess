@@ -46,6 +46,10 @@ namespace ClockworkGrid
         public string unitName;
         public Rarity rarity;
 
+        [Header("Tier")]
+        [Tooltip("Building tier (0-3). Used by RandomTier0-3 to filter the draw pool. -1 = excluded from tier pools.")]
+        public int tier = -1;
+
         [Header("Draw Weight")]
         [Tooltip("Relative draw likelihood. Default 1. Higher = more likely. Overrides rarity-based weight when > 0.")]
         public float drawWeight = 0f;  // 0 = use rarity-based weight (backwards compatible)

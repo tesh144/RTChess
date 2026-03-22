@@ -365,6 +365,20 @@ namespace LittleCafe.Editor
                 bool newKillerAdvances = killerStr.Equals("Advance", StringComparison.OrdinalIgnoreCase);
                 if (existing.killerAdvances != newKillerAdvances) { existing.killerAdvances = newKillerAdvances; changed = true; }
 
+                // Tier
+                string tierStr = GetValue(row, "Tier (button)");
+                if (!string.IsNullOrEmpty(tierStr))
+                {
+                    int newTier = -1;
+                    if (tierStr.StartsWith("Tier ", StringComparison.OrdinalIgnoreCase))
+                        int.TryParse(tierStr.Substring(5).Trim(), out newTier);
+                    else if (tierStr == "-")
+                        newTier = -1;
+                    else
+                        int.TryParse(tierStr, out newTier);
+                    if (existing.tier != newTier) { existing.tier = newTier; changed = true; }
+                }
+
                 // DrawWeight
                 changed |= TrySetFloat(ref existing.drawWeight, GetValue(row, "DrawWeight"));
 

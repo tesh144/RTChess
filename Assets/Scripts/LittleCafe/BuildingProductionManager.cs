@@ -522,6 +522,9 @@ namespace LittleCafe
                         entry.pendingCard = FindFighterCard(); // Fighter is now a proper card, not a worker variant
                     else if (entry.outputType == ProductionOutputType.Meal)
                         entry.pendingCard = FindMealCard();
+                    else if (entry.outputType >= ProductionOutputType.RandomTier0 &&
+                             entry.outputType <= ProductionOutputType.RandomTier3)
+                        entry.pendingCard = DrawRandomBuildingByTier(entry.outputType - ProductionOutputType.RandomTier0);
 
                     // SFX: production timer complete
                     if (GameSFXManager.Instance != null)
@@ -573,6 +576,9 @@ namespace LittleCafe
             else if (entry.outputType == ProductionOutputType.Fighter && entry.pendingCard != null)
                 rewardIcon = entry.pendingCard.iconSprite;
             else if (entry.outputType == ProductionOutputType.Meal && entry.pendingCard != null)
+                rewardIcon = entry.pendingCard.iconSprite;
+            else if (entry.outputType >= ProductionOutputType.RandomTier0 &&
+                     entry.outputType <= ProductionOutputType.RandomTier3 && entry.pendingCard != null)
                 rewardIcon = entry.pendingCard.iconSprite;
 
             GameObject canvasObj;
@@ -630,6 +636,9 @@ namespace LittleCafe
                     rewardName = $" (fighter: {entry.pendingCard.unitName})";
                 else if (entry.outputType == ProductionOutputType.Meal && entry.pendingCard != null)
                     rewardName = $" (feast: {entry.pendingCard.unitName})";
+                else if (entry.outputType >= ProductionOutputType.RandomTier0 &&
+                         entry.outputType <= ProductionOutputType.RandomTier3 && entry.pendingCard != null)
+                    rewardName = $" (tier{entry.outputType - ProductionOutputType.RandomTier0}: {entry.pendingCard.unitName})";
 
                 float nextInterval = entry.baseInterval + (entry.intervalBonus * (entry.collectCount + 1));
                 Debug.Log($"[BuildingProduction] Pop-up ready on '{entry.buildingObj.name}'{rewardName}" +
@@ -892,6 +901,13 @@ namespace LittleCafe
                 case ProductionOutputType.Meal:
                     collected = CollectMealReward(entry, buildingWorldPos);
                     break;
+
+                case ProductionOutputType.RandomTier0:
+                case ProductionOutputType.RandomTier1:
+                case ProductionOutputType.RandomTier2:
+                case ProductionOutputType.RandomTier3:
+                    collected = CollectRandomBuildingReward(entry, buildingWorldPos);
+                    break;
             }
 
             if (!collected)
@@ -1026,6 +1042,24 @@ namespace LittleCafe
             UnitStats drawn = RaritySystem.Instance.DrawRandomUnit();
             if (drawn != null && verboseLogging)
                 Debug.Log($"[BuildingProduction] Drew random card: {drawn.unitName} ({drawn.rarity})");
+            return drawn;
+        }
+
+        /// <summary>
+        /// Draw a random card filtered by tier (0-3).
+        /// Used by RandomTier0-3 production output types.
+        /// </summary>
+        private UnitStats DrawRandomBuildingByTier(int tier)
+        {
+            if (RaritySystem.Instance == null)
+            {
+                Debug.LogWarning("[BuildingProduction] No RaritySystem — can't draw tier card");
+                return null;
+            }
+
+            UnitStats drawn = RaritySystem.Instance.DrawRandomUnitByTier(tier);
+            if (drawn != null && verboseLogging)
+                Debug.Log($"[BuildingProduction] Drew tier {tier} card: {drawn.unitName} ({drawn.rarity})");
             return drawn;
         }
 

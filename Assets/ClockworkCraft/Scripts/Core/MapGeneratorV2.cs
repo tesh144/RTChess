@@ -366,6 +366,7 @@ namespace ClockworkCraft
                     stats.unitType        = UnitType.Soldier;
                     stats.unitName        = data.GetCleanName();
                     stats.rarity          = Rarity.Common;
+                    stats.tier            = data.tier;
                     stats.drawWeight      = data.drawWeight;
                     stats.furnitureTypeOverride = (int)data.type;
                     stats.iconSprite      = data.icon;
@@ -403,6 +404,7 @@ namespace ClockworkCraft
                     stats.unitType        = UnitType.Soldier;
                     stats.unitName        = data.GetCleanName();
                     stats.rarity          = Rarity.Common;
+                    stats.tier            = data.tier;
                     stats.drawWeight      = data.drawWeight;
                     stats.iconSprite      = data.icon;
                     stats.unitColor       = Color.white;
