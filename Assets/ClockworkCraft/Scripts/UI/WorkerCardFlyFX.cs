@@ -77,13 +77,13 @@ namespace LittleCafe
         /// </summary>
         public bool SpawnWorkerFly(Vector3 worldPosition, WorkerData workerData, int index = 0)
         {
-            if (canvas == null || mainCamera == null) return false;
+            if (mainCamera == null) return false;
             if (workerData == null) return false;
 
-            // Reserve a hand slot BEFORE starting the fly animation.
-            // If the hand is full, show the popup immediately and don't start the fly-in.
             var dock = ClockworkGrid.DockBarManager.Instance;
-            if (dock != null && !dock.TryReserveSlot())
+            if (dock == null) return false;
+
+            if (dock.IsHandFull)
             {
                 Debug.LogWarning("[WorkerCardFlyFX] Hand full — can't fly worker card");
                 if (ClockworkGrid.GameSFXManager.Instance != null)
@@ -92,7 +92,18 @@ namespace LittleCafe
                 return false;
             }
 
-            StartCoroutine(WorkerFlyCoroutine(worldPosition, workerData, index));
+            // Convert building world position to screen position for the card fly-in
+            Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPosition);
+            if (screenPos.z < 0) return false;
+
+            // Add the card directly — it will fly from the building's screen position
+            // using the same CardFlyInAnimation as the draw button
+            dock.AddWorkerCard(workerData, consumeReservation: false, flyFromScreenPos: screenPos);
+
+            if (ClockworkGrid.GameSFXManager.Instance != null)
+                ClockworkGrid.GameSFXManager.Instance.PlaySuccess();
+
+            CameraSystemLocator.Current?.Shake(0.08f, 0.15f);
             return true;
         }
 
@@ -105,12 +116,13 @@ namespace LittleCafe
         /// </summary>
         public bool SpawnCardFly(Vector3 worldPosition, ClockworkGrid.UnitStats cardStats, int index = 0)
         {
-            if (canvas == null || mainCamera == null) return false;
+            if (mainCamera == null) return false;
             if (cardStats == null) return false;
 
-            // Reserve a hand slot BEFORE starting the fly animation.
             var dock = ClockworkGrid.DockBarManager.Instance;
-            if (dock != null && !dock.TryReserveSlot())
+            if (dock == null) return false;
+
+            if (dock.IsHandFull)
             {
                 Debug.LogWarning("[WorkerCardFlyFX] Hand full — can't fly card");
                 if (ClockworkGrid.GameSFXManager.Instance != null)
@@ -119,7 +131,18 @@ namespace LittleCafe
                 return false;
             }
 
-            StartCoroutine(CardFlyCoroutine(worldPosition, cardStats, index));
+            // Convert building world position to screen position for the card fly-in
+            Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPosition);
+            if (screenPos.z < 0) return false;
+
+            // Add the card directly — it will fly from the building's screen position
+            // using the same CardFlyInAnimation as the draw button
+            dock.AddCard(cardStats, markAsNew: true, consumeReservation: false, flyFromScreenPos: screenPos);
+
+            if (ClockworkGrid.GameSFXManager.Instance != null)
+                ClockworkGrid.GameSFXManager.Instance.PlaySuccess();
+
+            CameraSystemLocator.Current?.Shake(0.08f, 0.15f);
             return true;
         }
 
@@ -254,9 +277,11 @@ namespace LittleCafe
             }
 
             // ── Phase 4: Arrival — add worker card (consumes the reserved slot) ─
+            // Pass the icon's final screen position so the card flies in from here
             if (DockBarManager.Instance != null)
             {
-                DockBarManager.Instance.AddWorkerCard(workerData, consumeReservation: true);
+                Vector3 arrivalScreenPos = rect.position;
+                DockBarManager.Instance.AddWorkerCard(workerData, consumeReservation: true, flyFromScreenPos: arrivalScreenPos);
             }
 
             // SFX: worker card acquired
@@ -382,9 +407,11 @@ namespace LittleCafe
             }
 
             // Phase 4: Arrival — add drawn card to hand (consumes the reserved slot)
+            // Pass the icon's final screen position so the card flies in from here
             if (ClockworkGrid.DockBarManager.Instance != null)
             {
-                ClockworkGrid.DockBarManager.Instance.AddCard(cardStats, markAsNew: true, consumeReservation: true);
+                Vector3 arrivalScreenPos = rect.position;
+                ClockworkGrid.DockBarManager.Instance.AddCard(cardStats, markAsNew: true, consumeReservation: true, flyFromScreenPos: arrivalScreenPos);
             }
 
             if (ClockworkGrid.GameSFXManager.Instance != null)
