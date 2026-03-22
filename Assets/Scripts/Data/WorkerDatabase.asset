@@ -18,12 +18,12 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 1
-    killerAdvances: 0
     behaviorType: 0
+    killerAdvances: 0
     hp: 2
     attackPower: 1
     drawWeight: 0
-    gridSize: {x: 0, y: 0}
+    gridSize: {x: 1, y: 1}
     visualScale: 0
     prefab: {fileID: 9011859404534711103, guid: 40a97e5d9c6d64bf888cecc906b97fd3, type: 3}
     icon: {fileID: 21300000, guid: f9441b13b752e428b84afa421b539c3e, type: 3}
@@ -32,12 +32,12 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 1
-    killerAdvances: 0
     behaviorType: 0
+    killerAdvances: 0
     hp: 10
     attackPower: 1
     drawWeight: 0
-    gridSize: {x: 0, y: 0}
+    gridSize: {x: 1, y: 1}
     visualScale: 0
     prefab: {fileID: 0}
-    icon: {fileID: 0}
+    icon: {fileID: 21300000, guid: cae1908ef32d7457e8c9d9e772b22e61, type: 3}

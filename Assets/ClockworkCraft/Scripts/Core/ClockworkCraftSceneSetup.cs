@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using ClockworkGrid;
 using LittleCafe;    // GridCamera, CameraPan live in LittleCafe namespace
@@ -24,7 +25,7 @@ namespace ClockworkCraft
 
         private void SetupCamera()
         {
-            Camera cam = FindObjectOfType<Camera>(true);
+            Camera cam = FindFirstObjectByType<Camera>();
             if (cam == null)
             {
                 Debug.LogError("[ClockworkCraftSetup] No Camera found in scene!");

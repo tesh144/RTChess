@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6527743757298223091}
   - component: {fileID: 5559404143422142381}
   m_Layer: 0
-  m_Name: Tent
+  m_Name: Tent_S
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -67,6 +67,7 @@ MonoBehaviour:
   gridX: 0
   gridY: 0
   gridSize: {x: 1, y: 1}
+  fogRevealRadius: 1
 --- !u!1 &2569269929636027087
 GameObject:
   m_ObjectHideFlags: 0
@@ -134,7 +135,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &2208562779259249144
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -148,6 +149,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -161,6 +163,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6748256631287455626}
     m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.43431
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.43431
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.43431
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -201,6 +215,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7633859078967191247, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296647801618232418, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 299541926921819646, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
       propertyPath: m_Name
       value: Tent_FBX
@@ -208,7 +234,9 @@ PrefabInstance:
     m_RemovedComponents:
     - {fileID: -1853094968961178454, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
     - {fileID: -6722085885383957590, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: -8700617353114198275, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
+    - {fileID: 65702495048144492, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: dc3fcf2ee127242ef886467d6389128d, type: 3}

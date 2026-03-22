@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
@@ -280,7 +281,7 @@ public class ProductionUIPrefabGenerator : Editor
     static void AutoAssignToManager()
     {
         // Find BuildingProductionManager in scene (or in prefabs)
-        var manager = FindObjectOfType<LittleCafe.BuildingProductionManager>();
+        var manager = FindFirstObjectByType<LittleCafe.BuildingProductionManager>();
         if (manager == null)
         {
             Debug.Log("[ProductionUIPrefabGenerator] No BuildingProductionManager in scene — prefabs saved but not auto-assigned. Assign timerPrefab and popupPrefab manually in Inspector.");

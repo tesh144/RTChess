@@ -3151,3 +3151,6 @@
 [EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
 [EXCEPTION] MissingReferenceException: The object of type 'RectTransform' has been destroyed but you are still trying to access it.
 
+[PLAY_MODE] 2026-03-22 11:11:15
+[EXCEPTION] ArgumentException: GetComponent requires that the requested component 'UnitStats' derives from MonoBehaviour or Component or is an interface.
+

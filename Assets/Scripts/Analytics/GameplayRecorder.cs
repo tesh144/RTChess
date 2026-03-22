@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using System;
 using System.Collections.Generic;
 using System.IO;

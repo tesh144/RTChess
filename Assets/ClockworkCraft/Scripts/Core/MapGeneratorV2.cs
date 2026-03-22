@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
@@ -136,7 +137,7 @@ namespace ClockworkCraft
         public int clearingRadius = 1;
 
         // Drawn by custom editor — no [Header] to avoid duplicates
-        [HideInInspector] [Range(0f, 1f)] public float mapDensity = 0.1f;
+        [HideInInspector] [Range(0.1f, 3f)] public float mapDensity = 1.0f;
         [HideInInspector] public List<EnvironmentSpawnEntry> spawnEntries = new List<EnvironmentSpawnEntry>();
         [HideInInspector] public List<UnitSpawnEntry> unitSpawnEntries = new List<UnitSpawnEntry>();
 
@@ -167,14 +168,14 @@ namespace ClockworkCraft
 
             // TitleScreenController's onGameStart UnityEvent should call RunGenerate()
             // via the Inspector. If no title screen exists, fall back to runtime hookup.
-            var titleScreen = FindObjectOfType<ClockworkGrid.TitleScreenController>(true);
+            var titleScreen = FindFirstObjectByType<ClockworkGrid.TitleScreenController>();
             if (titleScreen != null)
             {
                 Debug.Log("[MapGenV2] TitleScreenController found — waiting for onGameStart event...");
             }
             else
             {
-                var gate = FindObjectOfType<LittleCafe.GameStartGate>();
+                var gate = FindFirstObjectByType<LittleCafe.GameStartGate>();
                 if (gate != null)
                 {
                     gate.OnGameStart += RunGenerate;
@@ -211,12 +212,12 @@ namespace ClockworkCraft
             // Ensure furniture/entity systems exist (CafeSceneSetupV2 defers when MapGeneratorV2 is present)
             if (GridEntityManager.Instance == null)
             {
-                if (FindObjectOfType<GridEntityManager>() == null)
+                if (FindFirstObjectByType<GridEntityManager>() == null)
                     new GameObject("GridEntityManager").AddComponent<GridEntityManager>();
             }
-            if (FindObjectOfType<FurnitureConnectivityManager>() == null)
+            if (FindFirstObjectByType<FurnitureConnectivityManager>() == null)
                 new GameObject("FurnitureConnectivityManager").AddComponent<FurnitureConnectivityManager>();
-            if (FindObjectOfType<FurnitureRemovalHandler>() == null)
+            if (FindFirstObjectByType<FurnitureRemovalHandler>() == null)
                 new GameObject("FurnitureRemovalHandler").AddComponent<FurnitureRemovalHandler>();
 
             // Ensure economy
@@ -250,11 +251,11 @@ namespace ClockworkCraft
             }
 
             // Ensure resource display UI
-            if (FindObjectOfType<ResourceDisplayUI>(true) == null)
+            if (FindFirstObjectByType<ResourceDisplayUI>() == null)
                 new GameObject("ResourceDisplayUI").AddComponent<ResourceDisplayUI>();
 
             // Ensure loot particle FX
-            if (FindObjectOfType<ResourceLootFX>(true) == null)
+            if (FindFirstObjectByType<ResourceLootFX>() == null)
                 new GameObject("ResourceLootFX").AddComponent<ResourceLootFX>();
 
             // Ensure placement cost display (floating cost above drop location during drag)
@@ -266,22 +267,22 @@ namespace ClockworkCraft
                 new GameObject("GameplayRecorder").AddComponent<LittleCafe.GameplayRecorder>();
 
             // Ensure building production manager
-            if (FindObjectOfType<BuildingProductionManager>(true) == null)
+            if (FindFirstObjectByType<BuildingProductionManager>() == null)
             {
                 var bpm = new GameObject("BuildingProductionManager").AddComponent<BuildingProductionManager>();
                 bpm.workerDatabase = workerDatabase;
             }
-            else if (FindObjectOfType<BuildingProductionManager>(true).workerDatabase == null && workerDatabase != null)
+            else if (FindFirstObjectByType<BuildingProductionManager>().workerDatabase == null && workerDatabase != null)
             {
-                FindObjectOfType<BuildingProductionManager>(true).workerDatabase = workerDatabase;
+                FindFirstObjectByType<BuildingProductionManager>().workerDatabase = workerDatabase;
             }
 
             // Ensure worker card fly FX
-            if (FindObjectOfType<WorkerCardFlyFX>(true) == null)
+            if (FindFirstObjectByType<WorkerCardFlyFX>() == null)
                 new GameObject("WorkerCardFlyFX").AddComponent<WorkerCardFlyFX>();
 
             // Ensure GameSFXManager (unified sound effects)
-            if (GameSFXManager.Instance == null && FindObjectOfType<GameSFXManager>(true) == null)
+            if (GameSFXManager.Instance == null && FindFirstObjectByType<GameSFXManager>() == null)
                 new GameObject("GameSFXManager").AddComponent<GameSFXManager>();
 
             // Interaction registry — owned by CafeSceneSetupV2 as a scene object.
@@ -297,9 +298,9 @@ namespace ClockworkCraft
             }
 
             // Ensure UI infrastructure
-            if (FindObjectOfType<DragDropHandler>(true) == null)
+            if (FindFirstObjectByType<DragDropHandler>() == null)
                 new GameObject("DragDropHandler").AddComponent<DragDropHandler>();
-            if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 var esObj = new GameObject("EventSystem");
                 esObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
@@ -312,7 +313,7 @@ namespace ClockworkCraft
             GridManager gm = GridManager.Instance;
             if (gm == null)
             {
-                gm = FindObjectOfType<GridManager>(true);
+                gm = FindFirstObjectByType<GridManager>();
                 if (gm == null)
                 {
                     // Create GridManager if none exists in scene
@@ -443,8 +444,40 @@ namespace ClockworkCraft
             RaritySystem.Instance.RegisterUnitStats(deckStats);
             Debug.Log($"[MapGenV2] Registered {deckStats.Count} total items with RaritySystem");
 
+            // ── Create and register special production cards ──
+            // Feast card: produced by Kitchen building (a card that represents food)
+            UnitStats feastCard = ScriptableObject.CreateInstance<UnitStats>();
+            feastCard.unitName = "Feast";
+            feastCard.unitType = UnitType.Soldier;
+            feastCard.rarity = Rarity.Common;
+            feastCard.drawWeight = 0f;
+            feastCard.isRandomBuilding = false;
+            UnitStats kitchenStats = deckStats.Find(s => s.unitName == "Kitchen");
+            feastCard.iconSprite = kitchenStats != null ? kitchenStats.iconSprite : (deckStats.Count > 0 ? deckStats[0].iconSprite : null);
+            feastCard.unitPrefab = null;
+            feastCard.isMealSource = false; // This card isn't a meal source, but it represents food
+            deckStats.Add(feastCard);
+
+            // Fighter card: produced by Barracks building (uses first Worker as template)
+            // TODO: Create proper Fighter prefab and icon in the future
+            UnitStats workerTemplate = deckStats.Find(s => s.unitName == "Worker");
+            UnitStats fighterCard = ScriptableObject.CreateInstance<UnitStats>();
+            fighterCard.unitName = "Fighter";
+            fighterCard.unitType = UnitType.Soldier;
+            fighterCard.rarity = Rarity.Common;
+            fighterCard.drawWeight = 0f; // Not drawable
+            fighterCard.isRandomBuilding = false;
+            fighterCard.iconSprite = workerTemplate != null ? workerTemplate.iconSprite : (deckStats.Count > 0 ? deckStats[0].iconSprite : null);
+            fighterCard.unitPrefab = workerTemplate != null ? workerTemplate.unitPrefab : null; // Use Worker prefab for now
+            fighterCard.isMealSource = false;
+            // TODO: Fighters should have higher stats/damage than Workers once their prefab is created
+            deckStats.Add(fighterCard);
+
+            RaritySystem.Instance.RegisterUnitStats(deckStats);
+            Debug.Log("[MapGenV2] Created and registered 'Feast' and 'Fighter' cards for production buildings");
+
             // ── DockBarManager ───────────────────────────────────────────
-            DockBarManager dockManager = FindObjectOfType<DockBarManager>(true);
+            DockBarManager dockManager = FindFirstObjectByType<DockBarManager>();
             if (dockManager == null)
             {
                 Debug.LogWarning("[MapGenV2] DockBarManager not found in scene — no hand UI.");
@@ -457,7 +490,7 @@ namespace ClockworkCraft
             // Free draws in ClockworkCraft mode
             dockManager.SetDrawCost(0, 0);
 
-            Canvas canvas = FindObjectOfType<Canvas>();
+            Canvas canvas = FindFirstObjectByType<Canvas>();
             if (canvas != null)
             {
                 dockManager.Initialize(canvas);
@@ -693,7 +726,7 @@ namespace ClockworkCraft
 
             // Re-point camera at the (potentially new) grid center.
             GridCamera cam = GridCamera.Instance;
-            if (cam == null) cam = FindObjectOfType<GridCamera>();
+            if (cam == null) cam = FindFirstObjectByType<GridCamera>();
             if (cam == null)
             {
                 var cameraSystem = CameraSystemLocator.Current as GridCamera;

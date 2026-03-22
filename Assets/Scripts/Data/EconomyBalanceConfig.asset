@@ -89,7 +89,7 @@ MonoBehaviour:
       baseCost: 0
       costIncrement: 0
       costTable: []
-  - itemName: TrainingFacility
+  - itemName: Barracks
     sourceDatabase: 0
     icon: {fileID: 0}
     costs:

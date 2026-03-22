@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
@@ -62,9 +63,10 @@ namespace ClockworkCraft
                 int clearingSize = (2 * gen.clearingRadius + 1) * (2 * gen.clearingRadius + 1);
                 int available = totalTiles - clearingSize;
                 int totalBudget = Mathf.RoundToInt(available * densityProp.floatValue);
+                float coveragePercent = ((float)totalBudget / available) * 100f;
 
                 EditorGUILayout.HelpBox(
-                    $"~{totalBudget} spawn tiles  ({available} available)",
+                    $"~{coveragePercent:F1}% map coverage (~{totalBudget} / {available} tiles)",
                     MessageType.Info);
             }
 

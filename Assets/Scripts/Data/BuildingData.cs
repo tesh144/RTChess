@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using ClockworkCraft;
 
@@ -25,7 +26,7 @@ namespace LittleCafe
     public enum ProductionInputType
     {
         None,       // Auto-produce (ConeTent, Statue, Kitchen)
-        Worker,     // Requires a Worker card dragged onto the building (Training Facility)
+        Worker,     // Requires a Worker card dragged onto the building (Barracks)
         Fighter     // Requires a Fighter card dragged onto the building (future use)
     }
 
@@ -38,7 +39,7 @@ namespace LittleCafe
         Worker,     // Produces a worker card for the player's hand
         Currency,   // Produces currency that flies to the currency bar
         RandomBuilding, // Draws a random card from the deck (same as draw button)
-        Fighter,        // Produces a fighter card (from Training Facility)
+        Fighter,        // Produces a fighter card (from Barracks)
         Meal            // Produces a meal card (from Kitchen)
     }
 

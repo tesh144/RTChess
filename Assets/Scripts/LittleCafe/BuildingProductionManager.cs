@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -239,10 +240,10 @@ namespace LittleCafe
                         entry.timerRevealed = true;
                     }
 
-                    // Play interact animation on the building
+                    // Play bounce animation on the building (acknowledgement of worker/fighter acceptance)
                     Animator buildingAnimator = entry.buildingObj.GetComponentInChildren<Animator>();
                     if (buildingAnimator != null)
-                        buildingAnimator.SetTrigger("interact_strong");
+                        buildingAnimator.SetTrigger("idle_bounce");
 
                     if (verboseLogging)
                         Debug.Log($"[BuildingProduction] Fed {inputType} into '{entry.buildingObj.name}' — timer started ({entry.EffectiveInterval}s)");
@@ -518,7 +519,7 @@ namespace LittleCafe
                     else if (entry.outputType == ProductionOutputType.RandomBuilding)
                         entry.pendingCard = DrawRandomBuilding();
                     else if (entry.outputType == ProductionOutputType.Fighter)
-                        entry.pendingWorker = PickRandomWorker(); // Fighter = upgraded worker (uses same pool for now)
+                        entry.pendingCard = FindFighterCard(); // Fighter is now a proper card, not a worker variant
                     else if (entry.outputType == ProductionOutputType.Meal)
                         entry.pendingCard = FindMealCard();
 
@@ -568,6 +569,10 @@ namespace LittleCafe
             else if (entry.outputType == ProductionOutputType.Currency)
                 rewardIcon = ResourceDisplayUI.GetIconForResource(entry.producedResourceType);
             else if (entry.outputType == ProductionOutputType.RandomBuilding && entry.pendingCard != null)
+                rewardIcon = entry.pendingCard.iconSprite;
+            else if (entry.outputType == ProductionOutputType.Fighter && entry.pendingCard != null)
+                rewardIcon = entry.pendingCard.iconSprite;
+            else if (entry.outputType == ProductionOutputType.Meal && entry.pendingCard != null)
                 rewardIcon = entry.pendingCard.iconSprite;
 
             GameObject canvasObj;
@@ -621,6 +626,10 @@ namespace LittleCafe
                     rewardName = $" (worker: {entry.pendingWorker.GetCleanName()})";
                 else if (entry.outputType == ProductionOutputType.RandomBuilding && entry.pendingCard != null)
                     rewardName = $" (card: {entry.pendingCard.unitName})";
+                else if (entry.outputType == ProductionOutputType.Fighter && entry.pendingCard != null)
+                    rewardName = $" (fighter: {entry.pendingCard.unitName})";
+                else if (entry.outputType == ProductionOutputType.Meal && entry.pendingCard != null)
+                    rewardName = $" (feast: {entry.pendingCard.unitName})";
 
                 float nextInterval = entry.baseInterval + (entry.intervalBonus * (entry.collectCount + 1));
                 Debug.Log($"[BuildingProduction] Pop-up ready on '{entry.buildingObj.name}'{rewardName}" +
@@ -876,8 +885,8 @@ namespace LittleCafe
                     break;
 
                 case ProductionOutputType.Fighter:
-                    // Fighter uses same worker card delivery (fighter = upgraded worker for now)
-                    collected = CollectWorkerReward(entry, buildingWorldPos);
+                    // Fighter is now a proper card type (produced by Barracks)
+                    collected = CollectRandomBuildingReward(entry, buildingWorldPos);
                     break;
 
                 case ProductionOutputType.Meal:
@@ -1066,15 +1075,29 @@ namespace LittleCafe
         }
 
         /// <summary>
-        /// Find the Meal UnitStats from the registered card pool.
+        /// Find the Feast card (meal card) from the registered card pool.
+        /// Kitchen buildings produce Feast cards that workers can pick up.
         /// </summary>
         private UnitStats FindMealCard()
         {
             if (RaritySystem.Instance == null) return null;
-            UnitStats meal = RaritySystem.Instance.FindByName("Meal");
-            if (meal == null)
-                Debug.LogWarning("[BuildingProduction] 'Meal' card not found in RaritySystem pool");
-            return meal;
+            UnitStats feast = RaritySystem.Instance.FindByName("Feast");
+            if (feast == null)
+                Debug.LogWarning("[BuildingProduction] 'Feast' card not found in RaritySystem pool");
+            return feast;
+        }
+
+        /// <summary>
+        /// Find the Fighter card from the registered card pool.
+        /// Barracks buildings produce Fighter cards.
+        /// </summary>
+        private UnitStats FindFighterCard()
+        {
+            if (RaritySystem.Instance == null) return null;
+            UnitStats fighter = RaritySystem.Instance.FindByName("Fighter");
+            if (fighter == null)
+                Debug.LogWarning("[BuildingProduction] 'Fighter' card not found in RaritySystem pool");
+            return fighter;
         }
 
         /// <summary>

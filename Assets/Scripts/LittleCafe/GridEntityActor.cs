@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using System.Collections;
 using ClockworkGrid;
@@ -713,7 +714,7 @@ namespace LittleCafe
                 MealBuffSource mealSource = target.GetComponent<MealBuffSource>();
                 if (mealSource != null && !hasMealBuff)
                 {
-                    GrantMealBuff(8); // 8 interval ticks
+                    GrantMealBuff(10); // ~10 interval ticks (~20 seconds at 2s base interval)
                     if (verboseLogging)
                         Debug.Log($"[GridEntityActor] {gameObject.name} received meal buff ({mealBuffTicksRemaining} ticks)");
                 }

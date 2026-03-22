@@ -1,4 +1,6 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace ClockworkGrid
 {
@@ -39,11 +41,14 @@ namespace ClockworkGrid
         // Colors
         private Color validColor = new Color(1f, 1f, 1f, 0.6f);
         private Color invalidColor = new Color(1f, 0.3f, 0.3f, 0.6f);
-        private Color feedBuildingColor = new Color(0.3f, 1f, 0.5f, 0.75f); // Bright green glow for valid input building
+        private Color feedBuildingColor = new Color(0.3f, 1f, 0.5f, 0.75f); // Bright green glow for valid input building (hovered)
+        private Color feedBuildingDimColor = new Color(0.1f, 0.8f, 0.3f, 0.4f); // Dimmer green for valid input buildings (not hovered)
 
         // Feed-building state (dropping a card onto a production building)
         private bool isHoveringInputBuilding = false;
         private int feedTargetGridX, feedTargetGridY;
+        private List<(int gridX, int gridY)> allValidFeedBuildings = new List<(int, int)>(); // All valid drop locations
+        private int feedBuildingHighlightStartIndex = 1; // Cell highlights start from index 1 (index 0 is for hovered)
 
         // Camera tracking during drag
         private Vector3 preDragCameraTarget;
@@ -141,9 +146,22 @@ namespace ClockworkGrid
             if (GameSFXManager.Instance != null)
                 GameSFXManager.Instance.PlayDragStart();
 
-            // Get grid size from GridObject component on the prefab (not UnitStats)
+            // Get grid size: prefer GridObject on the prefab, fall back to UnitStats.gridSize
+            // (database-driven size that gets set from BuildingData/WorkerData during card creation)
             GridObject gridObj = currentUnitPrefab.GetComponent<GridObject>();
-            currentGridSize = (gridObj != null) ? gridObj.GridSize : new Vector2Int(1, 1);
+            if (gridObj != null && gridObj.GridSize.x >= 1 && gridObj.GridSize.y >= 1)
+            {
+                currentGridSize = gridObj.GridSize;
+            }
+            else
+            {
+                // UnitStats is a ScriptableObject (not a Component), so read it from the card icon
+                UnitStats stats = currentDraggingIcon?.UnitStats;
+                if (stats != null && stats.gridSize.x >= 1 && stats.gridSize.y >= 1)
+                    currentGridSize = stats.gridSize;
+                else
+                    currentGridSize = new Vector2Int(1, 1);
+            }
 
             // Cache canvas info for correct UI-to-screen conversion
             iconCanvas = icon.GetComponentInParent<Canvas>();
@@ -188,43 +206,65 @@ namespace ClockworkGrid
                 // Check for feed-building interaction first (dropping a worker/fighter onto a production building)
                 isHoveringInputBuilding = false;
                 LittleCafe.ProductionInputType cardInputType = GetCardInputType();
-                if (cardInputType != LittleCafe.ProductionInputType.None &&
-                    GridManager.Instance != null &&
-                    GridManager.Instance.WorldToGridPosition(worldPos, out int hoveredX, out int hoveredY))
+                if (cardInputType != LittleCafe.ProductionInputType.None)
                 {
-                    if (LittleCafe.BuildingProductionManager.Instance != null &&
-                        LittleCafe.BuildingProductionManager.Instance.IsInputBuildingAt(hoveredX, hoveredY, cardInputType))
+                    // Get all valid feed-buildings and highlight them
+                    GetAllValidFeedBuildings(cardInputType, allValidFeedBuildings);
+
+                    if (GridManager.Instance != null &&
+                        GridManager.Instance.WorldToGridPosition(worldPos, out int hoveredX, out int hoveredY))
                     {
-                        isHoveringInputBuilding = true;
-                        feedTargetGridX = hoveredX;
-                        feedTargetGridY = hoveredY;
-                        isValidPlacement = true; // Allow drop here
-                        targetGridX = hoveredX;
-                        targetGridY = hoveredY;
-
-                        // Show single bright green highlight on the building's cell
-                        UpdateFeedBuildingHighlight(hoveredX, hoveredY);
-
-                        // Camera + arc
-                        Vector3 buildingCenter = GridManager.Instance.GridToWorldPosition(hoveredX, hoveredY);
-                        buildingCenter.y = GetTileSurfaceY();
-
-                        var feedCam = CameraSystemLocator.Current;
-                        if (feedCam != null)
+                        // Check if hovered position is a valid feed-building
+                        if (LittleCafe.BuildingProductionManager.Instance != null &&
+                            LittleCafe.BuildingProductionManager.Instance.IsInputBuildingAt(hoveredX, hoveredY, cardInputType))
                         {
-                            Vector3 blendTarget = Vector3.Lerp(preDragCameraTarget, buildingCenter, 0.5f);
-                            Vector3 current = feedCam.CurrentTarget;
-                            Vector3 eased = Vector3.Lerp(current, blendTarget, Time.deltaTime * dragCameraEaseSpeed);
-                            feedCam.SetTarget(eased);
+                            isHoveringInputBuilding = true;
+                            feedTargetGridX = hoveredX;
+                            feedTargetGridY = hoveredY;
+                            isValidPlacement = true; // Allow drop here
+                            targetGridX = hoveredX;
+                            targetGridY = hoveredY;
+
+                            // Show all valid feed-buildings with the hovered one bright, others dimmer
+                            UpdateAllFeedBuildingHighlights(hoveredX, hoveredY);
+
+                            // Camera + arc to hovered building
+                            Vector3 buildingCenter = GridManager.Instance.GridToWorldPosition(hoveredX, hoveredY);
+                            buildingCenter.y = GetTileSurfaceY();
+
+                            var feedCam = CameraSystemLocator.Current;
+                            if (feedCam != null)
+                            {
+                                Vector3 blendTarget = Vector3.Lerp(preDragCameraTarget, buildingCenter, 0.5f);
+                                Vector3 current = feedCam.CurrentTarget;
+                                Vector3 eased = Vector3.Lerp(current, blendTarget, Time.deltaTime * dragCameraEaseSpeed);
+                                feedCam.SetTarget(eased);
+                            }
+
+                            UpdateArcLine(buildingCenter);
+
+                            // Hide placement cost display when hovering a feed building
+                            if (LittleCafe.PlacementCostDisplay.Instance != null)
+                                LittleCafe.PlacementCostDisplay.Instance.SetEntriesVisible(false);
+
+                            return; // Skip normal placement validation
                         }
+                        else if (allValidFeedBuildings.Count > 0)
+                        {
+                            // Not hovering a valid building, but valid buildings exist — show them all dimmer
+                            UpdateAllFeedBuildingHighlights(-1, -1);
 
-                        UpdateArcLine(buildingCenter);
-
-                        // Hide placement cost display when hovering a feed building
+                            // Hide placement cost display
+                            if (LittleCafe.PlacementCostDisplay.Instance != null)
+                                LittleCafe.PlacementCostDisplay.Instance.SetEntriesVisible(false);
+                        }
+                    }
+                    else if (allValidFeedBuildings.Count > 0)
+                    {
+                        // Raycast failed but valid buildings exist — show them all
+                        UpdateAllFeedBuildingHighlights(-1, -1);
                         if (LittleCafe.PlacementCostDisplay.Instance != null)
                             LittleCafe.PlacementCostDisplay.Instance.SetEntriesVisible(false);
-
-                        return; // Skip normal placement validation
                     }
                 }
 
@@ -640,6 +680,9 @@ namespace ClockworkGrid
                     cellHighlights[i].SetActive(false);
             }
 
+            // Clear valid feed-buildings list
+            allValidFeedBuildings.Clear();
+
             // Hide placement cost display
             if (LittleCafe.PlacementCostDisplay.Instance != null)
                 LittleCafe.PlacementCostDisplay.Instance.Hide();
@@ -712,7 +755,7 @@ namespace ClockworkGrid
             Camera cam = Camera.main;
             if (cam != null) return cam;
             // Fallback when camera isn't tagged "MainCamera" (e.g. GridCamera in cafe scene)
-            cam = FindObjectOfType<Camera>();
+            cam = FindFirstObjectByType<Camera>();
             Debug.Log($"[DragDropHandler] Camera.main was null, fallback found: {cam?.name ?? "NULL"}");
             return cam;
         }
@@ -757,26 +800,78 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Show a single bright green highlight on a valid feed-building cell.
-        /// Hides all other highlight quads.
+        /// Get all grid positions where valid input-accepting buildings are placed.
+        /// Used to show all valid drop locations while dragging a feedable card.
+        /// Uses brute-force grid iteration; optimize later if needed.
         /// </summary>
-        private void UpdateFeedBuildingHighlight(int gridX, int gridY)
+        private void GetAllValidFeedBuildings(LittleCafe.ProductionInputType requiredInput, List<(int, int)> outPositions)
+        {
+            outPositions.Clear();
+            if (LittleCafe.BuildingProductionManager.Instance == null) return;
+            if (GridManager.Instance == null) return;
+
+            var manager = LittleCafe.BuildingProductionManager.Instance;
+            var gridManager = GridManager.Instance;
+
+            // Brute-force check all grid positions (optimization: could cache bounds)
+            int gridWidth = gridManager.Width;
+            int gridHeight = gridManager.Height;
+
+            for (int x = 0; x < gridWidth; x++)
+            {
+                for (int y = 0; y < gridHeight; y++)
+                {
+                    if (manager.IsInputBuildingAt(x, y, requiredInput))
+                        outPositions.Add((x, y));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Show highlights for all valid feed-building cells.
+        /// The hovered building (hoveredX, hoveredY) gets bright green.
+        /// All other valid buildings get dimmer green.
+        /// Pass hoveredX = -1, hoveredY = -1 to show all dimmer (not hovering any).
+        /// </summary>
+        private void UpdateAllFeedBuildingHighlights(int hoveredX, int hoveredY)
         {
             if (GridManager.Instance == null) return;
+            if (allValidFeedBuildings.Count == 0)
+            {
+                // No valid feed-buildings, hide all highlights
+                for (int i = 0; i < MaxFootprintCells; i++)
+                    cellHighlights[i].SetActive(false);
+                return;
+            }
 
             float cellSize = GridManager.Instance.CellSize;
             float highlightY = GetTileSurfaceY() + 0.02f;
 
-            Vector3 pos = GridManager.Instance.GridToWorldPosition(gridX, gridY);
-            pos.y = highlightY;
+            // Show highlights for all valid feed-buildings
+            int highlightIndex = 0;
+            foreach (var (gridX, gridY) in allValidFeedBuildings)
+            {
+                if (highlightIndex >= MaxFootprintCells)
+                    break; // Max footprint cells reached
 
-            cellHighlights[0].transform.position = pos;
-            cellHighlights[0].transform.localScale = new Vector3(cellSize * 0.95f, cellSize * 0.95f, 1f);
-            cellHighlights[0].SetActive(true);
-            cellHighlightRenderers[0].material.color = feedBuildingColor;
+                Vector3 pos = GridManager.Instance.GridToWorldPosition(gridX, gridY);
+                pos.y = highlightY;
 
-            // Hide remaining quads
-            for (int i = 1; i < MaxFootprintCells; i++)
+                cellHighlights[highlightIndex].transform.position = pos;
+                cellHighlights[highlightIndex].transform.localScale = new Vector3(cellSize * 0.95f, cellSize * 0.95f, 1f);
+                cellHighlights[highlightIndex].SetActive(true);
+
+                // Bright green for hovered, dimmer for others
+                if (gridX == hoveredX && gridY == hoveredY)
+                    cellHighlightRenderers[highlightIndex].material.color = feedBuildingColor;
+                else
+                    cellHighlightRenderers[highlightIndex].material.color = feedBuildingDimColor;
+
+                highlightIndex++;
+            }
+
+            // Hide unused highlights
+            for (int i = highlightIndex; i < MaxFootprintCells; i++)
                 cellHighlights[i].SetActive(false);
         }
     }

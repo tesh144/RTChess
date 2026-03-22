@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
@@ -107,7 +108,7 @@ namespace LittleCafe
         private void TryStartInteraction()
         {
             Camera cam = Camera.main;
-            if (cam == null) cam = FindObjectOfType<Camera>();
+            if (cam == null) cam = FindFirstObjectByType<Camera>();
             if (cam == null) return;
 
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
@@ -265,7 +266,7 @@ namespace LittleCafe
         private void CreateLoadingBarUI()
         {
             // Find or create a canvas
-            uiCanvas = FindObjectOfType<Canvas>();
+            uiCanvas = FindFirstObjectByType<Canvas>();
             if (uiCanvas == null)
             {
                 GameObject canvasObj = new GameObject("RemovalUICanvas");
@@ -316,7 +317,7 @@ namespace LittleCafe
             if (holdTarget != null)
             {
                 Camera cam = Camera.main;
-                if (cam == null) cam = FindObjectOfType<Camera>();
+                if (cam == null) cam = FindFirstObjectByType<Camera>();
                 if (cam != null)
                 {
                     Vector3 worldPos = holdTarget.transform.position + Vector3.up * 2f;

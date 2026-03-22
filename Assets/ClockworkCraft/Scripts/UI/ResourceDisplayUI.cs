@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -372,7 +373,7 @@ namespace ClockworkCraft
 
         private CurrencyDatabase FindCurrencyDatabase()
         {
-            var mapGen = FindObjectOfType<MapGeneratorV2>();
+            var mapGen = FindFirstObjectByType<MapGeneratorV2>();
             if (mapGen != null && mapGen.currencyDatabase != null)
                 return mapGen.currencyDatabase;
 

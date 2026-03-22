@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using System.Collections.Generic;
 using ClockworkGrid;
@@ -34,7 +35,7 @@ namespace LittleCafe
 
         private void Awake()
         {
-            deferToMapGen = FindObjectOfType<ClockworkCraft.MapGeneratorV2>(true) != null;
+            deferToMapGen = FindFirstObjectByType<ClockworkCraft.MapGeneratorV2>() != null;
 
             // Ensure GameStateManager exists (execution order -110 should have created it,
             // but if it's not in the scene we create one as fallback)
@@ -58,7 +59,7 @@ namespace LittleCafe
             }
 
             // Disable GUI Pro Kit's demo PanelControl — we manage panels ourselves
-            var panelControl = FindObjectOfType<LayerLab.PanelControl>(true);
+            var panelControl = FindFirstObjectByType<LayerLab.PanelControl>();
             if (panelControl != null)
             {
                 panelControl.enabled = false;
@@ -85,7 +86,7 @@ namespace LittleCafe
             // TitleScreenController must already exist in the scene with all serialized references
             // wired via: Tools > ClockworkCraft > Setup Title Screen
             // No runtime creation, no runtime AddListener — everything is in the Inspector.
-            var titleScreen = FindObjectOfType<TitleScreenController>(true);
+            var titleScreen = FindFirstObjectByType<TitleScreenController>();
 
             if (titleScreen != null)
             {
@@ -147,7 +148,7 @@ namespace LittleCafe
 
         private void SetupGrid()
         {
-            GridManager gm = FindObjectOfType<GridManager>(true);
+            GridManager gm = FindFirstObjectByType<GridManager>();
             if (gm == null)
             {
                 GameObject gridObj = new GameObject("GridManager");
@@ -186,7 +187,7 @@ namespace LittleCafe
 
         private void SetupCamera()
         {
-            Camera cam = FindObjectOfType<Camera>(true);
+            Camera cam = FindFirstObjectByType<Camera>();
             if (cam == null)
             {
                 Debug.LogError("[CafeSceneSetupV2] No camera found in scene!");
@@ -286,7 +287,7 @@ namespace LittleCafe
 
         private void InitializeDockBar()
         {
-            DockBarManager dockManager = FindObjectOfType<DockBarManager>(true);
+            DockBarManager dockManager = FindFirstObjectByType<DockBarManager>();
             if (dockManager == null)
             {
                 Debug.LogWarning("[CafeSceneSetupV2] DockBarManager not found in scene!");
@@ -300,7 +301,7 @@ namespace LittleCafe
             SetPrivateField(dockManager, "baseDrawCost", baseDrawCost);
             SetPrivateField(dockManager, "costIncrement", costIncrement);
 
-            Canvas canvas = FindObjectOfType<Canvas>();
+            Canvas canvas = FindFirstObjectByType<Canvas>();
             if (canvas == null)
             {
                 Debug.LogWarning("[CafeSceneSetupV2] No Canvas found in scene!");
@@ -331,7 +332,7 @@ namespace LittleCafe
         {
             if (GameStateManager.Instance == null)
             {
-                var existing = FindObjectOfType<GameStateManager>(true);
+                var existing = FindFirstObjectByType<GameStateManager>();
                 if (existing == null)
                 {
                     new GameObject("GameStateManager").AddComponent<GameStateManager>();
@@ -350,7 +351,7 @@ namespace LittleCafe
 
         private void EnsureEventSystem()
         {
-            if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 GameObject esObj = new GameObject("EventSystem");
                 esObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
@@ -360,7 +361,7 @@ namespace LittleCafe
 
         private void EnsureDragDropHandler()
         {
-            if (FindObjectOfType<DragDropHandler>(true) == null)
+            if (FindFirstObjectByType<DragDropHandler>() == null)
             {
                 new GameObject("DragDropHandler").AddComponent<DragDropHandler>();
                 Debug.Log("[CafeSceneSetupV2] Created DragDropHandler");
@@ -373,35 +374,35 @@ namespace LittleCafe
         private void SetupFurnitureSystems()
         {
             // Furniture Connectivity Manager (tracks groups of connected furniture)
-            if (FindObjectOfType<FurnitureConnectivityManager>() == null)
+            if (FindFirstObjectByType<FurnitureConnectivityManager>() == null)
             {
                 GameObject fcmObj = new GameObject("FurnitureConnectivityManager");
                 fcmObj.AddComponent<FurnitureConnectivityManager>();
             }
 
             // Table Seating Manager (tracks chair-to-table attachments)
-            if (FindObjectOfType<TableSeatingManager>() == null)
+            if (FindFirstObjectByType<TableSeatingManager>() == null)
             {
                 GameObject tsmObj = new GameObject("TableSeatingManager");
                 tsmObj.AddComponent<TableSeatingManager>();
             }
 
             // Debug Visualizer (colored arcs and seating markers — toggle in Inspector)
-            if (FindObjectOfType<FurnitureConnectionDebugVisualizer>() == null)
+            if (FindFirstObjectByType<FurnitureConnectionDebugVisualizer>() == null)
             {
                 GameObject visObj = new GameObject("FurnitureDebugVisualizer");
                 visObj.AddComponent<FurnitureConnectionDebugVisualizer>();
             }
 
             // Furniture Removal Handler (tap-and-hold to remove placed furniture)
-            if (FindObjectOfType<FurnitureRemovalHandler>() == null)
+            if (FindFirstObjectByType<FurnitureRemovalHandler>() == null)
             {
                 GameObject removalObj = new GameObject("FurnitureRemovalHandler");
                 removalObj.AddComponent<FurnitureRemovalHandler>();
             }
 
             // Grid Entity Manager (attaches health/actor components on placement)
-            if (FindObjectOfType<GridEntityManager>() == null)
+            if (FindFirstObjectByType<GridEntityManager>() == null)
             {
                 GameObject gemObj = new GameObject("GridEntityManager");
                 gemObj.AddComponent<GridEntityManager>();
@@ -424,7 +425,7 @@ namespace LittleCafe
             }
 
             // Try to find one in the scene
-            var found = FindObjectOfType<ClockworkCraft.InteractionRegistry>(true);
+            var found = FindFirstObjectByType<ClockworkCraft.InteractionRegistry>();
             if (found != null)
             {
                 interactionRegistry = found;

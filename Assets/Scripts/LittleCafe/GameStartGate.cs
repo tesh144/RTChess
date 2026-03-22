@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using TMPro;
 using ClockworkGrid;
@@ -20,7 +21,7 @@ namespace LittleCafe
 
         private void Start()
         {
-            Canvas canvas = FindObjectOfType<Canvas>();
+            Canvas canvas = FindFirstObjectByType<Canvas>();
             if (canvas == null)
             {
                 Debug.LogWarning("[GameStartGate] No Canvas found — triggering immediately");

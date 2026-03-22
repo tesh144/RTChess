@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
@@ -47,7 +48,7 @@ public class SetupTitleScreen
 
         // ── Ensure GameStateManager exists ──────────────────────────
 
-        var gsm = Object.FindObjectOfType<ClockworkGrid.GameStateManager>(true);
+        var gsm = Object.FindFirstObjectByType<ClockworkGrid.GameStateManager>();
         if (gsm == null)
         {
             GameObject gsmObj = new GameObject("GameStateManager");
@@ -58,7 +59,7 @@ public class SetupTitleScreen
 
         // ── Find or create TitleScreenController ───────────────────
 
-        var controller = Object.FindObjectOfType<TitleScreenController>(true);
+        var controller = Object.FindFirstObjectByType<TitleScreenController>();
         if (controller == null)
         {
             GameObject obj = new GameObject("TitleScreenController");
@@ -153,7 +154,7 @@ public class SetupTitleScreen
         }
 
         // Wire CafeSceneSetupV2.OnGameStarted
-        var cafeSetup = Object.FindObjectOfType<LittleCafe.CafeSceneSetupV2>(true);
+        var cafeSetup = Object.FindFirstObjectByType<LittleCafe.CafeSceneSetupV2>();
         if (cafeSetup != null)
         {
             UnityEventTools.AddPersistentListener(
@@ -168,7 +169,7 @@ public class SetupTitleScreen
         }
 
         // Wire MapGeneratorV2.RunGenerate
-        var mapGen = Object.FindObjectOfType<ClockworkCraft.MapGeneratorV2>(true);
+        var mapGen = Object.FindFirstObjectByType<ClockworkCraft.MapGeneratorV2>();
         if (mapGen != null)
         {
             UnityEventTools.AddPersistentListener(

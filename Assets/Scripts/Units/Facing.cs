@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 namespace ClockworkGrid
 {
     public enum Facing

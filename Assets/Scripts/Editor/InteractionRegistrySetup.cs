@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using UnityEditor;
 using LittleCafe;
@@ -13,7 +14,7 @@ public class InteractionRegistrySetup
     public static void SetupInteractionRegistry()
     {
         // Find CafeSceneSetupV2 in the scene
-        CafeSceneSetupV2 sceneSetup = Object.FindObjectOfType<CafeSceneSetupV2>(true);
+        CafeSceneSetupV2 sceneSetup = Object.FindFirstObjectByType<CafeSceneSetupV2>();
         if (sceneSetup == null)
         {
             EditorUtility.DisplayDialog(
@@ -43,7 +44,7 @@ public class InteractionRegistrySetup
         }
 
         // Check if one exists elsewhere in the scene
-        InteractionRegistry otherRegistry = Object.FindObjectOfType<InteractionRegistry>(true);
+        InteractionRegistry otherRegistry = Object.FindFirstObjectByType<InteractionRegistry>();
         if (otherRegistry != null)
         {
             bool move = EditorUtility.DisplayDialog(
@@ -88,7 +89,7 @@ public class InteractionRegistrySetup
     [MenuItem("Tools/ClockworkCraft/Sync Interaction Registry Entries")]
     public static void SyncFromMenu()
     {
-        InteractionRegistry registry = Object.FindObjectOfType<InteractionRegistry>(true);
+        InteractionRegistry registry = Object.FindFirstObjectByType<InteractionRegistry>();
         if (registry == null)
         {
             EditorUtility.DisplayDialog(
@@ -119,7 +120,7 @@ public class InteractionRegistrySetup
         // Fall back to MapGeneratorV2's databases
         if (envDB == null || unitDB == null)
         {
-            MapGeneratorV2 mapGen = Object.FindObjectOfType<MapGeneratorV2>(true);
+            MapGeneratorV2 mapGen = Object.FindFirstObjectByType<MapGeneratorV2>();
             if (mapGen != null)
             {
                 if (envDB == null)
@@ -165,7 +166,7 @@ public class InteractionRegistrySetup
     /// </summary>
     static void AutoAssignDatabases(InteractionRegistry registry)
     {
-        MapGeneratorV2 mapGen = Object.FindObjectOfType<MapGeneratorV2>(true);
+        MapGeneratorV2 mapGen = Object.FindFirstObjectByType<MapGeneratorV2>();
         if (mapGen == null) return;
 
         SerializedObject so = new SerializedObject(registry);

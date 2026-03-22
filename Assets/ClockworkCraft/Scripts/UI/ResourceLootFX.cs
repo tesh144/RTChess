@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -60,7 +61,7 @@ namespace ClockworkCraft
 
         void Start()
         {
-            canvas = FindObjectOfType<Canvas>();
+            canvas = FindFirstObjectByType<Canvas>();
             if (canvas != null)
                 canvasRect = canvas.GetComponent<RectTransform>();
             mainCamera = Camera.main;

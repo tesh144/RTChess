@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
@@ -114,7 +115,7 @@ public class SetupLobbyPanel
 
         // ── Find or create DrawButtonController ──────────────────────
 
-        var controller = Object.FindObjectOfType<DrawButtonController>(true);
+        var controller = Object.FindFirstObjectByType<DrawButtonController>();
         if (controller == null)
         {
             // Place it on the Lobby panel itself (not a separate GameObject)

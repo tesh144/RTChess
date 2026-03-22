@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -192,6 +193,13 @@ namespace ClockworkCraft
 
             resources[type] += amount;
             OnResourceChanged?.Invoke(type, resources[type]);
+
+            // Play escalating coin collect SFX for currency resources
+            // Successive collections pitch up and swell in volume to convey "big haul" feeling
+            if (type == ResourceType.Gold)
+            {
+                ClockworkGrid.GameSFXManager.Instance?.PlayCoinCollect();
+            }
 
             Debug.Log($"[ResourceManager] +{amount} {type} → total {resources[type]}");
         }

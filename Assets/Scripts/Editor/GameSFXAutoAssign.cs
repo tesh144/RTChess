@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using UnityEditor;
 using ClockworkGrid;
@@ -11,7 +12,7 @@ public class GameSFXAutoAssign : Editor
     [MenuItem("Tools/ClockworkCraft/Auto-Assign SFX")]
     static void AutoAssignSFX()
     {
-        GameSFXManager sfx = FindObjectOfType<GameSFXManager>();
+        GameSFXManager sfx = FindFirstObjectByType<GameSFXManager>();
         if (sfx == null)
         {
             Debug.LogError("[SFX Auto-Assign] No GameSFXManager found in scene!");

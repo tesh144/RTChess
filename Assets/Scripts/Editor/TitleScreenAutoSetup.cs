@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
@@ -48,7 +49,7 @@ public static class TitleScreenAutoSetup
         // Don't run in play mode
         if (EditorApplication.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode) return;
 
-        var controller = Object.FindObjectOfType<TitleScreenController>(true);
+        var controller = Object.FindFirstObjectByType<TitleScreenController>();
 
         if (controller == null)
         {

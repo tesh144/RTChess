@@ -1,3 +1,4 @@
+#pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
@@ -121,7 +122,7 @@ namespace ClockworkGrid
             }
 
             // Find DrawButtonController in scene (for cost display updates)
-            drawButtonController = FindObjectOfType<DrawButtonController>(true);
+            drawButtonController = FindFirstObjectByType<DrawButtonController>();
 
             // Hide draw button — buildings are now produced by map objects, not manual draws
             if (drawButtonController != null)
@@ -627,7 +628,7 @@ namespace ClockworkGrid
         /// </summary>
         public void ShowHandFullPopup(Vector2 screenPos)
         {
-            Canvas canvas = FindObjectOfType<Canvas>();
+            Canvas canvas = FindFirstObjectByType<Canvas>();
             if (canvas == null) return;
 
             GameObject popupObj = new GameObject("HandFullPopup");
