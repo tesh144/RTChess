@@ -610,6 +610,10 @@ namespace LittleCafe
                 GameObject occupant = gm.GetCellOccupant(checkX, checkY);
                 if (occupant == null) continue;
 
+                // Skip meal sources while the buff is active — don't interact until it expires
+                if (hasMealBuff && occupant.GetComponent<MealBuffSource>() != null)
+                    continue;
+
                 // Found something — check alliance, unlock, and health.
                 GridEntityHealth targetHealth = occupant.GetComponent<GridEntityHealth>();
 
