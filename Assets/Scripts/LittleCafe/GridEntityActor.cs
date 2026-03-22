@@ -865,9 +865,6 @@ namespace LittleCafe
         // Starvation System (RotateAndInteract only)
         // ---------------------------------------------------------------
 
-        /// <summary>
-        /// Reset the idle counter completely. Called on any successful interaction.
-        /// </summary>
         // ---------------------------------------------------------------
         // Meal Buff
         // ---------------------------------------------------------------
@@ -883,7 +880,8 @@ namespace LittleCafe
                 Debug.LogWarning("[GridEntityActor] IntervalTimer.Instance is null — using fallback bar duration");
                 return Mathf.Max(1, Mathf.RoundToInt(mealBuffDurationSeconds / FallbackBarDuration));
             }
-            return Mathf.Max(1, Mathf.RoundToInt(mealBuffDurationSeconds / IntervalTimer.Instance.IntervalDuration));
+            float barDuration = Mathf.Max(float.Epsilon, IntervalTimer.Instance.IntervalDuration);
+            return Mathf.Max(1, Mathf.RoundToInt(mealBuffDurationSeconds / barDuration));
         }
 
         /// <summary>
@@ -902,6 +900,9 @@ namespace LittleCafe
         // Starvation
         // ---------------------------------------------------------------
 
+        /// <summary>
+        /// Reset the idle counter completely. Called on any successful interaction.
+        /// </summary>
         private void ResetIdleCounter()
         {
             if (idleTickCount > 0 && verboseLogging)
