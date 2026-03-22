@@ -726,12 +726,17 @@ namespace LittleCafe
                     if (mealSource.icon != null)
                         ClockworkCraft.IconFlyFX.Instance?.SpawnArc(mealSource.icon, target.transform.position, transform.position);
 
-                    // Visual: restart existing aura if expiring, otherwise add fresh one
+                    // Visual: restart existing icon if expiring, otherwise add fresh one
                     MealBuffVisual existingVisual = GetComponent<MealBuffVisual>();
                     if (existingVisual != null)
+                    {
                         existingVisual.Restart();
+                    }
                     else
-                        gameObject.AddComponent<MealBuffVisual>();
+                    {
+                        MealBuffVisual newVisual = gameObject.AddComponent<MealBuffVisual>();
+                        newVisual.buffIcon = mealSource.icon;
+                    }
 
                     if (verboseLogging)
                         Debug.Log($"[GridEntityActor] {gameObject.name} received meal buff ({mealBuffTicksRemaining} ticks)");
