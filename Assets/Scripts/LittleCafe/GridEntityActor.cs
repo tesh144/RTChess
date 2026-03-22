@@ -713,7 +713,7 @@ namespace LittleCafe
                 MealBuffSource mealSource = target.GetComponent<MealBuffSource>();
                 if (mealSource != null && !hasMealBuff)
                 {
-                    GrantMealBuff(10); // ~10 interval ticks (~20 seconds at 2s base interval)
+                    GrantMealBuff(ConvertDurationToTicks());
 
                     // Visual: food icon arcs from feast to this worker
                     if (mealSource.icon != null)
@@ -886,15 +886,33 @@ namespace LittleCafe
 
         /// <summary>
         /// Grant a meal buff lasting the specified number of interval ticks.
-        /// While active, the worker skips MealBuffSource targets during scan.
-        /// The buff is currently a flag with no mechanical effect — future iterations
-        /// may add speed boost, damage bonus, etc.
+        /// While active, the worker subscribes to OnHalfBar for double-speed movement
+        /// and skips MealBuffSource targets during scan.
         /// </summary>
         public void GrantMealBuff(int durationTicks)
         {
+            if (hasMealBuff) return; // already buffed — prevents double-subscription
+
             hasMealBuff = true;
             mealBuffTicksRemaining = durationTicks;
+
+            if (IntervalTimer.Instance != null)
+                IntervalTimer.Instance.OnHalfBar += OnHalfBarTick;
         }
+
+        private void ExpireMealBuff()
+        {
+            hasMealBuff = false;
+            mealBuffTicksRemaining = 0;
+
+            if (IntervalTimer.Instance != null)
+                IntervalTimer.Instance.OnHalfBar -= OnHalfBarTick;
+
+            if (verboseLogging)
+                Debug.Log($"[GridEntityActor] {gameObject.name} meal buff expired");
+        }
+
+        private void OnHalfBarTick(int bar) { }
 
         // ---------------------------------------------------------------
         // Starvation
