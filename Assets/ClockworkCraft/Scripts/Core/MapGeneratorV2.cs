@@ -132,6 +132,19 @@ namespace ClockworkCraft
         [Min(0)]
         public int clearingRadius = 1;
 
+        [Header("Corruption Hearts")]
+        [Tooltip("Prefab to spawn for each corruption heart. Must have a CorruptionHeart component.")]
+        public GameObject corruptionHeartPrefab;
+        [Tooltip("How many corruption hearts to place per map. Set to 0 to disable.")]
+        [Min(0)]
+        public int heartCount = 5;
+        [Tooltip("Minimum Chebyshev distance from the player start (center) before a heart may spawn.")]
+        [Min(1)]
+        public int minHeartDistFromCenter = 20;
+        [Tooltip("Minimum Chebyshev distance between any two hearts.")]
+        [Min(1)]
+        public int minHeartSpacing = 15;
+
         // Drawn by custom editor — no [Header] to avoid duplicates
         [HideInInspector] [Range(0.1f, 3f)] public float mapDensity = 1.0f;
         [HideInInspector] public List<EnvironmentSpawnEntry> spawnEntries = new List<EnvironmentSpawnEntry>();
@@ -275,6 +288,10 @@ namespace ClockworkCraft
                 FindFirstObjectByType<BuildingProductionManager>().workerDatabase = workerDatabase;
             }
 
+            // Ensure corruption manager
+            if (LittleCafe.CorruptionManager.Instance == null)
+                new GameObject("CorruptionManager").AddComponent<LittleCafe.CorruptionManager>();
+
             // Ensure worker card fly FX
             if (FindFirstObjectByType<WorkerCardFlyFX>() == null)
                 new GameObject("WorkerCardFlyFX").AddComponent<WorkerCardFlyFX>();
@@ -391,6 +408,8 @@ namespace ClockworkCraft
                     stats.producedResourceType    = data.producedResourceType;
                     stats.productionAmount        = data.productionAmount;
                     stats.killerAdvances          = data.killerAdvances;
+                    stats.productionCostResourceType = data.productionCostResourceType;
+                    stats.productionCostAmount       = data.productionCostAmount;
 
                     // Random pool & interaction categories (from sheet)
                     stats.isRandomBuilding        = data.isRandomBuilding;
@@ -763,6 +782,9 @@ namespace ClockworkCraft
 
             // ── Spawn units (staggered) ───────────────────────────────
             yield return StartCoroutine(SpawnAllUnitsStaggered());
+
+            // ── Spawn corruption hearts ───────────────────────────────
+            SpawnHearts();
 
             Debug.Log($"[MapGenV2] Map generated. Seed={seed}  Size={width}x{height}  Center=({center.x},{center.y})  Nodes={NodeManager.Instance?.NodeCount}");
         }
@@ -1908,6 +1930,96 @@ namespace ClockworkCraft
 
             if (unitCount > 0)
                 Debug.Log($"[MapGenV2] Spawned {unitCount} units on map");
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // Corruption Hearts
+        // ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Places corruption hearts on the map after all environment and units have spawned.
+        /// Hearts only appear on empty cells (no planGrid entry) outside the clearing and
+        /// at least minHeartDistFromCenter tiles from the player start.
+        /// </summary>
+        void SpawnHearts()
+        {
+            if (heartCount <= 0) return;
+            if (corruptionHeartPrefab == null)
+            {
+                Debug.LogWarning("[MapGenV2] corruptionHeartPrefab is not assigned — skipping heart spawn.");
+                return;
+            }
+
+            var gm = GridManager.Instance;
+            if (gm == null) return;
+
+            // Build a shuffled candidate list: empty cells outside clearing and far enough from center
+            var candidates = new System.Collections.Generic.List<Vector2Int>();
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                if (planGrid[x, y] != null) continue;   // occupied by environment
+                if (IsInClearing(x, y)) continue;       // too close to player start
+
+                int dx = Mathf.Abs(x - center.x);
+                int dy = Mathf.Abs(y - center.y);
+                if (Mathf.Max(dx, dy) < minHeartDistFromCenter) continue;
+
+                candidates.Add(new Vector2Int(x, y));
+            }
+
+            // Fisher-Yates shuffle using the map's seeded RNG for determinism
+            for (int i = candidates.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                var tmp = candidates[i];
+                candidates[i] = candidates[j];
+                candidates[j] = tmp;
+            }
+
+            // Pick positions, enforcing minimum spacing between hearts
+            var placed = new System.Collections.Generic.List<Vector2Int>();
+            foreach (var pos in candidates)
+            {
+                if (placed.Count >= heartCount) break;
+
+                // Check spacing against already-placed hearts
+                bool tooClose = false;
+                foreach (var p in placed)
+                {
+                    int dx = Mathf.Abs(pos.x - p.x);
+                    int dy = Mathf.Abs(pos.y - p.y);
+                    if (Mathf.Max(dx, dy) < minHeartSpacing) { tooClose = true; break; }
+                }
+                if (tooClose) continue;
+
+                // Check the cell is still free at runtime (units may occupy planGrid-null cells)
+                if (gm.GetCellOccupant(pos.x, pos.y) != null) continue;
+
+                // Spawn the heart
+                Vector3 worldPos = gm.GridToWorldPosition(pos.x, pos.y);
+                GameObject heartObj = Instantiate(corruptionHeartPrefab, worldPos, Quaternion.identity);
+                heartObj.name = $"CorruptionHeart_{placed.Count}";
+
+                var heart = heartObj.GetComponent<LittleCafe.CorruptionHeart>();
+                if (heart == null)
+                {
+                    Debug.LogError($"[MapGenV2] corruptionHeartPrefab '{corruptionHeartPrefab.name}' has no CorruptionHeart component — destroying.");
+                    Destroy(heartObj);
+                    continue;
+                }
+
+                heart.GridPosition = pos;
+
+                // Register the heart's tile in the grid so other systems see it as occupied
+                gm.PlaceUnit(pos.x, pos.y, heartObj, CellState.EnemyUnit);
+
+                placed.Add(pos);
+                Debug.Log($"[MapGenV2] Spawned CorruptionHeart at ({pos.x},{pos.y})");
+            }
+
+            if (placed.Count < heartCount)
+                Debug.LogWarning($"[MapGenV2] Only placed {placed.Count}/{heartCount} hearts — not enough valid candidates.");
         }
 
         // ─────────────────────────────────────────────────────────────────
