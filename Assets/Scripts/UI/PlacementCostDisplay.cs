@@ -83,15 +83,9 @@ namespace LittleCafe
                 Vector3 pos = columnBase + new Vector3(0f, baseHeight + stackSpacing * e.stackIndex, 0f);
                 e.root.transform.position = pos;
 
-                // Billboard — world-space Canvas renders on its -Z face,
-                // so we point the Canvas's Z axis AWAY from the camera
+                // Billboard — match camera rotation so icons always face the viewer
                 if (cam != null)
-                {
-                    Vector3 awayFromCam = pos - cam.transform.position;
-                    awayFromCam.y = 0f;
-                    if (awayFromCam.sqrMagnitude > 0.001f)
-                        e.root.transform.rotation = Quaternion.LookRotation(awayFromCam);
-                }
+                    e.root.transform.rotation = cam.transform.rotation;
 
                 // Pulse only the text when unaffordable — icon keeps its normal look
                 if (!e.canAfford)
