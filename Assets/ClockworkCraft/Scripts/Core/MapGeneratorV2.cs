@@ -80,6 +80,39 @@ namespace ClockworkCraft
     }
 
     /// <summary>
+    /// Spawn config for a single CorruptionDatabase entry.
+    /// Uses an explicit spawnCount instead of a proportional tile budget, because
+    /// corruption entities are sparse and their exact count matters for game balance.
+    /// </summary>
+    [System.Serializable]
+    public class CorruptionSpawnEntry
+    {
+        [HideInInspector] public string entityName;
+
+        [Tooltip("How this corruption entity is distributed on the map.")]
+        public SpawnMode spawnMode = SpawnMode.Scattered;
+
+        [Tooltip("Exact number of this entity to place on the map. Set to 0 to disable.")]
+        [Min(0)] public int spawnCount = 5;
+
+        [Tooltip("Minimum Chebyshev distance from the player start before an entity may spawn.")]
+        [Min(0)] public int minDistFromCenter = 10;
+
+        [Tooltip("Minimum Chebyshev distance between two instances of this entity (Scattered mode).")]
+        [Min(0)] public int minSpacing = 8;
+
+        // ── Cluster settings (Clustered mode) ──
+        [Tooltip("0 = few large clusters. 1 = many small scattered groups.")]
+        [Range(0f, 1f)] public float fragmentation = 0.4f;
+        [Tooltip("Cluster shape: 0 = stringy/organic, 1 = round/blobby.")]
+        [Range(0f, 1f)] public float clusterSpread = 0.5f;
+
+        // ── Edge settings (Edge mode) ──
+        [Tooltip("Name of the environment or unit type whose clusters this should spawn near.")]
+        public string edgeBorderOf = "";
+    }
+
+    /// <summary>
     /// Single authority for map creation in the ClockworkCraft scene.
     ///
     /// Owns the full pipeline:
@@ -132,18 +165,11 @@ namespace ClockworkCraft
         [Min(0)]
         public int clearingRadius = 1;
 
-        [Header("Corruption Hearts")]
-        [Tooltip("Prefab to spawn for each corruption heart. Must have a CorruptionHeart component.")]
-        public GameObject corruptionHeartPrefab;
-        [Tooltip("How many corruption hearts to place per map. Set to 0 to disable.")]
-        [Min(0)]
-        public int heartCount = 5;
-        [Tooltip("Minimum Chebyshev distance from the player start (center) before a heart may spawn.")]
-        [Min(1)]
-        public int minHeartDistFromCenter = 20;
-        [Tooltip("Minimum Chebyshev distance between any two hearts.")]
-        [Min(1)]
-        public int minHeartSpacing = 15;
+        [Header("Corruption")]
+        [Tooltip("Database of all corruption entity types. Assign in Inspector.")]
+        public CorruptionDatabase corruptionDatabase;
+        [Tooltip("One entry per corruption entity type to place on the map.")]
+        public List<CorruptionSpawnEntry> corruptionSpawnEntries = new List<CorruptionSpawnEntry>();
 
         // Drawn by custom editor — no [Header] to avoid duplicates
         [HideInInspector] [Range(0.1f, 3f)] public float mapDensity = 1.0f;
@@ -754,9 +780,17 @@ namespace ClockworkCraft
                 SyncSpawnEntries();
             }
 
+            // ── Auto-sync corruption entries if empty ────────────────────
+            if (corruptionDatabase != null && corruptionSpawnEntries.Count == 0)
+            {
+                Debug.Log("[MapGenV2] corruptionSpawnEntries empty — auto-syncing from CorruptionDatabase");
+                SyncCorruptionSpawnEntries();
+            }
+
             // ── Plan (fast — pure array math, no Instantiate) ─────────
             InitPlanGrid();
             PlaceAllEntries();
+            PlaceCorruptionEntities(); // runs after env + units so it respects their cells
 
             // ── Fog ───────────────────────────────────────────────────
             FogManager.Instance?.Initialize(width, height);
@@ -783,8 +817,8 @@ namespace ClockworkCraft
             // ── Spawn units (staggered) ───────────────────────────────
             yield return StartCoroutine(SpawnAllUnitsStaggered());
 
-            // ── Spawn corruption hearts ───────────────────────────────
-            SpawnHearts();
+            // ── Spawn corruption entities (staggered) ─────────────────
+            yield return StartCoroutine(SpawnAllCorruptionEntitiesStaggered());
 
             Debug.Log($"[MapGenV2] Map generated. Seed={seed}  Size={width}x{height}  Center=({center.x},{center.y})  Nodes={NodeManager.Instance?.NodeCount}");
         }
@@ -1933,93 +1967,308 @@ namespace ClockworkCraft
         }
 
         // ─────────────────────────────────────────────────────────────────
-        // Corruption Hearts
+        // Corruption Entities — Planning
         // ─────────────────────────────────────────────────────────────────
 
+        // Corruption entities use a "corruption:" prefix in planGrid so they
+        // don't collide with environment names or the "unit:" prefix.
+        const string CORRUPTION_PREFIX = "corruption:";
+
         /// <summary>
-        /// Places corruption hearts on the map after all environment and units have spawned.
-        /// Hearts only appear on empty cells (no planGrid entry) outside the clearing and
-        /// at least minHeartDistFromCenter tiles from the player start.
+        /// Syncs corruptionSpawnEntries from the CorruptionDatabase, adding an entry for
+        /// each entity not yet represented. Called automatically when the list is empty.
         /// </summary>
-        void SpawnHearts()
+        void SyncCorruptionSpawnEntries()
         {
-            if (heartCount <= 0) return;
-            if (corruptionHeartPrefab == null)
+            if (corruptionDatabase == null) return;
+            foreach (var data in corruptionDatabase.AllEntries)
             {
-                Debug.LogWarning("[MapGenV2] corruptionHeartPrefab is not assigned — skipping heart spawn.");
-                return;
+                bool exists = corruptionSpawnEntries.Exists(e => e.entityName == data.entityName);
+                if (!exists)
+                    corruptionSpawnEntries.Add(new CorruptionSpawnEntry { entityName = data.entityName });
             }
+        }
 
-            var gm = GridManager.Instance;
-            if (gm == null) return;
+        /// <summary>
+        /// Plans corruption entity placement into planGrid.
+        /// Called after PlaceAllEntries() so corruption entities respect
+        /// already-placed environment and unit cells.
+        /// </summary>
+        void PlaceCorruptionEntities()
+        {
+            if (corruptionDatabase == null || corruptionSpawnEntries == null) return;
 
-            // Build a shuffled candidate list: empty cells outside clearing and far enough from center
-            var candidates = new System.Collections.Generic.List<Vector2Int>();
+            foreach (var entry in corruptionSpawnEntries)
+            {
+                if (entry.spawnCount <= 0) continue;
+
+                LittleCafe.CorruptionData data = corruptionDatabase.GetByName(entry.entityName);
+                if (data == null)
+                {
+                    Debug.LogWarning($"[MapGenV2] CorruptionDatabase has no entry '{entry.entityName}' — skipping.");
+                    continue;
+                }
+                if (data.prefab == null)
+                {
+                    Debug.LogWarning($"[MapGenV2] Corruption entity '{entry.entityName}' has no prefab — skipping.");
+                    continue;
+                }
+
+                string planName = CORRUPTION_PREFIX + entry.entityName;
+
+                switch (entry.spawnMode)
+                {
+                    case SpawnMode.Scattered:
+                        PlaceCorruptionScattered(entry, planName);
+                        break;
+                    case SpawnMode.Clustered:
+                        PlaceCorruptionClustered(entry, planName);
+                        break;
+                    case SpawnMode.Edge:
+                        PlaceCorruptionEdge(entry, planName);
+                        break;
+                }
+            }
+        }
+
+        void PlaceCorruptionScattered(CorruptionSpawnEntry entry, string planName)
+        {
+            // Build candidate list: empty cells, outside clearing, beyond minDistFromCenter
+            var candidates = new List<Vector2Int>();
             for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
             {
-                if (planGrid[x, y] != null) continue;   // occupied by environment
-                if (IsInClearing(x, y)) continue;       // too close to player start
+                if (planGrid[x, y] != null) continue;
+                if (IsInClearing(x, y)) continue;
 
                 int dx = Mathf.Abs(x - center.x);
                 int dy = Mathf.Abs(y - center.y);
-                if (Mathf.Max(dx, dy) < minHeartDistFromCenter) continue;
+                if (Mathf.Max(dx, dy) < entry.minDistFromCenter) continue;
 
                 candidates.Add(new Vector2Int(x, y));
             }
 
-            // Fisher-Yates shuffle using the map's seeded RNG for determinism
+            // Fisher-Yates shuffle for determinism with the map's seeded RNG
             for (int i = candidates.Count - 1; i > 0; i--)
             {
                 int j = rng.Next(i + 1);
-                var tmp = candidates[i];
-                candidates[i] = candidates[j];
-                candidates[j] = tmp;
+                var tmp = candidates[i]; candidates[i] = candidates[j]; candidates[j] = tmp;
             }
 
-            // Pick positions, enforcing minimum spacing between hearts
-            var placed = new System.Collections.Generic.List<Vector2Int>();
+            // Place with Chebyshev spacing constraint
+            var placed = new List<Vector2Int>();
             foreach (var pos in candidates)
             {
-                if (placed.Count >= heartCount) break;
+                if (placed.Count >= entry.spawnCount) break;
 
-                // Check spacing against already-placed hearts
                 bool tooClose = false;
                 foreach (var p in placed)
                 {
                     int dx = Mathf.Abs(pos.x - p.x);
                     int dy = Mathf.Abs(pos.y - p.y);
-                    if (Mathf.Max(dx, dy) < minHeartSpacing) { tooClose = true; break; }
+                    if (Mathf.Max(dx, dy) < entry.minSpacing) { tooClose = true; break; }
                 }
                 if (tooClose) continue;
 
-                // Check the cell is still free at runtime (units may occupy planGrid-null cells)
-                if (gm.GetCellOccupant(pos.x, pos.y) != null) continue;
-
-                // Spawn the heart
-                Vector3 worldPos = gm.GridToWorldPosition(pos.x, pos.y);
-                GameObject heartObj = Instantiate(corruptionHeartPrefab, worldPos, Quaternion.identity);
-                heartObj.name = $"CorruptionHeart_{placed.Count}";
-
-                var heart = heartObj.GetComponent<LittleCafe.CorruptionHeart>();
-                if (heart == null)
-                {
-                    Debug.LogError($"[MapGenV2] corruptionHeartPrefab '{corruptionHeartPrefab.name}' has no CorruptionHeart component — destroying.");
-                    Destroy(heartObj);
-                    continue;
-                }
-
-                heart.GridPosition = pos;
-
-                // Register the heart's tile in the grid so other systems see it as occupied
-                gm.PlaceUnit(pos.x, pos.y, heartObj, CellState.EnemyUnit);
-
+                planGrid[pos.x, pos.y] = planName;
                 placed.Add(pos);
-                Debug.Log($"[MapGenV2] Spawned CorruptionHeart at ({pos.x},{pos.y})");
             }
 
-            if (placed.Count < heartCount)
-                Debug.LogWarning($"[MapGenV2] Only placed {placed.Count}/{heartCount} hearts — not enough valid candidates.");
+            if (placed.Count < entry.spawnCount)
+                Debug.LogWarning($"[MapGenV2] Corruption '{entry.entityName}': only placed {placed.Count}/{entry.spawnCount} (Scattered) — not enough valid candidates.");
+            else
+                Debug.Log($"[MapGenV2] Corruption '{entry.entityName}': planned {placed.Count} (Scattered).");
+        }
+
+        void PlaceCorruptionClustered(CorruptionSpawnEntry entry, string planName)
+        {
+            Vector2Int[] dirs = {
+                new Vector2Int(1, 0), new Vector2Int(-1, 0),
+                new Vector2Int(0, 1), new Vector2Int(0, -1)
+            };
+
+            // Reuse the existing BFS cluster logic, treating spawnCount as the tile budget.
+            int tileBudget = entry.spawnCount;
+            if (tileBudget <= 0) return;
+
+            float frag   = Mathf.Clamp01(entry.fragmentation);
+            float spread = Mathf.Clamp01(entry.clusterSpread);
+            int clusterCount = Mathf.Max(2, Mathf.RoundToInt(Mathf.Lerp(2f, 8f, frag)));
+            int tilesPerCluster = Mathf.Max(1, tileBudget / clusterCount);
+            int placed = 0;
+
+            for (int c = 0; c < clusterCount && placed < tileBudget; c++)
+            {
+                Vector2Int seed = Vector2Int.zero;
+                bool found = false;
+                for (int a = 0; a < 80; a++)
+                {
+                    int sx = rng.Next(width), sy = rng.Next(height);
+                    int ddx = Mathf.Abs(sx - center.x);
+                    int ddy = Mathf.Abs(sy - center.y);
+                    if (planGrid[sx, sy] == null && !IsInClearing(sx, sy)
+                        && Mathf.Max(ddx, ddy) >= entry.minDistFromCenter)
+                    {
+                        seed = new Vector2Int(sx, sy);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) continue;
+
+                // BFS blob
+                var queue   = new Queue<Vector2Int>();
+                var visited = new HashSet<Vector2Int>();
+                queue.Enqueue(seed);
+                visited.Add(seed);
+                int grown = 0;
+
+                while (queue.Count > 0 && grown < tilesPerCluster && placed < tileBudget)
+                {
+                    var current = queue.Dequeue();
+                    if (planGrid[current.x, current.y] == null && !IsInClearing(current.x, current.y))
+                    {
+                        planGrid[current.x, current.y] = planName;
+                        placed++;
+                        grown++;
+                    }
+                    foreach (var d in dirs)
+                    {
+                        var nb = current + d;
+                        if (nb.x < 0 || nb.x >= width || nb.y < 0 || nb.y >= height) continue;
+                        if (visited.Contains(nb)) continue;
+                        visited.Add(nb);
+                        if (planGrid[nb.x, nb.y] != null || IsInClearing(nb.x, nb.y)) continue;
+                        if ((float)rng.NextDouble() > spread) continue;
+                        queue.Enqueue(nb);
+                    }
+                }
+            }
+
+            Debug.Log($"[MapGenV2] Corruption '{entry.entityName}': planned {placed}/{tileBudget} (Clustered).");
+        }
+
+        void PlaceCorruptionEdge(CorruptionSpawnEntry entry, string planName)
+        {
+            if (string.IsNullOrEmpty(entry.edgeBorderOf))
+            {
+                Debug.LogWarning($"[MapGenV2] Corruption '{entry.entityName}' uses Edge mode but edgeBorderOf is empty — falling back to Scattered.");
+                PlaceCorruptionScattered(entry, planName);
+                return;
+            }
+
+            Vector2Int[] dirs = {
+                new Vector2Int(1, 0), new Vector2Int(-1, 0),
+                new Vector2Int(0, 1), new Vector2Int(0, -1)
+            };
+
+            // Collect empty cells adjacent to the border target
+            var edgeCells = new List<Vector2Int>();
+            string borderTarget      = entry.edgeBorderOf;
+            string unitBorderTarget  = UNIT_PREFIX + borderTarget;
+            string corrBorderTarget  = CORRUPTION_PREFIX + borderTarget;
+
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                if (planGrid[x, y] != null) continue;
+                if (IsInClearing(x, y)) continue;
+                int ddx = Mathf.Abs(x - center.x);
+                int ddy = Mathf.Abs(y - center.y);
+                if (Mathf.Max(ddx, ddy) < entry.minDistFromCenter) continue;
+
+                bool adjacent = false;
+                foreach (var d in dirs)
+                {
+                    int nx = x + d.x, ny = y + d.y;
+                    if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+                    string nb = planGrid[nx, ny];
+                    if (nb == borderTarget || nb == unitBorderTarget || nb == corrBorderTarget)
+                    {
+                        adjacent = true;
+                        break;
+                    }
+                }
+                if (adjacent) edgeCells.Add(new Vector2Int(x, y));
+            }
+
+            ShuffleList(edgeCells);
+
+            var placed = new List<Vector2Int>();
+            foreach (var pos in edgeCells)
+            {
+                if (placed.Count >= entry.spawnCount) break;
+
+                bool tooClose = false;
+                foreach (var p in placed)
+                {
+                    int ddx = Mathf.Abs(pos.x - p.x);
+                    int ddy = Mathf.Abs(pos.y - p.y);
+                    if (Mathf.Max(ddx, ddy) < entry.minSpacing) { tooClose = true; break; }
+                }
+                if (tooClose) continue;
+
+                planGrid[pos.x, pos.y] = planName;
+                placed.Add(pos);
+            }
+
+            Debug.Log($"[MapGenV2] Corruption '{entry.entityName}': planned {placed.Count}/{entry.spawnCount} (Edge near '{borderTarget}').");
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // Corruption Entities — Spawning
+        // ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Reads all "corruption:" planGrid entries and instantiates the corresponding
+        /// prefabs, calling Initialize(CorruptionData) on any CorruptionHeart component
+        /// before the object's Start() runs.
+        /// </summary>
+        System.Collections.IEnumerator SpawnAllCorruptionEntitiesStaggered()
+        {
+            if (corruptionDatabase == null) yield break;
+
+            const int BATCH_SIZE = 10;
+            int spawnCount = 0;
+
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                string planName = planGrid[x, y];
+                if (planName == null || !planName.StartsWith(CORRUPTION_PREFIX)) continue;
+
+                string entityName = planName.Substring(CORRUPTION_PREFIX.Length);
+                LittleCafe.CorruptionData data = corruptionDatabase.GetByName(entityName);
+                if (data == null || data.prefab == null) continue;
+
+                Vector3 worldPos = GridManager.Instance.GridToWorldPosition(x, y);
+                worldPos.y += 0.01f;
+                GameObject obj = Instantiate(data.prefab, worldPos, Quaternion.identity);
+                obj.name = $"{data.entityName}_{spawnCount}";
+
+                // Pass database stats to the component before Start() fires
+                var heart = obj.GetComponent<LittleCafe.CorruptionHeart>();
+                if (heart != null)
+                {
+                    heart.Initialize(data);
+                    heart.GridPosition = new Vector2Int(x, y);
+                }
+
+                if (enableFog)
+                {
+                    var fogHideable = obj.AddComponent<FogHideable>();
+                    fogHideable.Initialize(x, y);
+                }
+
+                GridManager.Instance?.PlaceUnit(x, y, obj, CellState.EnemyUnit);
+
+                spawnCount++;
+                if (spawnCount % BATCH_SIZE == 0)
+                    yield return null;
+            }
+
+            if (spawnCount > 0)
+                Debug.Log($"[MapGenV2] Spawned {spawnCount} corruption entities.");
         }
 
         // ─────────────────────────────────────────────────────────────────

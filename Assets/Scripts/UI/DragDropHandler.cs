@@ -505,7 +505,7 @@ namespace ClockworkGrid
                 }
             }
 
-            // Attach MealBuffSource marker if flagged in database
+            // Attach MealBuffSource marker and expiry degradation if flagged in database
             if (currentDraggingIcon?.UnitStats != null && currentDraggingIcon.UnitStats.isMealSource)
             {
                 if (unitObj.GetComponent<LittleCafe.MealBuffSource>() == null)
@@ -513,6 +513,9 @@ namespace ClockworkGrid
                     var mbs = unitObj.AddComponent<LittleCafe.MealBuffSource>();
                     mbs.icon = currentDraggingIcon.UnitStats.iconSprite;
                 }
+
+                if (unitObj.GetComponent<LittleCafe.FeastVisualDegradation>() == null)
+                    unitObj.AddComponent<LittleCafe.FeastVisualDegradation>();
             }
 
             // Update furniture connectivity after placement

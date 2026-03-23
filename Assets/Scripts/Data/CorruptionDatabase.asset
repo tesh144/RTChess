@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1df81bb7d06ae5948aa37ea832a7b352, type: 3}
+  m_Name: CorruptionDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.CorruptionDatabase
+  entries:
+  - entityName: Corruption Heart
+    prefab: {fileID: 3119510917662581751, guid: 8ec6bc77c596f0a4a901c5b5dd5b9370, type: 3}
+    icon: {fileID: 21300000, guid: d31140797c9bd5e47ad93c6fbde7822b, type: 2}
+    hp: 10
+    attackPower: 0
+    floatingIndicatorPrefab: {fileID: 7476618121232392446, guid: 25c7124f3ecad1342b713f88c3719eec, type: 3}

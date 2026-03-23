@@ -97,10 +97,40 @@ MonoBehaviour:
       - 85
       - 85
       - 85
-    - resourceType: 0
+    - resourceType: 3
       baseCost: 0
       costIncrement: 0
-      costTable: []
+      costTable:
+      - 5
+      - 5
+      - 5
+      - 5
+      - 5
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+      - 15
+      - 15
+      - 15
+      - 15
+      - 15
+      - 20
+      - 20
+      - 20
+      - 20
+      - 20
+      - 25
+      - 25
+      - 25
+      - 25
+      - 25
+      - 30
+      - 30
+      - 30
+      - 30
+      - 30
     - resourceType: 0
       baseCost: 0
       costIncrement: 0

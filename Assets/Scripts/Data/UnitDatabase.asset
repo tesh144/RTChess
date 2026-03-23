@@ -19,10 +19,10 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 1
+    behaviorType: 1
     isSlotTakeable: 1
     killerAdvances: 0
-    behaviorType: 1
-    lootResourceType: 24
+    lootResourceType: 23
     lootHpCost: 1
     lootYield: 1
     hp: 5
@@ -38,10 +38,10 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 1
+    behaviorType: 2
     isSlotTakeable: 1
     killerAdvances: 0
-    behaviorType: 2
-    lootResourceType: 25
+    lootResourceType: 23
     lootHpCost: 1
     lootYield: 1
     hp: 5

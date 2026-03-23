@@ -201,6 +201,10 @@ namespace LittleCafe
 
             if (verboseLogging)
                 Debug.Log($"[BuildingProduction] Registered '{buildingObj.name}' — produces {stats.productionOutputType} every {stats.productionInterval}s (bonus +{stats.productionIntervalBonus}s per collect, topHeight={entry.objectTopHeight:F1})");
+
+            // DIAGNOSTIC: log resource-cost fields so we can verify asset loaded correctly
+            if (entry.productionCostAmount > 0 || entry.productionCostResourceType != ResourceType.None)
+                Debug.Log($"[BuildingProduction] COST CHECK on register: '{buildingObj.name}' costType={(int)entry.productionCostResourceType}({entry.productionCostResourceType}) costAmount={entry.productionCostAmount} waitingForResources={entry.waitingForResources}");
         }
 
         /// <summary>
@@ -551,8 +555,10 @@ namespace LittleCafe
                 if (entry.waitingForResources)
                 {
                     var rm = ResourceManager.Instance;
+                    int have = rm != null ? rm.GetResource(entry.productionCostResourceType) : -1;
                     bool spent = rm != null && rm.SpendResources(
                         new Dictionary<ResourceType, int> { { entry.productionCostResourceType, entry.productionCostAmount } });
+                    Debug.Log($"[BuildingProduction] RESOURCE GATE '{entry.buildingObj?.name}': need {entry.productionCostAmount}x {entry.productionCostResourceType}(int={(int)entry.productionCostResourceType}), have={have}, rm={(rm == null ? "NULL" : "ok")}, spent={spent}");
                     if (spent)
                         entry.waitingForResources = false;
                     else

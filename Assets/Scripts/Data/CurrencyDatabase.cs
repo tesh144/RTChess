@@ -101,7 +101,7 @@ namespace ClockworkCraft
             var defaults = new (ResourceType type, string name, string emoji, int starting, bool unlocked)[]
             {
                 // ── Core Resources ──────────────────
-                (ResourceType.Gold,        "Gold",         "\U0001F4B0", 20, true),   // 💰
+                (ResourceType.Gold,        "Gold",         "\U0001F4B0", 0, true),   // 💰
                 (ResourceType.Wood,        "Wood",         "\U0001F332", 0, true),   // 🌲
                 (ResourceType.Food,        "Food",         "\U0001F344", 0, false),  // 🍄
                 (ResourceType.Stone,       "Stone",        "\U0001FAA8",  0, false),  // 🪨

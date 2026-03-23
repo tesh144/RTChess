@@ -46,7 +46,7 @@ namespace LittleCafe
 
         [Header("Meal Buff")]
         [Tooltip("How long the meal buff lasts in real seconds. Converted to bar ticks on grant.")]
-        [SerializeField] private float mealBuffDurationSeconds = 30f;
+        [SerializeField] private float mealBuffDurationSeconds = 20f;
 
         [Header("Debug")]
         [SerializeField] private bool verboseLogging = false;
@@ -168,6 +168,20 @@ namespace LittleCafe
 
                     if (checkX < 0 || checkX >= gm.Width || checkY < 0 || checkY >= gm.Height)
                         break;
+
+                    // Corruption priority — corrupted tiles are valid targets even if unoccupied
+                    GameObject scanTile = gm.GetGridTile(checkX, checkY);
+                    CorruptionOverlay scanCorruption = scanTile != null ? scanTile.GetComponent<CorruptionOverlay>() : null;
+                    if (scanCorruption != null && scanCorruption.Health != null && !scanCorruption.Health.IsDestroyed)
+                    {
+                        if (step < bestDist)
+                        {
+                            bestDist = step;
+                            bestFacing = facing;
+                            found = true;
+                        }
+                        break;
+                    }
 
                     GameObject occupant = gm.GetCellOccupant(checkX, checkY);
                     if (occupant == null) continue;
@@ -618,6 +632,16 @@ namespace LittleCafe
                 // Bounds check
                 if (checkX < 0 || checkX >= gm.Width || checkY < 0 || checkY >= gm.Height)
                     break;
+
+                // Corruption priority — attack tile overlay before the occupant underneath
+                GameObject attackTile = gm.GetGridTile(checkX, checkY);
+                CorruptionOverlay tileCorruption = attackTile != null ? attackTile.GetComponent<CorruptionOverlay>() : null;
+                if (tileCorruption != null && tileCorruption.Health != null && !tileCorruption.Health.IsDestroyed)
+                {
+                    ResetIdleCounter();
+                    yield return PerformStrongInteraction(tileCorruption.Health, checkX, checkY);
+                    yield break;
+                }
 
                 GameObject occupant = gm.GetCellOccupant(checkX, checkY);
                 if (occupant == null) continue;

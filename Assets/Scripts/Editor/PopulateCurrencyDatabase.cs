@@ -42,7 +42,7 @@ public static class PopulateCurrencyDatabase
         var entries = new (ResourceType type, string name, string emoji, string iconPath, int starting, bool unlocked)[]
         {
             // ── Core Resources ──────────────────
-            (ResourceType.Gold,        "Gold",         "\U0001F4B0", "Assets/Icons/Icon_30px/World/Gold - World0.png",                20, true),
+            (ResourceType.Gold,        "Gold",         "\U0001F4B0", "Assets/Icons/Icon_30px/World/Gold - World0.png",                0, true),
             (ResourceType.Wood,        "Wood",         "\U0001F332", "Assets/Icons/Icon_30px/Currency/Wood - Currency.png",             0, true),
             (ResourceType.Food,        "Food",         "\U0001F344", "Assets/Icons/Icon_30px/Currency/Food - Currency.png",             0, false),
             (ResourceType.Stone,       "Stone",        "\U0001FAA8", "Assets/Icons/Icon_30px/Currency/Rock - Currency.png",             0, false),

@@ -25,7 +25,7 @@ MonoBehaviour:
     lootResourceType: 1
     lootHpCost: 1
     lootYield: 1
-    hp: 300
+    hp: 300000
     attackPower: 0
     gridSize: {x: 1, y: 1}
     visualScale: 0
