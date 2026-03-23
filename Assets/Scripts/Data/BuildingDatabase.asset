@@ -35,11 +35,13 @@ MonoBehaviour:
     wildAnimalInteractible: 1
     isMealSource: 0
     productionInputType: 0
-    productionInterval: 5
-    productionIntervalBonus: 15
+    productionInterval: 10
+    productionIntervalBonus: 20
     productionOutputType: 1
     producedResourceType: 0
     productionAmount: 1
+    productionCostResourceType: 0
+    productionCostAmount: 0
   - assetName: Torch
     type: 0
     isFunctional: 0
@@ -67,6 +69,8 @@ MonoBehaviour:
     productionOutputType: 0
     producedResourceType: 0
     productionAmount: 1
+    productionCostResourceType: 0
+    productionCostAmount: 0
   - assetName: Statue
     type: 0
     isFunctional: 0
@@ -94,6 +98,8 @@ MonoBehaviour:
     productionOutputType: 3
     producedResourceType: 0
     productionAmount: 1
+    productionCostResourceType: 0
+    productionCostAmount: 0
   - assetName: Barracks
     type: 6
     isFunctional: 0
@@ -113,14 +119,16 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 0
+    wildAnimalInteractible: 1
     isMealSource: 0
     productionInputType: 1
-    productionInterval: 15
-    productionIntervalBonus: 30
+    productionInterval: 10
+    productionIntervalBonus: 20
     productionOutputType: 4
     producedResourceType: 0
     productionAmount: 1
+    productionCostResourceType: 0
+    productionCostAmount: 0
   - assetName: Kitchen
     type: 3
     isFunctional: 0
@@ -140,14 +148,16 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 0
+    wildAnimalInteractible: 1
     isMealSource: 0
     productionInputType: 0
-    productionInterval: 15
-    productionIntervalBonus: 15
+    productionInterval: 20
+    productionIntervalBonus: 20
     productionOutputType: 5
     producedResourceType: 0
     productionAmount: 1
+    productionCostResourceType: 3
+    productionCostAmount: 10
   - assetName: Feast
     type: 0
     isFunctional: 0
@@ -175,3 +185,5 @@ MonoBehaviour:
     productionOutputType: 0
     producedResourceType: 0
     productionAmount: 1
+    productionCostResourceType: 0
+    productionCostAmount: 0
