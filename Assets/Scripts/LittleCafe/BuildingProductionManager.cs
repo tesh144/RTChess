@@ -88,11 +88,17 @@ namespace LittleCafe
             public int collectCount;
             public bool isReady;
             public bool waitingForInput; // Input-triggered buildings idle until fed
+            public ResourceType productionCostResourceType;
+            public int          productionCostAmount;
+            public bool         waitingForResources; // true when building needs to spend resources before starting timer
             public WorkerData pendingWorker;
             public UnitStats pendingCard; // For RandomBuilding output
 
             // Delay: timer starts hidden, reveals after first tick
             public bool timerRevealed;
+
+            // Corruption: building is paused while its tile is corrupted
+            public bool isPaused;
 
             // World-space timer canvas
             public GameObject timerCanvasObj;
@@ -175,6 +181,9 @@ namespace LittleCafe
                 collectCount = 0,
                 isReady = false,
                 waitingForInput = stats.productionInputType != ProductionInputType.None,
+                productionCostResourceType = stats.productionCostResourceType,
+                productionCostAmount       = stats.productionCostAmount,
+                waitingForResources        = stats.productionCostAmount > 0,
                 pendingWorker = null
             };
 
@@ -192,6 +201,42 @@ namespace LittleCafe
 
             if (verboseLogging)
                 Debug.Log($"[BuildingProduction] Registered '{buildingObj.name}' — produces {stats.productionOutputType} every {stats.productionInterval}s (bonus +{stats.productionIntervalBonus}s per collect, topHeight={entry.objectTopHeight:F1})");
+        }
+
+        /// <summary>
+        /// Pause production for a corrupted building. Timer is preserved in place (not reset).
+        /// Idempotent — safe to call on an already-paused building.
+        /// </summary>
+        public void PauseBuilding(GameObject buildingObj)
+        {
+            foreach (var entry in entries)
+            {
+                if (entry.buildingObj == buildingObj)
+                {
+                    entry.isPaused = true;
+                    if (entry.timerCanvasObj != null)
+                        entry.timerCanvasObj.SetActive(false);
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Resume production for a building cleared of corruption. Timer continues from where it paused.
+        /// Idempotent — safe to call on a building that was not paused.
+        /// </summary>
+        public void ResumeBuilding(GameObject buildingObj)
+        {
+            foreach (var entry in entries)
+            {
+                if (entry.buildingObj == buildingObj)
+                {
+                    entry.isPaused = false;
+                    if (entry.timerCanvasObj != null && entry.timerRevealed && !entry.isReady)
+                        entry.timerCanvasObj.SetActive(true);
+                    return;
+                }
+            }
         }
 
         /// <summary>
@@ -495,6 +540,9 @@ namespace LittleCafe
                 }
 
                 if (entry.isReady) continue;
+
+                // Corruption: skip this building while its tile is corrupted
+                if (entry.isPaused) continue;
 
                 // Input-triggered buildings wait until fed before starting their timer
                 if (entry.waitingForInput) continue;
