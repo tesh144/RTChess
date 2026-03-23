@@ -131,6 +131,13 @@ namespace LittleCafe
         [Tooltip("How many units of the reward per production cycle.")]
         public int productionAmount = 1;
 
+        [Header("Production Resource Cost")]
+        [Tooltip("Resource type required to start each production cycle. None = no cost.")]
+        public ResourceType productionCostResourceType = ResourceType.None;
+
+        [Tooltip("Amount of productionCostResourceType consumed when the cycle starts. 0 = no cost.")]
+        public int productionCostAmount = 0;
+
         /// <summary>
         /// Get clean asset name without file extension.
         /// </summary>
