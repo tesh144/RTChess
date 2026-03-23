@@ -164,10 +164,10 @@ namespace ClockworkGrid
             if (characterSpriteImage != null && stats.iconSprite != null)
                 characterSpriteImage.sprite = stats.iconSprite;
 
-            // Name text
+            // Name text (with tier prefix for tier > 0)
             string displayName = !string.IsNullOrEmpty(stats.unitName) ? stats.unitName : stats.unitType.ToString();
             if (_nameText != null)
-                _nameText.text = displayName;
+                _nameText.text = FormatCardName(displayName, stats.tier);
 
             // Badges off by default
             SetNew(false);
@@ -193,7 +193,7 @@ namespace ClockworkGrid
                 _iconImage.sprite = stats.iconSprite;
 
             if (_nameText != null && stats != null)
-                _nameText.text = stats.unitName;
+                _nameText.text = FormatCardName(stats.unitName, stats.tier);
 
             SetNew(markAsNew);
             if (_greenBadge != null) _greenBadge.SetActive(false);
@@ -378,6 +378,20 @@ namespace ClockworkGrid
         {
             var i = GetImage(pathOrName);
             if (i != null) i.sprite = sprite;
+        }
+
+        // ── Card Name Formatting ─────────────────────────────────────
+
+        /// <summary>
+        /// Format a card display name with an optional tier prefix.
+        /// Tier 0 or below: just the plain name (e.g. "House").
+        /// Tier 1+: rich-text prefix in smaller grey text (e.g. "&lt;size=70%&gt;&lt;color=#999&gt;T1&lt;/color&gt;&lt;/size&gt; House").
+        /// </summary>
+        private static string FormatCardName(string baseName, int tier)
+        {
+            if (string.IsNullOrEmpty(baseName)) return baseName;
+            if (tier <= 0) return baseName;
+            return $"<size=70%><color=#999999>T{tier}</color></size> {baseName}";
         }
 
         // ── Visual State: New ────────────────────────────────────────

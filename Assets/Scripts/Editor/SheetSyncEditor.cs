@@ -355,7 +355,6 @@ namespace LittleCafe.Editor
                 // Production
                 changed |= TrySetFloat(ref existing.productionInterval, GetValue(row, "Prod. Interval (s)"));
                 changed |= TrySetFloat(ref existing.productionIntervalBonus, GetValue(row, "Interval Bonus (s)"));
-                changed |= TrySetInt(ref existing.productionAmount, GetValue(row, "Output Amt"));
 
                 // Input type
                 string inputStr = GetValue(row, "Input");

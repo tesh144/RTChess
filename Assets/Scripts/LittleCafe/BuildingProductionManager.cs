@@ -585,12 +585,13 @@ namespace LittleCafe
                     else if (entry.outputType == ProductionOutputType.RandomBuilding)
                         entry.pendingCard = DrawRandomBuilding();
                     else if (entry.outputType == ProductionOutputType.Fighter)
-                        entry.pendingCard = FindFighterCard(); // Fighter is now a proper card, not a worker variant
+                        entry.pendingCard = FindFighterCard();
                     else if (entry.outputType == ProductionOutputType.Meal)
                         entry.pendingCard = FindMealCard();
-                    else if (entry.outputType >= ProductionOutputType.RandomTier0 &&
-                             entry.outputType <= ProductionOutputType.RandomTier3)
-                        entry.pendingCard = DrawRandomBuildingByTier(entry.outputType - ProductionOutputType.RandomTier0);
+                    else if (IsTierBuildingOutput(entry.outputType))
+                        entry.pendingCard = DrawRandomBuildingByTier(GetTierFromOutput(entry.outputType));
+                    else if (IsTierUnitOutput(entry.outputType))
+                        entry.pendingCard = DrawRandomUnitByTier(GetTierFromOutput(entry.outputType));
 
                     // SFX: production timer complete
                     if (GameSFXManager.Instance != null)
@@ -644,8 +645,7 @@ namespace LittleCafe
                 rewardIcon = entry.pendingCard.iconSprite;
             else if (entry.outputType == ProductionOutputType.Meal && entry.pendingCard != null)
                 rewardIcon = entry.pendingCard.iconSprite;
-            else if (entry.outputType >= ProductionOutputType.RandomTier0 &&
-                     entry.outputType <= ProductionOutputType.RandomTier3 && entry.pendingCard != null)
+            else if ((IsTierBuildingOutput(entry.outputType) || IsTierUnitOutput(entry.outputType)) && entry.pendingCard != null)
                 rewardIcon = entry.pendingCard.iconSprite;
 
             GameObject canvasObj;
@@ -698,14 +698,13 @@ namespace LittleCafe
                 if (entry.outputType == ProductionOutputType.Worker && entry.pendingWorker != null)
                     rewardName = $" (worker: {entry.pendingWorker.GetCleanName()})";
                 else if (entry.outputType == ProductionOutputType.RandomBuilding && entry.pendingCard != null)
-                    rewardName = $" (card: {entry.pendingCard.unitName})";
+                    rewardName = $" (random: {entry.pendingCard.unitName})";
                 else if (entry.outputType == ProductionOutputType.Fighter && entry.pendingCard != null)
                     rewardName = $" (fighter: {entry.pendingCard.unitName})";
                 else if (entry.outputType == ProductionOutputType.Meal && entry.pendingCard != null)
                     rewardName = $" (feast: {entry.pendingCard.unitName})";
-                else if (entry.outputType >= ProductionOutputType.RandomTier0 &&
-                         entry.outputType <= ProductionOutputType.RandomTier3 && entry.pendingCard != null)
-                    rewardName = $" (tier{entry.outputType - ProductionOutputType.RandomTier0}: {entry.pendingCard.unitName})";
+                else if ((IsTierBuildingOutput(entry.outputType) || IsTierUnitOutput(entry.outputType)) && entry.pendingCard != null)
+                    rewardName = $" ({entry.outputType}: {entry.pendingCard.unitName})";
 
                 float nextInterval = entry.baseInterval + (entry.intervalBonus * (entry.collectCount + 1));
                 Debug.Log($"[BuildingProduction] Pop-up ready on '{entry.buildingObj.name}'{rewardName}" +
@@ -961,7 +960,6 @@ namespace LittleCafe
                     break;
 
                 case ProductionOutputType.Fighter:
-                    // Fighter is now a proper card type (produced by Barracks)
                     collected = CollectRandomBuildingReward(entry, buildingWorldPos);
                     break;
 
@@ -969,10 +967,14 @@ namespace LittleCafe
                     collected = CollectMealReward(entry, buildingWorldPos);
                     break;
 
-                case ProductionOutputType.RandomTier0:
-                case ProductionOutputType.RandomTier1:
-                case ProductionOutputType.RandomTier2:
-                case ProductionOutputType.RandomTier3:
+                case ProductionOutputType.Tier0Building:
+                case ProductionOutputType.Tier1Building:
+                case ProductionOutputType.Tier2Building:
+                case ProductionOutputType.Tier3Building:
+                case ProductionOutputType.Tier0Unit:
+                case ProductionOutputType.Tier1Unit:
+                case ProductionOutputType.Tier2Unit:
+                case ProductionOutputType.Tier3Unit:
                     collected = CollectRandomBuildingReward(entry, buildingWorldPos);
                     break;
             }
@@ -1102,6 +1104,10 @@ namespace LittleCafe
         /// Draw a random card from the RaritySystem pool.
         /// Same as what the draw button does.
         /// </summary>
+        /// <summary>
+        /// Draw a random card from the entire pool (no tier/source filter).
+        /// Used by ProductionOutputType.RandomBuilding.
+        /// </summary>
         private UnitStats DrawRandomBuilding()
         {
             if (RaritySystem.Instance == null)
@@ -1117,21 +1123,58 @@ namespace LittleCafe
         }
 
         /// <summary>
-        /// Draw a random card filtered by tier (0-3).
-        /// Used by RandomTier0-3 production output types.
+        /// Draw a random building card filtered by tier (0-3).
+        /// Filters the pool to only buildings tagged with the given tier.
         /// </summary>
         private UnitStats DrawRandomBuildingByTier(int tier)
         {
             if (RaritySystem.Instance == null)
             {
-                Debug.LogWarning("[BuildingProduction] No RaritySystem — can't draw tier card");
+                Debug.LogWarning("[BuildingProduction] No RaritySystem — can't draw tier building");
+                return null;
+            }
+
+            UnitStats drawn = RaritySystem.Instance.DrawRandomBuildingByTier(tier);
+            if (drawn != null && verboseLogging)
+                Debug.Log($"[BuildingProduction] Drew tier {tier} building: {drawn.unitName}");
+            return drawn;
+        }
+
+        /// <summary>
+        /// Draw a random unit/worker card filtered by tier (0-3).
+        /// Filters the pool to only units/workers tagged with the given tier.
+        /// </summary>
+        private UnitStats DrawRandomUnitByTier(int tier)
+        {
+            if (RaritySystem.Instance == null)
+            {
+                Debug.LogWarning("[BuildingProduction] No RaritySystem — can't draw tier unit");
                 return null;
             }
 
             UnitStats drawn = RaritySystem.Instance.DrawRandomUnitByTier(tier);
             if (drawn != null && verboseLogging)
-                Debug.Log($"[BuildingProduction] Drew tier {tier} card: {drawn.unitName} ({drawn.rarity})");
+                Debug.Log($"[BuildingProduction] Drew tier {tier} unit: {drawn.unitName}");
             return drawn;
+        }
+
+        // ─── Tier Output Helpers ──────────────────────────────────────────
+
+        private static bool IsTierBuildingOutput(ProductionOutputType t)
+        {
+            return t >= ProductionOutputType.Tier0Building && t <= ProductionOutputType.Tier3Building;
+        }
+
+        private static bool IsTierUnitOutput(ProductionOutputType t)
+        {
+            return t >= ProductionOutputType.Tier0Unit && t <= ProductionOutputType.Tier3Unit;
+        }
+
+        private static int GetTierFromOutput(ProductionOutputType t)
+        {
+            if (IsTierBuildingOutput(t)) return t - ProductionOutputType.Tier0Building;
+            if (IsTierUnitOutput(t)) return t - ProductionOutputType.Tier0Unit;
+            return 0;
         }
 
         /// <summary>
@@ -1157,8 +1200,15 @@ namespace LittleCafe
             UnitStats card = entry.pendingCard;
             if (card == null)
             {
-                // Fallback: draw now if pending card was lost
-                card = DrawRandomBuilding();
+                // Fallback: re-draw now if pending card was lost
+                if (entry.outputType == ProductionOutputType.RandomBuilding)
+                    card = DrawRandomBuilding();
+                else if (IsTierBuildingOutput(entry.outputType))
+                    card = DrawRandomBuildingByTier(GetTierFromOutput(entry.outputType));
+                else if (IsTierUnitOutput(entry.outputType))
+                    card = DrawRandomUnitByTier(GetTierFromOutput(entry.outputType));
+                else
+                    card = DrawRandomBuilding(); // Last resort
                 if (card == null) return false;
             }
 

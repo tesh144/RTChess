@@ -32,19 +32,24 @@ namespace LittleCafe
 
     /// <summary>
     /// What a building produces when its production timer completes.
+    /// Tier-based outputs randomly pick from the pool of items tagged with that tier.
     /// </summary>
     public enum ProductionOutputType
     {
-        None,           // No production
-        Worker,         // Produces a worker card for the player's hand
-        Currency,       // Produces currency that flies to the currency bar
-        RandomBuilding, // Draws a random card from the deck (legacy — no tier filter)
-        Fighter,        // Produces a fighter card (from Barracks)
-        Meal,           // Produces a meal card (from Kitchen)
-        RandomTier0,    // Draws a random card from tier 0 pool
-        RandomTier1,    // Draws a random card from tier 1 pool
-        RandomTier2,    // Draws a random card from tier 2 pool
-        RandomTier3     // Draws a random card from tier 3 pool
+        None,               // No production
+        Worker,             // Produces a worker card for the player's hand
+        Currency,           // Produces currency that flies to the currency bar
+        RandomBuilding,     // Draws a random card from any building in the pool (no tier filter)
+        Fighter,            // Produces a fighter card (from Barracks)
+        Meal,               // Produces a meal card (from Kitchen)
+        Tier0Building,      // Random building from tier 0 pool
+        Tier1Building,      // Random building from tier 1 pool
+        Tier2Building,      // Random building from tier 2 pool
+        Tier3Building,      // Random building from tier 3 pool
+        Tier0Unit,          // Random unit/worker from tier 0 pool
+        Tier1Unit,          // Random unit/worker from tier 1 pool
+        Tier2Unit,          // Random unit/worker from tier 2 pool
+        Tier3Unit           // Random unit/worker from tier 3 pool
     }
 
     /// <summary>

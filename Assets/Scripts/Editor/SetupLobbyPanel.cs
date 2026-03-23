@@ -13,11 +13,16 @@ using LittleCafe;
 /// Editor tool that sets up the Lobby panel for gameplay:
 ///
 ///   1. Finds the Lobby UIPanel in the scene
-///   2. Renames Button_Battle text to "Draw"
-///   3. Creates/finds DrawButtonController and assigns serialized references
-///   4. Wires Button_Battle onClick → DrawButtonController.OnDrawButtonClicked() (persistent)
-///   5. Resolves Label_Tag03_Time as the cooldown timer bubble
-///   6. Disables Button_Stage
+///   2. Finds Button_Main (draw/sacrifice button) and wires all references
+///   3. Resolves Label_Tag03_Time (cooldown timer) and Label_Tag03_Buy (cost/upgrade)
+///   4. Wires onClick → DrawButtonController.OnDrawButtonClicked() (persistent)
+///   5. Disables Button_Stage
+///
+/// Button_Main hierarchy:
+///   ├── Label_Tag03_Time  (Icon, Text)
+///   ├── Label_Tag03_Buy   (Text, Icon, Cost)
+///   ├── Icon              (crown)
+///   └── Text              ("Level X")
 ///
 /// All connections are serialized and visible in the Inspector.
 ///
@@ -50,67 +55,77 @@ public class SetupLobbyPanel
 
         Debug.Log($"[SetupLobbyPanel] Found Lobby panel: {lobbyPanel.gameObject.name}");
 
-        // ── Find Button_Battle ───────────────────────────────────────
+        // ── Find Button_Main (draw button) ────────────────────────────
 
-        Transform battleTransform = lobbyPanel.Get("Button_Battle");
-        if (battleTransform == null)
-            battleTransform = FindChildRecursive(lobbyPanel.transform, "Button_Battle");
+        Transform buttonMainTransform = FindChildRecursive(lobbyPanel.transform, "Button_Main");
 
-        if (battleTransform == null)
+        // Fallback to Button_Battle for backward compat
+        if (buttonMainTransform == null)
+            buttonMainTransform = FindChildRecursive(lobbyPanel.transform, "Button_Battle");
+
+        if (buttonMainTransform == null)
         {
-            Debug.LogError("[SetupLobbyPanel] Button_Battle not found in Lobby panel!");
+            Debug.LogError("[SetupLobbyPanel] Button_Main not found in Lobby panel!");
             return;
         }
 
-        Button battleButton = battleTransform.GetComponent<Button>();
-        if (battleButton == null)
+        Button mainButton = buttonMainTransform.GetComponent<Button>();
+        if (mainButton == null)
         {
-            Debug.LogError("[SetupLobbyPanel] Button_Battle has no Button component!");
+            Debug.LogError("[SetupLobbyPanel] Button_Main has no Button component!");
             return;
         }
 
-        // ── Rename button text to "Draw" ─────────────────────────────
+        // ── Find button text and icon ──────────────────────────────────
 
-        Transform textTransform = battleTransform.Find("Text");
-        TextMeshProUGUI buttonTMP = null;
-        if (textTransform != null)
-        {
-            buttonTMP = textTransform.GetComponent<TextMeshProUGUI>();
-            if (buttonTMP != null)
-            {
-                Undo.RecordObject(buttonTMP, "Rename Battle to Draw");
-                buttonTMP.text = "Draw";
-                EditorUtility.SetDirty(buttonTMP);
-                Debug.Log("[SetupLobbyPanel] Renamed Button_Battle text to 'Draw'");
-            }
-        }
+        Transform textTransform = buttonMainTransform.Find("Text");
+        TextMeshProUGUI buttonTMP = textTransform != null
+            ? textTransform.GetComponent<TextMeshProUGUI>()
+            : null;
 
-        // Also check for legacy Text component
-        if (buttonTMP == null && textTransform != null)
-        {
-            var legacyText = textTransform.GetComponent<UnityEngine.UI.Text>();
-            if (legacyText != null)
-            {
-                Undo.RecordObject(legacyText, "Rename Battle to Draw");
-                legacyText.text = "Draw";
-                EditorUtility.SetDirty(legacyText);
-                Debug.Log("[SetupLobbyPanel] Renamed Button_Battle legacy text to 'Draw'");
-            }
-        }
+        Transform iconTransform = buttonMainTransform.Find("Icon");
+        GameObject buttonIcon = iconTransform != null ? iconTransform.gameObject : null;
 
-        // ── Find timer bubble (Label_Tag03_Time) ─────────────────────
+        // ── Find Label_Tag03_Time (cooldown timer) ─────────────────────
 
-        Transform timerTransform = battleTransform.Find("Label_Tag03_Time");
+        Transform timerTransform = buttonMainTransform.Find("Label_Tag03_Time");
         if (timerTransform == null)
-            timerTransform = FindChildRecursive(battleTransform, "Label_Tag03_Time");
+            timerTransform = FindChildRecursive(buttonMainTransform, "Label_Tag03_Time");
 
         GameObject timerBubble = timerTransform != null ? timerTransform.gameObject : null;
 
-        // Find the TMP inside the timer bubble
         TextMeshProUGUI timerTMP = null;
         if (timerTransform != null)
         {
-            timerTMP = timerTransform.GetComponentInChildren<TextMeshProUGUI>();
+            // The Text child inside Label_Tag03_Time
+            Transform timerTextT = timerTransform.Find("Text");
+            if (timerTextT != null)
+                timerTMP = timerTextT.GetComponent<TextMeshProUGUI>();
+            if (timerTMP == null)
+                timerTMP = timerTransform.GetComponentInChildren<TextMeshProUGUI>();
+        }
+
+        // ── Find Label_Tag03_Buy (cost/upgrade tag) ────────────────────
+
+        Transform buyTransform = buttonMainTransform.Find("Label_Tag03_Buy");
+        if (buyTransform == null)
+            buyTransform = FindChildRecursive(buttonMainTransform, "Label_Tag03_Buy");
+
+        GameObject costBubble = buyTransform != null ? buyTransform.gameObject : null;
+
+        TextMeshProUGUI costTMP = null;
+        Image costIconImage = null;
+        if (buyTransform != null)
+        {
+            // Cost number text — look for child named "Cost"
+            Transform costTransform = buyTransform.Find("Cost");
+            if (costTransform != null)
+                costTMP = costTransform.GetComponent<TextMeshProUGUI>();
+
+            // Cost icon — look for child named "Icon"
+            Transform costIconTransform = buyTransform.Find("Icon");
+            if (costIconTransform != null)
+                costIconImage = costIconTransform.GetComponent<Image>();
         }
 
         // ── Find or create DrawButtonController ──────────────────────
@@ -118,7 +133,6 @@ public class SetupLobbyPanel
         var controller = Object.FindFirstObjectByType<DrawButtonController>();
         if (controller == null)
         {
-            // Place it on the Lobby panel itself (not a separate GameObject)
             Undo.RecordObject(lobbyPanel.gameObject, "Add DrawButtonController");
             controller = Undo.AddComponent<DrawButtonController>(lobbyPanel.gameObject);
             Debug.Log("[SetupLobbyPanel] Created DrawButtonController on Lobby panel");
@@ -130,40 +144,29 @@ public class SetupLobbyPanel
 
         var so = new SerializedObject(controller);
 
-        var drawButtonProp = so.FindProperty("drawButton");
-        if (drawButtonProp != null)
-            drawButtonProp.objectReferenceValue = battleButton;
-
-        var buttonTextProp = so.FindProperty("buttonText");
-        if (buttonTextProp != null)
-            buttonTextProp.objectReferenceValue = buttonTMP;
-
-        var timerBubbleProp = so.FindProperty("timerBubble");
-        if (timerBubbleProp != null)
-            timerBubbleProp.objectReferenceValue = timerBubble;
-
-        var timerTextProp = so.FindProperty("timerText");
-        if (timerTextProp != null)
-            timerTextProp.objectReferenceValue = timerTMP;
+        SetRef(so, "drawButton", mainButton);
+        SetRef(so, "buttonText", buttonTMP);
+        SetRef(so, "buttonIcon", buttonIcon);
+        SetRef(so, "timerBubble", timerBubble);
+        SetRef(so, "timerText", timerTMP);
+        SetRef(so, "costBubble", costBubble);
+        SetRef(so, "costNumberText", costTMP);
+        SetRef(so, "costIcon", costIconImage);
 
         so.ApplyModifiedProperties();
 
-        // ── Wire Button_Battle onClick → OnDrawButtonClicked (persistent) ──
+        // ── Wire onClick → OnDrawButtonClicked (persistent) ──────────
 
-        // Clear existing persistent listeners to avoid duplicates
-        int existingCount = battleButton.onClick.GetPersistentEventCount();
+        int existingCount = mainButton.onClick.GetPersistentEventCount();
         for (int i = existingCount - 1; i >= 0; i--)
-        {
-            UnityEventTools.RemovePersistentListener(battleButton.onClick, i);
-        }
+            UnityEventTools.RemovePersistentListener(mainButton.onClick, i);
 
-        // Add persistent listener (shows in Inspector)
         UnityEventTools.AddPersistentListener(
-            battleButton.onClick,
+            mainButton.onClick,
             new UnityAction(controller.OnDrawButtonClicked));
 
-        EditorUtility.SetDirty(battleButton);
-        Debug.Log("[SetupLobbyPanel] Wired Button_Battle onClick → DrawButtonController.OnDrawButtonClicked (persistent)");
+        EditorUtility.SetDirty(mainButton);
+        Debug.Log("[SetupLobbyPanel] Wired Button_Main onClick → DrawButtonController.OnDrawButtonClicked");
 
         // ── Disable Button_Stage ─────────────────────────────────────
 
@@ -185,13 +188,24 @@ public class SetupLobbyPanel
         EditorUtility.SetDirty(lobbyPanel.gameObject);
 
         Debug.Log($"[SetupLobbyPanel] Done! Lobby panel wired:\n" +
-                  $"  Draw Button: {(battleButton != null ? "OK" : "MISSING")}\n" +
-                  $"  Button Text: {(buttonTMP != null ? "OK" : "MISSING")}\n" +
-                  $"  Timer Bubble: {(timerBubble != null ? "OK" : "MISSING")}\n" +
-                  $"  Timer Text: {(timerTMP != null ? "OK" : "MISSING")}\n" +
-                  $"  Stage Button: {(stageTransform != null ? "Disabled" : "Not found")}");
+                  $"  Draw Button:   {(mainButton != null ? "OK" : "MISSING")}\n" +
+                  $"  Button Text:   {(buttonTMP != null ? "OK" : "MISSING")}\n" +
+                  $"  Button Icon:   {(buttonIcon != null ? "OK" : "MISSING")}\n" +
+                  $"  Timer Bubble:  {(timerBubble != null ? "OK" : "MISSING")}\n" +
+                  $"  Timer Text:    {(timerTMP != null ? "OK" : "MISSING")}\n" +
+                  $"  Cost Bubble:   {(costBubble != null ? "OK" : "MISSING")}\n" +
+                  $"  Cost Number:   {(costTMP != null ? "OK" : "MISSING")}\n" +
+                  $"  Cost Icon:     {(costIconImage != null ? "OK" : "MISSING")}\n" +
+                  $"  Stage Button:  {(stageTransform != null ? "Disabled" : "Not found")}");
 
         Selection.activeGameObject = controller.gameObject;
+    }
+
+    private static void SetRef(SerializedObject so, string propName, Object value)
+    {
+        var prop = so.FindProperty(propName);
+        if (prop != null)
+            prop.objectReferenceValue = value;
     }
 
     private static Transform FindChildRecursive(Transform parent, string name)

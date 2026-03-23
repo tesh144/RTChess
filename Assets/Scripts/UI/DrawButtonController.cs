@@ -33,17 +33,20 @@ namespace LittleCafe
     }
 
     /// <summary>
-    /// Controls the Draw button (gacha) and all its related UI.
+    /// Controls the Draw/Sacrifice button (gacha) and all its related UI.
     /// Tracks the current draw level — each successful draw levels up.
     /// Per-level output, cost, and cooldown are driven by the DrawButton sheet.
     ///
-    /// Owns:
-    ///   - The draw button itself (Button_Battle)
-    ///   - Button text ("Draw")
-    ///   - Cooldown timer bubble (Label_Tag03_Time)
-    ///   - Cost number text (shows draw price)
-    ///   - Cost fill bar (shows time until cost decrease)
-    ///   - Show/hide of the entire draw button area
+    /// UI hierarchy (Button_Main):
+    ///   - Label_Tag03_Time   → cooldown timer bubble (Icon + Text)
+    ///   - Label_Tag03_Buy    → cost/upgrade bubble (Text + Icon + Cost)
+    ///   - Icon               → crown/main icon
+    ///   - Text               → "Level X" (current draw level)
+    ///
+    /// States:
+    ///   - Cooldown:   Time tag visible, Buy tag hidden, button disabled
+    ///   - Ready+Cost: Time tag hidden, Buy tag visible, button enabled
+    ///   - Ready+Free: Both tags hidden, button enabled
     ///
     /// On click: resolves per-level output, spends cost via ResourceManager,
     /// adds card to hand via DockBarManager, increments level, starts cooldown.
@@ -51,25 +54,31 @@ namespace LittleCafe
     public class DrawButtonController : MonoBehaviour
     {
         [Header("Button")]
-        [Tooltip("The Button_Battle component.")]
+        [Tooltip("The Button_Main component.")]
         [SerializeField] private Button drawButton;
 
-        [Tooltip("The TMP text child of Button_Battle.")]
+        [Tooltip("The TMP text child of Button_Main (shows 'Level X').")]
         [SerializeField] private TextMeshProUGUI buttonText;
 
-        [Header("Cooldown Timer")]
-        [Tooltip("The Label_Tag03_Time bubble above the button.")]
+        [Tooltip("The crown/main Icon on the button (hidden during cooldown).")]
+        [SerializeField] private GameObject buttonIcon;
+
+        [Header("Cooldown Timer Tag (Label_Tag03_Time)")]
+        [Tooltip("The Label_Tag03_Time GameObject (shown during cooldown).")]
         [SerializeField] private GameObject timerBubble;
 
-        [Tooltip("TMP text inside the timer bubble.")]
+        [Tooltip("TMP text inside the timer tag (countdown number).")]
         [SerializeField] private TextMeshProUGUI timerText;
 
-        [Header("Cost Display")]
-        [Tooltip("TMP showing the current draw cost number.")]
+        [Header("Cost/Upgrade Tag (Label_Tag03_Buy)")]
+        [Tooltip("The Label_Tag03_Buy GameObject (shown when ready and has cost).")]
+        [SerializeField] private GameObject costBubble;
+
+        [Tooltip("TMP text showing cost number inside Label_Tag03_Buy ('Cost' child).")]
         [SerializeField] private TextMeshProUGUI costNumberText;
 
-        [Tooltip("Fill bar showing time until draw cost decreases.")]
-        [SerializeField] private Image costFillImage;
+        [Tooltip("Icon Image inside Label_Tag03_Buy (currency icon).")]
+        [SerializeField] private Image costIcon;
 
         [Header("Draw Level Data (synced from DrawButton sheet)")]
         [Tooltip("Per-level draw configuration. Index = draw level.")]
@@ -84,6 +93,8 @@ namespace LittleCafe
         private bool isOnCooldown = false;
         private float cooldownRemaining = 0f;
         private Coroutine cooldownCoroutine;
+        private Color originalButtonTextColor = Color.white;
+        private static readonly Color cooldownTextColor = new Color(0.55f, 0.65f, 0.7f); // grey to match disabled bg
 
         /// <summary>Current draw level (read-only).</summary>
         public int CurrentLevel => currentLevel;
@@ -103,12 +114,13 @@ namespace LittleCafe
                 initialized = true;
 
                 if (buttonText != null)
-                    buttonText.text = "Draw";
+                    originalButtonTextColor = buttonText.color;
 
-                if (timerBubble != null)
-                    timerBubble.SetActive(false);
+                // Start hidden — DockBarManager calls Show() after first card placement
+                Hide();
 
-                UpdateCostDisplay();
+                UpdateLevelText();
+                RefreshTagVisibility();
             }
 
             if (ResourceManager.Instance != null)
@@ -140,7 +152,7 @@ namespace LittleCafe
         }
 
         /// <summary>
-        /// Called by Button_Battle's onClick (persistent serialized listener).
+        /// Called by Button_Main's onClick (persistent serialized listener).
         /// Resolves per-level output, checks cost, adds card, levels up, starts cooldown.
         /// </summary>
         public void OnDrawButtonClicked()
@@ -210,7 +222,7 @@ namespace LittleCafe
                 StopCoroutine(cooldownCoroutine);
             cooldownCoroutine = StartCoroutine(CooldownRoutine(entry.cooldown));
 
-            UpdateCostDisplay();
+            UpdateLevelText();
         }
 
         /// <summary>
@@ -228,7 +240,32 @@ namespace LittleCafe
                 return DrawRandomAndAdd(dock);
             }
 
-            // ── RandomTier0-3 → cumulative tier draw ──
+            // ── TierXBuilding / TierXUnit → tier-filtered draw by source type ──
+            if (output.StartsWith("Tier", System.StringComparison.OrdinalIgnoreCase) &&
+                (output.EndsWith("Building", System.StringComparison.OrdinalIgnoreCase) ||
+                 output.EndsWith("Unit", System.StringComparison.OrdinalIgnoreCase)))
+            {
+                bool isBuilding = output.EndsWith("Building", System.StringComparison.OrdinalIgnoreCase);
+                string tierStr = output.Substring(4, 1); // "Tier0Building" → "0"
+                if (int.TryParse(tierStr, out int tier) && RaritySystem.Instance != null)
+                {
+                    UnitStats card = isBuilding
+                        ? RaritySystem.Instance.DrawRandomBuildingByTier(tier)
+                        : RaritySystem.Instance.DrawRandomUnitByTier(tier);
+                    if (card != null)
+                    {
+                        UnitStats clone = Instantiate(card);
+                        clone.name = card.unitName;
+                        dock.AddCard(clone, markAsNew: true, animateFromDraw: true);
+                        if (GameSFXManager.Instance != null)
+                            GameSFXManager.Instance.PlayCardDraw();
+                        return true;
+                    }
+                }
+                return DrawRandomAndAdd(dock);
+            }
+
+            // ── RandomTier0-3 (legacy) → cumulative tier draw ──
             if (output.StartsWith("RandomTier", System.StringComparison.OrdinalIgnoreCase))
             {
                 string tierStr = output.Substring("RandomTier".Length);
@@ -246,11 +283,10 @@ namespace LittleCafe
                         return true;
                     }
                 }
-                // Fallback to random if tier parse fails
                 return DrawRandomAndAdd(dock);
             }
 
-            // ── RandomBuilding (explicit) ──
+            // ── RandomBuilding (legacy explicit) ──
             if (output.Equals("RandomBuilding", System.StringComparison.OrdinalIgnoreCase))
             {
                 return DrawRandomAndAdd(dock);
@@ -388,38 +424,93 @@ namespace LittleCafe
             target.localScale = original;
         }
 
-        // ── Cost Display ────────────────────────────────────────────
+        // ── Tag & Level Display ──────────────────────────────────────
 
-        /// <summary>Update cost number text and affordability color.</summary>
-        public void UpdateCostDisplay()
+        /// <summary>
+        /// Update the button text to show "Level X" based on the current draw level.
+        /// Level is 1-indexed for display (internal level 0 = "Level 1").
+        /// </summary>
+        private void UpdateLevelText()
         {
-            if (costNumberText == null) return;
+            if (buttonText != null)
+                buttonText.text = $"Level {currentLevel + 1}";
+        }
+
+        /// <summary>
+        /// Master method that controls which tag is visible based on state:
+        ///   - Cooldown:   Time tag on, Buy tag off
+        ///   - Ready+Cost: Time tag off, Buy tag on (with cost number + icon)
+        ///   - Ready+Free: Both tags off
+        /// Also updates cost number and affordability color.
+        /// </summary>
+        private void RefreshTagVisibility()
+        {
+            if (isOnCooldown)
+            {
+                // Cooldown state — timer tag handles its own text in CooldownRoutine
+                if (timerBubble != null) timerBubble.SetActive(true);
+                if (costBubble != null) costBubble.SetActive(false);
+                return;
+            }
+
+            // Not on cooldown — hide timer tag
+            if (timerBubble != null) timerBubble.SetActive(false);
 
             DrawButtonEntry entry = GetCurrentEntry();
-            if (entry == null) return;
+            int cost = entry != null ? entry.costValue : 0;
 
-            int cost = entry.costValue;
-            bool canAfford = true;
-            if (cost > 0 && ResourceManager.Instance != null)
-                canAfford = ResourceManager.Instance.GetResource(entry.costCurrency) >= cost;
+            if (cost > 0)
+            {
+                // Show buy/upgrade tag
+                if (costBubble != null) costBubble.SetActive(true);
 
-            costNumberText.text = cost > 0 ? cost.ToString() : "FREE";
-            costNumberText.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
+                bool canAfford = true;
+                if (ResourceManager.Instance != null)
+                    canAfford = ResourceManager.Instance.GetResource(entry.costCurrency) >= cost;
+
+                if (costNumberText != null)
+                {
+                    costNumberText.text = cost.ToString();
+                    costNumberText.color = canAfford ? Color.white : new Color(1f, 0.3f, 0.3f);
+                }
+
+                // Update the currency icon in the buy tag
+                if (costIcon != null)
+                {
+                    Sprite coinSprite = ResourceDisplayUI.GetIconForResource(entry.costCurrency);
+                    if (coinSprite != null)
+                        costIcon.sprite = coinSprite;
+                }
+            }
+            else
+            {
+                // Free draw — hide both tags
+                if (costBubble != null) costBubble.SetActive(false);
+            }
         }
 
-        /// <summary>Update the cost fill bar (called externally when fill changes).</summary>
-        public void UpdateCostFill(float fillAmount)
+        /// <summary>
+        /// Toggle cooldown visuals on the button itself:
+        ///   - Cooldown ON:  text goes grey, crown icon hidden
+        ///   - Cooldown OFF: text restores original color, crown icon visible
+        /// </summary>
+        private void SetCooldownVisuals(bool onCooldown)
         {
-            if (costFillImage != null)
-                costFillImage.fillAmount = Mathf.Clamp01(fillAmount);
+            if (buttonText != null)
+                buttonText.color = onCooldown ? cooldownTextColor : originalButtonTextColor;
+
+            if (buttonIcon != null)
+                buttonIcon.SetActive(!onCooldown);
         }
+
+        /// <summary>Public API for external callers (e.g. DockBarManager) to refresh cost display.</summary>
+        public void UpdateCostDisplay() => RefreshTagVisibility();
 
         private void OnResourceChanged(ResourceType type, int newAmount)
         {
-            // Only update display if the changed resource is the one we care about
             DrawButtonEntry entry = GetCurrentEntry();
             if (entry != null && type == entry.costCurrency)
-                UpdateCostDisplay();
+                RefreshTagVisibility();
         }
 
         /// <summary>Get the current draw cost (for external display).</summary>
@@ -475,8 +566,13 @@ namespace LittleCafe
             if (drawButton != null)
                 drawButton.interactable = false;
 
-            if (timerBubble != null)
-                timerBubble.SetActive(true);
+            // Show timer tag, hide buy tag
+            RefreshTagVisibility();
+            SetCooldownVisuals(true);
+
+            // Reset timer text color to white for countdown display
+            if (timerText != null)
+                timerText.color = Color.white;
 
             while (cooldownRemaining > 0f)
             {
@@ -493,15 +589,15 @@ namespace LittleCafe
             if (drawButton != null)
             {
                 drawButton.interactable = true;
-                // Bounce to catch the player's eye
                 StartCoroutine(ReadyBounceAnimation(drawButton.transform));
             }
 
-            if (timerBubble != null)
-                timerBubble.SetActive(false);
+            // Switch from cooldown → ready state
+            RefreshTagVisibility();
+            SetCooldownVisuals(false);
 
-            if (timerText != null)
-                timerText.text = "";
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayDrawReady();
 
             cooldownCoroutine = null;
             Debug.Log("[DrawButton] Cooldown complete — draw available");

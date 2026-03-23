@@ -66,6 +66,10 @@ namespace LittleCafe
         [Tooltip("Damage dealt to target's HP per successful interaction.")]
         public int attackPower = 1;
 
+        [Header("Tier")]
+        [Tooltip("Unit tier (0-3). Used by tier-based production outputs to filter the draw pool. -1 = excluded from tier pools.")]
+        public int tier = -1;
+
         [Header("Draw Weight")]
         [Tooltip("Relative likelihood of being drawn. Default 1. Higher = more likely.")]
         public float drawWeight = 1f;

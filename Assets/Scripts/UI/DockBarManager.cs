@@ -31,19 +31,10 @@ namespace ClockworkGrid
         [Header("Draw Cost")]
         [SerializeField] private int baseDrawCost = 6;
         [SerializeField] private int costIncrement = 1;
-        [Tooltip("Interval ticks between automatic cost decreases (0 = disabled).")]
-        [SerializeField] private int costDecreaseInterval = 0;
-
-        [Header("Slide Animation")]
-        [SerializeField] private bool enableSlideAnimation = true;
-        [SerializeField] private float slideUpDistance = 150f;
-        [SerializeField] private float slideUpDuration = 0.6f;
 
         // ── Runtime State ───────────────────────────────────────────
 
         private List<GameCardUI> handCards = new List<GameCardUI>();
-        private RectTransform dockBarRect;
-        private Vector2 originalAnchoredPosition;
         private RectTransform cardPanel;
         private HorizontalLayoutGroup layoutGroup;
 
@@ -56,7 +47,6 @@ namespace ClockworkGrid
 
         // Draw cost tracking
         private int drawCount = 0;
-        private int ticksSinceCostDecrease = 0;
 
         // Cached reference to the draw button controller (found at runtime)
         private DrawButtonController drawButtonController;
@@ -78,15 +68,6 @@ namespace ClockworkGrid
                 return;
             }
             Instance = this;
-        }
-
-        private void OnDestroy()
-        {
-            if (ResourceTokenManager.Instance != null)
-                ResourceTokenManager.Instance.OnTokensChanged -= OnTokensChanged;
-
-            if (IntervalTimer.Instance != null)
-                IntervalTimer.Instance.OnIntervalTick -= OnIntervalTickCostDecrease;
         }
 
         // ── Initialization ──────────────────────────────────────────
@@ -122,22 +103,7 @@ namespace ClockworkGrid
             }
 
             // Find DrawButtonController in scene (for fly-in animations and visibility)
-            // Button_Battle starts disabled in the scene — turned on after the player's first placement
             drawButtonController = FindFirstObjectByType<DrawButtonController>(FindObjectsInactive.Include);
-
-            // Subscribe to token changes
-            if (ResourceTokenManager.Instance != null)
-                ResourceTokenManager.Instance.OnTokensChanged += OnTokensChanged;
-
-            // Subscribe to interval timer for cost decrease over time
-            if (costDecreaseInterval > 0 && IntervalTimer.Instance != null)
-                IntervalTimer.Instance.OnIntervalTick += OnIntervalTickCostDecrease;
-
-            // Cache RectTransform for slide animation
-            if (dockBarRect == null)
-                dockBarRect = GetComponent<RectTransform>();
-            if (dockBarRect != null)
-                originalAnchoredPosition = dockBarRect.anchoredPosition;
 
             NotifyCostChanged();
             Debug.Log("[DockBarManager] Initialized");
@@ -204,8 +170,6 @@ namespace ClockworkGrid
             ResourceTokenManager.Instance.SpendTokens(cost);
 
             drawCount++;
-            ticksSinceCostDecrease = 0;
-            UpdateCostFill();
 
             if (RaritySystem.Instance != null)
             {
@@ -274,7 +238,6 @@ namespace ClockworkGrid
             }
 
             // Add invisible placeholder children for each reserved slot.
-            // The layout group will position them where the real cards will land.
             var placeholders = new List<GameObject>();
             for (int i = 0; i < reservedSlots; i++)
             {
@@ -293,7 +256,7 @@ namespace ClockworkGrid
             if (placeholders.Count > 0)
                 targetPos = placeholders[placeholders.Count - 1].GetComponent<RectTransform>().position;
             else
-                targetPos = containerRect.position; // Fallback to container center
+                targetPos = containerRect.position;
 
             // Clean up all placeholders and restore the original layout
             foreach (var ph in placeholders)
@@ -389,7 +352,6 @@ namespace ClockworkGrid
             Vector3 startPos;
             if (overrideStartScreenPos.HasValue)
             {
-                // Convert screen position to world position on the canvas
                 startPos = overrideStartScreenPos.Value;
             }
             else if (drawButtonController != null && drawButtonController.ButtonRect != null)
@@ -398,7 +360,6 @@ namespace ClockworkGrid
             }
             else
             {
-                // Fallback — just pop in
                 card.PlayAppearAnimation();
                 yield break;
             }
@@ -416,15 +377,12 @@ namespace ClockworkGrid
 
                 if (cardRect == null) yield break;
 
-                // Smooth ease-in-out (same as world fly)
                 float easeT = t * t * (3f - 2f * t);
 
-                // Position: lerp with upward arc
                 Vector3 pos = Vector3.Lerp(startPos, finalPos, easeT);
                 pos.y += Mathf.Sin(t * Mathf.PI) * arcHeight;
                 cardRect.position = pos;
 
-                // Scale: grow from small to full with slight overshoot
                 float scaleT;
                 if (t < 0.7f)
                 {
@@ -440,12 +398,10 @@ namespace ClockworkGrid
                 yield return null;
             }
 
-            // Ensure final state
             if (cardRect == null) yield break;
             cardRect.position = finalPos;
             cardRect.localScale = finalScale;
 
-            // Start idle breathing after fly-in settles
             if (card != null)
                 card.StartIdleAnimation();
         }
@@ -541,105 +497,10 @@ namespace ClockworkGrid
 
         // ── Visibility ──────────────────────────────────────────────
 
-        /// <summary>Hide the card hand and draw button.</summary>
-        public void HideUI()
-        {
-            if (cardContainer != null) cardContainer.gameObject.SetActive(false);
-            if (drawButtonController != null) drawButtonController.Hide();
-        }
-
-        /// <summary>Show the card hand and draw button with slide-up animation.</summary>
+        /// <summary>Show the card hand area.</summary>
         public void ShowWithAnimation()
         {
             if (cardContainer != null) cardContainer.gameObject.SetActive(true);
-            // Draw button manages its own active state — don't force it on here
-
-            if (enableSlideAnimation && dockBarRect != null)
-                StartCoroutine(SlideUpAnimation());
-        }
-
-        private System.Collections.IEnumerator SlideUpAnimation()
-        {
-            if (dockBarRect == null) yield break;
-
-            Vector2 startPos = originalAnchoredPosition - new Vector2(0, slideUpDistance);
-            Vector2 endPos = originalAnchoredPosition;
-            dockBarRect.anchoredPosition = startPos;
-
-            float elapsed = 0f;
-            while (elapsed < slideUpDuration)
-            {
-                elapsed += Time.deltaTime;
-                float smoothT = 1f - Mathf.Pow(1f - (elapsed / slideUpDuration), 3f);
-                dockBarRect.anchoredPosition = Vector2.Lerp(startPos, endPos, smoothT);
-                yield return null;
-            }
-
-            dockBarRect.anchoredPosition = endPos;
-        }
-
-        // ── Cost Decrease Over Time ─────────────────────────────────
-
-        private void OnTokensChanged(int newTotal)
-        {
-            NotifyCostChanged();
-        }
-
-        private void OnIntervalTickCostDecrease(int intervalCount)
-        {
-            if (costDecreaseInterval <= 0 || drawCount <= 0)
-            {
-                UpdateCostFill();
-                return;
-            }
-
-            ticksSinceCostDecrease++;
-            if (ticksSinceCostDecrease >= costDecreaseInterval)
-            {
-                ticksSinceCostDecrease = 0;
-                drawCount--;
-                if (drawCount < 0) drawCount = 0;
-                Debug.Log($"[DockBarManager] Cost decreased — drawCount={drawCount}, cost={CalculateDrawCost()}");
-                NotifyCostChanged();
-            }
-
-            UpdateCostFill();
-        }
-
-        private void UpdateCostFill()
-        {
-            if (drawButtonController == null) return;
-
-            if (costDecreaseInterval <= 0 || drawCount <= 0)
-            {
-                drawButtonController.UpdateCostFill(0f);
-                return;
-            }
-
-            float remaining = (float)(costDecreaseInterval - ticksSinceCostDecrease) / costDecreaseInterval;
-            drawButtonController.UpdateCostFill(remaining);
-        }
-
-        // ── Internal ────────────────────────────────────────────────
-
-        private void UpdateLayoutSpacing()
-        {
-            if (layoutGroup == null) return;
-
-            int count = handCards.Count;
-            if (count <= 5) layoutGroup.spacing = 10f;
-            else if (count <= 8) layoutGroup.spacing = 8f;
-            else layoutGroup.spacing = 5f;
-        }
-
-        private void ClearCardContainer()
-        {
-            if (cardContainer == null) return;
-
-            for (int i = cardContainer.childCount - 1; i >= 0; i--)
-                Destroy(cardContainer.GetChild(i).gameObject);
-
-            Debug.Log("[DockBarManager] Cleared mock-up cards from container");
         }
 
         // ── Hand Full Popup ──────────────────────────────────────────
@@ -662,13 +523,11 @@ namespace ClockworkGrid
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2(200f, 40f);
 
-            // Position at screen point
             Camera canvasCam = (canvas.renderMode != RenderMode.ScreenSpaceOverlay) ? canvas.worldCamera : null;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 canvas.GetComponent<RectTransform>(), screenPos, canvasCam, out Vector2 localPoint);
             rt.anchoredPosition = localPoint;
 
-            // Override sorting so it's on top
             Canvas overrideCanvas = popupObj.AddComponent<Canvas>();
             overrideCanvas.overrideSorting = true;
             overrideCanvas.sortingOrder = 100;
@@ -700,17 +559,14 @@ namespace ClockworkGrid
 
             while (elapsed < duration)
             {
-                // Guard against destroyed UI objects (e.g. scene reload mid-animation)
                 if (rt == null || obj == null)
                     yield break;
 
                 elapsed += Time.deltaTime;
                 float t = elapsed / duration;
 
-                // Float upward
                 rt.anchoredPosition = startPos + new Vector2(0f, 40f * t);
 
-                // Fade out in second half
                 float alpha = t < 0.5f ? 1f : 1f - ((t - 0.5f) * 2f);
                 if (tmp != null)
                     tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, alpha);
@@ -720,6 +576,28 @@ namespace ClockworkGrid
 
             if (obj != null)
                 Destroy(obj);
+        }
+
+        // ── Internal ────────────────────────────────────────────────
+
+        private void UpdateLayoutSpacing()
+        {
+            if (layoutGroup == null) return;
+
+            int count = handCards.Count;
+            if (count <= 5) layoutGroup.spacing = 10f;
+            else if (count <= 8) layoutGroup.spacing = 8f;
+            else layoutGroup.spacing = 5f;
+        }
+
+        private void ClearCardContainer()
+        {
+            if (cardContainer == null) return;
+
+            for (int i = cardContainer.childCount - 1; i >= 0; i--)
+                Destroy(cardContainer.GetChild(i).gameObject);
+
+            Debug.Log("[DockBarManager] Cleared mock-up cards from container");
         }
     }
 }

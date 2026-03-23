@@ -35,6 +35,17 @@ namespace ClockworkGrid
     }
 
     /// <summary>
+    /// Which database a card was sourced from — used to filter tier-based draw pools.
+    /// </summary>
+    public enum CardSourceType
+    {
+        Building,       // From BuildingDatabase
+        Unit,           // From UnitDatabase (enemies, wild animals)
+        Worker,         // From WorkerDatabase (allied workers, fighters)
+        Environment     // From EnvironmentDatabase
+    }
+
+    /// <summary>
     /// ScriptableObject containing all stats for a unit type.
     /// Create instances in Unity: Right-click → Create → ClockworkGrid → Unit Stats
     /// </summary>
@@ -45,6 +56,10 @@ namespace ClockworkGrid
         public UnitType unitType;
         public string unitName;
         public Rarity rarity;
+
+        [Header("Card Source")]
+        [Tooltip("Which database this card came from. Used to filter tier-based draw pools (TierXBuilding vs TierXUnit).")]
+        public CardSourceType cardSource = CardSourceType.Building;
 
         [Header("Tier")]
         [Tooltip("Building tier (0-3). Used by RandomTier0-3 to filter the draw pool. -1 = excluded from tier pools.")]

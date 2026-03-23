@@ -24,10 +24,6 @@ namespace LittleCafe
         [Header("Fog")]
         [SerializeField] private int fogRevealRadius = 1;
 
-        [Header("Tile Swap")]
-        [Tooltip("Which tile prefab slot to apply under this building and its reveal radius. Leave empty to skip.")]
-        [SerializeField] private string buildingTileSlotName = "Under Building";
-
         // Adjacency tracking
         private List<FurnitureObject> adjacentFurniture = new List<FurnitureObject>();
 
@@ -56,7 +52,6 @@ namespace LittleCafe
             DetectAdjacentFurniture();
             UpdateGridCellState();
             RevealSurroundingTiles();
-            ApplyBuildingTileSlot();
 
             // Register with connectivity manager
             FurnitureConnectivityManager.Instance?.RegisterFurniture(this);
@@ -136,21 +131,6 @@ namespace LittleCafe
                     FogManager.Instance.RevealCell(checkX, checkY);
                 }
             }
-        }
-
-        /// <summary>
-        /// Swap grid tiles under this building and in its reveal radius to a special prefab slot.
-        /// Uses the same area as RevealSurroundingTiles (footprint + fogRevealRadius).
-        /// </summary>
-        protected void ApplyBuildingTileSlot()
-        {
-            if (string.IsNullOrEmpty(buildingTileSlotName)) return;
-
-            GridManager gm = GridManager.Instance;
-            if (gm == null) return;
-
-            gm.SetTileSlotArea(gridX, gridY, gridSize, fogRevealRadius, buildingTileSlotName);
-            Debug.Log($"[FurnitureObject] Applied tile slot '{buildingTileSlotName}' around {gameObject.name} (radius {fogRevealRadius})");
         }
 
         /// <summary>

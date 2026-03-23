@@ -41,6 +41,7 @@ namespace ClockworkGrid
         public AudioClip dragCancel;
         public AudioClip errorBuzz;
         public AudioClip successChime;
+        public AudioClip drawReady;            // draw button cooldown finished
 
         // ─── Combat ─────────────────────────────────────────────────────
         [Header("Combat")]
@@ -156,6 +157,12 @@ namespace ClockworkGrid
         public void PlayCardSlideIn()
         {
             PlayUI(cardSlideIn);
+        }
+
+        /// <summary>Play when draw button cooldown finishes and becomes available.</summary>
+        public void PlayDrawReady()
+        {
+            PlayUI(drawReady);
         }
 
         /// <summary>Play when player starts dragging a card.</summary>

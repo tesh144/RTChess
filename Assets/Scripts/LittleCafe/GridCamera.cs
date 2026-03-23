@@ -23,14 +23,14 @@ namespace LittleCafe
 
         [Header("Zoom - Fixed Limits")]
         [SerializeField] private float minDistance = 8f;           // Closest zoom (hard cap)
-        [SerializeField] private float absoluteMaxDistance = 60f;  // Never zoom out further than this
+        [SerializeField] private float absoluteMaxDistance = 80f;  // Never zoom out further than this (increased for 120x120 grid)
         [SerializeField] private float zoomSpeed = 3f;
         [SerializeField] private float zoomSmoothing = 8f;
 
         [Header("Zoom - Adaptive Scaling")]
         [SerializeField] private float baseDefaultDistance = 14f;  // Default zoom with few revealed tiles
         [SerializeField] private float baseMaxDistance = 20f;      // Max zoom with few revealed tiles
-        [SerializeField] private float distancePerRevealedTile = 0.04f; // Extra distance per revealed tile
+        [SerializeField] private float distancePerRevealedTile = 0.06f; // Extra distance per revealed tile (increased for smoother late-game zoom)
         [SerializeField] private float maxDistanceMultiplier = 1.3f;    // Max = default * this multiplier
 
         [Header("Smoothing")]
@@ -42,7 +42,9 @@ namespace LittleCafe
 
         [Header("Pan (WASD)")]
         [SerializeField] private float panSpeed = 5f;
-        [SerializeField] private float maxPanDistance = 10f;
+        [SerializeField] private float basePanDistance = 5f;              // Pan radius with few revealed tiles
+        [SerializeField] private float panDistancePerRevealedTile = 0.05f; // Extra pan radius per revealed tile
+        [SerializeField] private float absoluteMaxPanDistance = 80f;      // Never pan further than this
 
         [Header("Auto Rotation")]
         [SerializeField] private bool autoRotateOnStart = true;
@@ -56,6 +58,9 @@ namespace LittleCafe
         [SerializeField] private float nearClip = 0.3f;
         [SerializeField] private float farClip = 1000f;
         [SerializeField] private float distancePadding = 1.5f;
+
+        // Adaptive pan distance (grows with revealed tiles, like zoom)
+        private float currentMaxPanDistance;
 
         // Target state (what we're smoothing toward)
         private Vector3 targetLookPoint;
@@ -216,7 +221,11 @@ namespace LittleCafe
             if (currentMaxDistance < currentDefaultDistance)
                 currentMaxDistance = currentDefaultDistance;
 
-            Debug.Log($"[GridCamera] Zoom recalc: revealed={revealedTiles}, default={currentDefaultDistance:F1}, max={currentMaxDistance:F1}");
+            // Pan distance also grows with revealed tiles
+            currentMaxPanDistance = basePanDistance + revealedTiles * panDistancePerRevealedTile;
+            currentMaxPanDistance = Mathf.Clamp(currentMaxPanDistance, basePanDistance, absoluteMaxPanDistance);
+
+            Debug.Log($"[GridCamera] Zoom recalc: revealed={revealedTiles}, default={currentDefaultDistance:F1}, max={currentMaxDistance:F1}, pan={currentMaxPanDistance:F1}");
         }
 
         /// <summary>
@@ -364,9 +373,9 @@ namespace LittleCafe
         {
             Vector3 offset = targetLookPoint - gridCenter;
             offset.y = 0f;
-            if (offset.magnitude > maxPanDistance)
+            if (offset.magnitude > currentMaxPanDistance)
             {
-                offset = offset.normalized * maxPanDistance;
+                offset = offset.normalized * currentMaxPanDistance;
                 targetLookPoint = new Vector3(
                     gridCenter.x + offset.x,
                     targetLookPoint.y,

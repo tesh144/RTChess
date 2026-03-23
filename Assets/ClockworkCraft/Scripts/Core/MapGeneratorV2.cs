@@ -135,8 +135,8 @@ namespace ClockworkCraft
         // ─────────────────────────────────────────────────────────────────
 
         [Header("Grid Settings")]
-        public int mapWidth = 80;
-        public int mapHeight = 80;
+        public int mapWidth = 120;
+        public int mapHeight = 120;
         public float cellSize = 1.5f;
 
         [Header("Map Settings")]
@@ -198,8 +198,16 @@ namespace ClockworkCraft
 
         void Start()
         {
+            Debug.Log("[MapGenV2] Start() running...");
             EnsureManagers();
-            SetupDeck();
+            try
+            {
+                SetupDeck();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[MapGenV2] SetupDeck() CRASHED: {e}");
+            }
 
             // TitleScreenController's onGameStart UnityEvent should call RunGenerate()
             // via the Inspector. If no title screen exists, fall back to runtime hookup.
@@ -378,6 +386,8 @@ namespace ClockworkCraft
         /// </summary>
         void SetupDeck()
         {
+            Debug.Log("[MapGenV2] SetupDeck() starting...");
+
             // ── RaritySystem ─────────────────────────────────────────────
             if (RaritySystem.Instance != null)
             {
@@ -437,6 +447,9 @@ namespace ClockworkCraft
                     stats.productionCostResourceType = data.productionCostResourceType;
                     stats.productionCostAmount       = data.productionCostAmount;
 
+                    // Card source type (for tier-based draw filtering)
+                    stats.cardSource              = CardSourceType.Building;
+
                     // Random pool & interaction categories (from sheet)
                     stats.isRandomBuilding        = data.isRandomBuilding;
                     stats.allyInteractible        = data.allyInteractible;
@@ -465,6 +478,7 @@ namespace ClockworkCraft
             fighterCard.drawWeight = 0f; // Not drawable — produced by Barracks only
             fighterCard.isRandomBuilding = false;
             fighterCard.isMealSource = false;
+            fighterCard.cardSource = CardSourceType.Worker;
             if (fighterData != null)
             {
                 fighterCard.iconSprite      = fighterData.icon;
@@ -488,7 +502,7 @@ namespace ClockworkCraft
             Debug.Log("[MapGenV2] Registered Fighter card for Barracks production (Feast already in deck from BuildingDatabase)");
 
             // ── DockBarManager ───────────────────────────────────────────
-            DockBarManager dockManager = FindFirstObjectByType<DockBarManager>();
+            DockBarManager dockManager = FindFirstObjectByType<DockBarManager>(FindObjectsInactive.Include);
             if (dockManager == null)
             {
                 Debug.LogWarning("[MapGenV2] DockBarManager not found in scene — no hand UI.");

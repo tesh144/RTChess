@@ -11,19 +11,6 @@ namespace ClockworkGrid
         Resource
     }
 
-    /// <summary>
-    /// A named prefab slot for grid tiles. Drag a prefab in and give it a label.
-    /// Slots 0-1 are the base checkerboard pair. Slots 2-3 are for special surfaces (buildings, water, etc.).
-    /// </summary>
-    [System.Serializable]
-    public class TilePrefabSlot
-    {
-        [Tooltip("Friendly label shown in the Inspector (e.g. 'Grass Light', 'Under Building')")]
-        public string name = "Unnamed";
-        [Tooltip("Prefab used for tiles in this slot")]
-        public GameObject prefab;
-    }
-
     public class GridManager : MonoBehaviour
     {
         [Header("Grid Settings")]
@@ -31,15 +18,9 @@ namespace ClockworkGrid
         [SerializeField] private int gridHeight = 50;
         [SerializeField] private float cellSize = 1.5f;
 
-        [Header("Tile Prefabs — Drag prefabs here and name them")]
-        [Tooltip("Slot 0 & 1 = base checkerboard pair. Slot 2+ = special (buildings, water, etc.)")]
-        [SerializeField] private TilePrefabSlot[] tilePrefabSlots = new TilePrefabSlot[4]
-        {
-            new TilePrefabSlot { name = "Base Light" },
-            new TilePrefabSlot { name = "Base Dark" },
-            new TilePrefabSlot { name = "Under Building" },
-            new TilePrefabSlot { name = "Water" }
-        };
+        [Header("Tile Prefabs")]
+        [SerializeField] private GameObject gridTilePrefabA; // Checkerboard tile A (light)
+        [SerializeField] private GameObject gridTilePrefabB; // Checkerboard tile B (dark)
 
         [Header("Grid Visual")]
         [SerializeField] private Transform gridTilesContainer; // Optional parent for organization
@@ -49,7 +30,6 @@ namespace ClockworkGrid
 
         private CellState[,] cellStates;
         private GameObject[,] cellOccupants;
-        private int[,] tileSlotIndices; // Tracks which TilePrefabSlot each tile is using
         private GameObject[,] gridTiles; // Store instantiated tile GameObjects
 
         public int Width => gridWidth;
@@ -93,7 +73,6 @@ namespace ClockworkGrid
             cellStates = new CellState[gridWidth, gridHeight];
             cellOccupants = new GameObject[gridWidth, gridHeight];
             gridTiles = new GameObject[gridWidth, gridHeight];
-            tileSlotIndices = new int[gridWidth, gridHeight];
 
             // Create container if not assigned
             if (gridTilesContainer == null)
@@ -104,7 +83,7 @@ namespace ClockworkGrid
                 gridTilesContainer = containerObj.transform;
             }
 
-            // If no tile prefab slots have prefabs assigned, create default cubes
+            // If no tile prefabs assigned, create default cubes
             EnsureTilePrefabs();
 
             int tilesCreated = 0;
@@ -115,13 +94,10 @@ namespace ClockworkGrid
                     cellStates[x, y] = CellState.Empty;
                     cellOccupants[x, y] = null;
 
-                    // Checkerboard pattern: alternate slot 0 and slot 1
-                    int slotIndex = (x + y) % 2 == 0 ? 0 : 1;
-                    tileSlotIndices[x, y] = slotIndex;
-
-                    GameObject prefabToUse = GetSlotPrefab(slotIndex);
-                    // Fallback: if slot 1 has no prefab, use slot 0
-                    if (prefabToUse == null) prefabToUse = GetSlotPrefab(0);
+                    // Checkerboard pattern: alternate A and B
+                    GameObject prefabToUse = (x + y) % 2 == 0 ? gridTilePrefabA : gridTilePrefabB;
+                    // Fallback: if B has no prefab, use A
+                    if (prefabToUse == null) prefabToUse = gridTilePrefabA;
 
                     if (prefabToUse != null)
                     {
@@ -152,22 +128,7 @@ namespace ClockworkGrid
                 FogManager.Instance.OnCellRevealed += OnFogCellRevealed;
             }
 
-            string slotInfo = "";
-            for (int i = 0; i < tilePrefabSlots.Length; i++)
-            {
-                var slot = tilePrefabSlots[i];
-                slotInfo += $"\n  [{i}] \"{slot.name}\" = {(slot.prefab != null ? slot.prefab.name : "null")}";
-            }
-            Debug.Log($"[GridManager] Initialized {gridWidth}x{gridHeight} grid with {tilesCreated} tiles. Slots:{slotInfo}");
-        }
-
-        /// <summary>
-        /// Get the prefab from a slot index, with bounds checking.
-        /// </summary>
-        private GameObject GetSlotPrefab(int slotIndex)
-        {
-            if (tilePrefabSlots == null || slotIndex < 0 || slotIndex >= tilePrefabSlots.Length) return null;
-            return tilePrefabSlots[slotIndex]?.prefab;
+            Debug.Log($"[GridManager] Initialized {gridWidth}x{gridHeight} grid with {tilesCreated} tiles. A={gridTilePrefabA?.name ?? "null"}, B={gridTilePrefabB?.name ?? "null"}");
         }
 
         /// <summary>
@@ -175,25 +136,11 @@ namespace ClockworkGrid
         /// </summary>
         private void EnsureTilePrefabs()
         {
-            // Check if slot 0 has a prefab — if so, user has set things up
-            if (tilePrefabSlots != null && tilePrefabSlots.Length > 0 &&
-                tilePrefabSlots[0] != null && tilePrefabSlots[0].prefab != null) return;
+            if (gridTilePrefabA != null) return;
 
-            Debug.Log("[GridManager] No tile prefabs assigned in slots, creating default white/gray cubes");
+            Debug.Log("[GridManager] No tile prefabs assigned, creating default white/gray cubes");
 
-            // Ensure we have at least 2 slots
-            if (tilePrefabSlots == null || tilePrefabSlots.Length < 2)
-            {
-                tilePrefabSlots = new TilePrefabSlot[4]
-                {
-                    new TilePrefabSlot { name = "Base Light" },
-                    new TilePrefabSlot { name = "Base Dark" },
-                    new TilePrefabSlot { name = "Under Building" },
-                    new TilePrefabSlot { name = "Water" }
-                };
-            }
-
-            // Create default cube for slot 0
+            // Create default cube for A
             GameObject cubeA = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cubeA.name = "DefaultTileA_White";
             var rendererA = cubeA.GetComponent<MeshRenderer>();
@@ -205,9 +152,9 @@ namespace ClockworkGrid
             var colliderA = cubeA.GetComponent<Collider>();
             if (colliderA != null) DestroyImmediate(colliderA);
             cubeA.SetActive(false);
-            tilePrefabSlots[0].prefab = cubeA;
+            gridTilePrefabA = cubeA;
 
-            // Create default cube for slot 1
+            // Create default cube for B
             GameObject cubeB = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cubeB.name = "DefaultTileB_Gray";
             var rendererB = cubeB.GetComponent<MeshRenderer>();
@@ -219,7 +166,7 @@ namespace ClockworkGrid
             var colliderB = cubeB.GetComponent<Collider>();
             if (colliderB != null) DestroyImmediate(colliderB);
             cubeB.SetActive(false);
-            tilePrefabSlots[1].prefab = cubeB;
+            gridTilePrefabB = cubeB;
         }
 
         /// <summary>
@@ -293,155 +240,6 @@ namespace ClockworkGrid
             if (!IsValidCell(gridX, gridY)) return null;
             if (gridTiles == null) return null;
             return gridTiles[gridX, gridY];
-        }
-
-        // --- Tile Prefab Slot System ---
-
-        /// <summary>
-        /// Get the TilePrefabSlot array for external read (e.g. editor tools).
-        /// </summary>
-        public TilePrefabSlot[] TilePrefabSlots => tilePrefabSlots;
-
-        /// <summary>
-        /// Swap a single tile to a different prefab slot (by index).
-        /// Destroys the old tile, instantiates the new prefab, preserves fog state.
-        /// </summary>
-        public void SetTileSlot(int gridX, int gridY, int slotIndex)
-        {
-            if (!IsValidCell(gridX, gridY) || gridTiles == null) return;
-            if (tilePrefabSlots == null || slotIndex < 0 || slotIndex >= tilePrefabSlots.Length) return;
-
-            // Skip if already this slot
-            if (tileSlotIndices[gridX, gridY] == slotIndex) return;
-
-            GameObject newPrefab = GetSlotPrefab(slotIndex);
-            if (newPrefab == null) return;
-
-            GameObject oldTile = gridTiles[gridX, gridY];
-
-            // Capture fog state from old tile before destroying
-            bool wasRevealed = false;
-            TileFog oldFog = null;
-            if (oldTile != null)
-            {
-                oldFog = oldTile.GetComponent<TileFog>();
-                wasRevealed = oldFog != null && oldFog.IsRevealed;
-            }
-
-            // Capture position and scale from old tile (or compute fresh)
-            Vector3 tilePos;
-            Vector3 tileScale;
-            if (oldTile != null)
-            {
-                tilePos = oldTile.transform.position;
-                tileScale = oldTile.transform.localScale;
-                Destroy(oldTile);
-            }
-            else
-            {
-                tilePos = GridToWorldPosition(gridX, gridY);
-                tilePos.y = -cellSize / 2f;
-                tileScale = Vector3.one * cellSize;
-            }
-
-            // Instantiate new tile
-            GameObject newTile = Instantiate(newPrefab, tilePos, Quaternion.identity, gridTilesContainer);
-            newTile.name = $"GridTile_{gridX}_{gridY}";
-            newTile.SetActive(true);
-            newTile.transform.localScale = tileScale;
-
-            // Attach fog component — match the revealed state of the old tile
-            TileFog tileFog = newTile.AddComponent<TileFog>();
-            if (wasRevealed)
-            {
-                // Tile was already revealed — init at normal position, immediately reveal
-                tileFog.InitializeFog(-cellSize / 2f, fogDropDistance);
-                tileFog.RevealImmediate();
-            }
-            else
-            {
-                // Tile is still fogged — init in fogged (lowered) state
-                tileFog.InitializeFog(-cellSize / 2f, fogDropDistance);
-            }
-
-            gridTiles[gridX, gridY] = newTile;
-            tileSlotIndices[gridX, gridY] = slotIndex;
-        }
-
-        /// <summary>
-        /// Swap a single tile to a different prefab slot (by name, e.g. "Under Building").
-        /// </summary>
-        public void SetTileSlot(int gridX, int gridY, string slotName)
-        {
-            int index = GetSlotIndexByName(slotName);
-            if (index >= 0)
-                SetTileSlot(gridX, gridY, index);
-            else
-                Debug.LogWarning($"[GridManager] No tile prefab slot named '{slotName}'");
-        }
-
-        /// <summary>
-        /// Swap all tiles in a rectangular area to a prefab slot.
-        /// Covers anchorX/Y ± radius, plus the building's footprint size.
-        /// This is the main method called when buildings are placed.
-        /// </summary>
-        public void SetTileSlotArea(int anchorX, int anchorY, Vector2Int footprint, int radius, int slotIndex)
-        {
-            for (int dx = -radius; dx <= radius + footprint.x - 1; dx++)
-            {
-                for (int dy = -radius; dy <= radius + footprint.y - 1; dy++)
-                {
-                    SetTileSlot(anchorX + dx, anchorY + dy, slotIndex);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Overload: use slot name instead of index.
-        /// </summary>
-        public void SetTileSlotArea(int anchorX, int anchorY, Vector2Int footprint, int radius, string slotName)
-        {
-            int index = GetSlotIndexByName(slotName);
-            if (index >= 0)
-                SetTileSlotArea(anchorX, anchorY, footprint, radius, index);
-            else
-                Debug.LogWarning($"[GridManager] No tile prefab slot named '{slotName}'");
-        }
-
-        /// <summary>
-        /// Get which prefab slot a tile is currently using.
-        /// </summary>
-        public int GetTileSlotIndex(int gridX, int gridY)
-        {
-            if (!IsValidCell(gridX, gridY) || tileSlotIndices == null) return 0;
-            return tileSlotIndices[gridX, gridY];
-        }
-
-        /// <summary>
-        /// Get the name of the prefab slot a tile is currently using.
-        /// </summary>
-        public string GetTileSlotName(int gridX, int gridY)
-        {
-            int index = GetTileSlotIndex(gridX, gridY);
-            if (tilePrefabSlots != null && index >= 0 && index < tilePrefabSlots.Length)
-                return tilePrefabSlots[index]?.name ?? "Unknown";
-            return "Unknown";
-        }
-
-        /// <summary>
-        /// Find a slot index by name (case-insensitive).
-        /// Returns -1 if not found.
-        /// </summary>
-        public int GetSlotIndexByName(string slotName)
-        {
-            if (tilePrefabSlots == null || string.IsNullOrEmpty(slotName)) return -1;
-            for (int i = 0; i < tilePrefabSlots.Length; i++)
-            {
-                if (tilePrefabSlots[i] != null &&
-                    string.Equals(tilePrefabSlots[i].name, slotName, System.StringComparison.OrdinalIgnoreCase))
-                    return i;
-            }
-            return -1;
         }
 
         /// <summary>

@@ -20,6 +20,7 @@
 
 | Agent | Task | Status |
 |-------|------|--------|
+| Co-Work | #97 Draw button cost feedback + #101 Map scale/zoom/pan | → Ready for Review |
 
 ---
 
@@ -79,6 +80,9 @@
 | 2026-03-22 | Co-Work | TrainingFacility removed from BuildingDatabase.asset. Was incorrectly left in from prior session. Google Sheets is authoritative — TrainingFacility is not in Buildings & Production sheet. |
 | 2026-03-22 | Co-Work | Documentation update: CLAUDE_USER_JAI.md — added checkmark timing table, 10-step task workflow, data-must-match-sheets rule, AskUserQuestion popup mandate, check-codebase-before-asking rule. |
 | 2026-03-22 | Co-Work | Documentation update: Trello Card #85 + #70 — updated with AI best practices from this session (data consistency, popup for clarifications, codebase-first verification). |
+| 2026-03-23 | Co-Work | #97 Draw button cost feedback: Timer bubble now shows cost (e.g. "5 Gold") after cooldown ends, red text if can't afford, updates live on resource changes. DrawButtonController.cs |
+| 2026-03-23 | Co-Work | #101 Map scale: Grid 80x80→120x120. Camera zoom absoluteMax 60→80, distancePerTile 0.04→0.06. Pan distance now dynamic (basePanDistance + revealedTiles * 0.05). Both zoom and pan scale with FogManager revealed count. GridCamera.cs, MapGeneratorV2.cs |
+| 2026-03-23 | Co-Work | Trello cleanup: Merged AI Guideline cards (10→4), merged SFX pitch bug into #61, merged meal buff cards (5→2). Moved AI Guidelines to Important Documents with AI Instructions label. |
 
 ---
 

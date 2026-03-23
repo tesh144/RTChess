@@ -36,6 +36,7 @@ public class GameSFXAutoAssign : Editor
         assigned += TryAssign(so, "dragCancel", "ThirdParty/InterfaceSounds/V1.0/Interface/Clicks/Click Back (3)");
         assigned += TryAssign(so, "errorBuzz", "ThirdParty/InterfaceSounds/V1.0/Interface/Buzz Error (4)");
         assigned += TryAssign(so, "successChime", "ThirdParty/InterfaceSounds/V1.0/Items & Collectables/Special & Powerup (12)");
+        assigned += TryAssign(so, "drawReady", "ThirdParty/InterfaceSounds/V1.0/Interface/Special (3)");
 
         // Combat — sword/impact sounds for attacks, distinct death sound
         assigned += TryAssign(so, "hitImpact", "Audio/SFX/sfx_sword_slash");

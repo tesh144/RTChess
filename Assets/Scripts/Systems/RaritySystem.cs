@@ -104,30 +104,30 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Draw a random unit filtered by tier.
-        /// Only considers cards with isRandomBuilding == true AND tier == targetTier.
-        /// Falls back to unfiltered DrawRandomUnit() if no cards match the tier.
+        /// Draw a random card filtered by tier AND card source type.
+        /// Only considers cards with isRandomBuilding == true, tier == targetTier, and matching source.
+        /// Falls back to unfiltered DrawRandomUnit() if no cards match.
         /// </summary>
-        public UnitStats DrawRandomUnitByTier(int targetTier)
+        private UnitStats DrawByTierAndSource(int targetTier, System.Func<CardSourceType, bool> sourceFilter, string label)
         {
             if (allUnitStats.Count == 0)
             {
-                Debug.LogError("No unit stats registered! Cannot draw unit.");
+                Debug.LogError("No unit stats registered! Cannot draw.");
                 return null;
             }
 
-            // Calculate total weight for this tier
             float totalWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
                 if (!stats.isRandomBuilding) continue;
                 if (stats.tier != targetTier) continue;
+                if (!sourceFilter(stats.cardSource)) continue;
                 totalWeight += stats.GetEffectiveDrawWeight();
             }
 
             if (totalWeight <= 0f)
             {
-                Debug.LogWarning($"No drawable units in tier {targetTier} pool — falling back to unfiltered draw.");
+                Debug.LogWarning($"No drawable {label} in tier {targetTier} pool — falling back to unfiltered draw.");
                 return DrawRandomUnit();
             }
 
@@ -137,20 +137,41 @@ namespace ClockworkGrid
             {
                 if (!stats.isRandomBuilding) continue;
                 if (stats.tier != targetTier) continue;
+                if (!sourceFilter(stats.cardSource)) continue;
                 currentWeight += stats.GetEffectiveDrawWeight();
                 if (roll <= currentWeight)
                 {
-                    Debug.Log($"Drew {stats.unitName} (tier:{targetTier}, weight:{stats.GetEffectiveDrawWeight()})");
+                    Debug.Log($"Drew {stats.unitName} ({label} tier:{targetTier}, weight:{stats.GetEffectiveDrawWeight()})");
                     return stats;
                 }
             }
 
-            // Fallback — return first eligible in tier
+            // Fallback — first eligible match
             foreach (UnitStats stats in allUnitStats)
             {
-                if (stats.isRandomBuilding && stats.tier == targetTier) return stats;
+                if (stats.isRandomBuilding && stats.tier == targetTier && sourceFilter(stats.cardSource))
+                    return stats;
             }
             return DrawRandomUnit();
+        }
+
+        /// <summary>
+        /// Draw a random building card filtered by tier (0-3).
+        /// Only considers cards sourced from BuildingDatabase.
+        /// </summary>
+        public UnitStats DrawRandomBuildingByTier(int targetTier)
+        {
+            return DrawByTierAndSource(targetTier, s => s == CardSourceType.Building, "buildings");
+        }
+
+        /// <summary>
+        /// Draw a random unit/worker card filtered by tier (0-3).
+        /// Considers cards sourced from UnitDatabase or WorkerDatabase.
+        /// </summary>
+        public UnitStats DrawRandomUnitByTier(int targetTier)
+        {
+            return DrawByTierAndSource(targetTier,
+                s => s == CardSourceType.Unit || s == CardSourceType.Worker, "units");
         }
 
         /// <summary>
