@@ -430,6 +430,15 @@ namespace LittleCafe.Editor
                     if (existing.wildAnimalInteractible != newWild) { existing.wildAnimalInteractible = newWild; changed = true; }
                 }
 
+                // Production resource cost
+                string costResStr = StripEmoji(GetValue(row, "Cost Resource")).Replace(" ", "");
+                if (!string.IsNullOrEmpty(costResStr) && !costResStr.Equals("None", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (Enum.TryParse<ClockworkCraft.ResourceType>(costResStr, true, out var costRes))
+                        if (existing.productionCostResourceType != costRes) { existing.productionCostResourceType = costRes; changed = true; }
+                }
+                changed |= TrySetInt(ref existing.productionCostAmount, GetValue(row, "Cost Amount"));
+
                 if (changed)
                 {
                     updated++;
