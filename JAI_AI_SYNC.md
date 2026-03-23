@@ -142,6 +142,9 @@ _Anything one agent needs to flag for the other._
   8. **WorkerData.cs**: Added `tier` and `isSlotTakeable` fields synced from Workers & Entities sheet.
   9. **Duplicate Feast removal**: Removed manual Feast UnitStats creation in SetupDeck (BuildingDatabase version is authoritative).
   10. **Fighter card fix**: SetupDeck now pulls Fighter data from WorkerDatabase.GetByName("Fighter") instead of null workerTemplate.
+- 2026-03-23: SHEET SYNC + KITCHEN RESOURCE COST:
+  - **Sheet sync**: Pulled fresh data from all Google Sheets. Updated BuildingDatabase.asset (Home/Barracks/Kitchen intervals+bonuses, wildAnimalInteractible), EnvironmentDatabase.asset (Goldmine HP 300→300000), EconomyBalanceConfig.asset (Fighter Food cost slot added), SheetCache.json (lastSynced, all Buildings values current).
+  - **Kitchen resource cost** (data-driven `productionCostResourceType/Amount`): Added fields to BuildingData.cs + UnitStats.cs, copied in MapGeneratorV2.SetupDeck(), added `waitingForResources` flag to ProductionEntry + RegisterBuilding, resource guard in OnIntervalTick (SpendResources pre-pay), reset in CollectReward. SheetSyncEditor.SyncBuildings() parses new "Cost Resource"/"Cost Amount" columns. SheetCache.json updated. Kitchen = Food/10. All other buildings = None/0.
 - 2026-03-22: DATA CONSISTENCY AUDIT & FIXES:
   - **TrainingFacility**: Removed from BuildingDatabase.asset (correctly — not in Google Sheets)
   - **Fighter**: Restored to WorkerDatabase.asset (was incorrectly deleted; Google Sheets shows it as Worker type with tier 3, hp 10). Values synced from sheet.
