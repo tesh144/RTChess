@@ -362,8 +362,13 @@ namespace LittleCafe
                 yield return new WaitForSeconds(ROTATION_DURATION + INTERACTION_DELAY);
             }
 
-            // Step 3: Try to move one cell forward
-            yield return StartCoroutine(TryMoveForward());
+            // Step 3: Try to interact with whatever is in front first
+            bool interacted = false;
+            yield return StartCoroutine(ScanAndInteractWildAnimal(result => interacted = result));
+
+            // Step 4: If nothing to interact with, try to move forward
+            if (!interacted)
+                yield return StartCoroutine(TryMoveForward());
 
             interactionCoroutine = null;
         }
@@ -384,27 +389,34 @@ namespace LittleCafe
 
             if (isFirstTick)
             {
-                // First tick ever: skip rotation, just try to move in starting direction
+                // First tick ever: skip rotation, try to interact then move
                 isFirstTick = false;
                 yield return new WaitForSeconds(INTERACTION_DELAY);
-                yield return StartCoroutine(TryMoveForward());
+                bool interacted = false;
+                yield return StartCoroutine(ScanAndInteractWildAnimal(result => interacted = result));
+                if (!interacted)
+                    yield return StartCoroutine(TryMoveForward());
                 interactionCoroutine = null;
                 yield break;
             }
 
             if (rrm_isRotateTick)
             {
-                // Tick A: just rotate and wait
+                // Tick A: rotate, then try to interact (no move)
                 Rotate();
                 yield return new WaitForSeconds(ROTATION_DURATION + INTERACTION_DELAY);
+                yield return StartCoroutine(ScanAndInteractWildAnimal(_ => { }));
                 rrm_isRotateTick = false;
             }
             else
             {
-                // Tick B: rotate then move
+                // Tick B: rotate, try to interact, then move if nothing to attack
                 Rotate();
                 yield return new WaitForSeconds(ROTATION_DURATION + INTERACTION_DELAY);
-                yield return StartCoroutine(TryMoveForward());
+                bool interacted = false;
+                yield return StartCoroutine(ScanAndInteractWildAnimal(result => interacted = result));
+                if (!interacted)
+                    yield return StartCoroutine(TryMoveForward());
                 rrm_isRotateTick = true;
             }
 
@@ -648,6 +660,55 @@ namespace LittleCafe
             // Nothing found in range — play idle bounce and track idle ticks
             if (animator != null) animator.SetTrigger("idle_bounce");
             IncrementIdleCounter();
+        }
+
+        // ---------------------------------------------------------------
+        // Scan & Interact — Wild Animal (RotateAndMove / RotateRotateMove)
+        // ---------------------------------------------------------------
+
+        /// <summary>
+        /// Wild animal scan: look in facing direction for targets that are
+        /// wildAnimalInteractible in the InteractionRegistry. If found, attack.
+        /// Callback returns true if an interaction occurred, false otherwise.
+        /// </summary>
+        private IEnumerator ScanAndInteractWildAnimal(System.Action<bool> result)
+        {
+            result(false);
+
+            if (furnitureObject == null) yield break;
+            GridManager gm = GridManager.Instance;
+            if (gm == null) yield break;
+
+            currentFacing.ToGridOffset(out int dx, out int dy);
+            int startX = furnitureObject.GridX;
+            int startY = furnitureObject.GridY;
+
+            for (int step = 1; step <= attackRange; step++)
+            {
+                int checkX = startX + (dx * step);
+                int checkY = startY + (dy * step);
+
+                if (checkX < 0 || checkX >= gm.Width || checkY < 0 || checkY >= gm.Height)
+                    break;
+
+                GameObject occupant = gm.GetCellOccupant(checkX, checkY);
+                if (occupant == null) continue;
+
+                GridEntityHealth targetHealth = occupant.GetComponent<GridEntityHealth>();
+                if (targetHealth == null || targetHealth.IsDestroyed) continue;
+
+                // Check InteractionRegistry for wildAnimalInteractible
+                string targetName = occupant.name.Replace("(Clone)", "").Trim();
+                bool canInteract = ClockworkCraft.InteractionRegistry.Instance != null
+                    && ClockworkCraft.InteractionRegistry.Instance.CanInteract(targetName, ClockworkCraft.InteractorType.WildAnimal);
+
+                if (canInteract)
+                {
+                    yield return PerformStrongInteraction(targetHealth, checkX, checkY);
+                    result(true);
+                    yield break;
+                }
+            }
         }
 
         // ---------------------------------------------------------------
