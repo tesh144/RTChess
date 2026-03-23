@@ -164,6 +164,25 @@ namespace LittleCafe.Editor
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
 
+            EditorGUILayout.Space(4);
+
+            // Draw Button
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Draw Button", EditorStyles.boldLabel);
+            if (cachedData?.sheets != null && cachedData.sheets.ContainsKey("DrawButton"))
+            {
+                var sheet = cachedData.sheets["DrawButton"];
+                EditorGUILayout.LabelField($"  {sheet.rows.Count} levels in cache");
+            }
+
+            EditorGUILayout.BeginHorizontal();
+            GUI.enabled = cachedData != null;
+            if (GUILayout.Button("Sync Draw Button", GUILayout.Height(28)))
+                SyncDrawButton();
+            GUI.enabled = cachedData != null;
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
+
             EditorGUILayout.Space(8);
 
             // Sync All
@@ -174,6 +193,7 @@ namespace LittleCafe.Editor
                 if (workerDB != null) SyncWorkers();
                 if (unitDB != null) SyncUnits();
                 if (environmentDB != null) SyncEnvironment();
+                SyncDrawButton();
             }
             GUI.enabled = true;
 
@@ -493,6 +513,28 @@ namespace LittleCafe.Editor
                     if (existing.killerAdvances != newKillerAdvances) { existing.killerAdvances = newKillerAdvances; changed = true; }
                 }
 
+                // Tier
+                string tierStr = GetValue(row, "Tier (button)");
+                if (!string.IsNullOrEmpty(tierStr))
+                {
+                    int newTier = -1;
+                    if (tierStr.StartsWith("Tier ", StringComparison.OrdinalIgnoreCase))
+                        int.TryParse(tierStr.Substring(5).Trim(), out newTier);
+                    else if (tierStr == "-")
+                        newTier = -1;
+                    else
+                        int.TryParse(tierStr, out newTier);
+                    if (existing.tier != newTier) { existing.tier = newTier; changed = true; }
+                }
+
+                // Slot Takeable
+                string slotStr = GetValue(row, "Slot Takeable");
+                if (!string.IsNullOrEmpty(slotStr))
+                {
+                    bool newSlotTakeable = slotStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || slotStr == "1";
+                    if (existing.isSlotTakeable != newSlotTakeable) { existing.isSlotTakeable = newSlotTakeable; changed = true; }
+                }
+
                 if (changed)
                 {
                     updated++;
@@ -700,6 +742,85 @@ namespace LittleCafe.Editor
         }
 
         // ─────────────────────────────────────────────────────────────────
+        // Sync: Draw Button
+        // ─────────────────────────────────────────────────────────────────
+
+        private void SyncDrawButton()
+        {
+            if (cachedData?.sheets == null) return;
+            if (!cachedData.sheets.ContainsKey("DrawButton")) return;
+
+            // Find DrawButtonController in the scene
+            var controller = GameObject.FindFirstObjectByType<DrawButtonController>();
+            if (controller == null)
+            {
+                SetStatus("DrawButtonController not found in scene", MessageType.Warning);
+                return;
+            }
+
+            var sheet = cachedData.sheets["DrawButton"];
+            var entries = new List<DrawButtonEntry>();
+
+            foreach (var row in sheet.rows)
+            {
+                string orderStr = GetValue(row, "Draw Button Order");
+                if (string.IsNullOrEmpty(orderStr)) continue;
+                if (!int.TryParse(orderStr, out int order)) continue;
+
+                var entry = new DrawButtonEntry();
+                entry.order = order;
+
+                // Output — strip emoji, keep name as-is (None, Worker, Fighter, Home, RandomTier0, etc.)
+                string output = StripEmoji(GetValue(row, "Output"));
+                entry.outputName = string.IsNullOrEmpty(output) ? "None" : output;
+
+                // Cost currency — strip emoji, parse ResourceType
+                // Sheet header is "Cost Type" (e.g. "💰 Gold")
+                string costCurrencyStr = StripEmoji(GetValue(row, "Cost Type"));
+                if (!string.IsNullOrEmpty(costCurrencyStr))
+                {
+                    if (Enum.TryParse<ClockworkCraft.ResourceType>(costCurrencyStr.Replace(" ", ""), true, out var rt))
+                        entry.costCurrency = rt;
+                }
+
+                // Cost value — sheet header is "Cost Amount"
+                string valueStr = GetValue(row, "Cost Amount");
+                if (!string.IsNullOrEmpty(valueStr))
+                    int.TryParse(valueStr, out entry.costValue);
+
+                // Cooldown
+                string cooldownStr = GetValue(row, "Cooldown (s)");
+                if (!string.IsNullOrEmpty(cooldownStr))
+                    float.TryParse(cooldownStr, System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out entry.cooldown);
+
+                entries.Add(entry);
+            }
+
+            // Sort by order
+            entries.Sort((a, b) => a.order.CompareTo(b.order));
+
+            // Write to the serialized field via SerializedObject
+            var so = new SerializedObject(controller);
+            var prop = so.FindProperty("drawLevels");
+            prop.ClearArray();
+            for (int i = 0; i < entries.Count; i++)
+            {
+                prop.InsertArrayElementAtIndex(i);
+                var elem = prop.GetArrayElementAtIndex(i);
+                elem.FindPropertyRelative("order").intValue = entries[i].order;
+                elem.FindPropertyRelative("outputName").stringValue = entries[i].outputName;
+                elem.FindPropertyRelative("costCurrency").intValue = (int)entries[i].costCurrency;
+                elem.FindPropertyRelative("costValue").intValue = entries[i].costValue;
+                elem.FindPropertyRelative("cooldown").floatValue = entries[i].cooldown;
+            }
+            so.ApplyModifiedProperties();
+
+            EditorUtility.SetDirty(controller);
+            SetStatus($"Draw Button synced: {entries.Count} levels", MessageType.Info);
+        }
+
+        // ─────────────────────────────────────────────────────────────────
         // UI Helpers
         // ─────────────────────────────────────────────────────────────────
 
@@ -786,6 +907,8 @@ namespace LittleCafe.Editor
         {
             string clean = StripEmoji(s);
             if (string.IsNullOrEmpty(clean) || clean == "None") return ProductionOutputType.None;
+            // Sheet uses "Feast" but enum uses "Meal" — alias for compatibility
+            if (clean.Equals("Feast", StringComparison.OrdinalIgnoreCase)) return ProductionOutputType.Meal;
             if (Enum.TryParse<ProductionOutputType>(clean, true, out var result)) return result;
             return ProductionOutputType.None;
         }

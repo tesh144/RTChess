@@ -121,12 +121,9 @@ namespace ClockworkGrid
                 layoutGroup.childForceExpandHeight = false;
             }
 
-            // Find DrawButtonController in scene (for cost display updates)
-            drawButtonController = FindFirstObjectByType<DrawButtonController>();
-
-            // Hide draw button — buildings are now produced by map objects, not manual draws
-            if (drawButtonController != null)
-                drawButtonController.gameObject.SetActive(false);
+            // Find DrawButtonController in scene (for fly-in animations and visibility)
+            // Button_Battle starts disabled in the scene — turned on after the player's first placement
+            drawButtonController = FindFirstObjectByType<DrawButtonController>(FindObjectsInactive.Include);
 
             // Subscribe to token changes
             if (ResourceTokenManager.Instance != null)
@@ -309,7 +306,7 @@ namespace ClockworkGrid
         /// <summary>Add a new card to the hand. Optionally mark it as "new" with a badge.</summary>
         /// <param name="animateFromDraw">If true, card flies in from the draw button position.</param>
         /// <param name="consumeReservation">If true, consumes a previously reserved slot (from TryReserveSlot).</param>
-        public void AddCard(UnitStats unitStats, bool markAsNew = false, bool animateFromDraw = false, bool consumeReservation = false)
+        public void AddCard(UnitStats unitStats, bool markAsNew = false, bool animateFromDraw = false, bool consumeReservation = false, Vector3? flyFromScreenPos = null)
         {
             // Consume the reservation first (reduces reservedSlots so the count stays accurate)
             if (consumeReservation)
@@ -356,10 +353,14 @@ namespace ClockworkGrid
 
             UpdateLayoutSpacing();
 
-            // Fly-in animation from draw button, or appear animation for non-drawn cards
+            // Fly-in animation: from draw button, from a screen position, or just pop in
             if (animateFromDraw && drawButtonController != null)
             {
-                StartCoroutine(CardFlyInAnimation(card, cardObj.GetComponent<RectTransform>()));
+                StartCoroutine(CardFlyInAnimation(card, cardObj.GetComponent<RectTransform>(), null));
+            }
+            else if (flyFromScreenPos.HasValue)
+            {
+                StartCoroutine(CardFlyInAnimation(card, cardObj.GetComponent<RectTransform>(), flyFromScreenPos.Value));
             }
             else
             {
@@ -369,17 +370,13 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Animates a card flying from the draw button's position into its dock slot.
-        /// Card starts at draw button position, scaled to 0, and flies to final position
-        /// with a slight overshoot bounce.
+        /// Animates a card flying into its dock slot with an upward arc.
+        /// If overrideStartScreenPos is null, flies from the draw button.
+        /// If provided, flies from that screen-space position (used by building production).
         /// </summary>
-        private IEnumerator CardFlyInAnimation(GameCardUI card, RectTransform cardRect)
+        private IEnumerator CardFlyInAnimation(GameCardUI card, RectTransform cardRect, Vector3? overrideStartScreenPos)
         {
             if (cardRect == null) yield break;
-
-            // Get the actual draw button's screen position
-            RectTransform drawBtnRect = drawButtonController.ButtonRect;
-            if (drawBtnRect == null) yield break;
 
             // Let layout settle for one frame so we know the card's final position
             yield return null;
@@ -388,10 +385,28 @@ namespace ClockworkGrid
             Vector3 finalPos = cardRect.position;
             Vector3 finalScale = cardRect.localScale;
 
-            // Start position: the draw button's world position
-            Vector3 startPos = drawBtnRect.position;
+            // Start position: override screen pos, or the draw button
+            Vector3 startPos;
+            if (overrideStartScreenPos.HasValue)
+            {
+                // Convert screen position to world position on the canvas
+                startPos = overrideStartScreenPos.Value;
+            }
+            else if (drawButtonController != null && drawButtonController.ButtonRect != null)
+            {
+                startPos = drawButtonController.ButtonRect.position;
+            }
+            else
+            {
+                // Fallback — just pop in
+                card.PlayAppearAnimation();
+                yield break;
+            }
 
-            float duration = 0.35f;
+            // Arc height in world-space units (scales with screen)
+            float arcHeight = Mathf.Abs(finalPos.y - startPos.y) * 0.5f + 80f;
+
+            float duration = 0.45f;
             float elapsed = 0f;
 
             while (elapsed < duration)
@@ -401,22 +416,22 @@ namespace ClockworkGrid
 
                 if (cardRect == null) yield break;
 
-                // Ease-out cubic for smooth deceleration
-                float easeT = 1f - Mathf.Pow(1f - t, 3f);
+                // Smooth ease-in-out (same as world fly)
+                float easeT = t * t * (3f - 2f * t);
 
-                // Position: fly from draw button to final slot
-                cardRect.position = Vector3.Lerp(startPos, finalPos, easeT);
+                // Position: lerp with upward arc
+                Vector3 pos = Vector3.Lerp(startPos, finalPos, easeT);
+                pos.y += Mathf.Sin(t * Mathf.PI) * arcHeight;
+                cardRect.position = pos;
 
                 // Scale: grow from small to full with slight overshoot
                 float scaleT;
                 if (t < 0.7f)
                 {
-                    // Grow to 110%
                     scaleT = Mathf.Lerp(0.2f, 1.1f, t / 0.7f);
                 }
                 else
                 {
-                    // Settle back to 100%
                     float settleT = (t - 0.7f) / 0.3f;
                     scaleT = Mathf.Lerp(1.1f, 1f, settleT);
                 }
@@ -459,7 +474,7 @@ namespace ClockworkGrid
 
         /// <summary>Add a worker card from WorkerData (produced by buildings).</summary>
         /// <param name="consumeReservation">If true, consumes a previously reserved slot.</param>
-        public void AddWorkerCard(WorkerData workerData, bool consumeReservation = false)
+        public void AddWorkerCard(WorkerData workerData, bool consumeReservation = false, bool animateFromDraw = false, Vector3? flyFromScreenPos = null)
         {
             if (workerData == null) return;
 
@@ -496,7 +511,7 @@ namespace ClockworkGrid
             stats.isAllied        = true;
             stats.killerAdvances  = workerData.killerAdvances;
 
-            AddCard(stats, markAsNew: true);
+            AddCard(stats, markAsNew: true, animateFromDraw: animateFromDraw, flyFromScreenPos: flyFromScreenPos);
             Debug.Log($"[DockBarManager] Added worker card '{workerData.GetCleanName()}'");
         }
 
@@ -508,6 +523,13 @@ namespace ClockworkGrid
                 handCards.Remove(card);
                 Destroy(card.gameObject);
                 UpdateLayoutSpacing();
+            }
+
+            // Turn on the draw button after the player's first placement
+            if (drawButtonController != null)
+            {
+                drawButtonController.Show();
+                Debug.Log("[DockBarManager] Card placed — draw button activated");
             }
         }
 
@@ -530,7 +552,7 @@ namespace ClockworkGrid
         public void ShowWithAnimation()
         {
             if (cardContainer != null) cardContainer.gameObject.SetActive(true);
-            if (drawButtonController != null) drawButtonController.Show();
+            // Draw button manages its own active state — don't force it on here
 
             if (enableSlideAnimation && dockBarRect != null)
                 StartCoroutine(SlideUpAnimation());

@@ -20,7 +20,7 @@ namespace LittleCafe
     /// Each collection increases that building's effective interval by its
     /// productionIntervalBonus, so repeated use gets progressively slower.
     ///
-    /// Worker output picks a random worker from WorkerDatabase each time.
+    /// Worker output (ProductionOutputType.Worker) produces specifically the "Worker" unit from WorkerDatabase.
     ///
     /// Singleton — auto-created by MapGeneratorV2.EnsureManagers().
     /// </summary>
@@ -62,7 +62,7 @@ namespace LittleCafe
 
         // ─── Database ───────────────────────────────────────────────────
         [Header("Database References")]
-        [Tooltip("WorkerDatabase — a random worker is chosen each production cycle.")]
+        [Tooltip("WorkerDatabase — used to look up the 'Worker' unit for Home production.")]
         public WorkerDatabase workerDatabase;
 
         // ─── Debug ──────────────────────────────────────────────────────
@@ -515,7 +515,7 @@ namespace LittleCafe
                     entry.isReady = true;
 
                     if (entry.outputType == ProductionOutputType.Worker)
-                        entry.pendingWorker = PickRandomWorker();
+                        entry.pendingWorker = workerDatabase != null ? workerDatabase.GetByName("Worker") : null;
                     else if (entry.outputType == ProductionOutputType.RandomBuilding)
                         entry.pendingCard = DrawRandomBuilding();
                     else if (entry.outputType == ProductionOutputType.Fighter)
@@ -551,7 +551,8 @@ namespace LittleCafe
             List<WorkerData> validWorkers = new List<WorkerData>();
             foreach (var w in workers)
             {
-                if (w.prefab != null) validWorkers.Add(w);
+                // Exclude trained/special workers (Fighter) — they are produced by specific buildings only
+                if (w.prefab != null && w.type != WorkerType.Fighter) validWorkers.Add(w);
             }
 
             if (validWorkers.Count == 0) return null;
@@ -984,7 +985,7 @@ namespace LittleCafe
             WorkerData wd = entry.pendingWorker;
             if (wd == null)
             {
-                wd = PickRandomWorker();
+                wd = workerDatabase != null ? workerDatabase.GetByName("Worker") : null;
                 if (wd == null) return false;
             }
 

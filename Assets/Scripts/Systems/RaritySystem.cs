@@ -154,6 +154,54 @@ namespace ClockworkGrid
         }
 
         /// <summary>
+        /// Draw a random unit from tier 0 up to maxTier (inclusive).
+        /// RandomTier0 = tier 0 only. RandomTier1 = tier 0 + tier 1. etc.
+        /// Falls back to unfiltered DrawRandomUnit() if no cards match.
+        /// </summary>
+        public UnitStats DrawRandomUnitUpToTier(int maxTier)
+        {
+            if (allUnitStats.Count == 0)
+            {
+                Debug.LogError("No unit stats registered! Cannot draw unit.");
+                return null;
+            }
+
+            float totalWeight = 0f;
+            foreach (UnitStats stats in allUnitStats)
+            {
+                if (!stats.isRandomBuilding) continue;
+                if (stats.tier < 0 || stats.tier > maxTier) continue;
+                totalWeight += stats.GetEffectiveDrawWeight();
+            }
+
+            if (totalWeight <= 0f)
+            {
+                Debug.LogWarning($"No drawable units in tier 0-{maxTier} pool — falling back to unfiltered draw.");
+                return DrawRandomUnit();
+            }
+
+            float roll = Random.Range(0f, totalWeight);
+            float currentWeight = 0f;
+            foreach (UnitStats stats in allUnitStats)
+            {
+                if (!stats.isRandomBuilding) continue;
+                if (stats.tier < 0 || stats.tier > maxTier) continue;
+                currentWeight += stats.GetEffectiveDrawWeight();
+                if (roll <= currentWeight)
+                {
+                    Debug.Log($"Drew {stats.unitName} (tier:{stats.tier}, maxTier:{maxTier}, weight:{stats.GetEffectiveDrawWeight()})");
+                    return stats;
+                }
+            }
+
+            foreach (UnitStats stats in allUnitStats)
+            {
+                if (stats.isRandomBuilding && stats.tier >= 0 && stats.tier <= maxTier) return stats;
+            }
+            return DrawRandomUnit();
+        }
+
+        /// <summary>
         /// Get unit stats by type
         /// </summary>
         public UnitStats GetUnitStats(UnitType type)

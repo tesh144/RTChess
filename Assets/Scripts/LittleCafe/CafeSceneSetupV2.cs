@@ -18,8 +18,10 @@ namespace LittleCafe
         [Header("Grid Settings")]
         [SerializeField] private int gridSize = 50;
         [SerializeField] private float cellSize = 1.5f;
-        [SerializeField] private GameObject gridTilePrefabA; // Tile 1
-        [SerializeField] private GameObject gridTilePrefabB; // Tile 2
+        [SerializeField] private GameObject gridTilePrefabA; // Tile 1 (Base Light)
+        [SerializeField] private GameObject gridTilePrefabB; // Tile 2 (Base Dark)
+        [SerializeField] private GameObject gridTilePrefabC; // Tile 3 (Under Building)
+        [SerializeField] private GameObject gridTilePrefabD; // Tile 4 (Water / Other)
 
         [Header("Economy")]
         [SerializeField] private int startingTokens = 999;
@@ -162,16 +164,22 @@ namespace LittleCafe
             SetPrivateField(gm, "gridHeight", gridSize);
             SetPrivateField(gm, "cellSize", cellSize);
 
-            // Assign tile prefabs for checkerboard pattern
+            // Assign tile prefabs into the slot system (0/1 = checkerboard, 2/3 = special)
             if (gridTilePrefabA != null && gridTilePrefabB != null)
             {
-                SetPrivateField(gm, "gridTilePrefabA", gridTilePrefabA);
-                SetPrivateField(gm, "gridTilePrefabB", gridTilePrefabB);
-                Debug.Log("[CafeSceneSetupV2] Assigned tile prefabs for checkerboard");
+                var slots = (ClockworkGrid.TilePrefabSlot[])GetPrivateField(gm, "tilePrefabSlots");
+                if (slots != null && slots.Length >= 4)
+                {
+                    slots[0].prefab = gridTilePrefabA;
+                    slots[1].prefab = gridTilePrefabB;
+                    if (gridTilePrefabC != null) slots[2].prefab = gridTilePrefabC;
+                    if (gridTilePrefabD != null) slots[3].prefab = gridTilePrefabD;
+                }
+                Debug.Log($"[CafeSceneSetupV2] Assigned tile prefabs: A={gridTilePrefabA.name}, B={gridTilePrefabB.name}, C={(gridTilePrefabC != null ? gridTilePrefabC.name : "none")}, D={(gridTilePrefabD != null ? gridTilePrefabD.name : "none")}");
             }
             else
             {
-                Debug.LogWarning("[CafeSceneSetupV2] Grid tile prefabs not assigned! Assign Tile 1 and Tile 2 in Inspector.");
+                Debug.LogWarning("[CafeSceneSetupV2] Grid tile prefabs not assigned! Assign at least Tile A and Tile B in Inspector.");
             }
 
             if (gm.GetComponent<GridVisualizer>() == null)
@@ -493,6 +501,22 @@ namespace LittleCafe
                 type = type.BaseType;
             }
             Debug.LogWarning($"[CafeSceneSetupV2] Could not find field '{fieldName}' on {target.GetType().Name}");
+        }
+
+        private static object GetPrivateField(object target, string fieldName)
+        {
+            var type = target.GetType();
+            while (type != null)
+            {
+                var field = type.GetField(fieldName,
+                    System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance);
+                if (field != null)
+                    return field.GetValue(target);
+                type = type.BaseType;
+            }
+            Debug.LogWarning($"[CafeSceneSetupV2] Could not find field '{fieldName}' on {target.GetType().Name}");
+            return null;
         }
     }
 }

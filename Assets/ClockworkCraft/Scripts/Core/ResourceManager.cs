@@ -83,8 +83,8 @@ namespace ClockworkCraft
                 resources[ResourceType.Clay]    = 0;
                 resources[ResourceType.Flowers] = 0;
 
-                startingAmounts[ResourceType.Gold] = 20;
-                startingAmounts[ResourceType.Food] = 5;
+                startingAmounts[ResourceType.Gold] = 0;
+                startingAmounts[ResourceType.Food] = 0;
 
                 unlocked[ResourceType.Gold] = true;
                 unlocked[ResourceType.Wood] = true;

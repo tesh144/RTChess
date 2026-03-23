@@ -71,9 +71,14 @@
 | 2026-03-22 | Co-Work | #27 Worker Modification / Training System: Added TrainingFacility to BuildingDatabase.asset (productionInputType: Worker, productionInterval: 30s, productionOutputType: Fighter). Added TrainingFacility to Google Sheets Buildings & Production. Verified DragDropHandler feed-building and BuildingProductionManager input-triggered production fully support the feature. Created To Do (Jai) checklist for prefab/icon creation and placement cost config. → Ready for Review |
 | 2026-03-22 | Co-Work | #61 Multi-pickup SFX: Verified feature fully implemented in GameSFXManager.cs with v2 params (pitch 0.8+0.12/step, volume 0.85-1.6x, debounce 15ms, burst reset 1.5s, cap 15). Integrated in ResourceLootFX.cs line 245 on loot particle arrival. Documented implementation status and troubleshooting steps. → Ready for Review |
 | 2026-03-22 | Co-Work | Synced Feast data from Google Sheets to BuildingDatabase.asset (hp: 5→10, drawWeight: 0→0.5, isRandomBuilding: 0→1, productionInterval: 0→30, productionIntervalBonus: 0→15, productionAmount: 0→1). Fixed Barracks/Kitchen drawWeight: 1→0.5 in asset. |
-| 2026-03-22 | Co-Work | #88 Bug Fix: Removed Fighter from WorkerDatabase — was causing PickRandomWorker() to randomly select Fighter. ConeTent now correctly produces Workers. Renamed ConeTent→Home in BuildingDatabase.asset, Google Sheets (Buildings & Production), and code comments in BuildingData.cs. |
+| 2026-03-22 | Co-Work | #88 Bug Fix: Renamed ConeTent→Home in BuildingDatabase.asset, Google Sheets (Buildings & Production), and code comments in BuildingData.cs. NOTE: Fighter was incorrectly removed from WorkerDatabase in this session — has been restored with original values from git history (type=8, icon guid recovered). |
 | 2026-03-22 | Co-Work | #89 Resolved: TrainingFacility removed from BuildingDatabase.asset and Google Sheets. Feast entity confirmed present and correctly configured. Barracks is the training facility (consumes Workers, produces Fighters). |
 | 2026-03-22 | Claude Code | #90 RandomTier0-3 System: Tier field on BuildingData/UnitStats, RandomTier0-3 enums added, RaritySystem.DrawRandomUnitByTier() implemented, gacha defaults to RandomTier0, all .asset files synced, SheetSyncEditor syncs tier field. → Ready for Review |
+| 2026-03-22 | Co-Work | Home Worker production fix: BuildingProductionManager.cs — ProductionOutputType.Worker now calls workerDatabase.GetByName("Worker") (direct lookup) instead of PickRandomWorker() (random selection). Sheet confirms Home output = "Worker" specifically. |
+| 2026-03-22 | Co-Work | Gold startingAmount fix: CurrencyDatabase.asset — Gold startingAmount corrected 20→0 to match Google Sheets. All other currencies confirmed 0. |
+| 2026-03-22 | Co-Work | TrainingFacility removed from BuildingDatabase.asset. Was incorrectly left in from prior session. Google Sheets is authoritative — TrainingFacility is not in Buildings & Production sheet. |
+| 2026-03-22 | Co-Work | Documentation update: CLAUDE_USER_JAI.md — added checkmark timing table, 10-step task workflow, data-must-match-sheets rule, AskUserQuestion popup mandate, check-codebase-before-asking rule. |
+| 2026-03-22 | Co-Work | Documentation update: Trello Card #85 + #70 — updated with AI best practices from this session (data consistency, popup for clarifications, codebase-first verification). |
 
 ---
 
@@ -116,3 +121,29 @@ _Anything one agent needs to flag for the other._
   - **Card #70** (AskUserQuestion Usage): Updated with when/why/how to use popup tool for clarifications
   - **CLAUDE_USER_JAI.md**: Added checkmark timing table, updated "When Receiving a Task" steps to show CHECK on execution/UNCHECK before Ready for Review, added rules about AskUserQuestion and asking when unsure
   - **KEY RULE**: If unsure about something, use AskUserQuestion popup to ask — don't make assumptions, don't leave questions in card comments
+- 2026-03-22: SESSION HANDOFF (Co-Work → new Co-Work agent). Pending work for next agent:
+  1. **Map Density Slider** (plan at `/sessions/…/.claude/plans/async-knitting-codd.md`): Add `mapDensity` field to MapGeneratorV2.cs, scale Scattered/Clusters/Edge generation, add slider + estimate to MapGeneratorV2Editor.cs. Has full plan written — just needs implementation.
+  2. **Trello Card #90** (RandomTier0-3): Claude Code marked Ready for Review. Jai must review/test in Unity before closing.
+  3. **Barracks prefab + icon**: Needs a prefab with a prefab guid assigned in BuildingDatabase.asset — currently uses placeholder `47b7e0cce81224b9f987986ef1ad5a4b`. Verify in Unity.
+  4. **Kitchen + Meal prefabs/icons**: Human To-Do cards on Trello. Need creation in Unity.
+  5. **Cards #27 and #61** still in Ready for Review — awaiting Jai's in-game testing.
+  6. **Google Sheets sync** — after any .asset changes, run SheetSyncEditor to keep sheets current.
+  7. **Workers & Entities tier column** — verify Fighter tier = 3 in sheet matches WorkerDatabase.asset (drawWeight=0, no tier field on WorkerData currently). Check if SheetSyncEditor handles tier for workers.
+- 2026-03-22: SESSION CONTINUATION (Co-Work). Changes this session:
+  1. **SheetSyncEditor SyncDrawButton()**: Fixed column references — "Cost"→"Cost Type", "Value"→"Cost Amount" to match actual sheet headers.
+  2. **DrawButton Google Sheet**: Updated first 3 Output entries from "👷 Worker" to Home/Statue/Torch. Updated Output dropdown validation to include all buildings (Home, Torch, Statue, Barracks, Kitchen, Feast), workers (Worker, Fighter), and tier draws (RandomTier0-3, RandomBuilding, None).
+  3. **MapGeneratorV2 SetupDeck()**: Removed Home/Statue from starting hand. Player now starts with only a Worker card. Draw button delivers subsequent cards.
+  4. **Button_Battle (draw button) hidden on startup**: Set `m_IsActive: 0` in scene file. DockBarManager.RemoveCard() calls `drawButtonController.Show()` after first card placement to activate it. Show/Hide target `drawButton.gameObject` (Button_Battle), not the Lobby panel.
+  5. **DrawButtonController**: Per-level output, cost (multi-currency via ResourceManager), cooldown. Sheet-driven via DrawButtonEntry list serialized in scene (33 levels). Levels up on each successful draw. `workerDatabase` reference wired in scene.
+  6. **Draw button animations**: Pop-in scale animation on first reveal. Bouncy scale animation when cooldown ends (catches player's eye). Punch animation on click.
+  7. **Card fly-in arc from draw button**: All AddCard/AddWorkerCard calls from DrawButtonController now pass `animateFromDraw: true`. CardFlyInAnimation uses upward arc (`Sin(t*PI) * arcHeight`) matching world-collection fly style. AddWorkerCard gained `animateFromDraw` parameter.
+  6. **RaritySystem**: Added `DrawRandomUnitUpToTier(int maxTier)` — cumulative tier draw (RandomTier1 = Tier 0 + Tier 1 pool).
+  7. **ResourceManager.cs**: Starting gold fallback changed 20→0 to match sheet.
+  8. **WorkerData.cs**: Added `tier` and `isSlotTakeable` fields synced from Workers & Entities sheet.
+  9. **Duplicate Feast removal**: Removed manual Feast UnitStats creation in SetupDeck (BuildingDatabase version is authoritative).
+  10. **Fighter card fix**: SetupDeck now pulls Fighter data from WorkerDatabase.GetByName("Fighter") instead of null workerTemplate.
+- 2026-03-22: DATA CONSISTENCY AUDIT & FIXES:
+  - **TrainingFacility**: Removed from BuildingDatabase.asset (correctly — not in Google Sheets)
+  - **Fighter**: Restored to WorkerDatabase.asset (was incorrectly deleted; Google Sheets shows it as Worker type with tier 3, hp 10). Values synced from sheet.
+  - **RotateRotateMove**: Confirmed as real behavior in BehaviorType.cs (Mammoth correctly uses it)
+  - All data now consistent between Google Sheets and .asset files for Buildings, Workers, Units, Environment

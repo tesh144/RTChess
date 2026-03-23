@@ -45,6 +45,14 @@ namespace LittleCafe
         [Tooltip("When this worker is killed, does the attacker advance into its cell? Advance = true, Stay = false.")]
         public bool killerAdvances = false;
 
+        [Header("Slot")]
+        [Tooltip("When this entity dies, can another entity move into its cell? Workers = false (no takeover), Wild Animals = true.")]
+        public bool isSlotTakeable = false;
+
+        [Header("Tier")]
+        [Tooltip("Worker tier (0-3). Used by tier-based systems. -1 = excluded from tier pools.")]
+        public int tier = -1;
+
         [Header("Combat Stats")]
         [Tooltip("Health points. When HP reaches 0, triggers an event (removal, completion, etc.).")]
         public int hp = 3;

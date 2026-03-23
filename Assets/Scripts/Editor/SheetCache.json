@@ -5,7 +5,7 @@
     "Buildings & Production": {
       "headers": ["Icon", "Building", "Tier (button)", "isRandomBuilding", "DrawWeight", "Prod. Interval (s)", "Interval Bonus (s)", "Input", "Output", "Output Amt", "Killer's Behavior", "Reveal Radius", "Ally Interactible", "Enemy Interactible", "Wild Animal Interactible", "HP", "Attack"],
       "rows": [
-        {"Icon": "🏕", "Building": "ConeTent", "Tier (button)": "Tier 0", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "5", "Interval Bonus (s)": "15", "Input": "None", "Output": "👷 Worker", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
+        {"Icon": "🏕", "Building": "Home", "Tier (button)": "Tier 0", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "5", "Interval Bonus (s)": "15", "Input": "None", "Output": "👷 Worker", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
         {"Icon": "🔥", "Building": "Torch", "Tier (button)": "Tier 0", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "0", "Interval Bonus (s)": "0", "Input": "None", "Output": "None", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "2", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
         {"Icon": "🗿", "Building": "Statue", "Tier (button)": "Tier 0", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "10", "Interval Bonus (s)": "30", "Input": "None", "Output": "🏠 RandomBuilding", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
         {"Icon": "⚔️", "Building": "Barracks", "Tier (button)": "Tier 1", "isRandomBuilding": "TRUE", "DrawWeight": "1", "Prod. Interval (s)": "15", "Interval Bonus (s)": "30", "Input": "👷 Worker", "Output": "⚔️ Fighter", "Output Amt": "1", "Killer's Behavior": "Advance", "Reveal Radius": "1", "Ally Interactible": "FALSE", "Enemy Interactible": "TRUE", "Wild Animal Interactible": "FALSE", "HP": "10", "Attack": "0"},
@@ -32,6 +32,44 @@
         {"Object": "Water", "Drops": "💧 Water", "Loot per Hit": "1", "HP": "100", "Total Yield": "100", "Ally Interactible": "TRUE", "Enemy Interactible": "FALSE", "Wild Animal Interactible": "FALSE", "Killer's Behavior": "Advance"},
         {"Object": "Flowers", "Drops": "🌻 Flowers", "Loot per Hit": "1", "HP": "5", "Total Yield": "5", "Ally Interactible": "TRUE", "Enemy Interactible": "FALSE", "Wild Animal Interactible": "FALSE", "Killer's Behavior": "Advance"},
         {"Object": "Bone", "Drops": "🧊 White Marble", "Loot per Hit": "1", "HP": "3", "Total Yield": "3", "Ally Interactible": "TRUE", "Enemy Interactible": "FALSE", "Wild Animal Interactible": "FALSE", "Killer's Behavior": "Advance"}
+      ]
+    },
+    "DrawButton": {
+      "headers": ["Draw Button Order", "Output", "Cost Type", "Cost Amount", "Cooldown (s)"],
+      "rows": [
+        {"Draw Button Order": "0", "Output": "🏕 Home", "Cost Type": "💰 Gold", "Cost Amount": "1", "Cooldown (s)": "15"},
+        {"Draw Button Order": "1", "Output": "🗿 Statue", "Cost Type": "💰 Gold", "Cost Amount": "2", "Cooldown (s)": "15"},
+        {"Draw Button Order": "2", "Output": "🔥 Torch", "Cost Type": "💰 Gold", "Cost Amount": "3", "Cooldown (s)": "15"},
+        {"Draw Button Order": "3", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "4", "Cooldown (s)": "15"},
+        {"Draw Button Order": "4", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "5", "Cooldown (s)": "15"},
+        {"Draw Button Order": "5", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "6", "Cooldown (s)": "15"},
+        {"Draw Button Order": "6", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "7", "Cooldown (s)": "15"},
+        {"Draw Button Order": "7", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "8", "Cooldown (s)": "15"},
+        {"Draw Button Order": "8", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "9", "Cooldown (s)": "15"},
+        {"Draw Button Order": "9", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "10", "Cooldown (s)": "15"},
+        {"Draw Button Order": "10", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "11", "Cooldown (s)": "15"},
+        {"Draw Button Order": "11", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "12", "Cooldown (s)": "15"},
+        {"Draw Button Order": "12", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "13", "Cooldown (s)": "15"},
+        {"Draw Button Order": "13", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "14", "Cooldown (s)": "15"},
+        {"Draw Button Order": "14", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "15", "Cooldown (s)": "15"},
+        {"Draw Button Order": "15", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "16", "Cooldown (s)": "15"},
+        {"Draw Button Order": "16", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "17", "Cooldown (s)": "15"},
+        {"Draw Button Order": "17", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "18", "Cooldown (s)": "15"},
+        {"Draw Button Order": "18", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "19", "Cooldown (s)": "15"},
+        {"Draw Button Order": "19", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "20", "Cooldown (s)": "15"},
+        {"Draw Button Order": "20", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "21", "Cooldown (s)": "15"},
+        {"Draw Button Order": "21", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "22", "Cooldown (s)": "15"},
+        {"Draw Button Order": "22", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "23", "Cooldown (s)": "15"},
+        {"Draw Button Order": "23", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "24", "Cooldown (s)": "15"},
+        {"Draw Button Order": "24", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "25", "Cooldown (s)": "15"},
+        {"Draw Button Order": "25", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "26", "Cooldown (s)": "15"},
+        {"Draw Button Order": "26", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "27", "Cooldown (s)": "15"},
+        {"Draw Button Order": "27", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "28", "Cooldown (s)": "15"},
+        {"Draw Button Order": "28", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "29", "Cooldown (s)": "15"},
+        {"Draw Button Order": "29", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "30", "Cooldown (s)": "15"},
+        {"Draw Button Order": "30", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "31", "Cooldown (s)": "15"},
+        {"Draw Button Order": "31", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "32", "Cooldown (s)": "15"},
+        {"Draw Button Order": "32", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "33", "Cooldown (s)": "15"}
       ]
     }
   }

@@ -27,3 +27,17 @@ MonoBehaviour:
     visualScale: 0
     prefab: {fileID: 9011859404534711103, guid: 40a97e5d9c6d64bf888cecc906b97fd3, type: 3}
     icon: {fileID: 21300000, guid: f9441b13b752e428b84afa421b539c3e, type: 3}
+  - assetName: Fighter
+    type: 8
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 1
+    behaviorType: 0
+    killerAdvances: 0
+    hp: 10
+    attackPower: 1
+    drawWeight: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 0
+    prefab: {fileID: 597462284350424936, guid: a29d945ab7c7949e5ad189e5301e9eb7, type: 3}
+    icon: {fileID: 21300000, guid: e0a9944a641ef40528503a85dd2237a1, type: 3}
