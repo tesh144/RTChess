@@ -1002,6 +1002,10 @@ namespace LittleCafe
             if (entry.inputType != ProductionInputType.None)
                 entry.waitingForInput = true;
 
+            // Resource-cost buildings return to waiting state after collection
+            if (entry.productionCostAmount > 0)
+                entry.waitingForResources = true;
+
             // Hide timer until next tick reveals it
             if (entry.timerCanvasObj != null)
                 entry.timerCanvasObj.SetActive(false);
