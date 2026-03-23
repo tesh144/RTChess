@@ -547,6 +547,18 @@ namespace LittleCafe
                 // Input-triggered buildings wait until fed before starting their timer
                 if (entry.waitingForInput) continue;
 
+                // Resource-cost buildings wait until they can afford the activation cost
+                if (entry.waitingForResources)
+                {
+                    var rm = ResourceManager.Instance;
+                    bool spent = rm != null && rm.SpendResources(
+                        new Dictionary<ResourceType, int> { { entry.productionCostResourceType, entry.productionCostAmount } });
+                    if (spent)
+                        entry.waitingForResources = false;
+                    else
+                        continue; // not enough resources — skip tick
+                }
+
                 // Reveal timer after first tick (delayed so player can appreciate the object)
                 if (!entry.timerRevealed && entry.timerCanvasObj != null)
                 {
