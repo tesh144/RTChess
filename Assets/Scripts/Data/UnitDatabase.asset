@@ -64,7 +64,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
-    isMapGenerated: 1
+    isMapGenerated: 0
     behaviorType: 0
     killerAdvances: 1
     dropOnDeath: 0

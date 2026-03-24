@@ -1778,23 +1778,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: unitSpawnEntries.Array.size
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: corruptionSpawnEntries.Array.size
       value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: unitSpawnEntries.Array.data[2].unitName
-      value: CorruptedHeart
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: unitSpawnEntries.Array.data[2].minSpacing
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: unitSpawnEntries.Array.data[2].spawnWeight
-      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: corruptionSpawnEntries.Array.data[0].prefab
@@ -1808,14 +1796,6 @@ PrefabInstance:
       propertyPath: corruptionSpawnEntries.Array.data[2].prefab
       value: 
       objectReference: {fileID: 5028432610595724756, guid: cc8d22feddd3c4a3991944784e631183, type: 3}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: unitSpawnEntries.Array.data[2].clusterSpread
-      value: 0.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: unitSpawnEntries.Array.data[2].fragmentation
-      value: 0.5
-      objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: corruptionSpawnEntries.Array.data[0].entityName
       value: CorruptedHeart
