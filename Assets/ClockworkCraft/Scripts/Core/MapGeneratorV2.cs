@@ -115,6 +115,10 @@ namespace ClockworkCraft
         // ── Edge settings (Edge mode) ──
         [Tooltip("Name of the environment or unit type whose clusters this should spawn near.")]
         public string edgeBorderOf = "";
+
+        // ── Initial corruption footprint ──
+        [Tooltip("Moore neighbourhood radius of pre-corrupted tiles around each heart on spawn. 1 = heart cell + 8 surrounding tiles.")]
+        [Min(0)] public int initialCorruptionRadius = 1;
     }
 
     /// <summary>
@@ -2294,13 +2298,14 @@ namespace ClockworkCraft
                 GameObject obj = Instantiate(entry.prefab, worldPos, Quaternion.identity);
                 obj.name = $"{entityName}_{spawnCount}";
 
-                // Stats are serialized on the prefab's CorruptionHeart component — just set grid position
-                // and inject UnitDatabase so the heart can spawn spikes at runtime
+                // Stats are serialized on the prefab's CorruptionHeart component — just set grid position,
+                // inject UnitDatabase so the heart can spawn spikes, and pass the initial corruption radius
                 var heart = obj.GetComponent<LittleCafe.CorruptionHeart>();
                 if (heart != null)
                 {
                     heart.GridPosition = new Vector2Int(x, y);
                     heart.UnitDatabase = unitDatabase;
+                    heart.InitialCorruptionRadius = entry.initialCorruptionRadius;
                 }
 
                 if (enableFog)

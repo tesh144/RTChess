@@ -54,7 +54,7 @@ MonoBehaviour:
     visualScale: 0
     dropOnDeath: 0
     prefab: {fileID: 8309333646760003843, guid: f06e19f66f4cb467cbd277d8362fa5fd, type: 3}
-    icon: {fileID: 0}
+    icon: {fileID: 21300000, guid: 83117c70c1d23436eb6177fa097d8220, type: 3}
   - active: 1
     isMapGenerated: 1
     assetName: Rock
@@ -116,8 +116,8 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 7464727058517861843, guid: 27273a07510604f2a95f573a9e1527f0, type: 3}
-    icon: {fileID: 0}
+    prefab: {fileID: 9084166635889992083, guid: d20d6505b94184281b781a3f041b684a, type: 3}
+    icon: {fileID: 21300000, guid: 12295f694bf1f4803b5ac278f1e09a8c, type: 3}
   - active: 1
     isMapGenerated: 1
     assetName: Flowers
