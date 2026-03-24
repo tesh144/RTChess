@@ -429,14 +429,27 @@ namespace LittleCafe.Editor
                     if (existing.wildAnimalInteractible != newWild) { existing.wildAnimalInteractible = newWild; changed = true; }
                 }
 
-                // Production resource cost
-                string costResStr = StripEmoji(GetValue(row, "Cost Resource")).Replace(" ", "");
-                if (!string.IsNullOrEmpty(costResStr) && !costResStr.Equals("None", StringComparison.OrdinalIgnoreCase))
+                // Production resource cost ("Use Material" / "Use Amount" columns)
+                string costResStr = StripEmoji(GetValue(row, "Use Material")).Replace(" ", "");
+                if (!string.IsNullOrEmpty(costResStr) && costResStr != "-" && !costResStr.Equals("None", StringComparison.OrdinalIgnoreCase))
                 {
                     if (Enum.TryParse<ClockworkCraft.ResourceType>(costResStr, true, out var costRes))
                         if (existing.productionCostResourceType != costRes) { existing.productionCostResourceType = costRes; changed = true; }
                 }
-                changed |= TrySetInt(ref existing.productionCostAmount, GetValue(row, "Cost Amount"));
+                else if (costResStr == "-" || costResStr.Equals("None", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (existing.productionCostResourceType != ClockworkCraft.ResourceType.None) { existing.productionCostResourceType = ClockworkCraft.ResourceType.None; changed = true; }
+                }
+                string useAmtStr = GetValue(row, "Use Amount");
+                if (useAmtStr != "-")
+                    changed |= TrySetInt(ref existing.productionCostAmount, useAmtStr);
+
+                // Cost Increment — for HoldToFill buildings, cost increases by this amount each cycle
+                var incrementStr = GetValue(row, "Cost Increment");
+                if (!string.IsNullOrEmpty(incrementStr) && int.TryParse(incrementStr, out int increment))
+                {
+                    if (existing.resourcesRequiredIncrement != increment) { existing.resourcesRequiredIncrement = increment; changed = true; }
+                }
 
                 if (changed)
                 {

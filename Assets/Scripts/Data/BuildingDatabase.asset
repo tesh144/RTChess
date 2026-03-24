@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 09aac91ca3a864122ba7f982e1923220, type: 3}
   m_Name: BuildingDatabase
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   buildingList:
   - assetName: Home
     type: 0
@@ -93,7 +93,7 @@ MonoBehaviour:
     wildAnimalInteractible: 1
     isMealSource: 0
     productionInputType: 0
-    productionInterval: 10
+    productionInterval: 15
     productionIntervalBonus: 30
     productionOutputType: 3
     producedResourceType: 0
@@ -122,8 +122,8 @@ MonoBehaviour:
     wildAnimalInteractible: 1
     isMealSource: 0
     productionInputType: 1
-    productionInterval: 10
-    productionIntervalBonus: 20
+    productionInterval: 20
+    productionIntervalBonus: 30
     productionOutputType: 4
     producedResourceType: 0
     productionAmount: 1
@@ -150,14 +150,15 @@ MonoBehaviour:
     enemyInteractible: 1
     wildAnimalInteractible: 1
     isMealSource: 0
-    productionInputType: 0
+    productionInputType: 3
     productionInterval: 20
     productionIntervalBonus: 20
     productionOutputType: 5
     producedResourceType: 0
     productionAmount: 1
-    productionCostResourceType: 3
-    productionCostAmount: 10
+    productionCostResourceType: 23
+    productionCostAmount: 3
+    resourcesRequiredIncrement: 1
   - assetName: Feast
     type: 0
     isFunctional: 0
