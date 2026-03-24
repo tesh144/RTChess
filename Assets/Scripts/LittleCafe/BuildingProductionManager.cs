@@ -611,6 +611,12 @@ namespace LittleCafe
                         entry.pendingCard = FindFighterCard();
                     else if (entry.outputType == ProductionOutputType.Meal)
                         entry.pendingCard = FindMealCard();
+                    else if (entry.outputType == ProductionOutputType.Scrap)
+                    { } // Scrap is a currency reward, no pending card needed
+                    else if (entry.outputType == ProductionOutputType.Lizard)
+                        entry.pendingCard = RaritySystem.Instance?.FindByName("Lizard");
+                    else if (entry.outputType == ProductionOutputType.TreeSeed)
+                        entry.pendingCard = RaritySystem.Instance?.FindByName("TreeSeed");
                     else if (IsTierBuildingOutput(entry.outputType))
                         entry.pendingCard = DrawRandomBuildingByTier(GetTierFromOutput(entry.outputType));
                     else if (IsTierUnitOutput(entry.outputType))
@@ -667,6 +673,10 @@ namespace LittleCafe
             else if (entry.outputType == ProductionOutputType.Fighter && entry.pendingCard != null)
                 rewardIcon = entry.pendingCard.iconSprite;
             else if (entry.outputType == ProductionOutputType.Meal && entry.pendingCard != null)
+                rewardIcon = entry.pendingCard.iconSprite;
+            else if (entry.outputType == ProductionOutputType.Scrap)
+                rewardIcon = ResourceDisplayUI.GetIconForResource(entry.producedResourceType);
+            else if ((entry.outputType == ProductionOutputType.Lizard || entry.outputType == ProductionOutputType.TreeSeed) && entry.pendingCard != null)
                 rewardIcon = entry.pendingCard.iconSprite;
             else if ((IsTierBuildingOutput(entry.outputType) || IsTierUnitOutput(entry.outputType)) && entry.pendingCard != null)
                 rewardIcon = entry.pendingCard.iconSprite;
@@ -726,6 +736,12 @@ namespace LittleCafe
                     rewardName = $" (fighter: {entry.pendingCard.unitName})";
                 else if (entry.outputType == ProductionOutputType.Meal && entry.pendingCard != null)
                     rewardName = $" (feast: {entry.pendingCard.unitName})";
+                else if (entry.outputType == ProductionOutputType.Scrap)
+                    rewardName = " (scrap)";
+                else if (entry.outputType == ProductionOutputType.Lizard && entry.pendingCard != null)
+                    rewardName = $" (lizard: {entry.pendingCard.unitName})";
+                else if (entry.outputType == ProductionOutputType.TreeSeed && entry.pendingCard != null)
+                    rewardName = $" (tree seed: {entry.pendingCard.unitName})";
                 else if ((IsTierBuildingOutput(entry.outputType) || IsTierUnitOutput(entry.outputType)) && entry.pendingCard != null)
                     rewardName = $" ({entry.outputType}: {entry.pendingCard.unitName})";
 
@@ -991,6 +1007,16 @@ namespace LittleCafe
 
                 case ProductionOutputType.Meal:
                     collected = CollectMealReward(entry, buildingWorldPos);
+                    break;
+
+                case ProductionOutputType.Scrap:
+                    CollectCurrencyReward(entry, buildingWorldPos);
+                    collected = true;
+                    break;
+
+                case ProductionOutputType.Lizard:
+                case ProductionOutputType.TreeSeed:
+                    collected = CollectRandomBuildingReward(entry, buildingWorldPos);
                     break;
 
                 case ProductionOutputType.Tier0Building:
