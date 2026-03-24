@@ -1447,6 +1447,9 @@ namespace LittleCafe
             public GameObject buildingObj;
         }
 
+        /// <summary>DEBUG: number of registered production entries.</summary>
+        public int EntryCount => entries.Count;
+
         /// <summary>
         /// Resolves a raycast hit object (which may be a child collider/mesh) to
         /// the registered root building GameObject. Returns null if not found.
