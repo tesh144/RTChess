@@ -18,9 +18,9 @@ namespace LittleCafe
         [SerializeField] private float minChunkInterval = 0.08f;
 
         [Header("Resource Stream VFX")]
-        [SerializeField] private GameObject resourceIconPrefab;
         [SerializeField] private float streamFlyDuration = 0.4f;
         [SerializeField] private float streamArcHeight = 1.5f;
+        [SerializeField] private float streamIconSize = 64f;
 
         [Header("Fill Bar")]
         [SerializeField] private Color fillBarColor = new Color(0.3f, 0.85f, 0.4f, 1f);
@@ -336,7 +336,6 @@ namespace LittleCafe
 
         private void SpawnResourceStream(GameObject targetBuilding, ResourceType resourceType)
         {
-            if (resourceIconPrefab == null) return;
             if (targetBuilding == null) return;
 
             StartCoroutine(StreamParticleCoroutine(targetBuilding, resourceType));
@@ -386,20 +385,41 @@ namespace LittleCafe
                 startLocal = new Vector2(canvasRect.rect.width * 0.4f, canvasRect.rect.height * 0.4f);
             }
 
-            // ── Spawn the icon ──
-            GameObject icon = Instantiate(resourceIconPrefab, canvas.transform);
-            RectTransform iconRect = icon.GetComponent<RectTransform>();
-            if (iconRect == null) iconRect = icon.AddComponent<RectTransform>();
+            // ── Spawn the icon procedurally (same pattern as ResourceLootFX) ──
+            Sprite iconSprite = ResourceDisplayUI.GetIconForResource(resourceType);
 
+            GameObject icon = new GameObject("HoldFillParticle");
+            icon.transform.SetParent(canvas.transform, false);
+
+            RectTransform iconRect = icon.AddComponent<RectTransform>();
+            iconRect.sizeDelta = new Vector2(streamIconSize, streamIconSize);
             iconRect.anchorMin = new Vector2(0.5f, 0.5f);
             iconRect.anchorMax = new Vector2(0.5f, 0.5f);
             iconRect.anchoredPosition = startLocal;
             iconRect.localScale = Vector3.one;
 
-            CanvasGroup cg = icon.GetComponent<CanvasGroup>();
-            if (cg == null) cg = icon.AddComponent<CanvasGroup>();
+            Image iconImage = icon.AddComponent<Image>();
+            iconImage.raycastTarget = false;
+            iconImage.preserveAspect = true;
+            if (iconSprite != null)
+            {
+                iconImage.sprite = iconSprite;
+                iconImage.color = Color.white;
+            }
+            else
+            {
+                // Fallback: simple colored square
+                iconImage.color = fillBarColor;
+            }
+
+            CanvasGroup cg = icon.AddComponent<CanvasGroup>();
             cg.blocksRaycasts = false;
             cg.interactable = false;
+
+            // Render above other UI
+            Canvas particleCanvas = icon.AddComponent<Canvas>();
+            particleCanvas.overrideSorting = true;
+            particleCanvas.sortingOrder = 100;
 
             icon.SetActive(true);
 
