@@ -482,14 +482,22 @@ namespace LittleCafe
                     GridEntityHealth targetHealth = occupant.GetComponent<GridEntityHealth>();
                     if (targetHealth != null && !targetHealth.IsDestroyed)
                     {
-                        // Look up the occupant name in InteractionRegistry
-                        string targetName = occupant.name.Replace("(Clone)", "").Trim();
-                        if (ClockworkCraft.InteractionRegistry.Instance != null
-                            && ClockworkCraft.InteractionRegistry.Instance.CanInteract(targetName, ClockworkCraft.InteractorType.WildAnimal))
+                        // Same-faction skip: don't attack fellow non-allied entities
+                        if (!targetHealth.IsAllied)
                         {
-                            // Wild animal can interact — perform attack
-                            yield return StartCoroutine(PerformStrongInteraction(targetHealth, newX, newY));
-                            yield break;
+                            // Target is also an enemy — just bump, don't attack
+                        }
+                        else
+                        {
+                            // Look up the occupant name in InteractionRegistry
+                            string targetName = occupant.name.Replace("(Clone)", "").Trim();
+                            if (ClockworkCraft.InteractionRegistry.Instance != null
+                                && ClockworkCraft.InteractionRegistry.Instance.CanInteract(targetName, ClockworkCraft.InteractorType.WildAnimal))
+                            {
+                                // Wild animal can interact with allied target — perform attack
+                                yield return StartCoroutine(PerformStrongInteraction(targetHealth, newX, newY));
+                                yield break;
+                            }
                         }
                     }
                 }
@@ -664,13 +672,37 @@ namespace LittleCafe
 
                 if (targetHealth != null && !targetHealth.IsDestroyed)
                 {
-                    // Allied entities (workers, buildings) — skip entirely, treat as empty
-                    if (targetHealth.IsAllied)
-                        continue;
+                    // Same-faction skip: allies never attack allies, enemies never attack enemies.
+                    bool isAlliedActor = health != null && health.IsAllied;
+                    bool isAlliedTarget = targetHealth.IsAllied;
 
-                    if (!targetHealth.WorkerCanInteract)
+                    if (isAlliedActor && isAlliedTarget)
+                        continue; // Worker won't attack buildings/other workers
+                    if (!isAlliedActor && !isAlliedTarget)
+                        continue; // Enemy won't attack other enemies (spikes, hearts, dinos)
+
+                    // Faction-aware interaction check:
+                    // Allied actors (workers) use the per-instance WorkerCanInteract flag.
+                    // Non-allied actors (enemies, corruption spikes) must check InteractionRegistry
+                    // with their faction type so they respect per-faction flags from the sheet.
+                    bool canInteract;
+
+                    if (isAlliedActor)
                     {
-                        // Can't interact yet — weak bump animation
+                        // Worker path — use legacy per-instance flag
+                        canInteract = targetHealth.WorkerCanInteract;
+                    }
+                    else
+                    {
+                        // Enemy path — check InteractionRegistry for enemyInteractible flag
+                        string targetName = occupant.name.Replace("(Clone)", "").Trim();
+                        canInteract = ClockworkCraft.InteractionRegistry.Instance != null
+                            && ClockworkCraft.InteractionRegistry.Instance.CanInteract(targetName, ClockworkCraft.InteractorType.Enemy);
+                    }
+
+                    if (!canInteract)
+                    {
+                        // Can't interact — weak bump animation
                         FaceTarget(checkX, checkY);
                         if (animator != null) animator.SetTrigger("interact_weak");
                         yield break;
@@ -731,6 +763,11 @@ namespace LittleCafe
                 GridEntityHealth targetHealth = occupant.GetComponent<GridEntityHealth>();
                 if (targetHealth == null || targetHealth.IsDestroyed) continue;
 
+                // Same-faction skip: wild animals are non-allied, so skip other non-allied targets
+                // (other wild animals, corruption spikes/hearts). Only attack allied targets (player stuff).
+                if (!targetHealth.IsAllied)
+                    continue;
+
                 // Check InteractionRegistry for wildAnimalInteractible
                 string targetName = occupant.name.Replace("(Clone)", "").Trim();
                 bool canInteract = ClockworkCraft.InteractionRegistry.Instance != null
@@ -785,11 +822,12 @@ namespace LittleCafe
                 int attackPower = health != null ? health.AttackPower : 1;
                 int damageDealt = target.TakeDamageFrom(attackPower, health);
 
-                // Spawn loot particles if target is a resource node
-                // Uses HP-to-loot conversion: AccumulateDamage tracks how much damage
-                // has been dealt and returns how many loot particles to spawn.
+                // Spawn loot particles if target is a resource node.
+                // Only allied actors (workers) grant resources to the player — enemies
+                // still deal damage but don't generate loot for the player's economy.
+                bool isAlliedAttacker = health != null && health.IsAllied;
                 var resourceNode = target.GetComponent<ClockworkCraft.ResourceNode>();
-                if (resourceNode != null && resourceNode.resourceType != ClockworkCraft.ResourceType.None)
+                if (isAlliedAttacker && resourceNode != null && resourceNode.resourceType != ClockworkCraft.ResourceType.None)
                 {
                     int lootCount = resourceNode.AccumulateDamage(damageDealt);
                     if (lootCount > 0)
@@ -1080,8 +1118,10 @@ namespace LittleCafe
         /// </summary>
         private void IncrementIdleCounter()
         {
-            // Only workers (RotateAndInteract) starve
+            // Only allied workers starve — enemies (spikes) share the RotateAndInteract
+            // behavior but should never die from idling.
             if (behaviorType != BehaviorType.RotateAndInteract) return;
+            if (health != null && !health.IsAllied) return;
 
             idleTickCount++;
 

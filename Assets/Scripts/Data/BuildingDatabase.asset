@@ -24,8 +24,11 @@ MonoBehaviour:
     tier: 0
     drawWeight: 1
     placementCost: 0
-    gridSize: {x: 1, y: 1}
+    shape:
+      offsets:
+      - {x: 0, y: 0}
     visualScale: 0
+    gridSize: {x: 1, y: 1}
     killerAdvances: 1
     fogRevealRadius: 1
     prefab: {fileID: 4760405268050885137, guid: 2f41e9bf7cf6d4fccb70a1e8398e442a, type: 3}
@@ -55,8 +58,11 @@ MonoBehaviour:
     tier: 0
     drawWeight: 1
     placementCost: 0
-    gridSize: {x: 1, y: 1}
+    shape:
+      offsets:
+      - {x: 0, y: 0}
     visualScale: 0
+    gridSize: {x: 1, y: 1}
     killerAdvances: 1
     fogRevealRadius: 2
     prefab: {fileID: 5555927305428753834, guid: 471a7dabafbc84b92b19de4645e04a6a, type: 3}
@@ -86,8 +92,11 @@ MonoBehaviour:
     tier: 0
     drawWeight: 1
     placementCost: 0
-    gridSize: {x: 1, y: 1}
+    shape:
+      offsets:
+      - {x: 0, y: 0}
     visualScale: 0
+    gridSize: {x: 1, y: 1}
     killerAdvances: 1
     fogRevealRadius: 1
     prefab: {fileID: 8342170868413443855, guid: 9f7736c07d2744d04b0f1d11ae3b4e6f, type: 3}
@@ -117,8 +126,11 @@ MonoBehaviour:
     tier: 1
     drawWeight: 0.5
     placementCost: 0
-    gridSize: {x: 1, y: 1}
+    shape:
+      offsets:
+      - {x: 0, y: 0}
     visualScale: 0
+    gridSize: {x: 1, y: 1}
     killerAdvances: 1
     fogRevealRadius: 1
     prefab: {fileID: 1729936463556100942, guid: 47b7e0cce81224b9f987986ef1ad5a4b, type: 3}
@@ -148,8 +160,11 @@ MonoBehaviour:
     tier: 1
     drawWeight: 0.5
     placementCost: 0
-    gridSize: {x: 1, y: 1}
+    shape:
+      offsets:
+      - {x: 0, y: 0}
     visualScale: 0
+    gridSize: {x: 1, y: 1}
     killerAdvances: 1
     fogRevealRadius: 1
     prefab: {fileID: 1971429362272892409, guid: e494573a8fc0240988e475bb1bacde5b, type: 3}
@@ -179,8 +194,11 @@ MonoBehaviour:
     tier: 2
     drawWeight: 0.5
     placementCost: 0
-    gridSize: {x: 1, y: 1}
+    shape:
+      offsets:
+      - {x: 0, y: 0}
     visualScale: 0
+    gridSize: {x: 1, y: 1}
     killerAdvances: 0
     fogRevealRadius: 1
     prefab: {fileID: 4069388665601599064, guid: 5cfe09c1bdd804de3a2fa60089dad974, type: 3}
@@ -210,8 +228,11 @@ MonoBehaviour:
     tier: 3
     drawWeight: 0.3
     placementCost: 0
-    gridSize: {x: 1, y: 1}
+    shape:
+      offsets:
+      - {x: 0, y: 0}
     visualScale: 0
+    gridSize: {x: 1, y: 1}
     killerAdvances: 1
     fogRevealRadius: 1
     prefab: {fileID: 5927109788316665394, guid: f95fd6d4394764a679abc5b7e2950e65, type: 3}
@@ -241,11 +262,14 @@ MonoBehaviour:
     tier: 4
     drawWeight: 0.3
     placementCost: 0
-    gridSize: {x: 1, y: 1}
+    shape:
+      offsets:
+      - {x: 0, y: 0}
     visualScale: 0
+    gridSize: {x: 1, y: 1}
     killerAdvances: 1
     fogRevealRadius: 1
-    prefab: {fileID: 919132149155446097, guid: 39a13933645834d59ac27d3757c8b1fd, type: 3}
+    prefab: {fileID: 7955956385471571300, guid: 0c7f4560bbbe44d828921d2d5ba89416, type: 3}
     icon: {fileID: 21300000, guid: 7888857b664c547bf952682329ff6e18, type: 3}
     isRandomBuilding: 1
     allyInteractible: 0
@@ -272,8 +296,11 @@ MonoBehaviour:
     tier: 5
     drawWeight: 0.3
     placementCost: 0
-    gridSize: {x: 1, y: 1}
+    shape:
+      offsets:
+      - {x: 0, y: 0}
     visualScale: 0
+    gridSize: {x: 1, y: 1}
     killerAdvances: 1
     fogRevealRadius: 1
     prefab: {fileID: 703771162908890900, guid: cafe9388b89334ca78fca6b6ee83a739, type: 3}

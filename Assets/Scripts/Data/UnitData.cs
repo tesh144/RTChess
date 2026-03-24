@@ -47,6 +47,9 @@ namespace LittleCafe
         [Tooltip("Active objects perform an action each interval tick. Units act by default.")]
         public bool isActive = true;
 
+        [Tooltip("When true, MapGeneratorV2 includes this unit in its spawn pool. When false, this unit is only created by other systems (e.g. CorruptionHeart spawns Spikes).")]
+        public bool isMapGenerated = false;
+
         [Header("Behavior")]
         [Tooltip("Clockwork behavior pattern. RotateAndInteract = worker-style (attack). RotateAndMove = animal-style (wander).")]
         public BehaviorType behaviorType = BehaviorType.RotateAndMove;

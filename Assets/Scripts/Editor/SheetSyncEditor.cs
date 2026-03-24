@@ -585,9 +585,16 @@ namespace LittleCafe.Editor
                 string type = GetValue(row, "Type");
                 if (string.IsNullOrEmpty(entity) || string.IsNullOrEmpty(type)) continue;
 
-                // Derive isEnemy from Attack Behavior column (Hostile = enemy, Peaceful = not enemy)
-                string attackBehavior = GetValue(row, "Attack Behavior");
-                bool isEnemy = attackBehavior.Equals("Hostile", StringComparison.OrdinalIgnoreCase);
+                // Read isEnemy from the explicit "Enemy" column; fall back to Attack Behavior if absent
+                string enemyCol = GetValue(row, "Enemy");
+                bool isEnemy;
+                if (!string.IsNullOrEmpty(enemyCol))
+                    isEnemy = enemyCol.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || enemyCol == "1";
+                else
+                {
+                    string attackBehavior = GetValue(row, "Attack Behavior");
+                    isEnemy = attackBehavior.Equals("Hostile", StringComparison.OrdinalIgnoreCase);
+                }
 
                 // Only sync Hostile units OR Corruption-type entities to UnitDatabase
                 // (Corruption hearts are Peaceful but still live in UnitDatabase)
@@ -638,6 +645,14 @@ namespace LittleCafe.Editor
                 {
                     existing.isEnemy = isEnemy;
                     changed = true;
+                }
+
+                // MapGenerated flag
+                string mapGenStr = GetValue(row, "MapGenerated");
+                if (!string.IsNullOrEmpty(mapGenStr))
+                {
+                    bool newMapGen = mapGenStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || mapGenStr == "1";
+                    if (existing.isMapGenerated != newMapGen) { existing.isMapGenerated = newMapGen; changed = true; }
                 }
 
                 // GameUnitType — sync from Type column

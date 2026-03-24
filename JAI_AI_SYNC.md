@@ -22,6 +22,7 @@
 |-------|------|--------|
 | Co-Work | #117 New Buildings: Scrapper, Garden, Rabbit Farm | In Progress — DB entries synced; scene spawn cleanup done; production logic pending |
 | Co-Work | #22 Corruption System | In Progress — data arch + thorns + spike spawning done; scene entries cleaned up |
+| Co-Work | Enemy interaction fix | In Progress — ScanAndInteract faction-aware, loot gated for enemies, Enemy tag synced |
 
 ---
 
@@ -107,6 +108,12 @@
 | 2026-03-24 | Co-Work | SyncSpawnEntries() isMapGenerated filter: non-map-generated environment objects (Scrap, Lizard, TreeSeed) excluded from map generator spawn list. |
 | 2026-03-24 | Co-Work | Scene file cleanup: Corruption entries shifted from indices 1-3 to 0-2 (removed unnamed empty entry at index 0). spawnEntries reduced 8→6 (removed Scrap/Lizard at indices 6-7, non-map-generated). |
 | 2026-03-24 | Co-Work | Google Sheets Output dropdown: Updated Buildings & Production column M validation to include all buildings (with emoji), all environment types (with emoji), workers, and tier draws. |
+| 2026-03-24 | Co-Work | Enemy interaction fix: ScanAndInteract() now faction-aware — non-allied actors (corruption spikes) check InteractionRegistry.CanInteract(Enemy) instead of WorkerCanInteract. Prevents spikes from attacking goldmines/trees/rocks. |
+| 2026-03-24 | Co-Work | Enemy loot gate: PerformStrongInteraction() only grants loot/resources when attacker is allied. Enemies deal damage but don't feed player economy. |
+| 2026-03-24 | Co-Work | Enemy tag integration: SheetCache "Enemy" column added to Workers & Entities. SheetSyncEditor reads explicit "Enemy" column (falls back to Attack Behavior). CorruptedHeart isEnemy fixed 0→1 in UnitDatabase.asset. |
+| 2026-03-24 | Co-Work | Same-faction skip: ScanAndInteract, ScanAndInteractWildAnimal, TryMoveForward all now skip same-faction targets. Enemies don't attack enemies, allies don't attack allies. Prevents spike-on-heart friendly fire. |
+| 2026-03-24 | Co-Work | Starvation guard: IncrementIdleCounter() now requires IsAllied in addition to RotateAndInteract. Enemy spikes sharing the same behavior type no longer starve to death from idling. |
+| 2026-03-24 | Co-Work | isMapGenerated for units: Added field to UnitData.cs. Set in UnitDatabase.asset (Dinosaur/Mammoth/Heart=true, Spike1/Spike2=false). SyncUnitSpawnEntries() now filters by isMapGenerated. SheetSyncEditor syncs MapGenerated column for units. Scene file unitSpawnEntries cleaned: removed Spike1/Spike2 (size 5→3). |
 
 ---
 

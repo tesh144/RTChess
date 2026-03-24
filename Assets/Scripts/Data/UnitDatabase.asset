@@ -20,6 +20,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 1
+    isMapGenerated: 1
     behaviorType: 1
     killerAdvances: 0
     dropOnDeath: 0
@@ -41,6 +42,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 1
+    isMapGenerated: 1
     behaviorType: 2
     killerAdvances: 0
     dropOnDeath: 0
@@ -58,10 +60,11 @@ MonoBehaviour:
   - active: 1
     assetName: CorruptedHeart
     type: 12
-    isEnemy: 0
+    isEnemy: 1
     isFunctional: 0
     isWalkable: 0
     isActive: 0
+    isMapGenerated: 1
     behaviorType: 0
     killerAdvances: 1
     dropOnDeath: 0
@@ -83,6 +86,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 1
+    isMapGenerated: 0
     behaviorType: 0
     killerAdvances: 1
     dropOnDeath: 0
@@ -104,6 +108,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 1
+    isMapGenerated: 0
     behaviorType: 0
     killerAdvances: 1
     dropOnDeath: 0

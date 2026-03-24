@@ -669,6 +669,7 @@ namespace ClockworkCraft
             foreach (var unitData in unitDatabase.AllUnits)
             {
                 if (!unitData.active) continue; // skip inactive entries
+                if (!unitData.isMapGenerated) continue; // only map-generated units go into spawn entries
                 if (existing.TryGetValue(unitData.assetName, out var kept))
                     synced.Add(kept);
                 else
