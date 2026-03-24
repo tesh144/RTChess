@@ -446,6 +446,14 @@ namespace LittleCafe
         {
             if (furnitureObject == null) yield break;
 
+            // Multi-cell objects cannot use cell-by-cell movement — log an error and bail.
+            // Wild animals / moving entities should always be 1×1.
+            if (furnitureObject.Shape != null && furnitureObject.Shape.Count > 1)
+            {
+                Debug.LogError($"[GridEntityActor] TryMoveForward called on multi-cell object '{gameObject.name}' — movement not supported for shapes larger than 1×1. Skipping.");
+                yield break;
+            }
+
             GridManager gm = GridManager.Instance;
             if (gm == null) yield break;
 
@@ -645,6 +653,7 @@ namespace LittleCafe
 
                 GameObject occupant = gm.GetCellOccupant(checkX, checkY);
                 if (occupant == null) continue;
+                if (occupant == gameObject) continue; // Multi-cell: skip own footprint cells
 
                 // Skip meal sources while the buff is active — don't interact until it expires
                 if (hasMealBuff && occupant.GetComponent<MealBuffSource>() != null)
@@ -717,6 +726,7 @@ namespace LittleCafe
 
                 GameObject occupant = gm.GetCellOccupant(checkX, checkY);
                 if (occupant == null) continue;
+                if (occupant == gameObject) continue; // Multi-cell: skip own footprint cells
 
                 GridEntityHealth targetHealth = occupant.GetComponent<GridEntityHealth>();
                 if (targetHealth == null || targetHealth.IsDestroyed) continue;

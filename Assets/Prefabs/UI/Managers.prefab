@@ -180,11 +180,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd8bdef01a0ef42deb5cb241e26801ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapWidth: 40
-  mapHeight: 40
+  mapWidth: 120
+  mapHeight: 120
   cellSize: 1.5
   seed: 0
-  enableFog: 1
+  enableFog: 0
   startingRevealRadius: 1
   environmentDatabase: {fileID: 11400000, guid: b1d02fb45bceb4196845695e148a593e, type: 2}
   unitDatabase: {fileID: 11400000, guid: fb9df1513bc1548a59841afb135f9146, type: 2}
@@ -194,6 +194,8 @@ MonoBehaviour:
   economyBalanceConfig: {fileID: 11400000, guid: c11171627b78b4c5cbac1b5557eb7844, type: 2}
   centerEnvironmentName: Goldmine
   clearingRadius: 1
+  corruptionDatabase: {fileID: 0}
+  corruptionSpawnEntries: []
   mapDensity: 0.6
   spawnEntries:
   - environmentName: Goldmine
@@ -204,7 +206,7 @@ MonoBehaviour:
     clusterSpread: 0.6
     edgeBorderOf: 
   - environmentName: Tree
-    spawnMode: 1
+    spawnMode: 0
     spawnWeight: 12
     minSpacing: 0
     fragmentation: 0.35
@@ -238,6 +240,13 @@ MonoBehaviour:
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: Water
+  - environmentName: Bone
+    spawnMode: 0
+    spawnWeight: 0
+    minSpacing: 0
+    fragmentation: 0.3
+    clusterSpread: 0.6
+    edgeBorderOf: 
   unitSpawnEntries:
   - unitName: Dinosaur
     spawnMode: 0
@@ -362,6 +371,7 @@ MonoBehaviour:
   dragCancel: {fileID: 8300000, guid: 5312d3fc85ca49446a442edae8487c3e, type: 3}
   errorBuzz: {fileID: 8300000, guid: 833c9a8114fdc5f469ace53a9b8095ce, type: 3}
   successChime: {fileID: 8300000, guid: 728ee9b968b3f984699761f6023d4041, type: 3}
+  drawReady: {fileID: 0}
   hitImpact: {fileID: 8300000, guid: bee1d63cf8a1447b682635deea658066, type: 3}
   hitWeak: {fileID: 8300000, guid: c0101d4e6a84ad047844b70e663844b2, type: 3}
   entityDeath: {fileID: 8300000, guid: ff75728e6ca8ef94a8b3e458c6fe8ae9, type: 3}
@@ -411,5 +421,65 @@ Transform:
   - {fileID: 1717286920668227180}
   - {fileID: 2811489072605248795}
   - {fileID: 4635167958019617686}
+  - {fileID: 2129646175590079657}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &9035113113404508760
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2129646175590079657}
+  - component: {fileID: 3858417341043816194}
+  m_Layer: 0
+  m_Name: HoldToFillManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2129646175590079657
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9035113113404508760}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3909088470510346116}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3858417341043816194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9035113113404508760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c804562981b5d245902fc8cab948981, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.HoldToFillHandler
+  baseChunkInterval: 0.5
+  chunkDecayFactor: 0.85
+  minChunkInterval: 0.08
+  streamFlyDuration: 0.4
+  streamArcHeight: 1.5
+  streamIconSize: 64
+  fillBarColor: {r: 0.3, g: 0.85, b: 0.4, a: 1}
+  fillBarBgColor: {r: 0.15, g: 0.15, b: 0.2, a: 0.6}
+  fillBarWidth: 1.2
+  fillBarHeight: 0.15
+  fillBarYOffset: -0.3
+  chunkSFX: {fileID: 8300000, guid: 9adf5d8a676d04162b7a95760daef346, type: 3}
+  completionSFX: {fileID: 8300000, guid: 0e4035e10d1854ba1a7ae8c5cfef8729, type: 3}
+  basePitch: 0.8
+  maxPitch: 1.4

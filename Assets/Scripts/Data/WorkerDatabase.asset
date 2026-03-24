@@ -20,6 +20,8 @@ MonoBehaviour:
     isActive: 1
     behaviorType: 0
     killerAdvances: 0
+    isSlotTakeable: 0
+    tier: 0
     hp: 2
     attackPower: 1
     drawWeight: 0
@@ -34,6 +36,8 @@ MonoBehaviour:
     isActive: 1
     behaviorType: 0
     killerAdvances: 0
+    isSlotTakeable: 0
+    tier: 3
     hp: 10
     attackPower: 1
     drawWeight: 0

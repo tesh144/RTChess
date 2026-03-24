@@ -1,4 +1,5 @@
 #pragma warning disable CS0414, CS0219, CS0618
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ClockworkGrid
@@ -368,6 +369,88 @@ namespace ClockworkGrid
             Vector3 anchor = GridToWorldPosition(anchorX, anchorY);
             Vector3 far = GridToWorldPosition(anchorX + size.x - 1, anchorY + size.y - 1);
             return (anchor + far) * 0.5f;
+        }
+
+        // ── GridShape / Offset-based API ─────────────────────────────────────
+
+        /// <summary>
+        /// Check if ALL cells defined by shape offsets (at the given rotation) are
+        /// valid grid coordinates, currently empty, and fog-revealed.
+        /// Returns false immediately on the first failed cell.
+        /// </summary>
+        public bool AreOffsetCellsAvailable(int anchorX, int anchorY, GridShape shape, int rotation = 0)
+        {
+            if (shape == null || shape.IsEmpty) return IsCellEmpty(anchorX, anchorY);
+
+            List<Vector2Int> offsets = shape.GetOffsets(rotation);
+            foreach (var offset in offsets)
+            {
+                int cx = anchorX + offset.x;
+                int cy = anchorY + offset.y;
+                if (!IsCellEmpty(cx, cy)) return false;
+                if (!IsTileRevealed(cx, cy)) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Place a unit across all cells defined by shape offsets at the given rotation.
+        /// All cells must be empty; returns false without modifying state if any cell is occupied.
+        /// On success, every offset cell stores the same GameObject and CellState.
+        /// </summary>
+        public bool PlaceWithOffsets(int anchorX, int anchorY, GridShape shape, int rotation,
+                                     GameObject unit, CellState state)
+        {
+            if (shape == null || shape.IsEmpty)
+                return PlaceUnit(anchorX, anchorY, unit, state);
+
+            List<Vector2Int> offsets = shape.GetOffsets(rotation);
+
+            // Pre-validate — abort entirely if any cell is occupied
+            foreach (var offset in offsets)
+                if (!IsCellEmpty(anchorX + offset.x, anchorY + offset.y)) return false;
+
+            // Commit placement
+            foreach (var offset in offsets)
+                PlaceUnit(anchorX + offset.x, anchorY + offset.y, unit, state);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Remove a unit from all cells defined by shape offsets at the given rotation.
+        /// </summary>
+        public void RemoveWithOffsets(int anchorX, int anchorY, GridShape shape, int rotation = 0)
+        {
+            if (shape == null || shape.IsEmpty)
+            {
+                RemoveUnit(anchorX, anchorY);
+                return;
+            }
+
+            List<Vector2Int> offsets = shape.GetOffsets(rotation);
+            foreach (var offset in offsets)
+                RemoveUnit(anchorX + offset.x, anchorY + offset.y);
+        }
+
+        /// <summary>
+        /// Returns the world-space centroid of the shape's footprint at the given rotation.
+        /// Falls back to GridToWorldPosition(anchorX, anchorY) if the shape is null or empty.
+        /// </summary>
+        public Vector3 GetOffsetFootprintCenter(int anchorX, int anchorY, GridShape shape, int rotation = 0)
+        {
+            if (shape == null || shape.IsEmpty)
+                return GridToWorldPosition(anchorX, anchorY);
+
+            List<Vector2Int> offsets = shape.GetOffsets(rotation);
+            if (offsets.Count == 0)
+                return GridToWorldPosition(anchorX, anchorY);
+
+            Vector3 sum = Vector3.zero;
+            foreach (var offset in offsets)
+                sum += GridToWorldPosition(anchorX + offset.x, anchorY + offset.y);
+
+            return sum / offsets.Count;
         }
 
     }

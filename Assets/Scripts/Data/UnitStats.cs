@@ -50,7 +50,7 @@ namespace ClockworkGrid
     /// Create instances in Unity: Right-click → Create → ClockworkGrid → Unit Stats
     /// </summary>
     [CreateAssetMenu(fileName = "New Unit Stats", menuName = "ClockworkGrid/Unit Stats")]
-    public class UnitStats : ScriptableObject
+    public class UnitStats : ScriptableObject, ISerializationCallbackReceiver
     {
         [Header("Active")]
         [Tooltip("When false, this entry is excluded from draw pools, spawning, and all game systems")]
@@ -120,7 +120,12 @@ namespace ClockworkGrid
         [Header("Fog of War - Iteration 7")]
         public int revealRadius = 1; // Cells revealed around unit when placed (Soldier: 1, Ninja: 2, Ogre: 1)
 
-        [Header("Grid Footprint")]
+        [Header("Grid Shape")]
+        [Tooltip("Cell footprint for this unit/building. Replaces the legacy gridSize field.")]
+        public GridShape shape;
+
+        // ── Legacy field (hidden but kept serialised for migration) ─────────
+        [HideInInspector]
         public Vector2Int gridSize = new Vector2Int(1, 1); // Cells occupied (e.g. 2x1 table, 2x2 cooking station)
 
         [Header("Random Pool")]
@@ -207,6 +212,19 @@ namespace ClockworkGrid
                 case Rarity.Rare: return new Color(0.3f, 0.6f, 1f); // Blue
                 case Rarity.Epic: return new Color(0.8f, 0.4f, 1f); // Purple
                 default: return Color.white;
+            }
+        }
+
+        // ── ISerializationCallbackReceiver ───────────────────────────────────
+        public void OnBeforeSerialize() { }
+
+        public void OnAfterDeserialize()
+        {
+            // Auto-migrate: if shape is null/empty but gridSize was set to something
+            // meaningful, convert it to a GridShape rectangle.
+            if ((shape == null || shape.IsEmpty) && gridSize.x > 0 && gridSize.y > 0)
+            {
+                shape = GridShape.Rectangle(gridSize.x, gridSize.y);
             }
         }
     }

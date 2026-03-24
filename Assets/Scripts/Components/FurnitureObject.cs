@@ -19,7 +19,8 @@ namespace LittleCafe
         [Header("Grid State")]
         [SerializeField] private int gridX;
         [SerializeField] private int gridY;
-        [SerializeField] private Vector2Int gridSize = Vector2Int.one;
+        [SerializeField] private GridShape shape;
+        [SerializeField] private int currentRotation;
 
         [Header("Fog")]
         [SerializeField] private int fogRevealRadius = 1;
@@ -34,19 +35,44 @@ namespace LittleCafe
         public virtual bool IsWalkable => isWalkableDefault; // Virtual - Chair overrides this
         public int GridX { get => gridX; set => gridX = value; }
         public int GridY { get => gridY; set => gridY = value; }
-        public Vector2Int GridSize { get => gridSize; set => gridSize = value; }
+        public GridShape Shape { get => shape; set => shape = value; }
+        public int CurrentRotation { get => currentRotation; set => currentRotation = value; }
+
+        /// <summary>
+        /// Legacy GridSize shim — returns bounding box of current shape at rotation 0.
+        /// Use Shape + CurrentRotation directly where possible.
+        /// </summary>
+        public Vector2Int GridSize
+        {
+            get => (shape != null && !shape.IsEmpty) ? shape.GetBounds(0) : Vector2Int.one;
+            set
+            {
+                // Preserve backward-compat: setting GridSize creates a rectangle shape
+                shape = GridShape.Rectangle(value.x, value.y);
+            }
+        }
+
         public int FogRevealRadius { get => fogRevealRadius; set => fogRevealRadius = value; }
         public List<FurnitureObject> AdjacentFurniture => adjacentFurniture;
 
         /// <summary>
-        /// Called after furniture is placed on the grid.
-        /// Detects adjacent furniture and performs type-specific setup.
+        /// Called after furniture is placed on the grid (legacy overload — uses rectangle shape).
+        /// Prefer the GridShape overload for multi-cell / rotated objects.
         /// </summary>
         public virtual void OnPlaced(int x, int y, Vector2Int size)
         {
+            OnPlaced(x, y, GridShape.Rectangle(size.x, size.y), 0);
+        }
+
+        /// <summary>
+        /// Called after furniture is placed on the grid with a specific GridShape and rotation.
+        /// </summary>
+        public virtual void OnPlaced(int x, int y, GridShape placedShape, int rotation)
+        {
             gridX = x;
             gridY = y;
-            gridSize = size;
+            shape = placedShape ?? GridShape.Rectangle(1, 1);
+            currentRotation = rotation;
             gameObject.name = $"{furnitureType}_{gridX}_{gridY}";
 
             DetectAdjacentFurniture();
@@ -100,18 +126,23 @@ namespace LittleCafe
 
         /// <summary>
         /// Update the GridManager cell state based on walkability.
+        /// Uses PlaceWithOffsets so all shape cells are registered correctly.
         /// </summary>
         protected void UpdateGridCellState()
         {
             GridManager gm = GridManager.Instance;
             if (gm == null) return;
 
-            CellState state = IsWalkable ? CellState.Empty : CellState.PlayerUnit; // TODO: Add Furniture_Walkable state
-            gm.PlaceMultiCell(gridX, gridY, gridSize, gameObject, state);
+            CellState state = IsWalkable ? CellState.Empty : CellState.PlayerUnit;
+            GridShape effectiveShape = (shape != null && !shape.IsEmpty)
+                ? shape
+                : GridShape.Rectangle(1, 1);
+            gm.PlaceWithOffsets(gridX, gridY, effectiveShape, currentRotation, gameObject, state);
         }
 
         /// <summary>
         /// Reveal fog of war around placed furniture.
+        /// Iterates all occupied cells and reveals a radius around each one.
         /// </summary>
         protected void RevealSurroundingTiles()
         {
@@ -121,14 +152,21 @@ namespace LittleCafe
             if (FogManager.Instance == null) return;
 
             int revealRadius = fogRevealRadius;
+            GridShape effectiveShape = (shape != null && !shape.IsEmpty)
+                ? shape
+                : GridShape.Rectangle(1, 1);
 
-            for (int dx = -revealRadius; dx <= revealRadius + gridSize.x - 1; dx++)
+            var offsets = effectiveShape.GetOffsets(currentRotation);
+            foreach (var offset in offsets)
             {
-                for (int dy = -revealRadius; dy <= revealRadius + gridSize.y - 1; dy++)
+                int cellX = gridX + offset.x;
+                int cellY = gridY + offset.y;
+                for (int dx = -revealRadius; dx <= revealRadius; dx++)
                 {
-                    int checkX = gridX + dx;
-                    int checkY = gridY + dy;
-                    FogManager.Instance.RevealCell(checkX, checkY);
+                    for (int dy = -revealRadius; dy <= revealRadius; dy++)
+                    {
+                        FogManager.Instance.RevealCell(cellX + dx, cellY + dy);
+                    }
                 }
             }
         }
@@ -171,7 +209,10 @@ namespace LittleCafe
             GridManager gm = GridManager.Instance;
             if (gm != null)
             {
-                gm.RemoveMultiCell(gridX, gridY, gridSize);
+                GridShape effectiveShape = (shape != null && !shape.IsEmpty)
+                    ? shape
+                    : GridShape.Rectangle(1, 1);
+                gm.RemoveWithOffsets(gridX, gridY, effectiveShape, currentRotation);
             }
         }
 

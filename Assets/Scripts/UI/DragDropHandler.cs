@@ -20,7 +20,8 @@ namespace ClockworkGrid
         public bool IsDragging => isDragging;
         private bool isValidPlacement = false;
         private int targetGridX, targetGridY;
-        private Vector2Int currentGridSize = new Vector2Int(1, 1);
+        private GridShape currentShape;
+        private int currentRotation = 0;
 
         // Arc line rendering
         private LineRenderer arcLine;
@@ -34,7 +35,7 @@ namespace ClockworkGrid
         private Camera canvasCamera;
 
         // Grid cell highlights (pooled for multi-cell footprints)
-        private const int MaxFootprintCells = 9; // supports up to 3x3
+        private const int MaxFootprintCells = 16; // supports up to 4x4
         private GameObject[] cellHighlights = new GameObject[MaxFootprintCells];
         private MeshRenderer[] cellHighlightRenderers = new MeshRenderer[MaxFootprintCells];
 
@@ -101,6 +102,36 @@ namespace ClockworkGrid
                 float offset = Time.time * animationSpeed;
                 arcMaterial.mainTextureOffset = new Vector2(offset, 0);
             }
+
+            // ── Rotation input (only for multi-cell shapes during drag) ────
+            if (isDragging && currentShape != null && currentShape.Count > 1)
+            {
+                bool rotated = false;
+
+                // Right-click = rotate CW one step
+                if (Input.GetMouseButtonDown(1))
+                {
+                    currentRotation = (currentRotation + 1) % 4;
+                    rotated = true;
+                }
+
+                // Scroll wheel: up = CW, down = CCW
+                float scroll = Input.mouseScrollDelta.y;
+                if (scroll > 0f)
+                {
+                    currentRotation = (currentRotation + 1) % 4;
+                    rotated = true;
+                }
+                else if (scroll < 0f)
+                {
+                    currentRotation = ((currentRotation - 1) % 4 + 4) % 4;
+                    rotated = true;
+                }
+
+                // Refresh highlights immediately if rotation changed
+                if (rotated)
+                    UpdateCellHighlights(targetGridX, targetGridY);
+            }
         }
 
         private void CreateCellHighlights()
@@ -141,27 +172,28 @@ namespace ClockworkGrid
             currentUnitPrefab = unitPrefab;
             isDragging = true;
             isValidPlacement = false; // Reset - must hover a valid cell to place
+            currentRotation = 0;      // Reset rotation for every new drag
 
             // SFX: card picked up from dock
             if (GameSFXManager.Instance != null)
                 GameSFXManager.Instance.PlayDragStart();
 
-            // Get grid size: prefer GridObject on the prefab, fall back to UnitStats.gridSize
-            // (database-driven size that gets set from BuildingData/WorkerData during card creation)
+            // Get GridShape: prefer GridObject on the prefab, fall back to UnitStats.shape,
+            // final fallback to a 1×1 rectangle.
+            currentShape = null;
             GridObject gridObj = currentUnitPrefab.GetComponent<GridObject>();
-            if (gridObj != null && gridObj.GridSize.x >= 1 && gridObj.GridSize.y >= 1)
+            if (gridObj != null && gridObj.Shape != null && !gridObj.Shape.IsEmpty)
             {
-                currentGridSize = gridObj.GridSize;
+                currentShape = gridObj.Shape;
             }
             else
             {
-                // UnitStats is a ScriptableObject (not a Component), so read it from the card icon
                 UnitStats stats = currentDraggingIcon?.UnitStats;
-                if (stats != null && stats.gridSize.x >= 1 && stats.gridSize.y >= 1)
-                    currentGridSize = stats.gridSize;
-                else
-                    currentGridSize = new Vector2Int(1, 1);
+                if (stats != null && stats.shape != null && !stats.shape.IsEmpty)
+                    currentShape = stats.shape;
             }
+            if (currentShape == null || currentShape.IsEmpty)
+                currentShape = GridShape.Rectangle(1, 1);
 
             // Cache canvas info for correct UI-to-screen conversion
             iconCanvas = icon.GetComponentInParent<Canvas>();
@@ -273,7 +305,7 @@ namespace ClockworkGrid
                 isValidPlacement = valid;
 
                 // Footprint center for camera tracking and arc endpoint
-                Vector3 footprintCenter = GridManager.Instance.GetFootprintCenter(targetGridX, targetGridY, currentGridSize);
+                Vector3 footprintCenter = GridManager.Instance.GetOffsetFootprintCenter(targetGridX, targetGridY, currentShape, currentRotation);
                 footprintCenter.y = GetTileSurfaceY();
 
                 // Update per-cell highlights
@@ -421,15 +453,18 @@ namespace ClockworkGrid
             }
 
             // Place unit on grid — center on footprint
-            Vector3 worldPos = GridManager.Instance.GetFootprintCenter(targetGridX, targetGridY, currentGridSize);
+            Vector3 worldPos = GridManager.Instance.GetOffsetFootprintCenter(targetGridX, targetGridY, currentShape, currentRotation);
             worldPos.y = GetTileSurfaceY() + 0.05f; // Offset to prevent shadow clipping into grid
-            // Randomize facing direction for non-active objects (buildings, furniture)
-            // Active entities (workers, animals) get their facing from GridEntityActor.Initialize()
+            // Rotation: multi-cell objects use the chosen drag rotation; single-cell gets random facing.
+            // Active entities (workers, animals) get their facing from GridEntityActor.Initialize().
             Quaternion spawnRotation = currentUnitPrefab.transform.rotation;
             if (currentDraggingIcon?.UnitStats != null && !currentDraggingIcon.UnitStats.isActive)
             {
-                float randomY = 90f * Random.Range(0, 4); // 0, 90, 180, or 270
-                spawnRotation = Quaternion.Euler(0f, randomY, 0f);
+                bool isMultiCell = currentShape != null && currentShape.Count > 1;
+                float yDeg = isMultiCell
+                    ? currentRotation * 90f
+                    : 90f * Random.Range(0, 4); // 0, 90, 180, or 270
+                spawnRotation = Quaternion.Euler(0f, yDeg, 0f);
             }
             GameObject unitObj = Instantiate(currentUnitPrefab, worldPos, spawnRotation);
             unitObj.SetActive(true);
@@ -460,7 +495,7 @@ namespace ClockworkGrid
                     furniture.FogRevealRadius = currentDraggingIcon.UnitStats.revealRadius;
                 }
 
-                furniture.OnPlaced(targetGridX, targetGridY, currentGridSize);
+                furniture.OnPlaced(targetGridX, targetGridY, currentShape, currentRotation);
                 placedWithFurniture = true;
 
                 // Attach GridEntity components (health, actor, loot) based on database stats
@@ -479,17 +514,24 @@ namespace ClockworkGrid
             // Non-furniture path (workers, units — no FurnitureObject component)
             if (!placedWithFurniture)
             {
-                // Register with grid (multi-cell: all footprint cells point to same object)
-                GridManager.Instance.PlaceMultiCell(targetGridX, targetGridY, currentGridSize, unitObj, CellState.PlayerUnit);
+                // Register with grid — all shape footprint cells point to same object
+                GridManager.Instance.PlaceWithOffsets(targetGridX, targetGridY, currentShape, currentRotation,
+                    unitObj, CellState.PlayerUnit);
 
-                // Reveal surrounding fog (same as FurnitureObject.OnPlaced)
+                // Reveal surrounding fog for each occupied cell
                 if (FogManager.Instance != null)
                 {
                     int revealRadius = currentDraggingIcon?.UnitStats != null
                         ? currentDraggingIcon.UnitStats.revealRadius : 1;
-                    for (int dx = -revealRadius; dx <= revealRadius + currentGridSize.x - 1; dx++)
-                    for (int dy = -revealRadius; dy <= revealRadius + currentGridSize.y - 1; dy++)
-                        FogManager.Instance.RevealCell(targetGridX + dx, targetGridY + dy);
+                    var fogOffsets = currentShape.GetOffsets(currentRotation);
+                    foreach (var offset in fogOffsets)
+                    {
+                        int cellX = targetGridX + offset.x;
+                        int cellY = targetGridY + offset.y;
+                        for (int dx = -revealRadius; dx <= revealRadius; dx++)
+                        for (int dy = -revealRadius; dy <= revealRadius; dy++)
+                            FogManager.Instance.RevealCell(cellX + dx, cellY + dy);
+                    }
                 }
 
                 // Attach GridEntity components (health, actor, loot) from UnitStats
@@ -594,28 +636,29 @@ namespace ClockworkGrid
             float highlightY = GetTileSurfaceY() + 0.02f;
             int idx = 0;
 
-            for (int dx = 0; dx < currentGridSize.x; dx++)
+            var offsets = currentShape != null
+                ? currentShape.GetOffsets(currentRotation)
+                : new System.Collections.Generic.List<Vector2Int> { Vector2Int.zero };
+
+            foreach (var offset in offsets)
             {
-                for (int dy = 0; dy < currentGridSize.y; dy++)
-                {
-                    if (idx >= MaxFootprintCells) break;
+                if (idx >= MaxFootprintCells) break;
 
-                    int cx = anchorX + dx;
-                    int cy = anchorY + dy;
+                int cx = anchorX + offset.x;
+                int cy = anchorY + offset.y;
 
-                    Vector3 pos = GridManager.Instance.GridToWorldPosition(cx, cy);
-                    pos.y = highlightY;
+                Vector3 pos = GridManager.Instance.GridToWorldPosition(cx, cy);
+                pos.y = highlightY;
 
-                    cellHighlights[idx].transform.position = pos;
-                    cellHighlights[idx].transform.localScale = new Vector3(cellSize * 0.95f, cellSize * 0.95f, 1f);
-                    cellHighlights[idx].SetActive(true);
+                cellHighlights[idx].transform.position = pos;
+                cellHighlights[idx].transform.localScale = new Vector3(cellSize * 0.95f, cellSize * 0.95f, 1f);
+                cellHighlights[idx].SetActive(true);
 
-                    // Per-cell color: green if available, red if blocked
-                    bool cellOk = GridManager.Instance.IsCellEmpty(cx, cy) && GridManager.Instance.IsTileRevealed(cx, cy);
-                    cellHighlightRenderers[idx].material.color = cellOk ? validColor : invalidColor;
+                // Per-cell color: green if available + revealed, red if blocked
+                bool cellOk = GridManager.Instance.IsCellEmpty(cx, cy) && GridManager.Instance.IsTileRevealed(cx, cy);
+                cellHighlightRenderers[idx].material.color = cellOk ? validColor : invalidColor;
 
-                    idx++;
-                }
+                idx++;
             }
 
             // Hide unused highlight quads
@@ -743,7 +786,7 @@ namespace ClockworkGrid
             if (!GridManager.Instance.WorldToGridPosition(worldPos, out gridX, out gridY))
                 return false;
 
-            if (!GridManager.Instance.AreAllCellsAvailable(gridX, gridY, currentGridSize))
+            if (!GridManager.Instance.AreOffsetCellsAvailable(gridX, gridY, currentShape, currentRotation))
                 return false;
 
             return true;

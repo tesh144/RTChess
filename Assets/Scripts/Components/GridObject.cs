@@ -9,8 +9,12 @@ namespace ClockworkGrid
     /// </summary>
     public class GridObject : MonoBehaviour
     {
-        [Header("Grid Slot Size")]
-        [Tooltip("How many grid cells this object occupies (width × height)")]
+        [Header("Grid Shape")]
+        [Tooltip("Cell footprint this object occupies. Replaces the legacy gridSize field.")]
+        [SerializeField] private GridShape shape;
+
+        // ── Legacy field (hidden but kept serialised for migration) ──────────
+        [HideInInspector]
         [SerializeField] private Vector2Int gridSize = Vector2Int.one;
 
         [Header("Visual Alignment")]
@@ -20,45 +24,59 @@ namespace ClockworkGrid
         [Header("Debug")]
         [SerializeField] private bool showGizmos = true;
 
-        /// <summary>
-        /// Grid size in cells (width × height on XZ plane).
-        /// </summary>
-        public Vector2Int GridSize
+        // ── Properties ────────────────────────────────────────────────────────
+
+        /// <summary>Shape of this object's grid footprint (no rotation applied here).</summary>
+        public GridShape Shape
         {
-            get => gridSize;
-            set => gridSize = new Vector2Int(Mathf.Max(1, value.x), Mathf.Max(1, value.y));
+            get => shape;
+            set => shape = value;
         }
 
         /// <summary>
-        /// Whether this object should be centered within its grid footprint.
+        /// Legacy GridSize shim — returns the bounding box of the shape at rotation 0.
+        /// Setting this replaces the shape with a new rectangle.
         /// </summary>
+        public Vector2Int GridSize
+        {
+            get
+            {
+                if (shape != null && !shape.IsEmpty) return shape.GetBounds(0);
+                return new Vector2Int(Mathf.Max(1, gridSize.x), Mathf.Max(1, gridSize.y));
+            }
+            set
+            {
+                gridSize = new Vector2Int(Mathf.Max(1, value.x), Mathf.Max(1, value.y));
+                shape = GridShape.Rectangle(gridSize.x, gridSize.y);
+            }
+        }
+
+        /// <summary>Whether this object should be centered within its grid footprint.</summary>
         public bool CenterInSlot => centerInSlot;
 
-        /// <summary>
-        /// Is this a 1×1 single-cell object?
-        /// </summary>
-        public bool IsSingleCell => gridSize.x == 1 && gridSize.y == 1;
+        /// <summary>Is this a 1×1 single-cell object?</summary>
+        public bool IsSingleCell => (shape == null || shape.Count == 1);
+
+        /// <summary>Total number of cells this object occupies.</summary>
+        public int CellCount => shape?.Count ?? 1;
 
         /// <summary>
-        /// Total number of cells this object occupies.
-        /// </summary>
-        public int CellCount => gridSize.x * gridSize.y;
-
-        /// <summary>
-        /// Get the world-space size this object should occupy based on grid size.
-        /// Assumes GridManager.cellSize = 1.5f.
+        /// Get the world-space size this object should occupy based on its shape bounds.
         /// </summary>
         public Vector3 GetWorldSize()
         {
+            Vector2Int bounds = (shape != null && !shape.IsEmpty)
+                ? shape.GetBounds(0)
+                : new Vector2Int(Mathf.Max(1, gridSize.x), Mathf.Max(1, gridSize.y));
+
             if (GridManager.Instance != null)
             {
                 float cellSize = GridManager.Instance.CellSize;
-                return new Vector3(gridSize.x * cellSize, 0, gridSize.y * cellSize);
+                return new Vector3(bounds.x * cellSize, 0, bounds.y * cellSize);
             }
 
-            // Fallback if GridManager not available
             const float fallbackCellSize = 1.5f;
-            return new Vector3(gridSize.x * fallbackCellSize, 0, gridSize.y * fallbackCellSize);
+            return new Vector3(bounds.x * fallbackCellSize, 0, bounds.y * fallbackCellSize);
         }
 
         /// <summary>
@@ -136,10 +154,13 @@ namespace ClockworkGrid
             Gizmos.DrawWireCube(currentBounds.center, currentBounds.size);
 
 #if UNITY_EDITOR
-            // Draw label
+            // Draw label showing shape bounds
+            Vector2Int labelBounds = (shape != null && !shape.IsEmpty)
+                ? shape.GetBounds(0)
+                : new Vector2Int(Mathf.Max(1, gridSize.x), Mathf.Max(1, gridSize.y));
             UnityEditor.Handles.Label(
                 transform.position + Vector3.up * 2f,
-                $"{gridSize.x}×{gridSize.y} cells\n{(IsProperlyScaled() ? "✓ Scaled" : "⚠ Needs scaling")}"
+                $"{labelBounds.x}×{labelBounds.y} cells ({CellCount} total)\n{(IsProperlyScaled() ? "✓ Scaled" : "⚠ Needs scaling")}"
             );
 #endif
         }

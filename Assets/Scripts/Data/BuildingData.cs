@@ -1,6 +1,7 @@
 #pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using ClockworkCraft;
+using ClockworkGrid;
 
 namespace LittleCafe
 {
@@ -63,7 +64,7 @@ namespace LittleCafe
     /// Stored in BuildingDatabase ScriptableObject.
     /// </summary>
     [System.Serializable]
-    public class BuildingData
+    public class BuildingData : ISerializationCallbackReceiver
     {
         [Header("Active")]
         [Tooltip("When false, this entry is hidden from all game systems (draw pools, spawning, etc.)")]
@@ -95,9 +96,16 @@ namespace LittleCafe
         [Tooltip("Resource cost to place this building. 0 = free.")]
         public int placementCost = 0;
 
-        [Header("Grid & Visual")]
-        public Vector2Int gridSize = Vector2Int.one;
+        [Header("Grid Shape")]
+        [Tooltip("Cell footprint for this building. Replaces the legacy gridSize field.")]
+        public GridShape shape;
+
+        [Header("Visual")]
         public float visualScale = 1.0f;
+
+        // ── Legacy field (hidden but kept serialised for migration) ─────────
+        [HideInInspector]
+        public Vector2Int gridSize = Vector2Int.one;
 
         [Header("Killer's Behavior")]
         [Tooltip("When this building is destroyed, does the attacker advance into its cell? Advance = true, Stay = false.")]
@@ -155,6 +163,19 @@ namespace LittleCafe
 
         [Tooltip("Amount added to productionCostAmount after each production cycle. Anti-spam scaling. 0 = flat cost.")]
         public int productionCostIncrement = 0;
+
+        // ── ISerializationCallbackReceiver ──────────────────────────────────
+        public void OnBeforeSerialize() { }
+
+        public void OnAfterDeserialize()
+        {
+            // Auto-migrate: if shape is null/empty but gridSize was set to something
+            // meaningful, convert it to a GridShape rectangle.
+            if ((shape == null || shape.IsEmpty) && gridSize.x > 0 && gridSize.y > 0)
+            {
+                shape = GridShape.Rectangle(gridSize.x, gridSize.y);
+            }
+        }
 
         /// <summary>
         /// Get clean asset name without file extension.

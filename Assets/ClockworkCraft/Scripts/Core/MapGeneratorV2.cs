@@ -322,6 +322,10 @@ namespace ClockworkCraft
                 FindFirstObjectByType<BuildingProductionManager>().workerDatabase = workerDatabase;
             }
 
+            // Ensure hold-to-fill handler (input handler for HoldToFill buildings like Kitchen)
+            if (LittleCafe.HoldToFillHandler.Instance == null)
+                new GameObject("HoldToFillHandler").AddComponent<LittleCafe.HoldToFillHandler>();
+
             // Ensure corruption manager
             if (LittleCafe.CorruptionManager.Instance == null)
                 new GameObject("CorruptionManager").AddComponent<LittleCafe.CorruptionManager>();
@@ -1504,7 +1508,7 @@ namespace ClockworkCraft
             for (int y = 0; y < height; y++)
             {
                 string envName = planGrid[x, y];
-                if (envName == null || envName == "__center__") continue;
+                if (envName == null || envName.StartsWith("__")) continue;  // skip __center__, __footprint__, etc.
                 if (envName.StartsWith(UNIT_PREFIX)) continue; // Units are spawned by SpawnAllUnits()
 
                 EnvironmentData envData = environmentDatabase.GetByName(envName);
@@ -1648,7 +1652,14 @@ namespace ClockworkCraft
                 UnitData unitData = unitDatabase.GetByName(unitName);
                 if (unitData == null || unitData.prefab == null) continue;
 
-                Vector3 worldPos = GridManager.Instance.GridToWorldPosition(x, y);
+                // Build a GridShape for this unit — use legacy gridSize since UnitData
+                // is out of scope for the full GridShape migration.
+                GridShape unitShape = GridShape.Rectangle(
+                    Mathf.Max(1, unitData.gridSize.x),
+                    Mathf.Max(1, unitData.gridSize.y));
+
+                // Position at footprint center (handles multi-cell units correctly)
+                Vector3 worldPos = GridManager.Instance.GetOffsetFootprintCenter(x, y, unitShape, 0);
                 worldPos.y += 0.01f;
                 Quaternion randomRot = Quaternion.Euler(0f, 90f * rng.Next(4), 0f);
                 GameObject obj = Instantiate(unitData.prefab, worldPos, randomRot);
@@ -1662,7 +1673,8 @@ namespace ClockworkCraft
                     furniture = obj.AddComponent<FurnitureObject>();
                 furniture.GridX = x;
                 furniture.GridY = y;
-                furniture.GridSize = unitData.gridSize;
+                furniture.Shape = unitShape;
+                furniture.CurrentRotation = 0;
 
                 if (unitData.lootResourceType != ResourceType.None)
                 {
@@ -1693,7 +1705,7 @@ namespace ClockworkCraft
                     TriggerAppearAnimation(obj);
 
                 CellState cellState = unitData.isEnemy ? CellState.EnemyUnit : CellState.PlayerUnit;
-                GridManager.Instance?.PlaceUnit(x, y, obj, cellState);
+                GridManager.Instance?.PlaceWithOffsets(x, y, unitShape, 0, obj, cellState);
 
                 unitCount++;
                 if (unitCount % BATCH_SIZE == 0)

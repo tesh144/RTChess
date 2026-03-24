@@ -266,16 +266,20 @@ namespace LittleCafe
 
         private void HandleInput()
         {
+            // While dragging a multi-cell card, scroll wheel and right-click are consumed
+            // by DragDropHandler for rotation — skip camera input entirely in that case.
+            bool dragHandlesInput = DragDropHandler.Instance != null && DragDropHandler.Instance.IsDragging;
+
             // Scroll zoom (free within [minDistance, currentMaxDistance])
             float scroll = Input.mouseScrollDelta.y;
-            if (scroll != 0f)
+            if (scroll != 0f && !dragHandlesInput)
             {
                 targetDistance -= scroll * zoomSpeed;
                 targetDistance = Mathf.Clamp(targetDistance, minDistance, currentMaxDistance);
             }
 
             // Right-click drag to rotate
-            if (Input.GetMouseButtonDown(1))
+            if (Input.GetMouseButtonDown(1) && !dragHandlesInput)
             {
                 isRightDragging = true;
                 lastMousePos = Input.mousePosition;
@@ -287,7 +291,7 @@ namespace LittleCafe
                 if (Mathf.Abs(lastDragDeltaX) > 0.01f)
                     autoRotateDirection = Mathf.Sign(lastDragDeltaX);
             }
-            if (isRightDragging)
+            if (isRightDragging && !dragHandlesInput)
             {
                 Vector3 delta = Input.mousePosition - lastMousePos;
                 lastDragDeltaX = delta.x;
