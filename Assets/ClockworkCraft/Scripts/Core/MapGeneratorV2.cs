@@ -411,8 +411,10 @@ namespace ClockworkCraft
                 foreach (BuildingData data in buildingDatabase.AllBuildings)
                 {
                     if (data.prefab == null) continue;
+                    if (!data.active) continue; // Skip inactive entries
 
                     UnitStats stats       = ScriptableObject.CreateInstance<UnitStats>();
+                    stats.active          = data.active;
                     stats.unitType        = UnitType.Soldier;
                     stats.unitName        = data.GetCleanName();
                     stats.rarity          = Rarity.Common;

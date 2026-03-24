@@ -52,6 +52,10 @@ namespace ClockworkGrid
     [CreateAssetMenu(fileName = "New Unit Stats", menuName = "ClockworkGrid/Unit Stats")]
     public class UnitStats : ScriptableObject
     {
+        [Header("Active")]
+        [Tooltip("When false, this entry is excluded from draw pools, spawning, and all game systems")]
+        public bool active = true;
+
         [Header("Identity")]
         public UnitType unitType;
         public string unitName;

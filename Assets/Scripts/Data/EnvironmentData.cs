@@ -26,6 +26,10 @@ namespace LittleCafe
     [System.Serializable]
     public class EnvironmentData
     {
+        [Header("Active")]
+        [Tooltip("When false, this entry is hidden from all game systems")]
+        public bool active = true;
+
         [Header("Asset Identity")]
         public string assetName;
 

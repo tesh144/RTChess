@@ -352,6 +352,11 @@ namespace LittleCafe.Editor
 
                 bool changed = false;
 
+                // Active flag
+                string activeStr = GetValue(row, "Active");
+                bool newActive = string.IsNullOrEmpty(activeStr) || activeStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || activeStr == "1";
+                if (existing.active != newActive) { existing.active = newActive; changed = true; }
+
                 // Production
                 changed |= TrySetFloat(ref existing.productionInterval, GetValue(row, "Prod. Interval (s)"));
                 changed |= TrySetFloat(ref existing.productionIntervalBonus, GetValue(row, "Interval Bonus (s)"));
@@ -484,6 +489,11 @@ namespace LittleCafe.Editor
 
                 bool changed = false;
 
+                // Active flag
+                string activeStr = GetValue(row, "Active");
+                bool newActive = string.IsNullOrEmpty(activeStr) || activeStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || activeStr == "1";
+                if (existing.active != newActive) { existing.active = newActive; changed = true; }
+
                 // HP
                 changed |= TrySetInt(ref existing.hp, GetValue(row, "HP"));
 
@@ -586,6 +596,11 @@ namespace LittleCafe.Editor
 
                 bool changed = false;
 
+                // Active flag
+                string activeStr = GetValue(row, "Active");
+                bool newActive = string.IsNullOrEmpty(activeStr) || activeStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || activeStr == "1";
+                if (existing.active != newActive) { existing.active = newActive; changed = true; }
+
                 // HP
                 changed |= TrySetInt(ref existing.hp, GetValue(row, "HP"));
 
@@ -671,6 +686,11 @@ namespace LittleCafe.Editor
                 }
 
                 bool changed = false;
+
+                // Active flag
+                string activeStr = GetValue(row, "Active");
+                bool newActive = string.IsNullOrEmpty(activeStr) || activeStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || activeStr == "1";
+                if (existing.active != newActive) { existing.active = newActive; changed = true; }
 
                 // HP
                 changed |= TrySetInt(ref existing.hp, GetValue(row, "HP"));
