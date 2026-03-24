@@ -2020,7 +2020,7 @@ namespace ClockworkCraft
             var validNames = new System.Collections.Generic.HashSet<string>();
             foreach (var data in unitDatabase.GetByType(LittleCafe.GameUnitType.Corruption))
             {
-                if (data.active)
+                if (data.active && data.isMapGenerated)
                     validNames.Add(data.assetName);
             }
             corruptionSpawnEntries.RemoveAll(e =>
@@ -2029,7 +2029,7 @@ namespace ClockworkCraft
             // Add missing entries + update prefabs on existing ones
             foreach (var data in unitDatabase.GetByType(LittleCafe.GameUnitType.Corruption))
             {
-                if (!data.active) continue;
+                if (!data.active || !data.isMapGenerated) continue;
                 var existing = corruptionSpawnEntries.Find(e => e.entityName == data.assetName);
                 if (existing != null)
                 {
