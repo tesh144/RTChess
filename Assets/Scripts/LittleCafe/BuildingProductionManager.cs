@@ -321,6 +321,8 @@ namespace LittleCafe
             {
                 if (entries[i].buildingObj == buildingObj)
                 {
+                    if (entries[i].inputType == ProductionInputType.HoldToFill)
+                        OnHoldFillStateChanged?.Invoke(buildingObj, false);
                     DestroyEntryVisuals(entries[i]);
                     entries.RemoveAt(i);
                     if (verboseLogging)
@@ -550,6 +552,11 @@ namespace LittleCafe
 
                 if (entry.buildingObj == null)
                 {
+                    // buildingObj is null (Unity destroyed) — we cannot pass it to OnHoldFillStateChanged
+                    // because DestroyFillBar(null) won't find the dictionary key. The fill bar canvas
+                    // for this building is cleaned up by HoldToFillHandler.UpdateFillBars() stale-key
+                    // removal (which runs every LateUpdate and handles destroyed-but-non-null Unity keys
+                    // via Unity's overloaded == null check). No event needed here.
                     HoldToFillHandler.Instance?.InterruptIfActive(entry.buildingObj);
                     DestroyEntryVisuals(entry);
                     entries.RemoveAt(i);

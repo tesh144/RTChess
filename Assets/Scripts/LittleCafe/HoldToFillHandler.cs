@@ -37,6 +37,7 @@ namespace LittleCafe
 
         // State
         private AudioSource audioSource;
+        private Camera mainCamera;
         private GameObject activeBuilding;
         private float chunkTimer;
         private float currentChunkInterval;
@@ -51,6 +52,7 @@ namespace LittleCafe
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
+            mainCamera = Camera.main;
         }
 
         private void OnEnable()
@@ -131,8 +133,8 @@ namespace LittleCafe
             root.transform.position = building.transform.position + Vector3.up * fillBarYOffset;
 
             // Billboard toward camera on creation
-            if (Camera.main != null)
-                root.transform.rotation = Camera.main.transform.rotation;
+            if (mainCamera != null)
+                root.transform.rotation = mainCamera.transform.rotation;
 
             fillBarCanvases[building] = root;
             fillBarImages[building] = fillImage;
@@ -154,7 +156,8 @@ namespace LittleCafe
             UpdateFillBars();
 
             // LateUpdate ensures HandlePopupTap (in Update) runs first and consumes clicks.
-            if (Input.GetMouseButtonDown(0) && !BuildingProductionManager.Instance.ClickConsumedThisFrame)
+            var bpm = BuildingProductionManager.Instance;
+            if (bpm != null && Input.GetMouseButtonDown(0) && !bpm.ClickConsumedThisFrame)
             {
                 TryStartHold();
             }
@@ -175,7 +178,7 @@ namespace LittleCafe
             if (fillBarImages.Count == 0) return;
 
             var bpm = BuildingProductionManager.Instance;
-            Camera cam = Camera.main;
+            Camera cam = mainCamera;
 
             // Collect null keys to remove after iteration
             List<GameObject> toRemove = null;
@@ -231,7 +234,7 @@ namespace LittleCafe
             if (DragDropHandler.Instance != null && DragDropHandler.Instance.IsDragging)
                 return;
 
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
             if (!Physics.Raycast(ray, out RaycastHit hit, 100f))
                 return;
 
@@ -341,12 +344,27 @@ namespace LittleCafe
 
         private IEnumerator StreamParticleCoroutine(GameObject targetBuilding, ResourceType resourceType)
         {
-            // Resolve the canvas used by ResourceLootFX / ResourceDisplayUI
-            Canvas canvas = FindFirstObjectByType<Canvas>();
+            // Resolve the canvas used by ResourceLootFX / ResourceDisplayUI.
+            // Prefer the canvas that hosts ResourceDisplayUI to avoid grabbing a world-space canvas.
+            Canvas canvas = null;
+            if (ResourceDisplayUI.Instance != null)
+                canvas = ResourceDisplayUI.Instance.GetComponentInParent<Canvas>();
+            if (canvas == null)
+            {
+                // Fallback: find a ScreenSpaceOverlay canvas
+                foreach (var c in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+                {
+                    if (c.renderMode == RenderMode.ScreenSpaceOverlay)
+                    {
+                        canvas = c;
+                        break;
+                    }
+                }
+            }
             if (canvas == null) yield break;
 
             RectTransform canvasRect = canvas.GetComponent<RectTransform>();
-            Camera cam = Camera.main;
+            Camera cam = mainCamera;
             if (cam == null) yield break;
 
             // ── Determine start position: resource bar slot in canvas-local space ──
@@ -434,6 +452,7 @@ namespace LittleCafe
 
         private void StopHold()
         {
+            if (audioSource != null) audioSource.pitch = 1.0f;
             activeBuilding = null;
             chunksThisSession = 0;
         }

@@ -25,7 +25,7 @@ namespace LittleCafe
     /// </summary>
     public enum ProductionInputType
     {
-        None,       // Auto-produce (Home, Statue, Kitchen)
+        None,       // Auto-produce (Home, Statue)
         Worker,     // Requires a Worker card dragged onto the building (Barracks)
         Fighter,    // Requires a Fighter card dragged onto the building (future use)
         HoldToFill  // Player holds left-click to gradually fill the building with resources
