@@ -246,6 +246,7 @@ namespace LittleCafe
             for (int i = 0; i < bodyMaterials.Length; i++)
             {
                 if (bodyMaterials[i] == null) continue;
+                if (!bodyMaterials[i].HasProperty("_Color")) continue;
                 bodyMaterials[i].color = Color.Lerp(originalColors[i], BODY_TINT, alpha);
             }
         }
