@@ -1,6 +1,7 @@
 #pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 using ClockworkGrid;
 using ClockworkCraft;
@@ -15,6 +16,11 @@ namespace LittleCafe
         [SerializeField] private float baseChunkInterval = 0.5f;
         [SerializeField] private float chunkDecayFactor = 0.85f;
         [SerializeField] private float minChunkInterval = 0.08f;
+
+        [Header("Resource Stream VFX")]
+        [SerializeField] private GameObject resourceIconPrefab;
+        [SerializeField] private float streamFlyDuration = 0.4f;
+        [SerializeField] private float streamArcHeight = 1.5f;
 
         [Header("Fill Bar")]
         [SerializeField] private Color fillBarColor = new Color(0.3f, 0.85f, 0.4f, 1f);
@@ -283,7 +289,9 @@ namespace LittleCafe
 
             chunksThisSession++;
 
-            // TODO Task 5: trigger VFX per chunk
+            // Trigger VFX per chunk (Task 5)
+            SpawnResourceStream(activeBuilding, info.resourceType);
+
             // TODO Task 6: play chunk SFX
 
             // Accelerate
@@ -297,6 +305,107 @@ namespace LittleCafe
                 // TODO Task 6: play completion SFX
                 StopHold();
             }
+        }
+
+        private void SpawnResourceStream(GameObject targetBuilding, ResourceType resourceType)
+        {
+            if (resourceIconPrefab == null) return;
+            if (targetBuilding == null) return;
+
+            StartCoroutine(StreamParticleCoroutine(targetBuilding, resourceType));
+        }
+
+        private IEnumerator StreamParticleCoroutine(GameObject targetBuilding, ResourceType resourceType)
+        {
+            // Resolve the canvas used by ResourceLootFX / ResourceDisplayUI
+            Canvas canvas = FindFirstObjectByType<Canvas>();
+            if (canvas == null) yield break;
+
+            RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+            Camera cam = Camera.main;
+            if (cam == null) yield break;
+
+            // ── Determine start position: resource bar slot in canvas-local space ──
+            Vector2 startLocal;
+            if (ResourceDisplayUI.Instance != null && ResourceDisplayUI.Instance.GetSlotRect(resourceType) != null)
+            {
+                RectTransform slotRect = ResourceDisplayUI.Instance.GetSlotRect(resourceType);
+                Vector3 slotScreenPos = RectTransformUtility.WorldToScreenPoint(
+                    canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : cam,
+                    slotRect.position);
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    canvasRect, slotScreenPos,
+                    canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : cam,
+                    out startLocal);
+            }
+            else
+            {
+                // Fallback: top-right corner of canvas
+                startLocal = new Vector2(canvasRect.rect.width * 0.4f, canvasRect.rect.height * 0.4f);
+            }
+
+            // ── Spawn the icon ──
+            GameObject icon = Instantiate(resourceIconPrefab, canvas.transform);
+            RectTransform iconRect = icon.GetComponent<RectTransform>();
+            if (iconRect == null) iconRect = icon.AddComponent<RectTransform>();
+
+            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.anchoredPosition = startLocal;
+            iconRect.localScale = Vector3.one;
+
+            CanvasGroup cg = icon.GetComponent<CanvasGroup>();
+            if (cg == null) cg = icon.AddComponent<CanvasGroup>();
+            cg.blocksRaycasts = false;
+            cg.interactable = false;
+
+            icon.SetActive(true);
+
+            // ── Fly from bar to building ──
+            float elapsed = 0f;
+            while (elapsed < streamFlyDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / streamFlyDuration);
+
+                // Null-check: building may be destroyed mid-flight
+                if (icon == null) yield break;
+                if (targetBuilding == null)
+                {
+                    Destroy(icon);
+                    yield break;
+                }
+
+                // Recompute end position each frame so it tracks moving buildings
+                Vector3 buildingScreenPos = cam.WorldToScreenPoint(targetBuilding.transform.position);
+                if (buildingScreenPos.z < 0f)
+                {
+                    Destroy(icon);
+                    yield break;
+                }
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    canvasRect, buildingScreenPos,
+                    canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : cam,
+                    out Vector2 endLocal);
+
+                // Smooth ease-in-out
+                float eased = t * t * (3f - 2f * t);
+
+                Vector2 pos = Vector2.Lerp(startLocal, endLocal, eased);
+                // Sine arc — peaks in the middle of the flight
+                float arc = Mathf.Sin(t * Mathf.PI) * streamArcHeight * 50f;
+                pos.y += arc;
+
+                iconRect.anchoredPosition = pos;
+
+                // Fade out in final 20%
+                cg.alpha = t < 0.8f ? 1f : Mathf.Lerp(1f, 0f, (t - 0.8f) / 0.2f);
+
+                yield return null;
+            }
+
+            if (icon != null)
+                Destroy(icon);
         }
 
         private void StopHold()
