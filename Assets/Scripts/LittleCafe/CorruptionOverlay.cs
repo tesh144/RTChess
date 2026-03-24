@@ -122,25 +122,38 @@ namespace LittleCafe
 
         private void SpawnVisual()
         {
-            // Placeholder: purple quad sitting above the tile surface
-            visualChild = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            visualChild.name = "CorruptionVisual_Placeholder";
-            visualChild.transform.SetParent(transform);
-            visualChild.transform.localPosition = new Vector3(0f, 0.55f, 0f);
-            visualChild.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            visualChild.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+            // Use prefab from CorruptionManager if assigned, otherwise fall back to placeholder
+            GameObject prefab = CorruptionManager.Instance != null
+                ? CorruptionManager.Instance.CorruptionOverlayPrefab : null;
 
-            var r = visualChild.GetComponent<MeshRenderer>();
-            if (r != null)
+            if (prefab != null)
             {
-                r.material = new Material(Shader.Find("Sprites/Default"));
-                r.material.color = new Color(0.45f, 0f, 0.7f, 0.75f);
-                r.sortingOrder = 10;
+                visualChild = Instantiate(prefab, transform);
+                visualChild.name = "CorruptionVisual";
+                visualChild.SetActive(true);
             }
+            else
+            {
+                // Placeholder: purple quad sitting above the tile surface
+                visualChild = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                visualChild.name = "CorruptionVisual_Placeholder";
+                visualChild.transform.SetParent(transform);
+                visualChild.transform.localPosition = new Vector3(0f, 0.55f, 0f);
+                visualChild.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                visualChild.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
 
-            // Remove collider — workers target the tile via GridManager, not by raycast on this quad
-            var col = visualChild.GetComponent<Collider>();
-            if (col != null) Destroy(col);
+                var r = visualChild.GetComponent<MeshRenderer>();
+                if (r != null)
+                {
+                    r.material = new Material(Shader.Find("Sprites/Default"));
+                    r.material.color = new Color(0.45f, 0f, 0.7f, 0.75f);
+                    r.sortingOrder = 10;
+                }
+
+                // Remove collider — workers target the tile via GridManager, not by raycast on this quad
+                var col = visualChild.GetComponent<Collider>();
+                if (col != null) Destroy(col);
+            }
         }
     }
 }

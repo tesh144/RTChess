@@ -23,6 +23,13 @@ namespace LittleCafe
         [Tooltip("Chebyshev radius (in tiles) within which a revealed tile activates a dormant heart.")]
         [SerializeField] private int heartActivationRadius = 5;
 
+        [Header("Visuals")]
+        [Tooltip("Prefab instantiated on each corrupted tile. If null, uses a placeholder purple quad.")]
+        [SerializeField] private GameObject corruptionOverlayPrefab;
+
+        /// <summary>The overlay visual prefab. Read by CorruptionOverlay.SpawnVisual().</summary>
+        public GameObject CorruptionOverlayPrefab => corruptionOverlayPrefab;
+
         // ── Internal State ────────────────────────────────────────────────
 
         private readonly List<CorruptionHeart> allHearts = new List<CorruptionHeart>();
