@@ -27,7 +27,8 @@ namespace LittleCafe
     {
         None,       // Auto-produce (Home, Statue, Kitchen)
         Worker,     // Requires a Worker card dragged onto the building (Barracks)
-        Fighter     // Requires a Fighter card dragged onto the building (future use)
+        Fighter,    // Requires a Fighter card dragged onto the building (future use)
+        HoldToFill  // Player holds left-click to gradually fill the building with resources
     }
 
     /// <summary>
@@ -142,6 +143,9 @@ namespace LittleCafe
 
         [Tooltip("Amount of productionCostResourceType consumed when the cycle starts. 0 = no cost.")]
         public int productionCostAmount = 0;
+
+        [Tooltip("Resource increment per hold tick for HoldToFill buildings. 0 = unused.")]
+        public int resourcesRequiredIncrement = 0;
 
         /// <summary>
         /// Get clean asset name without file extension.

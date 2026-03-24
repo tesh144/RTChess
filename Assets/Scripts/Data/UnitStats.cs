@@ -155,6 +155,9 @@ namespace ClockworkGrid
         [Tooltip("Amount of productionCostResourceType consumed when the cycle starts. 0 = no cost.")]
         public int productionCostAmount = 0;
 
+        [Tooltip("Resource increment per hold tick for HoldToFill buildings. 0 = unused.")]
+        public int resourcesRequiredIncrement = 0;
+
         [Header("Visuals")]
         public Color unitColor = Color.blue;
         public Sprite iconSprite; // Icon for dock bar

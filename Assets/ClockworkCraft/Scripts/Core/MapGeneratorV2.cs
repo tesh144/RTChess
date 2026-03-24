@@ -446,6 +446,7 @@ namespace ClockworkCraft
                     stats.killerAdvances          = data.killerAdvances;
                     stats.productionCostResourceType = data.productionCostResourceType;
                     stats.productionCostAmount       = data.productionCostAmount;
+                    stats.resourcesRequiredIncrement = data.resourcesRequiredIncrement;
 
                     // Card source type (for tier-based draw filtering)
                     stats.cardSource              = CardSourceType.Building;
