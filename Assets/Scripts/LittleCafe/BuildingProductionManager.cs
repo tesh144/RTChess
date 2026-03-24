@@ -91,6 +91,9 @@ namespace LittleCafe
             public ResourceType productionCostResourceType;
             public int          productionCostAmount;
             public bool         waitingForResources; // true when building needs to spend resources before starting timer
+            public bool waitingForHoldFill;
+            public int holdFillProgress;
+            public int resourcesRequiredIncrement;
             public WorkerData pendingWorker;
             public UnitStats pendingCard; // For RandomBuilding output
 
@@ -114,6 +117,7 @@ namespace LittleCafe
             public SphereCollider popupCollider;
 
             public float EffectiveInterval => baseInterval + (intervalBonus * collectCount);
+            public int EffectiveFillCost => productionCostAmount + (resourcesRequiredIncrement * collectCount);
         }
 
         private readonly List<ProductionEntry> entries = new List<ProductionEntry>();
@@ -149,6 +153,7 @@ namespace LittleCafe
 
         void Update()
         {
+            ClickConsumedThisFrame = false;
             HandlePopupTap();
             UpdateTimerFill();
             AnimatePopups();
@@ -180,10 +185,13 @@ namespace LittleCafe
                 elapsedTime = 0f,
                 collectCount = 0,
                 isReady = false,
-                waitingForInput = stats.productionInputType != ProductionInputType.None,
+                waitingForInput = (stats.productionInputType != ProductionInputType.None && stats.productionInputType != ProductionInputType.HoldToFill),
                 productionCostResourceType = stats.productionCostResourceType,
                 productionCostAmount       = stats.productionCostAmount,
-                waitingForResources        = stats.productionCostAmount > 0,
+                waitingForResources        = (stats.productionCostAmount > 0 && stats.productionInputType != ProductionInputType.HoldToFill),
+                waitingForHoldFill         = (stats.productionInputType == ProductionInputType.HoldToFill),
+                holdFillProgress           = 0,
+                resourcesRequiredIncrement = stats.resourcesRequiredIncrement,
                 pendingWorker = null
             };
 
@@ -198,6 +206,9 @@ namespace LittleCafe
                 entry.timerCanvasObj.SetActive(false);
 
             entries.Add(entry);
+
+            if (stats.productionInputType == ProductionInputType.HoldToFill)
+                OnHoldFillStateChanged?.Invoke(buildingObj, true);
 
             if (verboseLogging)
                 Debug.Log($"[BuildingProduction] Registered '{buildingObj.name}' — produces {stats.productionOutputType} every {stats.productionInterval}s (bonus +{stats.productionIntervalBonus}s per collect, topHeight={entry.objectTopHeight:F1})");
@@ -551,8 +562,11 @@ namespace LittleCafe
                 // Input-triggered buildings wait until fed before starting their timer
                 if (entry.waitingForInput) continue;
 
+                // HoldToFill buildings wait until fully filled via IncrementHoldFill
+                if (entry.waitingForHoldFill) continue;
+
                 // Resource-cost buildings wait until they can afford the activation cost
-                if (entry.waitingForResources)
+                if (entry.waitingForResources && entry.inputType != ProductionInputType.HoldToFill)
                 {
                     var rm = ResourceManager.Instance;
                     int have = rm != null ? rm.GetResource(entry.productionCostResourceType) : -1;
@@ -895,6 +909,7 @@ namespace LittleCafe
                      hitObj.transform.IsChildOf(entry.popupCanvasObj.transform)))
                 {
                     CollectReward(entry);
+                    ClickConsumedThisFrame = true;
                     return;
                 }
 
@@ -904,6 +919,7 @@ namespace LittleCafe
                      hitObj.transform.IsChildOf(entry.buildingObj.transform)))
                 {
                     CollectReward(entry);
+                    ClickConsumedThisFrame = true;
                     return;
                 }
             }
@@ -923,6 +939,7 @@ namespace LittleCafe
                             if (entry.isReady && entry.buildingObj == occupant)
                             {
                                 CollectReward(entry);
+                                ClickConsumedThisFrame = true;
                                 return;
                             }
                         }
@@ -1007,12 +1024,20 @@ namespace LittleCafe
             entry.timerRevealed = false; // Re-delay the timer by 1 tick
 
             // Input-triggered buildings return to waiting state after collection
-            if (entry.inputType != ProductionInputType.None)
+            if (entry.inputType != ProductionInputType.None && entry.inputType != ProductionInputType.HoldToFill)
                 entry.waitingForInput = true;
 
             // Resource-cost buildings return to waiting state after collection
-            if (entry.productionCostAmount > 0)
+            if (entry.productionCostAmount > 0 && entry.inputType != ProductionInputType.HoldToFill)
                 entry.waitingForResources = true;
+
+            // HoldToFill buildings return to waiting state after collection
+            if (entry.inputType == ProductionInputType.HoldToFill)
+            {
+                entry.waitingForHoldFill = true;
+                entry.holdFillProgress = 0;
+                OnHoldFillStateChanged?.Invoke(entry.buildingObj, true);
+            }
 
             // Hide timer until next tick reveals it
             if (entry.timerCanvasObj != null)
@@ -1400,5 +1425,69 @@ namespace LittleCafe
                 ringSprite.name = "GeneratedRing";
             }
         }
+
+        // ─────────────────────────────────────────────────────────────────
+        // HoldToFill Public API
+        // ─────────────────────────────────────────────────────────────────
+
+        public struct HoldFillInfo
+        {
+            public int progress;
+            public int effectiveCost;
+            public ResourceType resourceType;
+            public GameObject buildingObj;
+        }
+
+        public bool IsWaitingForHoldFill(GameObject building)
+        {
+            var entry = entries.Find(e => e.buildingObj == building);
+            return entry != null && entry.waitingForHoldFill;
+        }
+
+        public HoldFillInfo GetHoldFillInfo(GameObject building)
+        {
+            var entry = entries.Find(e => e.buildingObj == building);
+            if (entry == null) return default;
+            return new HoldFillInfo
+            {
+                progress = entry.holdFillProgress,
+                effectiveCost = entry.EffectiveFillCost,
+                resourceType = entry.productionCostResourceType,
+                buildingObj = entry.buildingObj
+            };
+        }
+
+        public bool IncrementHoldFill(GameObject building)
+        {
+            var entry = entries.Find(e => e.buildingObj == building);
+            if (entry == null || !entry.waitingForHoldFill) return false;
+
+            entry.holdFillProgress++;
+            if (entry.holdFillProgress >= entry.EffectiveFillCost)
+            {
+                entry.waitingForHoldFill = false;
+                entry.elapsedTime = 0f;
+                entry.timerRevealed = false;
+                OnHoldFillStateChanged?.Invoke(building, false);
+                return true;
+            }
+            return false;
+        }
+
+        public bool HasReadyPopupAt(GameObject building)
+        {
+            var entry = entries.Find(e => e.buildingObj == building);
+            return entry != null && entry.isReady;
+        }
+
+        public bool ClickConsumedThisFrame { get; set; }
+
+        public bool IsBuildingPaused(GameObject building)
+        {
+            var entry = entries.Find(e => e.buildingObj == building);
+            return entry != null && entry.isPaused;
+        }
+
+        public event System.Action<GameObject, bool> OnHoldFillStateChanged;
     }
 }
