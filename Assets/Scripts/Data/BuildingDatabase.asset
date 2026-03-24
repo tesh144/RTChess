@@ -11,9 +11,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 09aac91ca3a864122ba7f982e1923220, type: 3}
   m_Name: BuildingDatabase
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   buildingList:
-  - assetName: Home
+  - active: 1
+    assetName: Home
     type: 0
     isFunctional: 0
     isWalkable: 0
@@ -32,7 +33,7 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 1
+    wildAnimalInteractible: 0
     isMealSource: 0
     productionInputType: 0
     productionInterval: 10
@@ -42,7 +43,9 @@ MonoBehaviour:
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
-  - assetName: Torch
+    productionCostIncrement: 0
+  - active: 1
+    assetName: Torch
     type: 0
     isFunctional: 0
     isWalkable: 0
@@ -71,7 +74,9 @@ MonoBehaviour:
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
-  - assetName: Statue
+    productionCostIncrement: 0
+  - active: 1
+    assetName: Statue
     type: 0
     isFunctional: 0
     isWalkable: 0
@@ -90,17 +95,19 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 1
+    wildAnimalInteractible: 0
     isMealSource: 0
     productionInputType: 0
-    productionInterval: 10
+    productionInterval: 15
     productionIntervalBonus: 30
     productionOutputType: 3
     producedResourceType: 0
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
-  - assetName: Barracks
+    productionCostIncrement: 0
+  - active: 1
+    assetName: Barracks
     type: 6
     isFunctional: 0
     isWalkable: 0
@@ -119,17 +126,19 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 1
+    wildAnimalInteractible: 0
     isMealSource: 0
     productionInputType: 1
-    productionInterval: 10
-    productionIntervalBonus: 20
+    productionInterval: 20
+    productionIntervalBonus: 30
     productionOutputType: 4
     producedResourceType: 0
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
-  - assetName: Kitchen
+    productionCostIncrement: 0
+  - active: 1
+    assetName: Kitchen
     type: 3
     isFunctional: 0
     isWalkable: 0
@@ -148,7 +157,7 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 0
     enemyInteractible: 1
-    wildAnimalInteractible: 1
+    wildAnimalInteractible: 0
     isMealSource: 0
     productionInputType: 0
     productionInterval: 20
@@ -156,9 +165,11 @@ MonoBehaviour:
     productionOutputType: 5
     producedResourceType: 0
     productionAmount: 1
-    productionCostResourceType: 3
-    productionCostAmount: 10
-  - assetName: Feast
+    productionCostResourceType: 23
+    productionCostAmount: 3
+    productionCostIncrement: 1
+  - active: 1
+    assetName: Feast
     type: 0
     isFunctional: 0
     isWalkable: 0
@@ -177,7 +188,7 @@ MonoBehaviour:
     isRandomBuilding: 1
     allyInteractible: 1
     enemyInteractible: 1
-    wildAnimalInteractible: 1
+    wildAnimalInteractible: 0
     isMealSource: 1
     productionInputType: 0
     productionInterval: 30
@@ -187,3 +198,97 @@ MonoBehaviour:
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
+    productionCostIncrement: 0
+  - active: 1
+    assetName: Scrapper
+    type: 3
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 0
+    hp: 5
+    attackPower: 0
+    tier: 3
+    drawWeight: 0.3
+    placementCost: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 0
+    killerAdvances: 1
+    fogRevealRadius: 1
+    prefab: {fileID: 5927109788316665394, guid: f95fd6d4394764a679abc5b7e2950e65, type: 3}
+    icon: {fileID: 21300000, guid: 8382b74377f3849a19cba4826c9efc90, type: 3}
+    isRandomBuilding: 1
+    allyInteractible: 1
+    enemyInteractible: 1
+    wildAnimalInteractible: 0
+    isMealSource: 0
+    productionInputType: 3
+    productionInterval: 30
+    productionIntervalBonus: 30
+    productionOutputType: 14
+    producedResourceType: 32
+    productionAmount: 1
+    productionCostResourceType: 0
+    productionCostAmount: 0
+    productionCostIncrement: 0
+  - active: 1
+    assetName: RabbitFarm
+    type: 3
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 0
+    hp: 5
+    attackPower: 0
+    tier: 4
+    drawWeight: 0.3
+    placementCost: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 0
+    killerAdvances: 1
+    fogRevealRadius: 1
+    prefab: {fileID: 919132149155446097, guid: 39a13933645834d59ac27d3757c8b1fd, type: 3}
+    icon: {fileID: 21300000, guid: 7888857b664c547bf952682329ff6e18, type: 3}
+    isRandomBuilding: 1
+    allyInteractible: 0
+    enemyInteractible: 1
+    wildAnimalInteractible: 0
+    isMealSource: 0
+    productionInputType: 0
+    productionInterval: 20
+    productionIntervalBonus: 20
+    productionOutputType: 15
+    producedResourceType: 0
+    productionAmount: 1
+    productionCostResourceType: 18
+    productionCostAmount: 3
+    productionCostIncrement: 1
+  - active: 1
+    assetName: Garden
+    type: 3
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 0
+    hp: 5
+    attackPower: 0
+    tier: 5
+    drawWeight: 0.3
+    placementCost: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 0
+    killerAdvances: 1
+    fogRevealRadius: 1
+    prefab: {fileID: 703771162908890900, guid: cafe9388b89334ca78fca6b6ee83a739, type: 3}
+    icon: {fileID: 21300000, guid: 19927fa1c46ec465e96a55e955d65636, type: 3}
+    isRandomBuilding: 1
+    allyInteractible: 0
+    enemyInteractible: 1
+    wildAnimalInteractible: 0
+    isMealSource: 0
+    productionInputType: 0
+    productionInterval: 20
+    productionIntervalBonus: 20
+    productionOutputType: 16
+    producedResourceType: 0
+    productionAmount: 1
+    productionCostResourceType: 5
+    productionCostAmount: 3
+    productionCostIncrement: 1

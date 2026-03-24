@@ -30,6 +30,10 @@ namespace LittleCafe
         [Tooltip("When false, this entry is hidden from all game systems")]
         public bool active = true;
 
+        [Header("Map Generation")]
+        [Tooltip("When true, this object is spawned by the map generator. When false, it is obtained through other means (e.g. building production).")]
+        public bool isMapGenerated = true;
+
         [Header("Asset Identity")]
         public string assetName;
 
@@ -69,6 +73,10 @@ namespace LittleCafe
         [Header("Grid & Visual")]
         public Vector2Int gridSize = Vector2Int.one;
         public float visualScale = 1.0f;
+
+        [Header("Drop on Death")]
+        [Tooltip("Resource type dropped when this object is destroyed. None = no drop on death.")]
+        public ResourceType dropOnDeath = ResourceType.None;
 
         [Header("Prefab & Icon")]
         public GameObject prefab;

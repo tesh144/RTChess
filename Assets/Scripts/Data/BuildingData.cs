@@ -22,12 +22,14 @@ namespace LittleCafe
     /// <summary>
     /// What triggers a building's production cycle to start.
     /// None = auto-produce on timer. Worker/Fighter = requires dragging that unit onto the building.
+    /// Any = accepts any card type dragged onto the building (Scrapper).
     /// </summary>
     public enum ProductionInputType
     {
         None,       // Auto-produce (Home, Statue, Kitchen)
         Worker,     // Requires a Worker card dragged onto the building (Barracks)
-        Fighter     // Requires a Fighter card dragged onto the building (future use)
+        Fighter,    // Requires a Fighter card dragged onto the building (future use)
+        Any         // Accepts any card type — consumes and scraps it (Scrapper)
     }
 
     /// <summary>
@@ -49,7 +51,10 @@ namespace LittleCafe
         Tier0Unit,          // Random unit/worker from tier 0 pool
         Tier1Unit,          // Random unit/worker from tier 1 pool
         Tier2Unit,          // Random unit/worker from tier 2 pool
-        Tier3Unit           // Random unit/worker from tier 3 pool
+        Tier3Unit,          // Random unit/worker from tier 3 pool
+        Scrap,              // Produces Scrap resource (from Scrapper — any card in → Scrap out)
+        Lizard,             // Produces a Lizard environment entity (Rabbit Farm)
+        TreeSeed            // Produces a Tree Seed entity (Garden)
     }
 
     /// <summary>
@@ -146,6 +151,9 @@ namespace LittleCafe
 
         [Tooltip("Amount of productionCostResourceType consumed when the cycle starts. 0 = no cost.")]
         public int productionCostAmount = 0;
+
+        [Tooltip("Amount added to productionCostAmount after each production cycle. Anti-spam scaling. 0 = flat cost.")]
+        public int productionCostIncrement = 0;
 
         /// <summary>
         /// Get clean asset name without file extension.

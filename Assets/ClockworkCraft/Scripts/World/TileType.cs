@@ -56,5 +56,6 @@ namespace ClockworkCraft
         GoldBag,
         Approval,       // Thumbs up
         Heart,          // Pink heart
+        Scrap,          // Scrap material — produced by the Scrapper building
     }
 }

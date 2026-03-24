@@ -152,6 +152,8 @@ namespace LittleCafe
 
         private void OnDestroy()
         {
+            if (FogManager.Instance != null)
+                FogManager.Instance.OnCellRevealed -= OnFogCellRevealed;
             CameraSystemLocator.Unregister(this);
             if (Instance == this) Instance = null;
         }
@@ -186,6 +188,10 @@ namespace LittleCafe
             targetDistance = currentDefaultDistance;
             currentDistance = targetDistance;
 
+            // Subscribe to fog reveal events so zoom cap grows as player explores
+            if (FogManager.Instance != null)
+                FogManager.Instance.OnCellRevealed += OnFogCellRevealed;
+
             if (cam != null)
             {
                 cam.fieldOfView = fieldOfView;
@@ -195,6 +201,15 @@ namespace LittleCafe
 
             ApplyOrbitPosition(smoothedLookPoint, currentYaw, currentPitch, currentDistance);
             Debug.Log($"[GridCamera] Ready: center={gridCenter}, default={currentDefaultDistance:F1}, max={currentMaxDistance:F1}");
+        }
+
+        /// <summary>
+        /// Called whenever a fog cell is revealed. Updates zoom bounds so the
+        /// player's max zoom-out grows progressively as they explore the map.
+        /// </summary>
+        private void OnFogCellRevealed(int x, int y)
+        {
+            RecalculateZoomLevels();
         }
 
         /// <summary>

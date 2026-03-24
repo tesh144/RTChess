@@ -555,6 +555,7 @@ namespace ClockworkCraft
                 var synced = new List<EnvironmentSpawnEntry>();
                 foreach (var envData in environmentDatabase.AllEnvironment)
                 {
+                    if (!envData.active) continue; // skip inactive entries
                     if (existing.TryGetValue(envData.assetName, out var kept))
                         synced.Add(kept);
                     else
@@ -661,6 +662,7 @@ namespace ClockworkCraft
             var synced = new List<UnitSpawnEntry>();
             foreach (var unitData in unitDatabase.AllUnits)
             {
+                if (!unitData.active) continue; // skip inactive entries
                 if (existing.TryGetValue(unitData.assetName, out var kept))
                     synced.Add(kept);
                 else
@@ -2259,10 +2261,12 @@ namespace ClockworkCraft
                 obj.name = $"{entityName}_{spawnCount}";
 
                 // Stats are serialized on the prefab's CorruptionHeart component — just set grid position
+                // and inject UnitDatabase so the heart can spawn spikes at runtime
                 var heart = obj.GetComponent<LittleCafe.CorruptionHeart>();
                 if (heart != null)
                 {
                     heart.GridPosition = new Vector2Int(x, y);
+                    heart.UnitDatabase = unitDatabase;
                 }
 
                 if (enableFog)

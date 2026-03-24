@@ -773,7 +773,7 @@ namespace LittleCafe
             if (target != null && !target.IsDestroyed)
             {
                 int attackPower = health != null ? health.AttackPower : 1;
-                int damageDealt = target.TakeDamage(attackPower);
+                int damageDealt = target.TakeDamageFrom(attackPower, health);
 
                 // Spawn loot particles if target is a resource node
                 // Uses HP-to-loot conversion: AccumulateDamage tracks how much damage
