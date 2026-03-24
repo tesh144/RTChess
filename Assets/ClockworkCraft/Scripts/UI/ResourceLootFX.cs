@@ -43,8 +43,10 @@ namespace ClockworkCraft
         public float flyCurveHeight = 80f;
 
         [Header("Visual")]
-        [Tooltip("Size of the particle icon.")]
+        [Tooltip("Base size of the particle icon (at 1080p reference height).")]
         public float iconSize = 84f;
+        [Tooltip("Reference screen height for icon scaling. Icons scale proportionally on other resolutions.")]
+        public float referenceScreenHeight = 1080f;
 
         // Pool — separate pools for sprite-based and text-based particles
         private Canvas canvas;
@@ -52,6 +54,9 @@ namespace ClockworkCraft
         private Camera mainCamera;
         private readonly Queue<GameObject> spritePool = new Queue<GameObject>();
         private readonly Queue<GameObject> textPool = new Queue<GameObject>();
+
+        /// <summary>Returns iconSize scaled to the current screen resolution.</summary>
+        private float ScaledIconSize => iconSize * (Screen.height / referenceScreenHeight);
 
         void Awake()
         {
@@ -127,7 +132,7 @@ namespace ClockworkCraft
                 if (tmp != null)
                 {
                     tmp.text = ResourceDisplayUI.GetEmojiForResource(resType);
-                    tmp.fontSize = iconSize;
+                    tmp.fontSize = ScaledIconSize;
                 }
             }
 
@@ -276,7 +281,8 @@ namespace ClockworkCraft
             obj.transform.SetParent(canvas.transform, false);
 
             RectTransform rect = obj.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(iconSize, iconSize);
+            float scaled = ScaledIconSize;
+            rect.sizeDelta = new Vector2(scaled, scaled);
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
 
@@ -302,14 +308,15 @@ namespace ClockworkCraft
             obj.transform.SetParent(canvas.transform, false);
 
             RectTransform rect = obj.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(60f, 60f);
+            float scaled = ScaledIconSize;
+            rect.sizeDelta = new Vector2(scaled, scaled);
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
 
             TextMeshProUGUI tmp = obj.AddComponent<TextMeshProUGUI>();
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.enableAutoSizing = false;
-            tmp.fontSize = iconSize;
+            tmp.fontSize = scaled;
             tmp.richText = true;
             tmp.raycastTarget = false;
             tmp.overflowMode = TextOverflowModes.Overflow;
