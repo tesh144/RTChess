@@ -69,6 +69,12 @@ namespace LittleCafe
 
         private void Update()
         {
+            // Furniture removal disabled — conflicts with HoldToFill and is not
+            // needed for the current game. All hold-click interactions on buildings
+            // are handled by HoldToFillHandler instead.
+            // To re-enable, uncomment the block below.
+
+            /*
             // Don't process if DragDropHandler is actively dragging
             if (DragDropHandler.Instance != null && DragDropHandler.Instance.IsDragging)
             {
@@ -98,6 +104,7 @@ namespace LittleCafe
                 }
                 CancelHold();
             }
+            */
         }
 
         /// <summary>
