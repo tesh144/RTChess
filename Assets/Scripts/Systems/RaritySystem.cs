@@ -69,7 +69,7 @@ namespace ClockworkGrid
             float totalWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
-                if (!stats.isRandomBuilding) continue;
+                if (!stats.active || !stats.isRandomBuilding) continue;
                 totalWeight += stats.GetEffectiveDrawWeight();
             }
 
@@ -86,7 +86,7 @@ namespace ClockworkGrid
             float currentWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
-                if (!stats.isRandomBuilding) continue;
+                if (!stats.active || !stats.isRandomBuilding) continue;
                 currentWeight += stats.GetEffectiveDrawWeight();
                 if (roll <= currentWeight)
                 {
@@ -119,7 +119,7 @@ namespace ClockworkGrid
             float totalWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
-                if (!stats.isRandomBuilding) continue;
+                if (!stats.active || !stats.isRandomBuilding) continue;
                 if (stats.tier != targetTier) continue;
                 if (!sourceFilter(stats.cardSource)) continue;
                 totalWeight += stats.GetEffectiveDrawWeight();
@@ -135,7 +135,7 @@ namespace ClockworkGrid
             float currentWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
-                if (!stats.isRandomBuilding) continue;
+                if (!stats.active || !stats.isRandomBuilding) continue;
                 if (stats.tier != targetTier) continue;
                 if (!sourceFilter(stats.cardSource)) continue;
                 currentWeight += stats.GetEffectiveDrawWeight();
@@ -190,7 +190,7 @@ namespace ClockworkGrid
             float totalWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
-                if (!stats.isRandomBuilding) continue;
+                if (!stats.active || !stats.isRandomBuilding) continue;
                 if (stats.tier < 0 || stats.tier > maxTier) continue;
                 totalWeight += stats.GetEffectiveDrawWeight();
             }
@@ -205,7 +205,7 @@ namespace ClockworkGrid
             float currentWeight = 0f;
             foreach (UnitStats stats in allUnitStats)
             {
-                if (!stats.isRandomBuilding) continue;
+                if (!stats.active || !stats.isRandomBuilding) continue;
                 if (stats.tier < 0 || stats.tier > maxTier) continue;
                 currentWeight += stats.GetEffectiveDrawWeight();
                 if (roll <= currentWeight)

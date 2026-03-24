@@ -748,6 +748,9 @@ namespace LittleCafe
         /// </summary>
         private IEnumerator PerformStrongInteraction(GridEntityHealth target, int targetX, int targetY)
         {
+            // Cache killerAdvances (IsSlotTakeable) before the target can be destroyed
+            bool cachedSlotTakeable = target != null && target.IsSlotTakeable;
+
             // Face the target (in case of multi-cell objects or range > 1)
             FaceTarget(targetX, targetY);
 
@@ -770,7 +773,7 @@ namespace LittleCafe
             if (target != null && !target.IsDestroyed)
             {
                 int attackPower = health != null ? health.AttackPower : 1;
-                int damageDealt = target.TakeDamage(attackPower);
+                int damageDealt = target.TakeDamageFrom(attackPower, health);
 
                 // Spawn loot particles if target is a resource node
                 // Uses HP-to-loot conversion: AccumulateDamage tracks how much damage
@@ -842,17 +845,12 @@ namespace LittleCafe
                     Debug.Log($"[GridEntityActor] {gameObject.name} → STRONG interact → {target.gameObject.name} for {damageDealt} damage (target HP: {target.CurrentHP}/{target.MaxHP}){(targetKilled ? " [KILLED]" : "")}");
             }
 
-            // If the target was killed, advance into its cell — but only if the
-            // target is slot-takeable (static environment like trees, rocks).
-            // Mobile units (dinos, monsters) are NOT slot-takeable by default —
-            // they vacate their cell on death and the worker should stay put.
-            if (targetKilled && furnitureObject != null)
+            // If the target was killed, advance into its cell — but only if
+            // killerAdvances was true (IsSlotTakeable). We cache this BEFORE
+            // the target gets destroyed, since destroyed objects return null.
+            if (targetKilled && furnitureObject != null && cachedSlotTakeable)
             {
-                bool canTakeSlot = target == null || target.IsSlotTakeable;
-                if (canTakeSlot)
-                {
-                    yield return StartCoroutine(AdvanceIntoCell(targetX, targetY));
-                }
+                yield return StartCoroutine(AdvanceIntoCell(targetX, targetY));
             }
         }
 

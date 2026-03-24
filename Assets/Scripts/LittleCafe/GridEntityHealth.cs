@@ -51,6 +51,12 @@ namespace LittleCafe
         public event Action<int, int, int> OnDamaged;
 
         /// <summary>
+        /// Fired when this entity takes damage from a specific attacker.
+        /// Passes (attacker, damageDealt). Used by Thorns-type retaliation mechanics.
+        /// </summary>
+        public event Action<GridEntityHealth, int> OnDamagedBy;
+
+        /// <summary>
         /// Fired when HP reaches zero. The listener decides what happens next.
         /// Passes this GridEntityHealth so the listener can identify the object.
         /// </summary>
@@ -97,6 +103,15 @@ namespace LittleCafe
 
         public int TakeDamage(int damage)
         {
+            return TakeDamageFrom(damage, null);
+        }
+
+        /// <summary>
+        /// Take damage from a specific attacker. Fires OnDamagedBy so Thorns-type effects
+        /// can retaliate. Prefer this overload in combat code.
+        /// </summary>
+        public int TakeDamageFrom(int damage, GridEntityHealth attacker)
+        {
             if (isDestroyed) return 0;
 
             int actualDamage = Mathf.Min(damage, currentHP);
@@ -120,6 +135,8 @@ namespace LittleCafe
 
             // Notify listeners
             OnDamaged?.Invoke(actualDamage, currentHP, maxHP);
+            if (attacker != null)
+                OnDamagedBy?.Invoke(attacker, actualDamage);
 
             // Check for death
             if (currentHP <= 0)

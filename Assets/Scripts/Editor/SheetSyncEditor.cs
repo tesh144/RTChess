@@ -352,12 +352,17 @@ namespace LittleCafe.Editor
 
                 bool changed = false;
 
+                // Active flag
+                string activeStr = GetValue(row, "Active");
+                bool newActive = string.IsNullOrEmpty(activeStr) || activeStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || activeStr == "1";
+                if (existing.active != newActive) { existing.active = newActive; changed = true; }
+
                 // Production
                 changed |= TrySetFloat(ref existing.productionInterval, GetValue(row, "Prod. Interval (s)"));
                 changed |= TrySetFloat(ref existing.productionIntervalBonus, GetValue(row, "Interval Bonus (s)"));
 
-                // Input type
-                string inputStr = GetValue(row, "Input");
+                // Input type (sheet column is "Input Card")
+                string inputStr = GetValue(row, "Input Card");
                 ProductionInputType newInput = ParseInputType(inputStr);
                 if (existing.productionInputType != newInput) { existing.productionInputType = newInput; changed = true; }
 
@@ -429,8 +434,8 @@ namespace LittleCafe.Editor
                     if (existing.wildAnimalInteractible != newWild) { existing.wildAnimalInteractible = newWild; changed = true; }
                 }
 
-                // Production resource cost ("Use Material" / "Use Amount" columns)
-                string costResStr = StripEmoji(GetValue(row, "Use Material")).Replace(" ", "");
+                // Production resource cost (sheet columns: "Resource Use" and "Resource Amount")
+                string costResStr = StripEmoji(GetValue(row, "Resource Use")).Replace(" ", "");
                 if (!string.IsNullOrEmpty(costResStr) && costResStr != "-" && !costResStr.Equals("None", StringComparison.OrdinalIgnoreCase))
                 {
                     if (Enum.TryParse<ClockworkCraft.ResourceType>(costResStr, true, out var costRes))
@@ -440,16 +445,12 @@ namespace LittleCafe.Editor
                 {
                     if (existing.productionCostResourceType != ClockworkCraft.ResourceType.None) { existing.productionCostResourceType = ClockworkCraft.ResourceType.None; changed = true; }
                 }
-                string useAmtStr = GetValue(row, "Use Amount");
-                if (useAmtStr != "-")
-                    changed |= TrySetInt(ref existing.productionCostAmount, useAmtStr);
-
-                // Cost Increment — for HoldToFill buildings, cost increases by this amount each cycle
-                var incrementStr = GetValue(row, "Cost Increment");
-                if (!string.IsNullOrEmpty(incrementStr) && int.TryParse(incrementStr, out int increment))
-                {
-                    if (existing.resourcesRequiredIncrement != increment) { existing.resourcesRequiredIncrement = increment; changed = true; }
-                }
+                string costAmtStr = GetValue(row, "Resource Amount");
+                if (costAmtStr != "-")
+                    changed |= TrySetInt(ref existing.productionCostAmount, costAmtStr);
+                string costIncStr = GetValue(row, "Resource Increment");
+                if (costIncStr != "-")
+                    changed |= TrySetInt(ref existing.productionCostIncrement, costIncStr);
 
                 if (changed)
                 {
@@ -496,6 +497,11 @@ namespace LittleCafe.Editor
                 }
 
                 bool changed = false;
+
+                // Active flag
+                string activeStr = GetValue(row, "Active");
+                bool newActive = string.IsNullOrEmpty(activeStr) || activeStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || activeStr == "1";
+                if (existing.active != newActive) { existing.active = newActive; changed = true; }
 
                 // HP
                 changed |= TrySetInt(ref existing.hp, GetValue(row, "HP"));
@@ -548,14 +554,6 @@ namespace LittleCafe.Editor
                     if (existing.tier != newTier) { existing.tier = newTier; changed = true; }
                 }
 
-                // Slot Takeable
-                string slotStr = GetValue(row, "Slot Takeable");
-                if (!string.IsNullOrEmpty(slotStr))
-                {
-                    bool newSlotTakeable = slotStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || slotStr == "1";
-                    if (existing.isSlotTakeable != newSlotTakeable) { existing.isSlotTakeable = newSlotTakeable; changed = true; }
-                }
-
                 if (changed)
                 {
                     updated++;
@@ -587,11 +585,14 @@ namespace LittleCafe.Editor
                 string type = GetValue(row, "Type");
                 if (string.IsNullOrEmpty(entity) || string.IsNullOrEmpty(type)) continue;
 
-                // Derive isEnemy from Attack Behavior column (Hostile = enemy, Peaceful = ally)
+                // Derive isEnemy from Attack Behavior column (Hostile = enemy, Peaceful = not enemy)
                 string attackBehavior = GetValue(row, "Attack Behavior");
                 bool isEnemy = attackBehavior.Equals("Hostile", StringComparison.OrdinalIgnoreCase);
-                // Only sync enemy/monster entries to UnitDatabase
-                if (!isEnemy) continue;
+
+                // Only sync Hostile units OR Corruption-type entities to UnitDatabase
+                // (Corruption hearts are Peaceful but still live in UnitDatabase)
+                bool isCorruption = type.Equals("Corruption", StringComparison.OrdinalIgnoreCase);
+                if (!isEnemy && !isCorruption) continue;
 
                 string cleanName = entity.Split('(')[0].Trim();
                 var existing = unitList.FirstOrDefault(u =>
@@ -606,6 +607,11 @@ namespace LittleCafe.Editor
                 }
 
                 bool changed = false;
+
+                // Active flag
+                string activeStr = GetValue(row, "Active");
+                bool newActive = string.IsNullOrEmpty(activeStr) || activeStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || activeStr == "1";
+                if (existing.active != newActive) { existing.active = newActive; changed = true; }
 
                 // HP
                 changed |= TrySetInt(ref existing.hp, GetValue(row, "HP"));
@@ -634,13 +640,14 @@ namespace LittleCafe.Editor
                     changed = true;
                 }
 
-                // Slot Takeable
-                string slotStr = GetValue(row, "Slot Takeable");
-                bool slotTakeable = slotStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase);
-                if (existing.isSlotTakeable != slotTakeable)
+                // GameUnitType — sync from Type column
+                string typeStr = GetValue(row, "Type");
+                if (!string.IsNullOrEmpty(typeStr))
                 {
-                    existing.isSlotTakeable = slotTakeable;
-                    changed = true;
+                    if (Enum.TryParse<LittleCafe.GameUnitType>(typeStr, true, out var newUnitType))
+                    {
+                        if (existing.type != newUnitType) { existing.type = newUnitType; changed = true; }
+                    }
                 }
 
                 // Draw weight
@@ -659,6 +666,29 @@ namespace LittleCafe.Editor
                     bool newKillerAdvances = killerStr.Equals("Advance", StringComparison.OrdinalIgnoreCase);
                     if (existing.killerAdvances != newKillerAdvances) { existing.killerAdvances = newKillerAdvances; changed = true; }
                 }
+
+                // Drop on Death — resource type dropped when this unit is destroyed
+                string dropOnDeathStr = StripEmoji(GetValue(row, "Drop on Death"));
+                if (!string.IsNullOrEmpty(dropOnDeathStr))
+                {
+                    ClockworkCraft.ResourceType newDropOnDeath = ClockworkCraft.ResourceType.None;
+                    if (!dropOnDeathStr.Equals("None", StringComparison.OrdinalIgnoreCase))
+                        Enum.TryParse<ClockworkCraft.ResourceType>(dropOnDeathStr.Replace(" ", ""), true, out newDropOnDeath);
+                    if (existing.dropOnDeath != newDropOnDeath) { existing.dropOnDeath = newDropOnDeath; changed = true; }
+                }
+
+                // Loot resource type (from Drops column)
+                string unitDrops = StripEmoji(GetValue(row, "Drops"));
+                if (!string.IsNullOrEmpty(unitDrops) && !unitDrops.Equals("None", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (Enum.TryParse<ClockworkCraft.ResourceType>(unitDrops.Replace(" ", ""), true, out var lootRt))
+                    {
+                        if (existing.lootResourceType != lootRt) { existing.lootResourceType = lootRt; changed = true; }
+                    }
+                }
+
+                // Loot per hit
+                changed |= TrySetInt(ref existing.lootHpCost, GetValue(row, "Loot per Hit"));
 
                 if (changed)
                 {
@@ -702,6 +732,19 @@ namespace LittleCafe.Editor
 
                 bool changed = false;
 
+                // Active flag
+                string activeStr = GetValue(row, "Active");
+                bool newActive = string.IsNullOrEmpty(activeStr) || activeStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || activeStr == "1";
+                if (existing.active != newActive) { existing.active = newActive; changed = true; }
+
+                // MapGenerated flag
+                string mapGenStr = GetValue(row, "MapGenerated");
+                if (!string.IsNullOrEmpty(mapGenStr))
+                {
+                    bool newMapGen = mapGenStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || mapGenStr == "1";
+                    if (existing.isMapGenerated != newMapGen) { existing.isMapGenerated = newMapGen; changed = true; }
+                }
+
                 // HP
                 changed |= TrySetInt(ref existing.hp, GetValue(row, "HP"));
 
@@ -728,6 +771,16 @@ namespace LittleCafe.Editor
                 {
                     bool newKillerAdvances = killerStr.Equals("Advance", StringComparison.OrdinalIgnoreCase);
                     if (existing.killerAdvances != newKillerAdvances) { existing.killerAdvances = newKillerAdvances; changed = true; }
+                }
+
+                // Drop on Death — resource type dropped when this object is destroyed
+                string dropOnDeathStr = StripEmoji(GetValue(row, "Drop on Death"));
+                if (!string.IsNullOrEmpty(dropOnDeathStr))
+                {
+                    ClockworkCraft.ResourceType newDropOnDeath = ClockworkCraft.ResourceType.None;
+                    if (!dropOnDeathStr.Equals("None", StringComparison.OrdinalIgnoreCase))
+                        Enum.TryParse<ClockworkCraft.ResourceType>(dropOnDeathStr.Replace(" ", ""), true, out newDropOnDeath);
+                    if (existing.dropOnDeath != newDropOnDeath) { existing.dropOnDeath = newDropOnDeath; changed = true; }
                 }
 
                 // Interaction categories
@@ -920,6 +973,8 @@ namespace LittleCafe.Editor
         {
             string clean = StripEmoji(s);
             if (string.IsNullOrEmpty(clean) || clean == "None") return ProductionInputType.None;
+            // "Any" → accepts any card type (Scrapper)
+            if (clean.Equals("Any", StringComparison.OrdinalIgnoreCase)) return ProductionInputType.Any;
             if (Enum.TryParse<ProductionInputType>(clean, true, out var result)) return result;
             return ProductionInputType.None;
         }
@@ -928,8 +983,10 @@ namespace LittleCafe.Editor
         {
             string clean = StripEmoji(s);
             if (string.IsNullOrEmpty(clean) || clean == "None") return ProductionOutputType.None;
-            // Sheet uses "Feast" but enum uses "Meal" — alias for compatibility
+            // Sheet aliases → enum names
             if (clean.Equals("Feast", StringComparison.OrdinalIgnoreCase)) return ProductionOutputType.Meal;
+            if (clean.Equals("Lizard", StringComparison.OrdinalIgnoreCase)) return ProductionOutputType.Lizard;
+            if (clean.Equals("Tree Seed", StringComparison.OrdinalIgnoreCase)) return ProductionOutputType.TreeSeed;
             if (Enum.TryParse<ProductionOutputType>(clean, true, out var result)) return result;
             return ProductionOutputType.None;
         }

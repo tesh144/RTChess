@@ -20,7 +20,8 @@
 
 | Agent | Task | Status |
 |-------|------|--------|
-| Co-Work | #97 Draw button cost feedback + #101 Map scale/zoom/pan | → Ready for Review |
+| Co-Work | #117 New Buildings: Scrapper, Garden, Rabbit Farm | In Progress — DB entries moved to correct databases; production logic pending |
+| Co-Work | #22 Corruption System | In Progress — data arch + thorns + spike spawning done; environment entries corrected |
 
 ---
 
@@ -83,6 +84,23 @@
 | 2026-03-23 | Co-Work | #97 Draw button cost feedback: Timer bubble now shows cost (e.g. "5 Gold") after cooldown ends, red text if can't afford, updates live on resource changes. DrawButtonController.cs |
 | 2026-03-23 | Co-Work | #101 Map scale: Grid 80x80→120x120. Camera zoom absoluteMax 60→80, distancePerTile 0.04→0.06. Pan distance now dynamic (basePanDistance + revealedTiles * 0.05). Both zoom and pan scale with FogManager revealed count. GridCamera.cs, MapGeneratorV2.cs |
 | 2026-03-23 | Co-Work | Trello cleanup: Merged AI Guideline cards (10→4), merged SFX pitch bug into #61, merged meal buff cards (5→2). Moved AI Guidelines to Important Documents with AI Instructions label. |
+| 2026-03-24 | Co-Work | #22 Corruption System: Data architecture refactor complete. GameUnitType.Corruption added. CorruptionHeart uses serialized fields. CorruptionDatabase/CorruptionData/CreateCorruptionDatabase deleted. MapGeneratorV2 + Editor updated to use UnitDatabase. |
+| 2026-03-24 | Co-Work | Trello: Maintained all 5 Tasks (Claude) cards on Auto RTS board — labels, descriptions, progress comments, dueComplete flags. |
+| 2026-03-24 | Co-Work | Google Sheets: Alternating row zebra stripes fixed across all 9 Placement Costs sections. Scrapper/Rabbit Farm/Garden emoji prefixes added to Buildings & Production. |
+| 2026-03-24 | Co-Work | #115 Fix killer behavior: cachedSlotTakeable fix already in place from prior session. → Ready for Review |
+| 2026-03-24 | Co-Work | #118 Zoom out with progress: GridCamera subscribes to FogManager.OnCellRevealed → RecalculateZoomLevels(). → Ready for Review |
+| 2026-03-24 | Co-Work | #120 Active flag: SyncSpawnEntries() and SyncUnitSpawnEntries() now filter inactive entries. → Ready for Review |
+| 2026-03-24 | Co-Work | #22 Corruption: Thorns (1 dmg retaliation) + spike spawning added to CorruptionHeart. OnDamagedBy event + TakeDamageFrom() added to GridEntityHealth; GridEntityActor uses TakeDamageFrom. unitDatabase injected into heart by MapGeneratorV2. → Ready for Review |
+| 2026-03-24 | Co-Work | New enums: ProductionInputType.Any, ProductionOutputType.Scrap/PetRabbit/TreeSeed, ResourceType.Scrap added. SheetSyncEditor column names fixed (Input Card, Resource Use, Resource Amount) and new aliases added. |
+| 2026-03-24 | Co-Work | UnitDatabase.asset: CorruptedHeart, Spike1, Spike2, PetRabbit, TreeSeed entries added (type=Corruption or Generic; prefabs need assigning in Inspector). |
+| 2026-03-24 | Co-Work | BuildingDatabase.asset: Scrapper (tier 3, Any input, Scrap output), Rabbit Farm (tier 4, Petal cost, PetRabbit output), Garden (tier 5, Water cost, TreeSeed output) entries added. |
+| 2026-03-24 | Co-Work | SyncUnits() updated to sync Corruption-type entries (not just Hostile); also syncs GameUnitType from Type column. |
+| 2026-03-24 | Co-Work | Scrap/PetRabbit/TreeSeed moved from BuildingDatabase to EnvironmentDatabase (user correction: these are environment entities, not buildings). |
+| 2026-03-24 | Co-Work | EnvironmentData.cs: Added isMapGenerated (bool) and dropOnDeath (ResourceType) fields. UnitData.cs: Added dropOnDeath field. |
+| 2026-03-24 | Co-Work | SheetSyncEditor: SyncEnvironment() now syncs MapGenerated + Drop on Death columns. SyncUnits() now syncs Drop on Death + Drops + Loot per Hit. |
+| 2026-03-24 | Co-Work | EnvironmentDatabase.asset: Added Scrap (loot=Scrap/32, HP=5, isMapGenerated=false), PetRabbit (loot=Meat/23, HP=3, isMapGenerated=false), TreeSeed (loot=Wood/2, HP=5, isMapGenerated=false). Existing entries updated with isMapGenerated=true + dropOnDeath=0. |
+| 2026-03-24 | Co-Work | BuildingDatabase.asset synced with latest Google Sheets: Statue interval 10→15, Barracks interval 10→20 bonus 20→30, Kitchen cost Food/10→Meat/3 +increment 1, all wildAnimalInteractible corrected. RabbitFarm/Garden +productionCostIncrement=1. |
+| 2026-03-24 | Co-Work | SheetCache.json fully rewritten with all 3 sheets' latest data including new columns (MapGenerated, Drop on Death, Resource Increment, Input Card, etc.). |
 
 ---
 
@@ -149,6 +167,24 @@ _Anything one agent needs to flag for the other._
 - 2026-03-23: SHEET SYNC + KITCHEN RESOURCE COST:
   - **Sheet sync**: Pulled fresh data from all Google Sheets. Updated BuildingDatabase.asset (Home/Barracks/Kitchen intervals+bonuses, wildAnimalInteractible), EnvironmentDatabase.asset (Goldmine HP 300→300000), EconomyBalanceConfig.asset (Fighter Food cost slot added), SheetCache.json (lastSynced, all Buildings values current).
   - **Kitchen resource cost** (data-driven `productionCostResourceType/Amount`): Added fields to BuildingData.cs + UnitStats.cs, copied in MapGeneratorV2.SetupDeck(), added `waitingForResources` flag to ProductionEntry + RegisterBuilding, resource guard in OnIntervalTick (SpendResources pre-pay), reset in CollectReward. SheetSyncEditor.SyncBuildings() parses new "Cost Resource"/"Cost Amount" columns. SheetCache.json updated. Kitchen = Food/10. All other buildings = None/0.
+- 2026-03-24: CORRUPTION SYSTEM DATA ARCHITECTURE (#22):
+  - **GameUnitType.Corruption** added to enum in UnitData.cs. Corruption hearts/spikes are now UnitDatabase entries.
+  - **CorruptionHeart refactor**: Removed `Initialize(CorruptionData)`. Stats (maxHP, attackPower, floatingIndicatorPrefab) are now [SerializeField] on the prefab itself. Set values directly in the Unity prefab Inspector.
+  - **CorruptionSpawnEntry**: Added `GameObject prefab` field. entityName (hidden) still used as planGrid key — populated from `unitData.assetName` during sync.
+  - **MapGeneratorV2**: Removed `corruptionDatabase` field. `SyncCorruptionSpawnEntries()` now pulls from `unitDatabase.GetByType(GameUnitType.Corruption)`. `PlaceCorruptionEntities()` and `SpawnAllCorruptionEntitiesStaggered()` use `entry.prefab` directly — no DB lookup.
+  - **MapGeneratorV2Editor**: All CorruptionDatabase references removed. Corruption sync button and entry cards now driven by UnitDatabase.
+  - **Deleted**: `CorruptionDatabase.cs`, `CorruptionData.cs`, `CreateCorruptionDatabase.cs` (+ .meta files).
+  - **Next step for Jai**: In Unity — (1) assign heart prefabs as UnitDatabase entries with type=Corruption, (2) set HP/attack/indicator fields directly on CorruptionHeart prefab, (3) hit Sync from Database on MapGeneratorV2 to populate corruptionSpawnEntries.
+- 2026-03-24: TRELLO CARD MAINTENANCE (Auto RTS Tasks):
+  - #117 "New Buildings: Scrapper, Garden, Rabbit Farm": Fixed title typo (Builsings→Buildings), added Feature+Creative labels, added progress description. Sheet work done ✅. Unity prefabs/icons still pending.
+  - #120 "Active flag on sheet entries": Added System+Feature labels, wrote design description.
+  - #118 "Zoom out increases with map progress": Added Feature+Behavior labels, wrote design description.
+  - #115 "Fix killer behavior on wild animal death": Wrote description noting slotTakeable context.
+  - #22 "Corruption System": Checked (in-progress), added 🔍 comment. Implementation completed this session.
+- 2026-03-24: GOOGLE SHEETS (Placement Costs + Buildings & Production):
+  - Applied alternating zebra stripe formatting across all 9 building sections × 30 data rows on Placement Costs sheet.
+  - Fixed Placement Costs headers: U1="🐇 Rabbit Farm", AD1="🌿 Garden".
+  - Fixed Buildings & Production B8=🔧 Scrapper, B9=🐇 Rabbit Farm, B10=🌿 Garden emoji prefix.
 - 2026-03-22: DATA CONSISTENCY AUDIT & FIXES:
   - **TrainingFacility**: Removed from BuildingDatabase.asset (correctly — not in Google Sheets)
   - **Fighter**: Restored to WorkerDatabase.asset (was incorrectly deleted; Google Sheets shows it as Worker type with tier 3, hp 10). Values synced from sheet.

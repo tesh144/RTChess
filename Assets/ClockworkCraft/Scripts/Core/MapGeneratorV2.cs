@@ -80,14 +80,19 @@ namespace ClockworkCraft
     }
 
     /// <summary>
-    /// Spawn config for a single CorruptionDatabase entry.
+    /// Spawn config for a single corruption heart prefab.
     /// Uses an explicit spawnCount instead of a proportional tile budget, because
     /// corruption entities are sparse and their exact count matters for game balance.
+    /// Populated by SyncCorruptionSpawnEntries() from UnitDatabase entries of type Corruption.
     /// </summary>
     [System.Serializable]
     public class CorruptionSpawnEntry
     {
+        /// <summary>Asset name from UnitData — used as the planGrid key. Populated during sync.</summary>
         [HideInInspector] public string entityName;
+
+        [Tooltip("CorruptionHeart prefab to instantiate. Populated automatically by Sync from Database.")]
+        public GameObject prefab;
 
         [Tooltip("How this corruption entity is distributed on the map.")]
         public SpawnMode spawnMode = SpawnMode.Scattered;
@@ -165,16 +170,11 @@ namespace ClockworkCraft
         [Min(0)]
         public int clearingRadius = 1;
 
-        [Header("Corruption")]
-        [Tooltip("Database of all corruption entity types. Assign in Inspector.")]
-        public CorruptionDatabase corruptionDatabase;
-        [Tooltip("One entry per corruption entity type to place on the map.")]
-        public List<CorruptionSpawnEntry> corruptionSpawnEntries = new List<CorruptionSpawnEntry>();
-
         // Drawn by custom editor — no [Header] to avoid duplicates
         [HideInInspector] [Range(0.1f, 3f)] public float mapDensity = 1.0f;
         [HideInInspector] public List<EnvironmentSpawnEntry> spawnEntries = new List<EnvironmentSpawnEntry>();
         [HideInInspector] public List<UnitSpawnEntry> unitSpawnEntries = new List<UnitSpawnEntry>();
+        [HideInInspector] public List<CorruptionSpawnEntry> corruptionSpawnEntries = new List<CorruptionSpawnEntry>();
 
         // ─────────────────────────────────────────────────────────────────
         // Internal state
@@ -411,8 +411,10 @@ namespace ClockworkCraft
                 foreach (BuildingData data in buildingDatabase.AllBuildings)
                 {
                     if (data.prefab == null) continue;
+                    if (!data.active) continue; // Skip inactive entries
 
                     UnitStats stats       = ScriptableObject.CreateInstance<UnitStats>();
+                    stats.active          = data.active;
                     stats.unitType        = UnitType.Soldier;
                     stats.unitName        = data.GetCleanName();
                     stats.rarity          = Rarity.Common;
@@ -554,6 +556,7 @@ namespace ClockworkCraft
                 var synced = new List<EnvironmentSpawnEntry>();
                 foreach (var envData in environmentDatabase.AllEnvironment)
                 {
+                    if (!envData.active) continue; // skip inactive entries
                     if (existing.TryGetValue(envData.assetName, out var kept))
                         synced.Add(kept);
                     else
@@ -660,6 +663,7 @@ namespace ClockworkCraft
             var synced = new List<UnitSpawnEntry>();
             foreach (var unitData in unitDatabase.AllUnits)
             {
+                if (!unitData.active) continue; // skip inactive entries
                 if (existing.TryGetValue(unitData.assetName, out var kept))
                     synced.Add(kept);
                 else
@@ -796,9 +800,9 @@ namespace ClockworkCraft
             }
 
             // ── Auto-sync corruption entries if empty ────────────────────
-            if (corruptionDatabase != null && corruptionSpawnEntries.Count == 0)
+            if (unitDatabase != null && corruptionSpawnEntries.Count == 0)
             {
-                Debug.Log("[MapGenV2] corruptionSpawnEntries empty — auto-syncing from CorruptionDatabase");
+                Debug.Log("[MapGenV2] corruptionSpawnEntries empty — auto-syncing from UnitDatabase (Corruption type)");
                 SyncCorruptionSpawnEntries();
             }
 
@@ -1990,17 +1994,22 @@ namespace ClockworkCraft
         const string CORRUPTION_PREFIX = "corruption:";
 
         /// <summary>
-        /// Syncs corruptionSpawnEntries from the CorruptionDatabase, adding an entry for
-        /// each entity not yet represented. Called automatically when the list is empty.
+        /// Syncs corruptionSpawnEntries from UnitDatabase entries with type == Corruption,
+        /// adding an entry for each asset not yet represented. Called automatically when
+        /// the list is empty or via the editor Sync button.
         /// </summary>
-        void SyncCorruptionSpawnEntries()
+        public void SyncCorruptionSpawnEntries()
         {
-            if (corruptionDatabase == null) return;
-            foreach (var data in corruptionDatabase.AllEntries)
+            if (unitDatabase == null) return;
+            foreach (var data in unitDatabase.GetByType(LittleCafe.GameUnitType.Corruption))
             {
-                bool exists = corruptionSpawnEntries.Exists(e => e.entityName == data.entityName);
+                bool exists = corruptionSpawnEntries.Exists(e => e.entityName == data.assetName);
                 if (!exists)
-                    corruptionSpawnEntries.Add(new CorruptionSpawnEntry { entityName = data.entityName });
+                    corruptionSpawnEntries.Add(new CorruptionSpawnEntry
+                    {
+                        entityName = data.assetName,
+                        prefab     = data.prefab
+                    });
             }
         }
 
@@ -2011,21 +2020,15 @@ namespace ClockworkCraft
         /// </summary>
         void PlaceCorruptionEntities()
         {
-            if (corruptionDatabase == null || corruptionSpawnEntries == null) return;
+            if (corruptionSpawnEntries == null) return;
 
             foreach (var entry in corruptionSpawnEntries)
             {
                 if (entry.spawnCount <= 0) continue;
 
-                LittleCafe.CorruptionData data = corruptionDatabase.GetByName(entry.entityName);
-                if (data == null)
+                if (entry.prefab == null)
                 {
-                    Debug.LogWarning($"[MapGenV2] CorruptionDatabase has no entry '{entry.entityName}' — skipping.");
-                    continue;
-                }
-                if (data.prefab == null)
-                {
-                    Debug.LogWarning($"[MapGenV2] Corruption entity '{entry.entityName}' has no prefab — skipping.");
+                    Debug.LogWarning($"[MapGenV2] Corruption entry '{entry.entityName}' has no prefab — skipping.");
                     continue;
                 }
 
@@ -2236,13 +2239,10 @@ namespace ClockworkCraft
 
         /// <summary>
         /// Reads all "corruption:" planGrid entries and instantiates the corresponding
-        /// prefabs, calling Initialize(CorruptionData) on any CorruptionHeart component
-        /// before the object's Start() runs.
+        /// prefabs. Stats are serialized on the CorruptionHeart prefab itself.
         /// </summary>
         System.Collections.IEnumerator SpawnAllCorruptionEntitiesStaggered()
         {
-            if (corruptionDatabase == null) yield break;
-
             const int BATCH_SIZE = 10;
             int spawnCount = 0;
 
@@ -2253,20 +2253,21 @@ namespace ClockworkCraft
                 if (planName == null || !planName.StartsWith(CORRUPTION_PREFIX)) continue;
 
                 string entityName = planName.Substring(CORRUPTION_PREFIX.Length);
-                LittleCafe.CorruptionData data = corruptionDatabase.GetByName(entityName);
-                if (data == null || data.prefab == null) continue;
+                var entry = corruptionSpawnEntries.Find(e => e.entityName == entityName);
+                if (entry == null || entry.prefab == null) continue;
 
                 Vector3 worldPos = GridManager.Instance.GridToWorldPosition(x, y);
                 worldPos.y += 0.01f;
-                GameObject obj = Instantiate(data.prefab, worldPos, Quaternion.identity);
-                obj.name = $"{data.entityName}_{spawnCount}";
+                GameObject obj = Instantiate(entry.prefab, worldPos, Quaternion.identity);
+                obj.name = $"{entityName}_{spawnCount}";
 
-                // Pass database stats to the component before Start() fires
+                // Stats are serialized on the prefab's CorruptionHeart component — just set grid position
+                // and inject UnitDatabase so the heart can spawn spikes at runtime
                 var heart = obj.GetComponent<LittleCafe.CorruptionHeart>();
                 if (heart != null)
                 {
-                    heart.Initialize(data);
                     heart.GridPosition = new Vector2Int(x, y);
+                    heart.UnitDatabase = unitDatabase;
                 }
 
                 if (enableFog)
