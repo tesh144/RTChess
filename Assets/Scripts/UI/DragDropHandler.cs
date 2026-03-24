@@ -480,7 +480,11 @@ namespace ClockworkGrid
             bool placedWithFurniture = false;
 
             // NEW: Initialize FurnitureObject (LittleCafe furniture system)
-            LittleCafe.FurnitureObject furniture = unitObj.GetComponent<LittleCafe.FurnitureObject>();
+            // HoldToFill buildings skip the furniture system entirely — their hold interaction
+            // is used for filling, not removal, and they don't need connectivity/seating.
+            bool isHoldToFill = (currentDraggingIcon?.UnitStats?.productionInputType == LittleCafe.ProductionInputType.HoldToFill);
+
+            LittleCafe.FurnitureObject furniture = isHoldToFill ? null : unitObj.GetComponent<LittleCafe.FurnitureObject>();
             if (furniture != null)
             {
                 // Apply correct FurnitureType from database (variant prefabs may have wrong serialized type)

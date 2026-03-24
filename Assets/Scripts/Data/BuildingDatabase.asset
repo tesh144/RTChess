@@ -282,7 +282,7 @@ MonoBehaviour:
     productionOutputType: 15
     producedResourceType: 0
     productionAmount: 1
-    productionCostResourceType: 18
+    productionCostResourceType: 6
     productionCostAmount: 3
     productionCostIncrement: 1
   - active: 1
