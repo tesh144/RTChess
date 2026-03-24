@@ -93,7 +93,7 @@ namespace LittleCafe
             public bool         waitingForResources; // true when building needs to spend resources before starting timer
             public bool waitingForHoldFill;
             public int holdFillProgress;
-            public int resourcesRequiredIncrement;
+            public int productionCostIncrement;
             public WorkerData pendingWorker;
             public UnitStats pendingCard; // For RandomBuilding output
 
@@ -117,7 +117,7 @@ namespace LittleCafe
             public SphereCollider popupCollider;
 
             public float EffectiveInterval => baseInterval + (intervalBonus * collectCount);
-            public int EffectiveFillCost => productionCostAmount + (resourcesRequiredIncrement * collectCount);
+            public int EffectiveFillCost => productionCostAmount + (productionCostIncrement * collectCount);
         }
 
         private readonly List<ProductionEntry> entries = new List<ProductionEntry>();
@@ -191,7 +191,7 @@ namespace LittleCafe
                 waitingForResources        = (stats.productionCostAmount > 0 && stats.productionInputType != ProductionInputType.HoldToFill),
                 waitingForHoldFill         = (stats.productionInputType == ProductionInputType.HoldToFill),
                 holdFillProgress           = 0,
-                resourcesRequiredIncrement = stats.resourcesRequiredIncrement,
+                productionCostIncrement = stats.productionCostIncrement,
                 pendingWorker = null
             };
 

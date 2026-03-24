@@ -160,7 +160,7 @@ namespace ClockworkGrid
         public int productionCostAmount = 0;
 
         [Tooltip("Resource increment per hold tick for HoldToFill buildings. 0 = unused.")]
-        public int resourcesRequiredIncrement = 0;
+        public int productionCostIncrement = 0;
 
         [Header("Visuals")]
         public Color unitColor = Color.blue;
