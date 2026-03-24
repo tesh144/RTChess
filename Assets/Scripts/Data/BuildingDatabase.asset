@@ -159,7 +159,7 @@ MonoBehaviour:
     enemyInteractible: 1
     wildAnimalInteractible: 0
     isMealSource: 0
-    productionInputType: 3
+    productionInputType: 4
     productionInterval: 20
     productionIntervalBonus: 20
     productionOutputType: 5
