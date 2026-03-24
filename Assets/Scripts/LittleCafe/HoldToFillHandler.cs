@@ -29,7 +29,14 @@ namespace LittleCafe
         [SerializeField] private float fillBarHeight = 0.15f;
         [SerializeField] private float fillBarYOffset = -0.3f;
 
+        [Header("Audio")]
+        [SerializeField] private AudioClip chunkSFX;
+        [SerializeField] private AudioClip completionSFX;
+        [SerializeField] private float basePitch = 0.8f;
+        [SerializeField] private float maxPitch = 1.4f;
+
         // State
+        private AudioSource audioSource;
         private GameObject activeBuilding;
         private float chunkTimer;
         private float currentChunkInterval;
@@ -43,6 +50,7 @@ namespace LittleCafe
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+            audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
         }
 
         private void OnEnable()
@@ -292,7 +300,9 @@ namespace LittleCafe
             // Trigger VFX per chunk (Task 5)
             SpawnResourceStream(activeBuilding, info.resourceType);
 
-            // TODO Task 6: play chunk SFX
+            var updatedInfo = bpm.GetHoldFillInfo(activeBuilding);
+            float fillRatio = updatedInfo.effectiveCost > 0 ? (float)updatedInfo.progress / updatedInfo.effectiveCost : 0f;
+            PlayChunkSound(fillRatio);
 
             // Accelerate
             currentChunkInterval = Mathf.Max(
@@ -302,9 +312,23 @@ namespace LittleCafe
 
             if (fillComplete)
             {
-                // TODO Task 6: play completion SFX
+                PlayCompletionSound();
                 StopHold();
             }
+        }
+
+        private void PlayChunkSound(float fillRatio)
+        {
+            if (chunkSFX == null || audioSource == null) return;
+            audioSource.pitch = Mathf.Lerp(basePitch, maxPitch, fillRatio);
+            audioSource.PlayOneShot(chunkSFX);
+        }
+
+        private void PlayCompletionSound()
+        {
+            if (completionSFX == null || audioSource == null) return;
+            audioSource.pitch = 1.0f;
+            audioSource.PlayOneShot(completionSFX);
         }
 
         private void SpawnResourceStream(GameObject targetBuilding, ResourceType resourceType)
