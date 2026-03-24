@@ -229,6 +229,7 @@ namespace LittleCafe
                 if (entry.buildingObj == buildingObj)
                 {
                     entry.isPaused = true;
+                    HoldToFillHandler.Instance?.InterruptIfActive(entry.buildingObj);
                     if (entry.timerCanvasObj != null)
                         entry.timerCanvasObj.SetActive(false);
                     return;
@@ -549,6 +550,7 @@ namespace LittleCafe
 
                 if (entry.buildingObj == null)
                 {
+                    HoldToFillHandler.Instance?.InterruptIfActive(entry.buildingObj);
                     DestroyEntryVisuals(entry);
                     entries.RemoveAt(i);
                     continue;
