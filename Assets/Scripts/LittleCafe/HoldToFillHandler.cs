@@ -27,7 +27,7 @@ namespace LittleCafe
         [SerializeField] private Color fillBarBgColor = new Color(0.15f, 0.15f, 0.2f, 0.6f);
         [SerializeField] private float fillBarWidth = 1.2f;
         [SerializeField] private float fillBarHeight = 0.15f;
-        [SerializeField] private float fillBarYOffset = -0.3f;
+        [SerializeField] private float fillBarYOffset = 0.3f;
 
         [Header("Audio")]
         [SerializeField] private AudioClip chunkSFX;
@@ -242,19 +242,23 @@ namespace LittleCafe
             var bpm = BuildingProductionManager.Instance;
             if (bpm == null) return;
 
-            if (bpm.HasReadyPopupAt(hitObj))
+            // Resolve the hit (which may be a child collider/mesh) to the root building
+            GameObject building = bpm.ResolveHitToBuilding(hitObj);
+            if (building == null) return;
+
+            if (bpm.HasReadyPopupAt(building))
                 return;
 
-            if (!bpm.IsWaitingForHoldFill(hitObj))
+            if (!bpm.IsWaitingForHoldFill(building))
                 return;
 
-            if (bpm.IsBuildingPaused(hitObj))
+            if (bpm.IsBuildingPaused(building))
                 return;
 
             // Stop any existing hold before starting new one
             StopHold();
 
-            activeBuilding = hitObj;
+            activeBuilding = building;
             chunksThisSession = 0;
             currentChunkInterval = baseChunkInterval;
             chunkTimer = 0f;

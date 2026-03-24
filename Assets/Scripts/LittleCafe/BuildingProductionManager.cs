@@ -1447,6 +1447,24 @@ namespace LittleCafe
             public GameObject buildingObj;
         }
 
+        /// <summary>
+        /// Resolves a raycast hit object (which may be a child collider/mesh) to
+        /// the registered root building GameObject. Returns null if not found.
+        /// Same hierarchy-walk logic used by HandlePopupTap.
+        /// </summary>
+        public GameObject ResolveHitToBuilding(GameObject hitObj)
+        {
+            if (hitObj == null) return null;
+            foreach (var entry in entries)
+            {
+                if (entry.buildingObj == null) continue;
+                if (hitObj == entry.buildingObj ||
+                    hitObj.transform.IsChildOf(entry.buildingObj.transform))
+                    return entry.buildingObj;
+            }
+            return null;
+        }
+
         public bool IsWaitingForHoldFill(GameObject building)
         {
             var entry = entries.Find(e => e.buildingObj == building);
