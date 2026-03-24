@@ -1455,9 +1455,11 @@ namespace LittleCafe
         /// the registered root building GameObject. Returns null if not found.
         /// Same hierarchy-walk logic used by HandlePopupTap.
         /// </summary>
-        public GameObject ResolveHitToBuilding(GameObject hitObj)
+        public GameObject ResolveHitToBuilding(GameObject hitObj, Vector3 hitPoint = default)
         {
             if (hitObj == null) return null;
+
+            // Check 1: direct match or child of a registered building
             foreach (var entry in entries)
             {
                 if (entry.buildingObj == null) continue;
@@ -1465,6 +1467,26 @@ namespace LittleCafe
                     hitObj.transform.IsChildOf(entry.buildingObj.transform))
                     return entry.buildingObj;
             }
+
+            // Check 2: ground tile — resolve via grid cell occupant
+            // (same as HandlePopupTap Check 3)
+            if (hitPoint != default && GridManager.Instance != null)
+            {
+                int gx, gy;
+                if (GridManager.Instance.WorldToGridPosition(hitPoint, out gx, out gy))
+                {
+                    GameObject occupant = GridManager.Instance.GetCellOccupant(gx, gy);
+                    if (occupant != null)
+                    {
+                        foreach (var entry in entries)
+                        {
+                            if (entry.buildingObj == occupant)
+                                return entry.buildingObj;
+                        }
+                    }
+                }
+            }
+
             return null;
         }
 

@@ -258,8 +258,8 @@ namespace LittleCafe
             var bpm = BuildingProductionManager.Instance;
             if (bpm == null) { Debug.Log("[HoldToFill] TryStartHold: ABORT — BPM is null"); return; }
 
-            // Resolve the hit (which may be a child collider/mesh) to the root building
-            GameObject building = bpm.ResolveHitToBuilding(hitObj);
+            // Resolve the hit (which may be a child collider/mesh or a ground tile) to the root building
+            GameObject building = bpm.ResolveHitToBuilding(hitObj, hit.point);
             if (building == null)
             {
                 Debug.Log($"[HoldToFill] TryStartHold: ABORT — ResolveHitToBuilding returned null for '{hitObj.name}'. Entries count={bpm.EntryCount}");
