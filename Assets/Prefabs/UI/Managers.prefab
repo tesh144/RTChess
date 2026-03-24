@@ -194,8 +194,6 @@ MonoBehaviour:
   economyBalanceConfig: {fileID: 11400000, guid: c11171627b78b4c5cbac1b5557eb7844, type: 2}
   centerEnvironmentName: Goldmine
   clearingRadius: 1
-  corruptionDatabase: {fileID: 0}
-  corruptionSpawnEntries: []
   mapDensity: 0.6
   spawnEntries:
   - environmentName: Goldmine
@@ -240,13 +238,6 @@ MonoBehaviour:
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: Water
-  - environmentName: Bone
-    spawnMode: 0
-    spawnWeight: 0
-    minSpacing: 0
-    fragmentation: 0.3
-    clusterSpread: 0.6
-    edgeBorderOf: 
   unitSpawnEntries:
   - unitName: Dinosaur
     spawnMode: 0
@@ -261,6 +252,55 @@ MonoBehaviour:
     minSpacing: 5
     fragmentation: 0.5
     clusterSpread: 0.4
+    edgeBorderOf: 
+  - unitName: CorruptedHeart
+    spawnMode: 0
+    spawnWeight: 2
+    minSpacing: 4
+    fragmentation: 0.5
+    clusterSpread: 0.4
+    edgeBorderOf: 
+  - unitName: Spike1
+    spawnMode: 0
+    spawnWeight: 2
+    minSpacing: 4
+    fragmentation: 0.5
+    clusterSpread: 0.4
+    edgeBorderOf: 
+  - unitName: Spike2
+    spawnMode: 0
+    spawnWeight: 2
+    minSpacing: 4
+    fragmentation: 0.5
+    clusterSpread: 0.4
+    edgeBorderOf: 
+  corruptionSpawnEntries:
+  - entityName: CorruptedHeart
+    prefab: {fileID: 3891125815025428421, guid: e6178d83154944b29944b762ce570de0, type: 3}
+    spawnMode: 0
+    spawnCount: 5
+    minDistFromCenter: 10
+    minSpacing: 8
+    fragmentation: 0.4
+    clusterSpread: 0.5
+    edgeBorderOf: 
+  - entityName: Spike1
+    prefab: {fileID: 5310634814577635811, guid: 465cf5512f6b444d0aca541502f10bed, type: 3}
+    spawnMode: 0
+    spawnCount: 5
+    minDistFromCenter: 10
+    minSpacing: 8
+    fragmentation: 0.4
+    clusterSpread: 0.5
+    edgeBorderOf: 
+  - entityName: Spike2
+    prefab: {fileID: 5028432610595724756, guid: cc8d22feddd3c4a3991944784e631183, type: 3}
+    spawnMode: 0
+    spawnCount: 5
+    minDistFromCenter: 10
+    minSpacing: 8
+    fragmentation: 0.4
+    clusterSpread: 0.5
     edgeBorderOf: 
 --- !u!1 &6706931420203540427
 GameObject:
@@ -422,8 +462,56 @@ Transform:
   - {fileID: 2811489072605248795}
   - {fileID: 4635167958019617686}
   - {fileID: 2129646175590079657}
+  - {fileID: 2663884284594737060}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8569992685382959820
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2663884284594737060}
+  - component: {fileID: 1817720487229440558}
+  m_Layer: 0
+  m_Name: CorruptionManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2663884284594737060
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8569992685382959820}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -821.41675, y: -486.7499, z: -0.45521}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3909088470510346116}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1817720487229440558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8569992685382959820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8886d5b8b8e521e4793431ea894e5abf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.CorruptionManager
+  spreadInterval: 30
+  heartActivationRadius: 5
+  corruptionOverlayPrefab: {fileID: 2274087348341675862, guid: 4bc9b527bd2cb4ba9bd20a667243c636, type: 3}
 --- !u!1 &9035113113404508760
 GameObject:
   m_ObjectHideFlags: 0

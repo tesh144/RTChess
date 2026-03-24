@@ -20,8 +20,8 @@
 
 | Agent | Task | Status |
 |-------|------|--------|
-| Co-Work | #117 New Buildings: Scrapper, Garden, Rabbit Farm | In Progress — DB entries moved to correct databases; production logic pending |
-| Co-Work | #22 Corruption System | In Progress — data arch + thorns + spike spawning done; environment entries corrected |
+| Co-Work | #117 New Buildings: Scrapper, Garden, Rabbit Farm | In Progress — DB entries synced; scene spawn cleanup done; production logic pending |
+| Co-Work | #22 Corruption System | In Progress — data arch + thorns + spike spawning done; scene entries cleaned up |
 
 ---
 
@@ -101,6 +101,12 @@
 | 2026-03-24 | Co-Work | EnvironmentDatabase.asset: Added Scrap (loot=Scrap/32, HP=5, isMapGenerated=false), PetRabbit (loot=Meat/23, HP=3, isMapGenerated=false), TreeSeed (loot=Wood/2, HP=5, isMapGenerated=false). Existing entries updated with isMapGenerated=true + dropOnDeath=0. |
 | 2026-03-24 | Co-Work | BuildingDatabase.asset synced with latest Google Sheets: Statue interval 10→15, Barracks interval 10→20 bonus 20→30, Kitchen cost Food/10→Meat/3 +increment 1, all wildAnimalInteractible corrected. RabbitFarm/Garden +productionCostIncrement=1. |
 | 2026-03-24 | Co-Work | SheetCache.json fully rewritten with all 3 sheets' latest data including new columns (MapGenerated, Drop on Death, Resource Increment, Input Card, etc.). |
+| 2026-03-24 | Co-Work | Pet Rabbit → Lizard rename: BuildingData.cs enum (ProductionOutputType.Lizard), SheetSyncEditor aliases, EnvironmentDatabase.asset (assetName: Lizard), SheetCache.json, Google Sheets (Buildings & Production Output column). |
+| 2026-03-24 | Co-Work | Custom PropertyDrawers: DatabaseEntryDrawers.cs — NamedEntryDrawer base class + 6 drawers (Building/Environment/Unit/Worker/Furniture/Currency). Inspector now shows asset names instead of "Element N". |
+| 2026-03-24 | Co-Work | SyncCorruptionSpawnEntries() rewritten: removes invalid/empty/inactive entries, updates prefabs on existing, adds missing from UnitDatabase. |
+| 2026-03-24 | Co-Work | SyncSpawnEntries() isMapGenerated filter: non-map-generated environment objects (Scrap, Lizard, TreeSeed) excluded from map generator spawn list. |
+| 2026-03-24 | Co-Work | Scene file cleanup: Corruption entries shifted from indices 1-3 to 0-2 (removed unnamed empty entry at index 0). spawnEntries reduced 8→6 (removed Scrap/Lizard at indices 6-7, non-map-generated). |
+| 2026-03-24 | Co-Work | Google Sheets Output dropdown: Updated Buildings & Production column M validation to include all buildings (with emoji), all environment types (with emoji), workers, and tier draws. |
 
 ---
 

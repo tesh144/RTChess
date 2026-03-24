@@ -666,6 +666,53 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 545960978}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &650257396
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 650257398}
+  - component: {fileID: 650257397}
+  m_Layer: 0
+  m_Name: CorruptionManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &650257397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 650257396}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8886d5b8b8e521e4793431ea894e5abf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.CorruptionManager
+  spreadInterval: 30
+  heartActivationRadius: 5
+  corruptionOverlayPrefab: {fileID: 2274087348341675862, guid: 4bc9b527bd2cb4ba9bd20a667243c636, type: 3}
+--- !u!4 &650257398
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 650257396}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.33463, y: 0, z: -0.45521}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &755167175
 GameObject:
   m_ObjectHideFlags: 0
@@ -1718,32 +1765,168 @@ PrefabInstance:
       value: 120
       objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: enableFog
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: mapHeight
       value: 120
       objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionDatabase
+      value: 
+      objectReference: {fileID: 11400000, guid: 5b1863fb6efc4f6458e11a5290e36838, type: 2}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: spawnEntries.Array.size
-      value: 7
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].spawnWeight
+      propertyPath: unitSpawnEntries.Array.size
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].clusterSpread
-      value: 0.6
+      propertyPath: corruptionSpawnEntries.Array.size
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].fragmentation
-      value: 0.3
+      propertyPath: unitSpawnEntries.Array.data[2].unitName
+      value: CorruptedHeart
       objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].environmentName
-      value: Bone
+      propertyPath: unitSpawnEntries.Array.data[3].unitName
+      value: Spike1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[4].unitName
+      value: Spike2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[2].minSpacing
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[3].minSpacing
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[4].minSpacing
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[2].spawnWeight
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[3].spawnWeight
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[4].spawnWeight
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[0].prefab
+      value: 
+      objectReference: {fileID: 3891125815025428421, guid: e6178d83154944b29944b762ce570de0, type: 3}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[1].prefab
+      value: 
+      objectReference: {fileID: 5310634814577635811, guid: 465cf5512f6b444d0aca541502f10bed, type: 3}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[2].prefab
+      value: 
+      objectReference: {fileID: 5028432610595724756, guid: cc8d22feddd3c4a3991944784e631183, type: 3}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[2].clusterSpread
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[2].fragmentation
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[3].clusterSpread
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[3].fragmentation
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[4].clusterSpread
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitSpawnEntries.Array.data[4].fragmentation
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[0].entityName
+      value: CorruptedHeart
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[0].minSpacing
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[0].spawnCount
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[1].entityName
+      value: Spike1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[1].minSpacing
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[1].spawnCount
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[2].entityName
+      value: Spike2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[2].minSpacing
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[2].spawnCount
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[0].clusterSpread
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[0].fragmentation
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[1].clusterSpread
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[1].fragmentation
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[2].clusterSpread
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[2].fragmentation
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[0].minDistFromCenter
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[1].minDistFromCenter
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionSpawnEntries.Array.data[2].minDistFromCenter
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7692711440160710592, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: m_Name
@@ -1948,7 +2131,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3999109263222092446, guid: ca72ee9706328451697b0a6fc0fb4826, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -55.25061
+      value: -55.25049
       objectReference: {fileID: 0}
     - target: {fileID: 4334760630780682364, guid: ca72ee9706328451697b0a6fc0fb4826, type: 3}
       propertyPath: m_Pivot.x
@@ -2372,3 +2555,4 @@ SceneRoots:
   - {fileID: 9035382247615089692}
   - {fileID: 5338089454353429927}
   - {fileID: 4778128516260304820}
+  - {fileID: 650257398}

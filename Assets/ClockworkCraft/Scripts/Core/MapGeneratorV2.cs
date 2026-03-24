@@ -561,6 +561,7 @@ namespace ClockworkCraft
                 foreach (var envData in environmentDatabase.AllEnvironment)
                 {
                     if (!envData.active) continue; // skip inactive entries
+                    if (!envData.isMapGenerated) continue; // only map-generated objects go into spawn entries
                     if (existing.TryGetValue(envData.assetName, out var kept))
                         synced.Add(kept);
                     else
@@ -2013,15 +2014,34 @@ namespace ClockworkCraft
         public void SyncCorruptionSpawnEntries()
         {
             if (unitDatabase == null) return;
+
+            // Remove invalid entries (empty name, no longer in database, or inactive)
+            var validNames = new System.Collections.Generic.HashSet<string>();
             foreach (var data in unitDatabase.GetByType(LittleCafe.GameUnitType.Corruption))
             {
-                bool exists = corruptionSpawnEntries.Exists(e => e.entityName == data.assetName);
-                if (!exists)
+                if (data.active)
+                    validNames.Add(data.assetName);
+            }
+            corruptionSpawnEntries.RemoveAll(e =>
+                string.IsNullOrEmpty(e.entityName) || !validNames.Contains(e.entityName));
+
+            // Add missing entries + update prefabs on existing ones
+            foreach (var data in unitDatabase.GetByType(LittleCafe.GameUnitType.Corruption))
+            {
+                if (!data.active) continue;
+                var existing = corruptionSpawnEntries.Find(e => e.entityName == data.assetName);
+                if (existing != null)
+                {
+                    existing.prefab = data.prefab;
+                }
+                else
+                {
                     corruptionSpawnEntries.Add(new CorruptionSpawnEntry
                     {
                         entityName = data.assetName,
                         prefab     = data.prefab
                     });
+                }
             }
         }
 
