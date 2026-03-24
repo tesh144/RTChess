@@ -28,6 +28,7 @@ namespace LittleCafe
 
         private GameObject visualChild;
         private GameObject pausedOccupant;
+        private Transform occupantTransform; // Cached for visual positioning
         private System.Action<GridEntityHealth> occupantDeathHandler;
 
         // ── Lifecycle ──────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ namespace LittleCafe
         public void InitWithOccupant(GameObject occupant)
         {
             if (occupant == null) return;
+            occupantTransform = occupant.transform;
 
             if (BuildingProductionManager.Instance != null)
             {
@@ -128,7 +130,32 @@ namespace LittleCafe
 
             if (prefab != null)
             {
-                visualChild = Instantiate(prefab, transform);
+                // If there's an occupant (tree, building, etc.), parent to it and
+                // position at RefHeight so the fire sits on top of the object.
+                // If no occupant (empty ground), parent to the tile at ground level.
+                if (occupantTransform != null)
+                {
+                    Transform refHeight = FindRefHeight(occupantTransform);
+                    if (refHeight != null)
+                    {
+                        visualChild = Instantiate(prefab, refHeight);
+                        visualChild.transform.localPosition = Vector3.zero;
+                    }
+                    else
+                    {
+                        // No RefHeight — place at top of occupant using renderer bounds
+                        visualChild = Instantiate(prefab, occupantTransform);
+                        float height = EstimateHeight(occupantTransform);
+                        visualChild.transform.localPosition = new Vector3(0f, height, 0f);
+                    }
+                }
+                else
+                {
+                    // Empty ground — parent to tile, sit on surface
+                    visualChild = Instantiate(prefab, transform);
+                    visualChild.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+                }
+
                 visualChild.name = "CorruptionVisual";
                 visualChild.SetActive(true);
             }
@@ -150,10 +177,39 @@ namespace LittleCafe
                     r.sortingOrder = 10;
                 }
 
-                // Remove collider — workers target the tile via GridManager, not by raycast on this quad
                 var col = visualChild.GetComponent<Collider>();
                 if (col != null) Destroy(col);
             }
+        }
+
+        /// <summary>Find a child named "RefHeight" in the hierarchy.</summary>
+        private static Transform FindRefHeight(Transform root)
+        {
+            for (int i = 0; i < root.childCount; i++)
+            {
+                if (root.GetChild(i).name == "RefHeight")
+                    return root.GetChild(i);
+            }
+            // Recursive search
+            foreach (Transform child in root)
+            {
+                var found = FindRefHeight(child);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        /// <summary>Estimate object height from renderer bounds when no RefHeight exists.</summary>
+        private static float EstimateHeight(Transform root)
+        {
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0) return 0.5f;
+
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+                bounds.Encapsulate(renderers[i].bounds);
+
+            return bounds.max.y - root.position.y;
         }
     }
 }
