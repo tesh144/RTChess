@@ -535,14 +535,6 @@ namespace LittleCafe.Editor
                     if (existing.tier != newTier) { existing.tier = newTier; changed = true; }
                 }
 
-                // Slot Takeable
-                string slotStr = GetValue(row, "Slot Takeable");
-                if (!string.IsNullOrEmpty(slotStr))
-                {
-                    bool newSlotTakeable = slotStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || slotStr == "1";
-                    if (existing.isSlotTakeable != newSlotTakeable) { existing.isSlotTakeable = newSlotTakeable; changed = true; }
-                }
-
                 if (changed)
                 {
                     updated++;
@@ -618,15 +610,6 @@ namespace LittleCafe.Editor
                 if (existing.isEnemy != isEnemy)
                 {
                     existing.isEnemy = isEnemy;
-                    changed = true;
-                }
-
-                // Slot Takeable
-                string slotStr = GetValue(row, "Slot Takeable");
-                bool slotTakeable = slotStr.Equals("TRUE", StringComparison.OrdinalIgnoreCase);
-                if (existing.isSlotTakeable != slotTakeable)
-                {
-                    existing.isSlotTakeable = slotTakeable;
                     changed = true;
                 }
 

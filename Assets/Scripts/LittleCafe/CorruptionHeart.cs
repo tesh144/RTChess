@@ -8,16 +8,19 @@ namespace LittleCafe
     /// Dormant until the player reveals a tile within heartActivationRadius. Owns a set of
     /// corrupted tiles tracked by CorruptionManager. When destroyed, its entire cluster is cleared.
     ///
-    /// Stats (HP, attack power, indicator prefab) are injected via Initialize(CorruptionData)
-    /// by MapGeneratorV2 immediately after instantiation, before Start() runs.
-    /// GridPosition must also be set by map gen before Start().
+    /// Stats are serialized directly on the prefab — no CorruptionData/CorruptionDatabase needed.
+    /// GridPosition must be set by map gen before Start().
     /// </summary>
     public class CorruptionHeart : MonoBehaviour
     {
-        // ── Stats — set via Initialize(), not hardcoded ──────────────────
-        private int maxHP = 10;
-        private int attackPower = 1;
-        private GameObject floatingIndicatorPrefab;
+        // ── Stats — serialized on the prefab ─────────────────────────────
+        [Header("Stats")]
+        [SerializeField] private int maxHP = 10;
+        [SerializeField] private int attackPower = 1;
+
+        [Header("Visuals")]
+        [Tooltip("Billboard sprite prefab that floats above the heart. A magenta placeholder quad is used if null.")]
+        [SerializeField] private GameObject floatingIndicatorPrefab;
 
         public bool IsActive { get; private set; } = false;
 
@@ -28,24 +31,8 @@ namespace LittleCafe
 
         private GameObject floatingIndicatorInstance;
 
-        // ── Lifecycle ──────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Called by MapGeneratorV2 immediately after Instantiate(), before Start() runs.
-        /// Transfers stat values from the CorruptionDatabase entry onto this component.
-        /// </summary>
-        public void Initialize(CorruptionData data)
-        {
-            if (data == null) return;
-            maxHP                   = data.hp;
-            attackPower             = data.attackPower;
-            floatingIndicatorPrefab = data.floatingIndicatorPrefab;
-        }
-
         private void Awake()
         {
-            // Add the health component now so it exists when other systems query it,
-            // but defer Initialize() until Start() when our own stats are set.
             Health = gameObject.AddComponent<GridEntityHealth>();
         }
 

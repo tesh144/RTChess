@@ -73,8 +73,7 @@ namespace LittleCafe
         /// <param name="killerAdvances">When killed, does the attacker advance into this cell? Maps to sheet "Killer's Behavior" (Advance/Stay).</param>
         public void AttachComponents(GameObject go, int hp, int attackPower, bool isActive,
             BehaviorType behaviorType = BehaviorType.RotateAndInteract,
-            string registryName = null, bool allied = false, bool killerAdvances = true,
-            bool? slotTakeableOverride = null)
+            string registryName = null, bool allied = false, bool killerAdvances = true)
         {
             if (go == null) return;
 
@@ -94,10 +93,7 @@ namespace LittleCafe
                 if (ClockworkCraft.InteractionRegistry.Instance != null)
                     canInteract = ClockworkCraft.InteractionRegistry.Instance.IsUnlocked(lookupName);
 
-                // slotTakeable: use explicit override if provided, else fall back to killerAdvances for backward compat
-                bool slotTakeable = slotTakeableOverride ?? killerAdvances;
-
-                health.Initialize(hp, attackPower, canInteract, allied, slotTakeable);
+                health.Initialize(hp, attackPower, canInteract, allied, killerAdvances);
                 allHealth.Add(health);
 
                 // Attach HP bar (shows on damage, fades after timeout)
@@ -136,11 +132,10 @@ namespace LittleCafe
         public void AttachComponents(GameObject go, int hp, int attackPower, bool isActive,
             ResourceType lootResourceType, int lootHpCost = 1, int lootYield = 1,
             BehaviorType behaviorType = BehaviorType.RotateAndInteract,
-            string registryName = null, bool allied = false, bool killerAdvances = true,
-            bool? slotTakeableOverride = null)
+            string registryName = null, bool allied = false, bool killerAdvances = true)
         {
             // Attach base health + actor
-            AttachComponents(go, hp, attackPower, isActive, behaviorType, registryName, allied, killerAdvances, slotTakeableOverride);
+            AttachComponents(go, hp, attackPower, isActive, behaviorType, registryName, allied, killerAdvances);
 
             // Attach ResourceNode for loot if a resource type is specified
             if (lootResourceType != ResourceType.None && go != null)
@@ -186,8 +181,7 @@ namespace LittleCafe
         {
             if (data == null) return;
             AttachComponents(go, data.hp, data.attackPower, data.isActive, data.behaviorType,
-                registryName: data.assetName, allied: true, killerAdvances: data.killerAdvances,
-                slotTakeableOverride: data.isSlotTakeable);
+                registryName: data.assetName, allied: true, killerAdvances: data.killerAdvances);
         }
 
         /// <summary>
@@ -198,8 +192,7 @@ namespace LittleCafe
             if (data == null) return;
             AttachComponents(go, data.hp, data.attackPower, data.isActive,
                 data.lootResourceType, data.lootHpCost, data.lootYield, data.behaviorType,
-                registryName: data.assetName, allied: false, killerAdvances: data.killerAdvances,
-                slotTakeableOverride: data.isSlotTakeable);
+                registryName: data.assetName, allied: false, killerAdvances: data.killerAdvances);
         }
 
         /// <summary>

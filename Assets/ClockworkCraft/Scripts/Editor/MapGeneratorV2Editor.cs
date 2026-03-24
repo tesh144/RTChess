@@ -19,7 +19,7 @@ namespace ClockworkCraft
             // Draw everything except custom-drawn fields
             DrawPropertiesExcluding(serializedObject,
                 "centerEnvironmentName", "mapDensity", "spawnEntries",
-                "unitSpawnEntries");
+                "unitSpawnEntries", "corruptionSpawnEntries");
 
             // ── Center dropdown ──────────────────────────────────────
             EditorGUILayout.Space();
@@ -43,7 +43,7 @@ namespace ClockworkCraft
             }
 
             // ══════════════════════════════════════════════════════════
-            // Spawn Distribution (combined environment + units)
+            // Spawn Distribution (combined environment + units + corruption)
             // ══════════════════════════════════════════════════════════
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Spawn Distribution", EditorStyles.boldLabel);
@@ -103,13 +103,15 @@ namespace ClockworkCraft
                     }
 
                     gen.SyncSpawnEntries();
+                    gen.SyncCorruptionSpawnEntries();
                     EditorUtility.SetDirty(gen);
-                    serializedObject.Update();  // Refresh serialized state after direct field writes
+                    serializedObject.Update();
                 }
 
                 bool emptyEnv = hasEnvDB && gen.spawnEntries.Count == 0 && gen.environmentDatabase.AllEnvironment.Count > 0;
                 bool emptyUnit = hasUnitDB && gen.unitSpawnEntries.Count == 0 && gen.unitDatabase.Count > 0;
-                if (emptyEnv || emptyUnit)
+                bool emptyCorruption = hasUnitDB && gen.corruptionSpawnEntries.Count == 0;
+                if (emptyEnv || emptyUnit || emptyCorruption)
                 {
                     EditorGUILayout.HelpBox("No spawn entries. Click 'Sync from Database' to populate.", MessageType.Warning);
                 }
@@ -134,6 +136,7 @@ namespace ClockworkCraft
                     if (gen.environmentDatabase != null || gen.unitDatabase != null)
                     {
                         gen.SyncSpawnEntries();
+                        gen.SyncCorruptionSpawnEntries();
                         EditorUtility.SetDirty(gen);
                         serializedObject.Update();
                     }
@@ -146,6 +149,8 @@ namespace ClockworkCraft
                 if (!string.IsNullOrEmpty(e.environmentName)) allNames.Add(e.environmentName);
             foreach (var e in gen.unitSpawnEntries)
                 if (!string.IsNullOrEmpty(e.unitName)) allNames.Add(e.unitName);
+            foreach (var e in gen.corruptionSpawnEntries)
+                if (!string.IsNullOrEmpty(e.entityName)) allNames.Add(e.entityName);
             string[] allNameArray = allNames.ToArray();
 
             // ── Combined weight + budget for all entries ────────────
@@ -226,6 +231,79 @@ namespace ClockworkCraft
                     DrawSpawnModeFields(entryProp, modeProp, weightProp, spacingProp, mode, allNameArray, "edgeBorderOf", "Spawn Near");
                     EditorGUI.indentLevel--;
 
+                    EditorGUILayout.EndVertical();
+                }
+            }
+
+            // ── Corruption entry cards ───────────────────────────────
+            if (hasUnitDB && gen.corruptionSpawnEntries.Count > 0)
+            {
+                SerializedProperty corruptionEntriesProp = serializedObject.FindProperty("corruptionSpawnEntries");
+                for (int i = 0; i < corruptionEntriesProp.arraySize; i++)
+                {
+                    SerializedProperty entryProp    = corruptionEntriesProp.GetArrayElementAtIndex(i);
+                    SerializedProperty nameProp      = entryProp.FindPropertyRelative("entityName");
+                    SerializedProperty modeProp      = entryProp.FindPropertyRelative("spawnMode");
+                    SerializedProperty countProp     = entryProp.FindPropertyRelative("spawnCount");
+                    SerializedProperty minDistProp   = entryProp.FindPropertyRelative("minDistFromCenter");
+                    SerializedProperty spacingProp   = entryProp.FindPropertyRelative("minSpacing");
+
+                    string entryName = nameProp.stringValue;
+                    if (string.IsNullOrEmpty(entryName)) entryName = "(unnamed)";
+
+                    SpawnMode mode = (SpawnMode)modeProp.enumValueIndex;
+
+                    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                    EditorGUILayout.LabelField($"\u2620  {entryName}  \u2014  {countProp.intValue} hearts", EditorStyles.boldLabel);
+
+                    EditorGUI.indentLevel++;
+
+                    EditorGUILayout.PropertyField(modeProp, new GUIContent("Spawn Mode"));
+                    EditorGUILayout.PropertyField(countProp, new GUIContent("Spawn Count",
+                        "Exact number of this entity to place on the map."));
+                    EditorGUILayout.PropertyField(minDistProp, new GUIContent("Min Dist from Center",
+                        "Minimum Chebyshev distance from player start."));
+
+                    switch (mode)
+                    {
+                        case SpawnMode.Scattered:
+                            EditorGUILayout.PropertyField(spacingProp, new GUIContent("Min Spacing"));
+                            break;
+
+                        case SpawnMode.Clustered:
+                            SerializedProperty fragProp   = entryProp.FindPropertyRelative("fragmentation");
+                            SerializedProperty spreadProp = entryProp.FindPropertyRelative("clusterSpread");
+
+                            float f = fragProp.floatValue;
+                            int previewClusters = Mathf.Max(2, Mathf.RoundToInt(Mathf.Lerp(2f, 12f, f)));
+                            float loosePct = Mathf.Lerp(0f, 40f, f);
+
+                            EditorGUILayout.PropertyField(fragProp, new GUIContent("Fragmentation",
+                                "0 = few large cohesive blobs. 1 = many small clusters with loose break-off pieces."));
+                            EditorGUILayout.HelpBox(
+                                $"~{previewClusters} blobs + {loosePct:F0}% loose pieces",
+                                MessageType.None);
+                            EditorGUILayout.PropertyField(spreadProp, new GUIContent("Spread",
+                                "Blob shape: 0 = stringy/organic, 1 = round/blobby."));
+                            break;
+
+                        case SpawnMode.Edge:
+                            SerializedProperty borderProp = entryProp.FindPropertyRelative("edgeBorderOf");
+                            if (allNameArray.Length > 0)
+                            {
+                                int curIdx = System.Array.IndexOf(allNameArray, borderProp.stringValue);
+                                if (curIdx < 0) curIdx = 0;
+                                int newIdx = EditorGUILayout.Popup("Spawn Near", curIdx, allNameArray);
+                                borderProp.stringValue = allNameArray[newIdx];
+                            }
+                            else
+                            {
+                                EditorGUILayout.PropertyField(borderProp, new GUIContent("Spawn Near"));
+                            }
+                            break;
+                    }
+
+                    EditorGUI.indentLevel--;
                     EditorGUILayout.EndVertical();
                 }
             }

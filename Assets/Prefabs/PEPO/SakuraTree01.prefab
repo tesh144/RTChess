@@ -67,6 +67,7 @@ MonoBehaviour:
   gridX: 0
   gridY: 0
   gridSize: {x: 1, y: 1}
+  fogRevealRadius: 1
 --- !u!1 &4663450184719598765
 GameObject:
   m_ObjectHideFlags: 0
@@ -134,7 +135,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &4776926021428701029
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -148,6 +149,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -161,6 +163,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4415604575297409269}
     m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 3650de2c910304391bb02a2c1b3d15cc, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.79671
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3650de2c910304391bb02a2c1b3d15cc, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.79671
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3650de2c910304391bb02a2c1b3d15cc, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.79671
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3650de2c910304391bb02a2c1b3d15cc, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -204,6 +218,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 3650de2c910304391bb02a2c1b3d15cc, type: 3}
       propertyPath: m_Name
       value: SakuraTree01_FBX
+      objectReference: {fileID: 0}
+    - target: {fileID: 7750397243111347764, guid: 3650de2c910304391bb02a2c1b3d15cc, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
