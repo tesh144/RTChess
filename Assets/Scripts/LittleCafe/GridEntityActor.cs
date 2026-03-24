@@ -52,7 +52,21 @@ namespace LittleCafe
         [SerializeField] private bool verboseLogging = false;
 
         // Cached references
-        private FurnitureObject furnitureObject;
+        private FurnitureObject _furnitureObject;
+        private bool _furnitureObjectCached;
+        private FurnitureObject furnitureObject
+        {
+            get
+            {
+                if (!_furnitureObjectCached)
+                {
+                    _furnitureObject = GetComponent<FurnitureObject>();
+                    if (_furnitureObject != null)
+                        _furnitureObjectCached = true;
+                }
+                return _furnitureObject;
+            }
+        }
         private GridEntityHealth health;
         private Animator animator;
         private Transform animatorHolder;
@@ -220,7 +234,7 @@ namespace LittleCafe
 
         private void CacheReferences()
         {
-            furnitureObject = GetComponent<FurnitureObject>();
+            // furnitureObject is now lazy-loaded via property (may be added after Initialize)
             health = GetComponent<GridEntityHealth>();
 
             // Find the AnimatorHolder child (PEPO prefab convention)
