@@ -1496,6 +1496,16 @@ namespace LittleCafe
             return entry != null && entry.waitingForHoldFill;
         }
 
+        /// <summary>
+        /// Returns true if the building uses HoldToFill input type (regardless of current production state).
+        /// Used by FurnitureRemovalHandler to exclude these buildings from hold-to-remove.
+        /// </summary>
+        public bool IsHoldToFillBuilding(GameObject building)
+        {
+            var entry = entries.Find(e => e.buildingObj == building);
+            return entry != null && entry.inputType == ProductionInputType.HoldToFill;
+        }
+
         public HoldFillInfo GetHoldFillInfo(GameObject building)
         {
             var entry = entries.Find(e => e.buildingObj == building);

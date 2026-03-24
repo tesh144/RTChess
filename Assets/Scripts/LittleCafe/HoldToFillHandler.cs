@@ -53,7 +53,6 @@ namespace LittleCafe
             Instance = this;
             audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
             mainCamera = Camera.main;
-            Debug.Log($"[HoldToFill] Awake — Instance created. mainCamera={(mainCamera != null ? "OK" : "NULL")}");
         }
 
         private void OnEnable()
@@ -158,13 +157,6 @@ namespace LittleCafe
 
             // LateUpdate ensures HandlePopupTap (in Update) runs first and consumes clicks.
             var bpm = BuildingProductionManager.Instance;
-            if (Input.GetMouseButtonDown(0))
-            {
-                // DEBUG: log every click to trace where it fails
-                bool bpmNull = (bpm == null);
-                bool consumed = bpm != null && bpm.ClickConsumedThisFrame;
-                Debug.Log($"[HoldToFill] CLICK detected. bpm={!bpmNull}, consumed={consumed}");
-            }
             if (bpm != null && Input.GetMouseButtonDown(0) && !bpm.ClickConsumedThisFrame)
             {
                 TryStartHold();
@@ -240,52 +232,28 @@ namespace LittleCafe
         {
             // Input priority: don't activate if dragging
             if (DragDropHandler.Instance != null && DragDropHandler.Instance.IsDragging)
-            {
-                Debug.Log("[HoldToFill] TryStartHold: ABORT — DragDropHandler is dragging");
                 return;
-            }
 
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
             if (!Physics.Raycast(ray, out RaycastHit hit, 100f))
-            {
-                Debug.Log("[HoldToFill] TryStartHold: ABORT — raycast hit nothing");
                 return;
-            }
 
             GameObject hitObj = hit.collider.gameObject;
-            Debug.Log($"[HoldToFill] TryStartHold: raycast hit '{hitObj.name}' (layer={hitObj.layer})");
-
             var bpm = BuildingProductionManager.Instance;
-            if (bpm == null) { Debug.Log("[HoldToFill] TryStartHold: ABORT — BPM is null"); return; }
+            if (bpm == null) return;
 
             // Resolve the hit (which may be a child collider/mesh or a ground tile) to the root building
             GameObject building = bpm.ResolveHitToBuilding(hitObj, hit.point);
-            if (building == null)
-            {
-                Debug.Log($"[HoldToFill] TryStartHold: ABORT — ResolveHitToBuilding returned null for '{hitObj.name}'. Entries count={bpm.EntryCount}");
-                return;
-            }
-            Debug.Log($"[HoldToFill] TryStartHold: resolved to building '{building.name}'");
+            if (building == null) return;
 
             if (bpm.HasReadyPopupAt(building))
-            {
-                Debug.Log("[HoldToFill] TryStartHold: ABORT — building has ready popup");
                 return;
-            }
 
             if (!bpm.IsWaitingForHoldFill(building))
-            {
-                Debug.Log($"[HoldToFill] TryStartHold: ABORT — IsWaitingForHoldFill=false for '{building.name}'");
                 return;
-            }
 
             if (bpm.IsBuildingPaused(building))
-            {
-                Debug.Log("[HoldToFill] TryStartHold: ABORT — building is paused/corrupted");
                 return;
-            }
-
-            Debug.Log($"[HoldToFill] TryStartHold: SUCCESS — starting hold on '{building.name}'");
 
             // Stop any existing hold before starting new one
             StopHold();

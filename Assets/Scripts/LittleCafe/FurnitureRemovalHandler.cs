@@ -136,6 +136,11 @@ namespace LittleCafe
             FurnitureObject furniture = occupantObj.GetComponent<FurnitureObject>();
             if (furniture == null) return;
 
+            // HoldToFill buildings use hold-click for filling, not removal
+            if (BuildingProductionManager.Instance != null &&
+                BuildingProductionManager.Instance.IsHoldToFillBuilding(occupantObj))
+                return;
+
             isHolding = true;
             holdTimer = 0f;
             holdTarget = furniture;
