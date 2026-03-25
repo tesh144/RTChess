@@ -1,0 +1,23 @@
+{
+  "skill_name": "clockwork-workflow",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "ok lets get started, check the trello board and see whats on my plate. tag anything that needs tags and clean up any messy cards",
+      "expected_output": "Should trigger Phase 1 — read the Trello board, identify cards assigned to Jai, apply labels to untagged cards, fix spelling in titles/descriptions, flag any stale cards, and report back with a summary of available work.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I just updated a bunch of stuff in the Workers & Entities sheet, can you pull the latest and make sure the databases match? I changed some HP values and movement behaviors",
+      "expected_output": "Should trigger Phase 2 — fetch Workers & Entities sheet via Google Sheets MCP, update SheetCache.json with fresh data and new lastSynced timestamp, then compare key fields (hp, behaviorType, etc.) between the cache and UnitDatabase.asset / WorkerDatabase.asset, reporting any mismatches.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I just finished fixing the corruption spike friendly fire bug, do a review of my changes before I move the card",
+      "expected_output": "Should trigger Phase 3 — run git diff to see all changes, do two review passes (correctness then quality), check for stripped comments or missing null checks, verify .asset changes match sheet data, then update the Trello card with a completion comment and move it to Ready for Review.",
+      "files": []
+    }
+  ]
+}

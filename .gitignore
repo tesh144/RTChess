@@ -85,5 +85,6 @@ Thumbs.db
 # Large PSD source files
 *.psd
 
-# Claude Code
-.claude/
+# Claude Code — ignore settings but keep skills
+.claude/*
+!.claude/skills/
