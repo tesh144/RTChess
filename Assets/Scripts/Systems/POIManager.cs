@@ -1,0 +1,293 @@
+using System.Collections.Generic;
+using UnityEngine;
+using ClockworkGrid;
+using LittleCafe;
+
+namespace ClockworkCraft
+{
+    /// <summary>
+    /// Manages POI bubbles floating above fogged objects near the explored border.
+    /// Hearts always show a bubble. Env objects use a rolling window of up to maxEnvBubbles.
+    /// Added to the Managers GameObject in the Inspector.
+    /// </summary>
+    public class POIManager : MonoBehaviour
+    {
+        public static POIManager Instance { get; private set; }
+
+        [Header("Prefab & Database")]
+        [SerializeField] private POIBubble bubblePrefab;
+        [SerializeField] private POIDatabase poiDatabase;
+
+        [Header("Window Settings")]
+        [Tooltip("Maximum number of env-object POI bubbles shown at once.")]
+        [SerializeField] private int maxEnvBubbles = 5;
+
+        [Tooltip("A fog-side env object qualifies if any revealed cell is within this many tiles (Manhattan distance).")]
+        [SerializeField] private float fogBorderRadius = 3f;
+
+        [Tooltip("Pre-instantiated pool size for heart bubbles (in addition to maxEnvBubbles).")]
+        [SerializeField] private int heartPoolSize = 6;
+
+        [Header("Animation")]
+        [SerializeField] private float bobHeight = 0.15f;
+        [SerializeField] private float bobDuration = 1.4f;
+        [SerializeField] private float popInDuration = 0.25f;
+        [SerializeField] private float fadeOutDuration = 0.4f;
+        [SerializeField] private float heightAboveGround = 2.5f;
+
+        // ── Registries ──────────────────────────────────────────────────
+
+        private struct EnvPOIEntry
+        {
+            public Vector2Int gridPos;
+            public string assetName;
+        }
+
+        private readonly Dictionary<Vector2Int, CorruptionHeart> heartRegistry
+            = new Dictionary<Vector2Int, CorruptionHeart>();
+
+        private readonly Dictionary<Vector2Int, EnvPOIEntry> envRegistry
+            = new Dictionary<Vector2Int, EnvPOIEntry>();
+
+        // Active bubbles keyed by grid position
+        private readonly Dictionary<Vector2Int, POIBubble> activeBubbles
+            = new Dictionary<Vector2Int, POIBubble>();
+
+        // Pool
+        private readonly List<POIBubble> pool = new List<POIBubble>();
+
+        // ── Lifecycle ───────────────────────────────────────────────────
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+
+            CreatePool();
+        }
+
+        private void OnDestroy()
+        {
+            if (FogManager.Instance != null)
+                FogManager.Instance.OnCellRevealed -= OnCellRevealed;
+        }
+
+        // ── Public API ──────────────────────────────────────────────────
+
+        /// <summary>Called by CorruptionHeart after it registers with CorruptionManager.</summary>
+        public void RegisterHeart(CorruptionHeart heart)
+        {
+            if (heart == null) return;
+            var pos = heart.GridPosition;
+            if (heartRegistry.ContainsKey(pos)) return;
+            heartRegistry[pos] = heart;
+
+            // Hearts always get a bubble immediately
+            ShowBubble(pos, "Corruption");
+        }
+
+        /// <summary>Called by CorruptionHeart.OnDestroy().</summary>
+        public void UnregisterHeart(CorruptionHeart heart)
+        {
+            if (heart == null) return;
+            var pos = heart.GridPosition;
+            DismissBubble(pos);
+            heartRegistry.Remove(pos);
+        }
+
+        /// <summary>Called by MapGeneratorV2 after each env object spawn.</summary>
+        public void RegisterEnvPOI(Vector2Int gridPos, string assetName)
+        {
+            if (poiDatabase == null) return;
+            // Only register if this asset type has a POI entry
+            if (poiDatabase.GetByTypeName(assetName) == null) return;
+            if (envRegistry.ContainsKey(gridPos)) return;
+
+            envRegistry[gridPos] = new EnvPOIEntry
+            {
+                gridPos = gridPos,
+                assetName = assetName
+            };
+        }
+
+        /// <summary>Called by MapGeneratorV2 after all spawning is complete.</summary>
+        public void Initialize()
+        {
+            if (FogManager.Instance != null)
+            {
+                FogManager.Instance.OnCellRevealed -= OnCellRevealed; // avoid double-subscribe
+                FogManager.Instance.OnCellRevealed += OnCellRevealed;
+            }
+
+            RefreshEnvWindow();
+            Debug.Log($"[POIManager] Initialized. Hearts: {heartRegistry.Count}, Env POIs: {envRegistry.Count}");
+        }
+
+        // ── Fog Event ───────────────────────────────────────────────────
+
+        private void OnCellRevealed(int x, int y)
+        {
+            var coord = new Vector2Int(x, y);
+
+            // Heart discovered
+            if (heartRegistry.TryGetValue(coord, out var heart) && heart != null)
+            {
+                AwardApproval("Corruption");
+                DismissBubble(coord);
+                heartRegistry.Remove(coord);
+            }
+
+            // Env POI discovered
+            if (envRegistry.TryGetValue(coord, out var entry))
+            {
+                AwardApproval(entry.assetName);
+                DismissBubble(coord);
+                envRegistry.Remove(coord);
+            }
+
+            // Border expanded — refresh which env POIs qualify
+            RefreshEnvWindow();
+        }
+
+        // ── Rolling Window ──────────────────────────────────────────────
+
+        private void RefreshEnvWindow()
+        {
+            if (FogManager.Instance == null) return;
+
+            // Count current active env bubbles (exclude hearts)
+            int activeEnvCount = 0;
+            foreach (var kvp in activeBubbles)
+            {
+                if (!heartRegistry.ContainsKey(kvp.Key) && kvp.Value.IsActive)
+                    activeEnvCount++;
+            }
+
+            int openSlots = maxEnvBubbles - activeEnvCount;
+            if (openSlots <= 0) return;
+
+            // Build candidates: in fog, near border, not already showing a bubble
+            var candidates = new List<(Vector2Int pos, EnvPOIEntry entry, int dist)>();
+
+            foreach (var kvp in envRegistry)
+            {
+                var pos = kvp.Key;
+                if (activeBubbles.ContainsKey(pos)) continue;
+
+                // Must still be in fog
+                if (FogManager.Instance.IsCellRevealed(pos.x, pos.y)) continue;
+
+                int minDist = MinManhattanDistToRevealed(pos);
+                if (minDist <= (int)fogBorderRadius)
+                    candidates.Add((pos, kvp.Value, minDist));
+            }
+
+            // Sort by distance ascending (most discoverable first)
+            candidates.Sort((a, b) => a.dist.CompareTo(b.dist));
+
+            // Fill open slots
+            int filled = 0;
+            for (int i = 0; i < candidates.Count && filled < openSlots; i++)
+            {
+                ShowBubble(candidates[i].pos, candidates[i].entry.assetName);
+                filled++;
+            }
+        }
+
+        private int MinManhattanDistToRevealed(Vector2Int pos)
+        {
+            // Bounded scan around pos — more efficient than iterating all revealed cells
+            int radius = (int)fogBorderRadius + 1;
+            int minDist = int.MaxValue;
+
+            for (int dx = -radius; dx <= radius; dx++)
+            for (int dy = -radius; dy <= radius; dy++)
+            {
+                int nx = pos.x + dx;
+                int ny = pos.y + dy;
+                if (FogManager.Instance.IsCellRevealed(nx, ny))
+                {
+                    int dist = Mathf.Abs(dx) + Mathf.Abs(dy);
+                    if (dist < minDist) minDist = dist;
+                }
+            }
+
+            return minDist;
+        }
+
+        // ── Bubble Management ───────────────────────────────────────────
+
+        private void ShowBubble(Vector2Int gridPos, string assetName)
+        {
+            if (activeBubbles.ContainsKey(gridPos)) return;
+
+            var bubble = GetFromPool();
+            if (bubble == null) return;
+
+            var data = poiDatabase != null ? poiDatabase.GetByTypeName(assetName) : null;
+            string text = data != null ? data.label : assetName;
+            Color color = data != null ? data.bubbleColor : Color.white;
+
+            Vector3 worldPos = GridManager.Instance != null
+                ? GridManager.Instance.GridToWorldPosition(gridPos.x, gridPos.y)
+                : new Vector3(gridPos.x, 0f, gridPos.y);
+            worldPos.y += heightAboveGround;
+
+            bubble.Setup(text, color, worldPos);
+            activeBubbles[gridPos] = bubble;
+        }
+
+        private void DismissBubble(Vector2Int gridPos)
+        {
+            if (!activeBubbles.TryGetValue(gridPos, out var bubble)) return;
+            bubble.Dismiss();
+            activeBubbles.Remove(gridPos);
+        }
+
+        private void AwardApproval(string assetName)
+        {
+            if (poiDatabase == null) return;
+            var data = poiDatabase.GetByTypeName(assetName);
+            if (data == null || data.approvalReward <= 0) return;
+
+            if (ResourceManager.Instance != null)
+                ResourceManager.Instance.AddResource(ResourceType.Approval, data.approvalReward);
+        }
+
+        // ── Pool ────────────────────────────────────────────────────────
+
+        private void CreatePool()
+        {
+            if (bubblePrefab == null) return;
+            int total = maxEnvBubbles + heartPoolSize;
+
+            for (int i = 0; i < total; i++)
+            {
+                var bubble = Instantiate(bubblePrefab, transform);
+                bubble.SetAnimParams(popInDuration, bobHeight, bobDuration, fadeOutDuration);
+                bubble.gameObject.SetActive(false);
+                pool.Add(bubble);
+            }
+        }
+
+        private POIBubble GetFromPool()
+        {
+            foreach (var bubble in pool)
+            {
+                if (!bubble.IsActive && !bubble.gameObject.activeSelf)
+                    return bubble;
+            }
+            // Pool exhausted — create overflow instance
+            if (bubblePrefab == null) return null;
+            var overflow = Instantiate(bubblePrefab, transform);
+            overflow.SetAnimParams(popInDuration, bobHeight, bobDuration, fadeOutDuration);
+            overflow.gameObject.SetActive(false);
+            pool.Add(overflow);
+            return overflow;
+        }
+    }
+}
