@@ -27,6 +27,8 @@ namespace LittleCafe
         public GridEntityHealth Health { get; private set; }
 
         private GameObject visualChild;
+        private Material _fogMaterial;
+        private Texture2D _fogTexture;
         private GameObject pausedOccupant;
         private Transform occupantTransform; // Cached for visual positioning
         private System.Action<GridEntityHealth> occupantDeathHandler;
@@ -106,6 +108,10 @@ namespace LittleCafe
                 occupantDeathHandler = null;
             }
 
+            // Destroy fog material and texture to avoid memory leaks
+            if (_fogMaterial != null) { Destroy(_fogMaterial); _fogMaterial = null; }
+            if (_fogTexture  != null) { Destroy(_fogTexture);  _fogTexture  = null; }
+
             // Destroy visual child
             if (visualChild != null)
             {
@@ -161,24 +167,110 @@ namespace LittleCafe
             }
             else
             {
-                // Placeholder: purple quad sitting above the tile surface
-                visualChild = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                visualChild.name = "CorruptionVisual_Placeholder";
-                visualChild.transform.SetParent(transform);
-                visualChild.transform.localPosition = new Vector3(0f, 0.55f, 0f);
-                visualChild.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                visualChild.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+                // Code-driven purple fog particle system — no prefab or texture assets needed
 
-                var r = visualChild.GetComponent<MeshRenderer>();
-                if (r != null)
+                // Step 1: Generate soft-circle texture (radial alpha gradient)
+                _fogTexture = new Texture2D(32, 32, TextureFormat.RGBA32, false);
+                Vector2 center = new Vector2(15.5f, 15.5f);
+                for (int px = 0; px < 32; px++)
                 {
-                    r.material = new Material(Shader.Find("Sprites/Default"));
-                    r.material.color = new Color(0.45f, 0f, 0.7f, 0.75f);
-                    r.sortingOrder = 10;
+                    for (int py = 0; py < 32; py++)
+                    {
+                        float dist = Vector2.Distance(new Vector2(px, py), center);
+                        float t = Mathf.Clamp01(1f - dist / 16f);
+                        float alpha = t * t;
+                        _fogTexture.SetPixel(px, py, new Color(1f, 1f, 1f, alpha));
+                    }
                 }
+                _fogTexture.Apply();
 
-                var col = visualChild.GetComponent<Collider>();
-                if (col != null) Destroy(col);
+                // Step 2: Create material (Particles/Standard Unlit, alpha-blended)
+                var sh = Shader.Find("Particles/Standard Unlit");
+                if (sh == null)
+                {
+                    Debug.LogError("[CorruptionOverlay] Shader 'Particles/Standard Unlit' not found.");
+                    return;
+                }
+                _fogMaterial = new Material(sh);
+                _fogMaterial.mainTexture = _fogTexture;
+                _fogMaterial.SetFloat("_Mode", 2f);
+                _fogMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                _fogMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                _fogMaterial.SetInt("_ZWrite", 0);
+                _fogMaterial.EnableKeyword("_ALPHABLEND_ON");
+                _fogMaterial.renderQueue = 3000;
+
+                // Step 3: Create child GameObject and ParticleSystem
+                visualChild = new GameObject("CorruptionFog");
+                visualChild.transform.SetParent(transform);
+                visualChild.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+                visualChild.transform.localRotation = Quaternion.identity;
+                visualChild.transform.localScale    = Vector3.one;
+
+                var ps = visualChild.AddComponent<ParticleSystem>();
+
+                // Step 4: Configure ParticleSystem modules
+                var main = ps.main;
+                main.duration        = 3f;
+                main.loop            = true;
+                main.startLifetime   = 2.5f;
+                main.startSpeed      = 0.04f;
+                main.startSize       = 0.45f;
+                main.maxParticles    = 60;
+                main.simulationSpace = ParticleSystemSimulationSpace.Local;
+                main.gravityModifier = 0f;
+                main.startColor = new ParticleSystem.MinMaxGradient(
+                    new Color(0.45f, 0f, 0.75f, 0.5f),
+                    new Color(0.60f, 0f, 0.85f, 0.5f)
+                );
+
+                var emission = ps.emission;
+                emission.enabled = true;
+                emission.rateOverTime = 20f;
+
+                var shape = ps.shape;
+                shape.enabled   = true;
+                shape.shapeType = ParticleSystemShapeType.Box;
+                shape.scale     = new Vector3(0.85f, 0.05f, 0.85f);
+
+                // Colour over lifetime: fade in → hold → fade out
+                var gradient = new Gradient();
+                gradient.alphaKeys = new GradientAlphaKey[]
+                {
+                    new GradientAlphaKey(0f, 0.0f),
+                    new GradientAlphaKey(1f, 0.2f),
+                    new GradientAlphaKey(1f, 0.8f),
+                    new GradientAlphaKey(0f, 1.0f),
+                };
+                gradient.colorKeys = new GradientColorKey[]
+                {
+                    new GradientColorKey(Color.white, 0f),
+                    new GradientColorKey(Color.white, 1f),
+                };
+                var colOverLife = ps.colorOverLifetime;
+                colOverLife.enabled = true;
+                colOverLife.color   = new ParticleSystem.MinMaxGradient(gradient);
+
+                // Size over lifetime: expand then shrink
+                var sizeCurve = new AnimationCurve(
+                    new Keyframe(0f,   0.8f),
+                    new Keyframe(0.5f, 1.0f),
+                    new Keyframe(1f,   0.6f)
+                );
+                var sizeOverLife = ps.sizeOverLifetime;
+                sizeOverLife.enabled = true;
+                sizeOverLife.size    = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
+
+                // Renderer
+                var psr = visualChild.GetComponent<ParticleSystemRenderer>();
+                psr.material         = _fogMaterial;
+                psr.renderMode       = ParticleSystemRenderMode.Billboard;
+                psr.sortingOrder     = 10;
+                psr.sortingLayerName = "Default";
+
+                // Start playback
+                visualChild.SetActive(true);
+                ps.Play();
             }
         }
 

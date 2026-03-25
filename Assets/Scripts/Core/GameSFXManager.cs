@@ -20,6 +20,7 @@ namespace ClockworkGrid
         // ─── Audio Sources ──────────────────────────────────────────────
         private AudioSource sfxSource;       // Main SFX channel
         private AudioSource uiSource;        // UI-specific channel (unaffected by game pause)
+        private AudioSource coinSource;      // Dedicated channel for coin collect escalation (isolated pitch)
 
         // ─── Volume ─────────────────────────────────────────────────────
         [Header("Volume")]
@@ -81,10 +82,12 @@ namespace ClockworkGrid
         private const float FOG_REVEAL_DEBOUNCE = 0.15f; // Only play once per 150ms
 
         private float lastCoinCollectTime = -1f;
-        private const float COIN_COLLECT_DEBOUNCE = 0.015f;  // 15ms — very tight, lets rapid arrivals layer
         private int coinCollectBurstCount = 0;
-        private const int MAX_COIN_COLLECT_BURST = 15;       // High cap — big hauls should keep escalating
-        private const float COIN_BURST_RESET_TIME = 1.5f;    // 1.5s — loot particles arrive spread over ~1s, don't reset mid-batch
+        private const int MAX_COIN_COLLECT_BURST = 15;
+        private const float COIN_BURST_RESET_TIME = 1.5f;
+        private const float COIN_STAGGER_INTERVAL = 0.06f;   // 60ms between queued sounds — guarantees distinct dings
+        private readonly System.Collections.Generic.Queue<int> coinSoundQueue = new System.Collections.Generic.Queue<int>();
+        private float nextCoinPlayTime = 0f;
 
         // ─────────────────────────────────────────────────────────────────
         // Lifecycle
@@ -110,8 +113,19 @@ namespace ClockworkGrid
             uiSource.spatialBlend = 0f;
             uiSource.ignoreListenerPause = true;
 
+            // Dedicated coin collect source — isolated from sfxSource so other SFX
+            // can't stomp the escalating pitch mid-burst
+            coinSource = gameObject.AddComponent<AudioSource>();
+            coinSource.playOnAwake = false;
+            coinSource.spatialBlend = 0f;
+
             // Generate procedural fallback clips for critical sounds
             GenerateProceduralFallbacks();
+        }
+
+        private void Update()
+        {
+            DrainCoinSoundQueue();
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -228,10 +242,10 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Play when a single loot particle arrives at the resource bar.
-        /// Uses ascending pitch within a burst to convey quantity — collecting
-        /// many items produces a satisfying escalating "ding-ding-ding" scale.
-        /// Volume also swells slightly with burst count for impact.
+        /// Called when a loot particle arrives at the resource bar.
+        /// Enqueues the sound for staggered playback — even if 10 particles arrive
+        /// on the same frame, each produces a distinct, ascending-pitch ding
+        /// spaced 60ms apart. No debounce needed; the queue handles spacing.
         /// </summary>
         public void PlayCoinCollect()
         {
@@ -241,26 +255,35 @@ namespace ClockworkGrid
             if (timeSinceLast > COIN_BURST_RESET_TIME)
                 coinCollectBurstCount = 0;
 
-            // Cap how many sounds play per batch
+            // Cap how many sounds queue per batch
             if (coinCollectBurstCount >= MAX_COIN_COLLECT_BURST) return;
-
-            // Still debounce rapid-fire calls (but tighter than before)
-            if (timeSinceLast < COIN_COLLECT_DEBOUNCE) return;
 
             lastCoinCollectTime = Time.unscaledTime;
             coinCollectBurstCount++;
 
-            // Ascending pitch: each successive coin steps up a clear musical interval.
-            // Starts at 0.8 and climbs ~0.12 per step → very noticeable scale over a burst.
-            float basePitch = 0.8f + (coinCollectBurstCount * 0.12f);
-            float pitch = basePitch + Random.Range(-0.02f, 0.02f);
+            // Enqueue the burst index — Update() drains at staggered intervals
+            coinSoundQueue.Enqueue(coinCollectBurstCount);
+        }
 
-            // Volume swell: later items in a burst play noticeably louder (up to 1.6x)
-            float burstVolume = masterVolume * Mathf.Lerp(0.85f, 1.6f, (float)coinCollectBurstCount / MAX_COIN_COLLECT_BURST);
+        /// <summary>
+        /// Drains one queued coin sound per COIN_STAGGER_INTERVAL on the dedicated
+        /// coinSource AudioSource. Guarantees every arrival is audibly distinct.
+        /// </summary>
+        private void DrainCoinSoundQueue()
+        {
+            if (coinSoundQueue.Count == 0) return;
+            if (coinCollect == null || coinSource == null) return;
+            if (Time.unscaledTime < nextCoinPlayTime) return;
 
-            if (coinCollect == null || sfxSource == null) return;
-            sfxSource.pitch = pitch;
-            sfxSource.PlayOneShot(coinCollect, burstVolume);
+            int burstIndex = coinSoundQueue.Dequeue();
+
+            float pitch = 0.8f + (burstIndex * 0.12f) + Random.Range(-0.02f, 0.02f);
+            float volume = masterVolume * Mathf.Lerp(0.85f, 1.6f, (float)burstIndex / MAX_COIN_COLLECT_BURST);
+
+            coinSource.pitch = pitch;
+            coinSource.PlayOneShot(coinCollect, volume);
+
+            nextCoinPlayTime = Time.unscaledTime + COIN_STAGGER_INTERVAL;
         }
 
         /// <summary>Play when a loot particle reaches its final destination.</summary>

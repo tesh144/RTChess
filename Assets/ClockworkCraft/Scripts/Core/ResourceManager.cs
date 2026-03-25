@@ -194,12 +194,8 @@ namespace ClockworkCraft
             resources[type] += amount;
             OnResourceChanged?.Invoke(type, resources[type]);
 
-            // Play escalating coin collect SFX for currency resources
-            // Successive collections pitch up and swell in volume to convey "big haul" feeling
-            if (type == ResourceType.Gold)
-            {
-                ClockworkGrid.GameSFXManager.Instance?.PlayCoinCollect();
-            }
+            // SFX removed — coin collect sound is triggered by ResourceLootFX on particle arrival.
+            // Having it here too caused double-calls that broke the burst timing.
 
             Debug.Log($"[ResourceManager] +{amount} {type} → total {resources[type]}");
         }
