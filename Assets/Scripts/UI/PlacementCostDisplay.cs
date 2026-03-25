@@ -56,6 +56,7 @@ namespace LittleCafe
             public int stackIndex;           // 0 = bottom, 1 = next up, etc.
             public Color baseIconColor;
             public Color baseTextColor;
+            public PlacementCost cost;       // Stored for live re-evaluation of affordability
         }
 
         private void Awake()
@@ -87,12 +88,25 @@ namespace LittleCafe
                 if (cam != null)
                     e.root.transform.rotation = cam.transform.rotation;
 
+                // Re-evaluate affordability each frame so gaining resources mid-drag updates the display
+                bool nowAffordable = CanAfford(e.cost);
+                if (nowAffordable != e.canAfford)
+                {
+                    e.canAfford = nowAffordable;
+                    e.baseTextColor = nowAffordable ? Color.white : new Color(1f, 0.3f, 0.3f);
+                    entries[i] = e;
+                }
+
                 // Pulse only the text when unaffordable — icon keeps its normal look
                 if (!e.canAfford)
                 {
                     Color textC = e.baseTextColor;
                     textC.a = pulseAlpha;
                     if (e.quantityText != null) e.quantityText.color = textC;
+                }
+                else if (e.quantityText != null)
+                {
+                    e.quantityText.color = Color.white;
                 }
             }
         }
@@ -273,7 +287,8 @@ namespace LittleCafe
                 canAfford = canAfford,
                 stackIndex = stackIndex,
                 baseIconColor = iconColor,
-                baseTextColor = textColor
+                baseTextColor = textColor,
+                cost = cost
             });
         }
 
