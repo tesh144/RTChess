@@ -666,6 +666,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 545960978}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &694181744 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3909088470510346116, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+  m_PrefabInstance: {fileID: 4778128516260304820}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &755167175
 GameObject:
   m_ObjectHideFlags: 0
@@ -1317,6 +1322,60 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef3f3617cfcb7449b89d1062e397ac2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1315825324
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1315825325}
+  - component: {fileID: 1315825326}
+  m_Layer: 0
+  m_Name: POI Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1315825325
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1315825324}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 694181744}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1315825326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1315825324}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cf91ee5e0268674186edfa1637ca57a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.POIManager
+  bubblePrefab: {fileID: 0}
+  poiDatabase: {fileID: 0}
+  maxEnvBubbles: 5
+  fogBorderRadius: 3
+  heartPoolSize: 6
+  bobHeight: 0.15
+  bobDuration: 1.4
+  popInDuration: 0.25
+  fadeOutDuration: 0.4
+  heightAboveGround: 2.5
 --- !u!114 &1611081465 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6882083484004807931, guid: ca72ee9706328451697b0a6fc0fb4826, type: 3}
@@ -1726,10 +1785,6 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: enableFog
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: mapHeight
       value: 60
       objectReference: {fileID: 0}
@@ -1791,7 +1846,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 3909088470510346116, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1315825325}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
 --- !u!1001 &5338089454353429927

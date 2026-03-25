@@ -180,8 +180,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd8bdef01a0ef42deb5cb241e26801ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapWidth: 80
-  mapHeight: 80
+  mapWidth: 60
+  mapHeight: 60
   cellSize: 1.5
   seed: 0
   enableFog: 1
@@ -209,7 +209,7 @@ MonoBehaviour:
     edgeBorderOf: 
   - environmentName: Tree
     spawnMode: 0
-    spawnWeight: 7
+    spawnWeight: 6.6
     minSpacing: 0
     fragmentation: 0.35
     clusterSpread: 0.15
@@ -232,7 +232,7 @@ MonoBehaviour:
     spawnMode: 1
     spawnWeight: 4
     minSpacing: 0
-    fragmentation: 0.15
+    fragmentation: 0.763
     clusterSpread: 0.7
     edgeBorderOf: 
   - environmentName: Flowers
@@ -257,7 +257,71 @@ MonoBehaviour:
     fragmentation: 0.5
     clusterSpread: 0.4
     edgeBorderOf: 
-  corruptionSpawnEntries: []
+  corruptionSpawnEntries:
+  - entityName: CorruptedHeart
+    prefab: {fileID: 3119510917662581751, guid: 8ec6bc77c596f0a4a901c5b5dd5b9370, type: 3}
+    spawnMode: 0
+    spawnCount: 5
+    minDistFromCenter: 10
+    minSpacing: 8
+    fragmentation: 0.4
+    clusterSpread: 0.5
+    edgeBorderOf: 
+    initialCorruptionRadius: 0
+--- !u!1 &5602963096750714910
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4463995966958978971}
+  - component: {fileID: 78387799121497973}
+  m_Layer: 0
+  m_Name: POI Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4463995966958978971
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5602963096750714910}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3909088470510346116}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &78387799121497973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5602963096750714910}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cf91ee5e0268674186edfa1637ca57a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.POIManager
+  bubblePrefab: {fileID: 0}
+  poiDatabase: {fileID: 0}
+  maxEnvBubbles: 5
+  fogBorderRadius: 3
+  heartPoolSize: 6
+  bobHeight: 0.15
+  bobDuration: 1.4
+  popInDuration: 0.25
+  fadeOutDuration: 0.4
+  heightAboveGround: 2.5
 --- !u!1 &6706931420203540427
 GameObject:
   m_ObjectHideFlags: 0
@@ -419,6 +483,7 @@ Transform:
   - {fileID: 4635167958019617686}
   - {fileID: 2129646175590079657}
   - {fileID: 2663884284594737060}
+  - {fileID: 4463995966958978971}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8569992685382959820
@@ -513,7 +578,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c804562981b5d245902fc8cab948981, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.HoldToFillHandler
-  baseChunkInterval: 0.5
+  baseChunkInterval: 0.25
   chunkDecayFactor: 0.85
   minChunkInterval: 0.08
   streamFlyDuration: 0.4
