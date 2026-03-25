@@ -42,10 +42,6 @@ namespace LittleCafe
         [Range(1, 8)]
         [SerializeField] private int spikeMinCorruptedNeighbors = 8;
 
-        [Header("Visuals")]
-        [Tooltip("Billboard sprite prefab that floats above the heart. A magenta placeholder quad is used if null.")]
-        [SerializeField] private GameObject floatingIndicatorPrefab;
-
         public bool IsActive { get; private set; } = false;
 
         /// <summary>Grid coordinates of this heart. Set by map generation before Start().</summary>
@@ -66,7 +62,6 @@ namespace LittleCafe
         /// </summary>
         public int InitialCorruptedRadius { get; set; } = 1;
 
-        private GameObject floatingIndicatorInstance;
         private float spikeSpawnTimer;
         private bool hasInitialized;
 
@@ -109,7 +104,11 @@ namespace LittleCafe
 
             spikeSpawnTimer = spikeSpawnInterval;
 
-            SpawnFloatingIndicator();
+            // Register with POIManager for fog-edge bubble display.
+            // This lives inside EnsureInitialized (not Start) because FogHideable can
+            // deactivate hearts before Start() fires — EnsureInitialized is called
+            // explicitly by MapGeneratorV2 before that happens.
+            ClockworkCraft.POIManager.Instance?.RegisterHeart(this);
         }
 
         private void Update()
@@ -133,8 +132,7 @@ namespace LittleCafe
                 Health.OnDamagedBy -= OnDamagedByAttacker;
             }
 
-            if (floatingIndicatorInstance != null)
-                Destroy(floatingIndicatorInstance);
+            ClockworkCraft.POIManager.Instance?.UnregisterHeart(this);
         }
 
         // ── Public ────────────────────────────────────────────────────────
@@ -286,32 +284,5 @@ namespace LittleCafe
             return count;
         }
 
-        private void SpawnFloatingIndicator()
-        {
-            if (floatingIndicatorPrefab != null)
-            {
-                floatingIndicatorInstance = Instantiate(floatingIndicatorPrefab, transform.position + Vector3.up * 2.5f, Quaternion.identity);
-                floatingIndicatorInstance.name = "CorruptionHeartIndicator";
-            }
-            else
-            {
-                // Placeholder: a magenta quad floating above the heart
-                floatingIndicatorInstance = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                floatingIndicatorInstance.name = "CorruptionHeartIndicator_Placeholder";
-                floatingIndicatorInstance.transform.position = transform.position + Vector3.up * 2.5f;
-                floatingIndicatorInstance.transform.localScale = Vector3.one * 0.6f;
-
-                var r = floatingIndicatorInstance.GetComponent<MeshRenderer>();
-                if (r != null)
-                {
-                    r.material = new Material(Shader.Find("Sprites/Default"));
-                    r.material.color = new Color(0.8f, 0f, 1f, 0.9f);
-                    r.sortingOrder = 200;
-                }
-
-                var col = floatingIndicatorInstance.GetComponent<Collider>();
-                if (col != null) Destroy(col);
-            }
-        }
     }
 }

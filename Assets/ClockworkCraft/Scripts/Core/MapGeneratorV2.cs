@@ -896,6 +896,9 @@ namespace ClockworkCraft
             // ── Spawn corruption entities (staggered) ─────────────────
             yield return StartCoroutine(SpawnAllCorruptionEntitiesStaggered());
 
+            // Initialize POI system now that all objects are registered
+            POIManager.Instance?.Initialize();
+
             Debug.Log($"[MapGenV2] Map generated. Seed={seed}  Size={width}x{height}  Center=({center.x},{center.y})  Nodes={NodeManager.Instance?.NodeCount}");
         }
 
@@ -1703,6 +1706,8 @@ namespace ClockworkCraft
                     TriggerAppearAnimation(obj);
 
                 GridManager.Instance?.PlaceUnit(x, y, obj, CellState.Resource);
+                // Register as POI candidate if this env type is in the POI database
+                POIManager.Instance?.RegisterEnvPOI(new Vector2Int(x, y), envData.assetName);
 
                 count++;
                 if (count % BATCH_SIZE == 0)
