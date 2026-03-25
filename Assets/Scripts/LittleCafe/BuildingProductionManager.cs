@@ -614,9 +614,9 @@ namespace LittleCafe
                     else if (entry.outputType == ProductionOutputType.Scrap)
                     { } // Scrap is a currency reward, no pending card needed
                     else if (entry.outputType == ProductionOutputType.Lizard)
-                        entry.pendingCard = RaritySystem.Instance?.FindByName("Lizard");
+                        entry.pendingCard = CardPool.Instance?.FindByName("Lizard");
                     else if (entry.outputType == ProductionOutputType.TreeSeed)
-                        entry.pendingCard = RaritySystem.Instance?.FindByName("TreeSeed");
+                        entry.pendingCard = CardPool.Instance?.FindByName("TreeSeed");
                     else if (IsTierBuildingOutput(entry.outputType))
                         entry.pendingCard = DrawRandomBuildingByTier(GetTierFromOutput(entry.outputType));
                     else if (IsTierUnitOutput(entry.outputType))
@@ -1161,7 +1161,7 @@ namespace LittleCafe
         // ─────────────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Draw a random card from the RaritySystem pool.
+        /// Draw a random card from the CardPool pool.
         /// Same as what the draw button does.
         /// </summary>
         /// <summary>
@@ -1170,13 +1170,13 @@ namespace LittleCafe
         /// </summary>
         private UnitStats DrawRandomBuilding()
         {
-            if (RaritySystem.Instance == null)
+            if (CardPool.Instance == null)
             {
-                Debug.LogWarning("[BuildingProduction] No RaritySystem — can't draw random card");
+                Debug.LogWarning("[BuildingProduction] No CardPool — can't draw random card");
                 return null;
             }
 
-            UnitStats drawn = RaritySystem.Instance.DrawRandomUnit();
+            UnitStats drawn = CardPool.Instance.DrawRandomUnit();
             if (drawn != null && verboseLogging)
                 Debug.Log($"[BuildingProduction] Drew random card: {drawn.unitName} ({drawn.rarity})");
             return drawn;
@@ -1188,13 +1188,13 @@ namespace LittleCafe
         /// </summary>
         private UnitStats DrawRandomBuildingByTier(int tier)
         {
-            if (RaritySystem.Instance == null)
+            if (CardPool.Instance == null)
             {
-                Debug.LogWarning("[BuildingProduction] No RaritySystem — can't draw tier building");
+                Debug.LogWarning("[BuildingProduction] No CardPool — can't draw tier building");
                 return null;
             }
 
-            UnitStats drawn = RaritySystem.Instance.DrawRandomBuildingByTier(tier);
+            UnitStats drawn = CardPool.Instance.DrawRandomBuildingByTier(tier);
             if (drawn != null && verboseLogging)
                 Debug.Log($"[BuildingProduction] Drew tier {tier} building: {drawn.unitName}");
             return drawn;
@@ -1206,13 +1206,13 @@ namespace LittleCafe
         /// </summary>
         private UnitStats DrawRandomUnitByTier(int tier)
         {
-            if (RaritySystem.Instance == null)
+            if (CardPool.Instance == null)
             {
-                Debug.LogWarning("[BuildingProduction] No RaritySystem — can't draw tier unit");
+                Debug.LogWarning("[BuildingProduction] No CardPool — can't draw tier unit");
                 return null;
             }
 
-            UnitStats drawn = RaritySystem.Instance.DrawRandomUnitByTier(tier);
+            UnitStats drawn = CardPool.Instance.DrawRandomUnitByTier(tier);
             if (drawn != null && verboseLogging)
                 Debug.Log($"[BuildingProduction] Drew tier {tier} unit: {drawn.unitName}");
             return drawn;
@@ -1295,10 +1295,10 @@ namespace LittleCafe
         /// </summary>
         private UnitStats FindMealCard()
         {
-            if (RaritySystem.Instance == null) return null;
-            UnitStats feast = RaritySystem.Instance.FindByName("Feast");
+            if (CardPool.Instance == null) return null;
+            UnitStats feast = CardPool.Instance.FindByName("Feast");
             if (feast == null)
-                Debug.LogWarning("[BuildingProduction] 'Feast' card not found in RaritySystem pool");
+                Debug.LogWarning("[BuildingProduction] 'Feast' card not found in CardPool pool");
             return feast;
         }
 
@@ -1308,10 +1308,10 @@ namespace LittleCafe
         /// </summary>
         private UnitStats FindFighterCard()
         {
-            if (RaritySystem.Instance == null) return null;
-            UnitStats fighter = RaritySystem.Instance.FindByName("Fighter");
+            if (CardPool.Instance == null) return null;
+            UnitStats fighter = CardPool.Instance.FindByName("Fighter");
             if (fighter == null)
-                Debug.LogWarning("[BuildingProduction] 'Fighter' card not found in RaritySystem pool");
+                Debug.LogWarning("[BuildingProduction] 'Fighter' card not found in CardPool pool");
             return fighter;
         }
 

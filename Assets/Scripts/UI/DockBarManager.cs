@@ -143,7 +143,7 @@ namespace ClockworkGrid
         // ── Draw Action ─────────────────────────────────────────────
 
         /// <summary>
-        /// Execute a draw: spend tokens, pull from RaritySystem, add card to hand.
+        /// Execute a draw: spend tokens, pull from CardPool, add card to hand.
         /// Called by DrawButtonController.
         /// </summary>
         public void OnDrawButtonClicked()
@@ -171,9 +171,9 @@ namespace ClockworkGrid
 
             drawCount++;
 
-            if (RaritySystem.Instance != null)
+            if (CardPool.Instance != null)
             {
-                UnitStats drawnStats = RaritySystem.Instance.DrawRandomUnitByTier(0);
+                UnitStats drawnStats = CardPool.Instance.DrawRandomUnitByTier(0);
                 if (drawnStats != null)
                 {
                     AddCard(drawnStats, markAsNew: true, animateFromDraw: true);

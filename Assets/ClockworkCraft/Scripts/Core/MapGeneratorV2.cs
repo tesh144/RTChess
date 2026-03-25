@@ -389,19 +389,19 @@ namespace ClockworkCraft
         }
 
         /// <summary>
-        /// Populate the RaritySystem draw pool, then initialize the DockBarManager.
+        /// Populate the CardPool draw pool, then initialize the DockBarManager.
         /// Uses WorkerDatabase + BuildingDatabase.
         /// </summary>
         void SetupDeck()
         {
             Debug.Log("[MapGenV2] SetupDeck() starting...");
 
-            // ── RaritySystem ─────────────────────────────────────────────
-            if (RaritySystem.Instance != null)
+            // ── CardPool ─────────────────────────────────────────────
+            if (CardPool.Instance != null)
             {
-                DestroyImmediate(RaritySystem.Instance.gameObject);
+                DestroyImmediate(CardPool.Instance.gameObject);
             }
-            new GameObject("RaritySystem").AddComponent<RaritySystem>();
+            new GameObject("CardPool").AddComponent<CardPool>();
 
             var deckStats = new List<UnitStats>();
 
@@ -473,8 +473,8 @@ namespace ClockworkCraft
                 Debug.Log($"[MapGenV2] Added {buildingCount} buildings to deck (workers excluded — produced by buildings)");
             }
 
-            RaritySystem.Instance.RegisterUnitStats(deckStats);
-            Debug.Log($"[MapGenV2] Registered {deckStats.Count} total items with RaritySystem");
+            CardPool.Instance.RegisterUnitStats(deckStats);
+            Debug.Log($"[MapGenV2] Registered {deckStats.Count} total items with CardPool");
 
             // ── Create and register special production cards ──
             // NOTE: Feast is already in deckStats from BuildingDatabase (with proper icon, prefab, and stats).
@@ -509,7 +509,7 @@ namespace ClockworkCraft
             }
             deckStats.Add(fighterCard);
 
-            RaritySystem.Instance.RegisterUnitStats(deckStats);
+            CardPool.Instance.RegisterUnitStats(deckStats);
             Debug.Log("[MapGenV2] Registered Fighter card for Barracks production (Feast already in deck from BuildingDatabase)");
 
             // ── DockBarManager ───────────────────────────────────────────

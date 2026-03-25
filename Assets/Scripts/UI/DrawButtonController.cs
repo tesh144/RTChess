@@ -247,11 +247,11 @@ namespace LittleCafe
             {
                 bool isBuilding = output.EndsWith("Building", System.StringComparison.OrdinalIgnoreCase);
                 string tierStr = output.Substring(4, 1); // "Tier0Building" → "0"
-                if (int.TryParse(tierStr, out int tier) && RaritySystem.Instance != null)
+                if (int.TryParse(tierStr, out int tier) && CardPool.Instance != null)
                 {
                     UnitStats card = isBuilding
-                        ? RaritySystem.Instance.DrawRandomBuildingByTier(tier)
-                        : RaritySystem.Instance.DrawRandomUnitByTier(tier);
+                        ? CardPool.Instance.DrawRandomBuildingByTier(tier)
+                        : CardPool.Instance.DrawRandomUnitByTier(tier);
                     if (card != null)
                     {
                         UnitStats clone = Instantiate(card);
@@ -271,8 +271,8 @@ namespace LittleCafe
                 string tierStr = output.Substring("RandomTier".Length);
                 if (int.TryParse(tierStr, out int maxTier))
                 {
-                    if (RaritySystem.Instance == null) return false;
-                    UnitStats card = RaritySystem.Instance.DrawRandomUnitUpToTier(maxTier);
+                    if (CardPool.Instance == null) return false;
+                    UnitStats card = CardPool.Instance.DrawRandomUnitUpToTier(maxTier);
                     if (card != null)
                     {
                         UnitStats clone = Instantiate(card);
@@ -310,10 +310,10 @@ namespace LittleCafe
             // ── Fighter → from WorkerDatabase ──
             if (output.Equals("Fighter", System.StringComparison.OrdinalIgnoreCase))
             {
-                // Fighter is registered in RaritySystem (created in SetupDeck from WorkerDatabase)
-                if (RaritySystem.Instance != null)
+                // Fighter is registered in CardPool (created in SetupDeck from WorkerDatabase)
+                if (CardPool.Instance != null)
                 {
-                    UnitStats fighter = RaritySystem.Instance.FindByName("Fighter");
+                    UnitStats fighter = CardPool.Instance.FindByName("Fighter");
                     if (fighter != null)
                     {
                         UnitStats clone = Instantiate(fighter);
@@ -324,14 +324,14 @@ namespace LittleCafe
                         return true;
                     }
                 }
-                Debug.LogWarning("[DrawButton] Fighter card not found in RaritySystem");
+                Debug.LogWarning("[DrawButton] Fighter card not found in CardPool");
                 return false;
             }
 
-            // ── Specific building/card name → find in RaritySystem ──
-            if (RaritySystem.Instance != null)
+            // ── Specific building/card name → find in CardPool ──
+            if (CardPool.Instance != null)
             {
-                UnitStats card = RaritySystem.Instance.FindByName(output);
+                UnitStats card = CardPool.Instance.FindByName(output);
                 if (card != null)
                 {
                     UnitStats clone = Instantiate(card);
@@ -350,8 +350,8 @@ namespace LittleCafe
         /// <summary>Draw a random building and add to dock. Returns true on success.</summary>
         private bool DrawRandomAndAdd(DockBarManager dock)
         {
-            if (RaritySystem.Instance == null) return false;
-            UnitStats card = RaritySystem.Instance.DrawRandomUnit();
+            if (CardPool.Instance == null) return false;
+            UnitStats card = CardPool.Instance.DrawRandomUnit();
             if (card != null)
             {
                 UnitStats clone = Instantiate(card);

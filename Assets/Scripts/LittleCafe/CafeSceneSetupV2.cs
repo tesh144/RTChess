@@ -55,7 +55,7 @@ namespace LittleCafe
             // Deck setup — only in standalone cafe mode (MapGeneratorV2 owns it in ClockworkCraft)
             if (!deferToMapGen)
             {
-                SetupRaritySystem();
+                SetupCardPool();
             }
 
             // Disable GUI Pro Kit's demo PanelControl — we manage panels ourselves
@@ -225,7 +225,7 @@ namespace LittleCafe
 
         // --- Rarity System ---
 
-        private void SetupRaritySystem()
+        private void SetupCardPool()
         {
             if (furnitureDatabase == null)
             {
@@ -233,15 +233,15 @@ namespace LittleCafe
                 return;
             }
 
-            // Destroy old RaritySystem (contains combat units)
-            if (RaritySystem.Instance != null)
+            // Destroy old CardPool (contains combat units)
+            if (CardPool.Instance != null)
             {
-                DestroyImmediate(RaritySystem.Instance.gameObject);
-                Debug.Log("[CafeSceneSetupV2] Destroyed old RaritySystem");
+                DestroyImmediate(CardPool.Instance.gameObject);
+                Debug.Log("[CafeSceneSetupV2] Destroyed old CardPool");
             }
 
-            // Create fresh RaritySystem for furniture
-            new GameObject("RaritySystem").AddComponent<RaritySystem>();
+            // Create fresh CardPool for furniture
+            new GameObject("CardPool").AddComponent<CardPool>();
 
             List<UnitStats> furnitureStats = new List<UnitStats>();
 
@@ -268,18 +268,18 @@ namespace LittleCafe
                 furnitureStats.Add(stats);
             }
 
-            RaritySystem.Instance.RegisterUnitStats(furnitureStats);
-            Debug.Log($"[CafeSceneSetupV2] Registered {furnitureStats.Count} furniture types with RaritySystem");
+            CardPool.Instance.RegisterUnitStats(furnitureStats);
+            Debug.Log($"[CafeSceneSetupV2] Registered {furnitureStats.Count} furniture types with CardPool");
         }
 
         /// <summary>
-        /// Convert FurnitureType to UnitType for backwards compatibility with RaritySystem.
+        /// Convert FurnitureType to UnitType for backwards compatibility with CardPool.
         /// </summary>
         private UnitType ConvertFurnitureTypeToUnitType(FurnitureType furnitureType)
         {
             // Use unused UnitType values or create a mapping
             // For now, just cast (they're both enums)
-            // This is a temporary hack until we refactor RaritySystem to support furniture
+            // This is a temporary hack until we refactor CardPool to support furniture
             return UnitType.Soldier; // Default to Soldier for now
         }
 
@@ -316,7 +316,7 @@ namespace LittleCafe
                 FurnitureData firstFurniture = furnitureDatabase.AllFurniture[0];
                 if (firstFurniture.prefab != null)
                 {
-                    UnitStats startingStats = RaritySystem.Instance.GetUnitStats(UnitType.Soldier); // TODO: Fix this mapping
+                    UnitStats startingStats = CardPool.Instance.GetUnitStats(UnitType.Soldier); // TODO: Fix this mapping
                     if (startingStats != null)
                     {
                         dockManager.AddCard(startingStats);

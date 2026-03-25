@@ -5,13 +5,14 @@ using UnityEngine;
 namespace ClockworkGrid
 {
     /// <summary>
-    /// Manages rarity-based weighted random unit selection.
-    /// Singleton pattern for global access.
+    /// Runtime pool of all drawable UnitStats cards.
+    /// Populated by MapGeneratorV2.SetupDeck() from sheet-synced databases.
+    /// Provides weighted random draws (by tier, draw weight) and name lookups.
     /// </summary>
-    public class RaritySystem : MonoBehaviour
+    public class CardPool : MonoBehaviour
     {
         // Singleton
-        public static RaritySystem Instance { get; private set; }
+        public static CardPool Instance { get; private set; }
 
         [Header("Available Units")]
         [SerializeField] private List<UnitStats> allUnitStats = new List<UnitStats>();
@@ -50,7 +51,7 @@ namespace ClockworkGrid
                 }
             }
 
-            Debug.Log($"RaritySystem registered {allUnitStats.Count} unit types");
+            Debug.Log($"CardPool registered {allUnitStats.Count} unit types");
         }
 
         /// <summary>
