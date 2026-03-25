@@ -509,8 +509,42 @@ namespace ClockworkCraft
             }
             deckStats.Add(fighterCard);
 
+            // ── Environment production cards (Lizard, TreeSeed, Scrap) ──
+            // These are outputs from Rabbit Farm, Garden, and Scrapper buildings.
+            // They live in EnvironmentDatabase but need UnitStats in CardPool for FindByName().
+            string[] envProductionNames = { "Lizard", "TreeSeed", "Scrap" };
+            if (environmentDatabase != null)
+            {
+                foreach (string envName in envProductionNames)
+                {
+                    EnvironmentData envData = environmentDatabase.GetByName(envName);
+                    if (envData == null) { Debug.LogWarning($"[MapGenV2] '{envName}' not found in EnvironmentDatabase — skipping"); continue; }
+
+                    UnitStats envCard = ScriptableObject.CreateInstance<UnitStats>();
+                    envCard.unitName        = envName;
+                    envCard.unitType        = UnitType.Soldier;
+                    envCard.rarity          = Rarity.Common;
+                    envCard.drawWeight      = 0f; // Not drawable — only produced by buildings
+                    envCard.isRandomBuilding = false;
+                    envCard.isMealSource    = false;
+                    envCard.cardSource      = CardSourceType.Unit;
+                    envCard.iconSprite      = envData.icon;
+                    envCard.unitPrefab      = envData.prefab;
+                    envCard.isActive        = envData.isActive;
+                    envCard.isAllied        = true;
+                    envCard.maxHP           = envData.hp;
+                    envCard.attackDamage    = envData.attackPower;
+                    envCard.killerAdvances  = envData.killerAdvances;
+                    envCard.gridSize        = envData.gridSize;
+                    envCard.modelScale      = envData.visualScale;
+                    envCard.active          = envData.active;
+                    deckStats.Add(envCard);
+                    Debug.Log($"[MapGenV2] Registered '{envName}' card for building production");
+                }
+            }
+
             CardPool.Instance.RegisterUnitStats(deckStats);
-            Debug.Log("[MapGenV2] Registered Fighter card for Barracks production (Feast already in deck from BuildingDatabase)");
+            Debug.Log("[MapGenV2] Registered Fighter + environment production cards with CardPool");
 
             // ── DockBarManager ───────────────────────────────────────────
             DockBarManager dockManager = FindFirstObjectByType<DockBarManager>(FindObjectsInactive.Include);
