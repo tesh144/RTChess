@@ -180,11 +180,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd8bdef01a0ef42deb5cb241e26801ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapWidth: 120
-  mapHeight: 120
+  mapWidth: 80
+  mapHeight: 80
   cellSize: 1.5
   seed: 0
-  enableFog: 0
+  enableFog: 1
   startingRevealRadius: 1
   environmentDatabase: {fileID: 11400000, guid: b1d02fb45bceb4196845695e148a593e, type: 2}
   unitDatabase: {fileID: 11400000, guid: fb9df1513bc1548a59841afb135f9146, type: 2}
@@ -194,7 +194,11 @@ MonoBehaviour:
   economyBalanceConfig: {fileID: 11400000, guid: c11171627b78b4c5cbac1b5557eb7844, type: 2}
   centerEnvironmentName: Goldmine
   clearingRadius: 1
-  mapDensity: 0.6
+  defaultEnvironmentDesaturatedValue: 0.2
+  defaultEnvironmentFullColorValue: 1
+  defaultEnvironmentTransitionDuration: 0.3
+  enableUnitDesaturation: 1
+  mapDensity: 0.5
   spawnEntries:
   - environmentName: Goldmine
     spawnMode: 0
@@ -205,21 +209,21 @@ MonoBehaviour:
     edgeBorderOf: 
   - environmentName: Tree
     spawnMode: 0
-    spawnWeight: 12
+    spawnWeight: 7
     minSpacing: 0
     fragmentation: 0.35
     clusterSpread: 0.15
     edgeBorderOf: 
   - environmentName: Rock
     spawnMode: 0
-    spawnWeight: 6
+    spawnWeight: 5
     minSpacing: 1
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
   - environmentName: Mountain
     spawnMode: 0
-    spawnWeight: 0
+    spawnWeight: 1
     minSpacing: 6
     fragmentation: 0.3
     clusterSpread: 0.6
@@ -242,27 +246,18 @@ MonoBehaviour:
   - unitName: Dinosaur
     spawnMode: 0
     spawnWeight: 1
-    minSpacing: 5
+    minSpacing: 9
     fragmentation: 0.5
     clusterSpread: 0.4
-    edgeBorderOf:
+    edgeBorderOf: 
   - unitName: Mammoth
     spawnMode: 0
     spawnWeight: 1
-    minSpacing: 5
+    minSpacing: 9
     fragmentation: 0.5
     clusterSpread: 0.4
-    edgeBorderOf:
-  corruptionSpawnEntries:
-  - entityName: CorruptedHeart
-    prefab: {fileID: 3119510917662581751, guid: 8ec6bc77c596f0a4a901c5b5dd5b9370, type: 3}
-    spawnMode: 0
-    spawnCount: 5
-    minDistFromCenter: 10
-    minSpacing: 8
-    fragmentation: 0.4
-    clusterSpread: 0.5
-    edgeBorderOf:
+    edgeBorderOf: 
+  corruptionSpawnEntries: []
 --- !u!1 &6706931420203540427
 GameObject:
   m_ObjectHideFlags: 0
@@ -472,6 +467,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.CorruptionManager
   spreadInterval: 30
   heartActivationRadius: 5
+  useParticleFog: 1
   corruptionOverlayPrefab: {fileID: 2274087348341675862, guid: 4bc9b527bd2cb4ba9bd20a667243c636, type: 3}
 --- !u!1 &9035113113404508760
 GameObject:

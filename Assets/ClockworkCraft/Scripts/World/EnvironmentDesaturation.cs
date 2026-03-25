@@ -19,9 +19,17 @@ namespace ClockworkCraft
     {
         private static readonly int SaturationID = Shader.PropertyToID("_Saturation");
 
-        private const float DesaturatedValue = 0.5f;
-        private const float FullColorValue = 1f;
-        private const float TransitionDuration = 0.3f;
+        [Header("Desaturation Settings")]
+        [Tooltip("Saturation amount before the first interaction (0 = grayscale, 1 = full color)")]
+        [Range(0f,1f)]
+        public float DesaturatedValue = 0.5f;
+
+        [Tooltip("Saturation amount after the first interaction")]
+        [Range(0f,1f)]
+        public float FullColorValue = 1f;
+
+        [Tooltip("Seconds for the transition from desaturated to full color")]
+        public float TransitionDuration = 0.3f;
 
         private Renderer[] renderers;
         private MaterialPropertyBlock mpb;

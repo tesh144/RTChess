@@ -175,6 +175,22 @@ namespace ClockworkCraft
         [Min(0)]
         public int clearingRadius = 1;
 
+        [Header("Environment Desaturation")]
+        [Tooltip("Saturation amount before first worker interaction (0 = grayscale, 1 = full color)")]
+        [Range(0f, 1f)]
+        public float defaultEnvironmentDesaturatedValue = 0.5f;
+
+        [Tooltip("Saturation amount after first worker interaction")]
+        [Range(0f, 1f)]
+        public float defaultEnvironmentFullColorValue = 1f;
+
+        [Tooltip("Seconds for desaturation -> full-color transition")]
+        [Min(0f)]
+        public float defaultEnvironmentTransitionDuration = 0.3f;
+
+        [Tooltip("Enable desaturation and colorization behavior on units (e.g. animals)")]
+        public bool enableUnitDesaturation = false;
+
         // Drawn by custom editor — no [Header] to avoid duplicates
         [HideInInspector] [Range(0.1f, 3f)] public float mapDensity = 1.0f;
         [HideInInspector] public List<EnvironmentSpawnEntry> spawnEntries = new List<EnvironmentSpawnEntry>();
@@ -1498,6 +1514,22 @@ namespace ClockworkCraft
         // Spawn Phase
         // ─────────────────────────────────────────────────────────────────
 
+        void ApplyEnvironmentDesaturationDefaults(GameObject obj, bool addIfMissing = false)
+        {
+            if (obj == null) return;
+
+            var desat = obj.GetComponent<ClockworkCraft.EnvironmentDesaturation>();
+            if (desat == null)
+            {
+                if (!addIfMissing) return;
+                desat = obj.AddComponent<ClockworkCraft.EnvironmentDesaturation>();
+            }
+
+            desat.DesaturatedValue   = defaultEnvironmentDesaturatedValue;
+            desat.FullColorValue     = defaultEnvironmentFullColorValue;
+            desat.TransitionDuration = defaultEnvironmentTransitionDuration;
+        }
+
         void SpawnCenter()
         {
             if (string.IsNullOrEmpty(centerEnvironmentName)) return;
@@ -1531,7 +1563,10 @@ namespace ClockworkCraft
             }
 
             if (GridEntityManager.Instance != null)
+            {
                 GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
+                ApplyEnvironmentDesaturationDefaults(obj);
+            }
 
             GridManager.Instance?.PlaceUnit(center.x, center.y, obj, CellState.Resource);
             TriggerAppearAnimation(obj);
@@ -1593,7 +1628,10 @@ namespace ClockworkCraft
 
                 // ── Entity components ────────────────────────────────
                 if (GridEntityManager.Instance != null)
+                {
                     GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
+                    ApplyEnvironmentDesaturationDefaults(obj);
+                }
 
                 // ── Appear animation (only if visible) ───────────────
                 if (obj.activeSelf)
@@ -1656,7 +1694,10 @@ namespace ClockworkCraft
                 }
 
                 if (GridEntityManager.Instance != null)
+                {
                     GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
+                    ApplyEnvironmentDesaturationDefaults(obj);
+                }
 
                 if (obj.activeSelf)
                     TriggerAppearAnimation(obj);
@@ -1737,6 +1778,9 @@ namespace ClockworkCraft
 
                 if (GridEntityManager.Instance != null)
                     GridEntityManager.Instance.AttachFromUnitData(obj, unitData);
+
+                if (enableUnitDesaturation)
+                    ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
 
                 if (obj.activeSelf)
                     TriggerAppearAnimation(obj);
@@ -2018,6 +2062,9 @@ namespace ClockworkCraft
                 // ── Entity components (health, actor, loot) ───────────
                 if (GridEntityManager.Instance != null)
                     GridEntityManager.Instance.AttachFromUnitData(obj, unitData);
+
+                if (enableUnitDesaturation)
+                    ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
 
                 // ── Appear animation ──────────────────────────────────
                 if (obj.activeSelf)
