@@ -245,63 +245,24 @@ MonoBehaviour:
     minSpacing: 5
     fragmentation: 0.5
     clusterSpread: 0.4
-    edgeBorderOf: 
+    edgeBorderOf:
   - unitName: Mammoth
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 5
     fragmentation: 0.5
     clusterSpread: 0.4
-    edgeBorderOf: 
-  - unitName: CorruptedHeart
-    spawnMode: 0
-    spawnWeight: 2
-    minSpacing: 4
-    fragmentation: 0.5
-    clusterSpread: 0.4
-    edgeBorderOf: 
-  - unitName: Spike1
-    spawnMode: 0
-    spawnWeight: 2
-    minSpacing: 4
-    fragmentation: 0.5
-    clusterSpread: 0.4
-    edgeBorderOf: 
-  - unitName: Spike2
-    spawnMode: 0
-    spawnWeight: 2
-    minSpacing: 4
-    fragmentation: 0.5
-    clusterSpread: 0.4
-    edgeBorderOf: 
+    edgeBorderOf:
   corruptionSpawnEntries:
   - entityName: CorruptedHeart
-    prefab: {fileID: 3891125815025428421, guid: e6178d83154944b29944b762ce570de0, type: 3}
+    prefab: {fileID: 3119510917662581751, guid: 8ec6bc77c596f0a4a901c5b5dd5b9370, type: 3}
     spawnMode: 0
     spawnCount: 5
     minDistFromCenter: 10
     minSpacing: 8
     fragmentation: 0.4
     clusterSpread: 0.5
-    edgeBorderOf: 
-  - entityName: Spike1
-    prefab: {fileID: 5310634814577635811, guid: 465cf5512f6b444d0aca541502f10bed, type: 3}
-    spawnMode: 0
-    spawnCount: 5
-    minDistFromCenter: 10
-    minSpacing: 8
-    fragmentation: 0.4
-    clusterSpread: 0.5
-    edgeBorderOf: 
-  - entityName: Spike2
-    prefab: {fileID: 5028432610595724756, guid: cc8d22feddd3c4a3991944784e631183, type: 3}
-    spawnMode: 0
-    spawnCount: 5
-    minDistFromCenter: 10
-    minSpacing: 8
-    fragmentation: 0.4
-    clusterSpread: 0.5
-    edgeBorderOf: 
+    edgeBorderOf:
 --- !u!1 &6706931420203540427
 GameObject:
   m_ObjectHideFlags: 0
