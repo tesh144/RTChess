@@ -205,7 +205,7 @@ namespace LittleCafe
                 // Step 3: Create child GameObject and ParticleSystem
                 visualChild = new GameObject("CorruptionFog");
                 visualChild.transform.SetParent(transform);
-                visualChild.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+                visualChild.transform.localPosition = new Vector3(0f, 0.15f, 0f);
                 visualChild.transform.localRotation = Quaternion.identity;
                 visualChild.transform.localScale    = Vector3.one;
 
@@ -217,7 +217,7 @@ namespace LittleCafe
                 main.loop            = true;
                 main.startLifetime   = 2.5f;
                 main.startSpeed      = 0.04f;
-                main.startSize       = 0.45f;
+                main.startSize       = 0.7f;
                 main.maxParticles    = 60;
                 main.simulationSpace = ParticleSystemSimulationSpace.Local;
                 main.gravityModifier = 0f;
@@ -233,7 +233,7 @@ namespace LittleCafe
                 var shape = ps.shape;
                 shape.enabled   = true;
                 shape.shapeType = ParticleSystemShapeType.Box;
-                shape.scale     = new Vector3(0.85f, 0.05f, 0.85f);
+                shape.scale     = new Vector3(1.0f, 0.05f, 1.0f);
 
                 // Colour over lifetime: fade in → hold → fade out
                 var gradient = new Gradient();
