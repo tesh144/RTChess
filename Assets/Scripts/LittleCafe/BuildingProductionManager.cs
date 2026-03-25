@@ -264,7 +264,8 @@ namespace LittleCafe
             foreach (var entry in entries)
             {
                 if (entry.buildingObj == null) continue;
-                if (entry.inputType != requiredInput) continue;
+                // Building with Any input accepts all card types; otherwise strict match
+                if (entry.inputType != requiredInput && entry.inputType != ProductionInputType.Any) continue;
 
                 var furniture = entry.buildingObj.GetComponent<FurnitureObject>();
                 if (furniture != null && furniture.GridX == gridX && furniture.GridY == gridY)
@@ -282,7 +283,8 @@ namespace LittleCafe
             foreach (var entry in entries)
             {
                 if (entry.buildingObj == null) continue;
-                if (entry.inputType != inputType) continue;
+                // Building with Any input accepts all card types; otherwise strict match
+                if (entry.inputType != inputType && entry.inputType != ProductionInputType.Any) continue;
                 if (!entry.waitingForInput) continue; // Already processing
 
                 var furniture = entry.buildingObj.GetComponent<FurnitureObject>();

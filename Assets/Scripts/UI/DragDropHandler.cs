@@ -848,7 +848,7 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Determine what ProductionInputType this dragged card can provide to a building.
-        /// Workers (isActive + isAllied) → Worker. Otherwise None.
+        /// Workers → Worker, Fighters → Fighter, everything else → Any (for Scrapper).
         /// </summary>
         private LittleCafe.ProductionInputType GetCardInputType()
         {
@@ -859,8 +859,8 @@ namespace ClockworkGrid
             if (stats.isActive && stats.isAllied)
                 return LittleCafe.ProductionInputType.Worker;
 
-            // Future: fighters could map to ProductionInputType.Fighter
-            return LittleCafe.ProductionInputType.None;
+            // All other cards can be fed to buildings that accept Any (e.g. Scrapper)
+            return LittleCafe.ProductionInputType.Any;
         }
 
         /// <summary>
