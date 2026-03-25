@@ -1,5 +1,6 @@
 #pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
+using ClockworkGrid;
 
 namespace LittleCafe
 {
@@ -29,6 +30,7 @@ namespace LittleCafe
         private GameObject visualChild;
         private Material _fogMaterial;
         private Texture2D _fogTexture;
+        private bool _subscribedToFog;
         private GameObject pausedOccupant;
         private Transform occupantTransform; // Cached for visual positioning
         private System.Action<GridEntityHealth> occupantDeathHandler;
@@ -47,12 +49,34 @@ namespace LittleCafe
         {
             Health.OnEntityDestroyed += OnOverlayDestroyed;
             SpawnVisual();
+
+            // Hide visual if tile is in fog — show when revealed
+            if (visualChild != null && FogManager.Instance != null &&
+                !FogManager.Instance.IsCellRevealed(GridPosition.x, GridPosition.y))
+            {
+                visualChild.SetActive(false);
+                FogManager.Instance.OnCellRevealed += OnFogRevealed;
+                _subscribedToFog = true;
+            }
         }
 
         private void OnDestroy()
         {
             if (Health != null)
                 Health.OnEntityDestroyed -= OnOverlayDestroyed;
+            if (_subscribedToFog && FogManager.Instance != null)
+                FogManager.Instance.OnCellRevealed -= OnFogRevealed;
+        }
+
+        private void OnFogRevealed(int x, int y)
+        {
+            if (x != GridPosition.x || y != GridPosition.y) return;
+            if (visualChild != null) visualChild.SetActive(true);
+            if (_subscribedToFog && FogManager.Instance != null)
+            {
+                FogManager.Instance.OnCellRevealed -= OnFogRevealed;
+                _subscribedToFog = false;
+            }
         }
 
         // ── Public API ────────────────────────────────────────────────────
@@ -215,25 +239,25 @@ namespace LittleCafe
                 var main = ps.main;
                 main.duration        = 3f;
                 main.loop            = true;
-                main.startLifetime   = 2.5f;
-                main.startSpeed      = 0.04f;
-                main.startSize       = 0.7f;
-                main.maxParticles    = 60;
+                main.startLifetime   = 3f;
+                main.startSpeed      = 0.02f;       // very slow drift
+                main.startSize       = new ParticleSystem.MinMaxCurve(0.8f, 1.3f);  // varied sizes for organic look
+                main.maxParticles    = 40;
                 main.simulationSpace = ParticleSystemSimulationSpace.Local;
                 main.gravityModifier = 0f;
                 main.startColor = new ParticleSystem.MinMaxGradient(
-                    new Color(0.45f, 0f, 0.75f, 0.5f),
-                    new Color(0.60f, 0f, 0.85f, 0.5f)
+                    new Color(0.45f, 0f, 0.75f, 0.25f),   // lower alpha — builds up via overlap
+                    new Color(0.60f, 0f, 0.85f, 0.3f)
                 );
 
                 var emission = ps.emission;
                 emission.enabled = true;
-                emission.rateOverTime = 20f;
+                emission.rateOverTime = 12f;
 
                 var shape = ps.shape;
                 shape.enabled   = true;
                 shape.shapeType = ParticleSystemShapeType.Box;
-                shape.scale     = new Vector3(1.0f, 0.05f, 1.0f);
+                shape.scale     = new Vector3(1.1f, 0.02f, 1.1f);  // slightly wider than tile so edges bleed into neighbors
 
                 // Colour over lifetime: fade in → hold → fade out
                 var gradient = new Gradient();
@@ -253,11 +277,11 @@ namespace LittleCafe
                 colOverLife.enabled = true;
                 colOverLife.color   = new ParticleSystem.MinMaxGradient(gradient);
 
-                // Size over lifetime: expand then shrink
+                // Size over lifetime: grow then gently shrink
                 var sizeCurve = new AnimationCurve(
-                    new Keyframe(0f,   0.8f),
-                    new Keyframe(0.5f, 1.0f),
-                    new Keyframe(1f,   0.6f)
+                    new Keyframe(0f,   0.6f),
+                    new Keyframe(0.3f, 1.0f),
+                    new Keyframe(1f,   0.8f)
                 );
                 var sizeOverLife = ps.sizeOverLifetime;
                 sizeOverLife.enabled = true;
