@@ -146,16 +146,27 @@ public class MaterialTextureFixer : EditorWindow
         log.Add(dryRun ? "(DRY RUN — no changes made)" : "DONE — changes saved");
     }
 
+    // Strip underscores, hyphens, spaces for fuzzy comparison
+    static string Normalize(string s) => s.ToLowerInvariant().Replace("_", "").Replace("-", "").Replace(" ", "");
+
     Texture2D FindMatchingTexture(string matName, string matPath, Dictionary<string, string> textureLookup)
     {
         string matNameLower = matName.ToLowerInvariant();
+        string matNameNorm = Normalize(matName);
 
         // Strategy 1: Exact match on material name
         if (textureLookup.TryGetValue(matNameLower, out string exactPath))
             return AssetDatabase.LoadAssetAtPath<Texture2D>(exactPath);
 
-        // Strategy 2: Material name often has suffixes like "_Base_Color", try without
-        string[] suffixes = { "_base_color", "_basecolor", "_diffuse", "_albedo", "_color", "_texture", "_2d_view", "_texture_2d_view" };
+        // Strategy 2: Match ignoring underscores/hyphens (WheatL04 matches Wheat_L04)
+        foreach (var kvp in textureLookup)
+        {
+            if (Normalize(kvp.Key) == matNameNorm)
+                return AssetDatabase.LoadAssetAtPath<Texture2D>(kvp.Value);
+        }
+
+        // Strategy 3: Strip common suffixes and try again
+        string[] suffixes = { "_base_color", "_basecolor", "_diffuse", "_albedo", "_color", "_texture", "_2d_view", "_texture_2d_view", "_texutre" };
         foreach (string suffix in suffixes)
         {
             if (matNameLower.EndsWith(suffix))
@@ -163,27 +174,45 @@ public class MaterialTextureFixer : EditorWindow
                 string stripped = matNameLower.Substring(0, matNameLower.Length - suffix.Length);
                 if (textureLookup.TryGetValue(stripped, out string strippedPath))
                     return AssetDatabase.LoadAssetAtPath<Texture2D>(strippedPath);
+                // Also try normalized
+                string strippedNorm = Normalize(stripped);
+                foreach (var kvp in textureLookup)
+                {
+                    if (Normalize(kvp.Key) == strippedNorm)
+                        return AssetDatabase.LoadAssetAtPath<Texture2D>(kvp.Value);
+                }
             }
-            // Also try adding the suffix
-            if (textureLookup.TryGetValue(matNameLower + suffix, out string addedPath))
-                return AssetDatabase.LoadAssetAtPath<Texture2D>(addedPath);
         }
 
-        // Strategy 3: Search in the same directory as the material
+        // Strategy 4: Search nearby — go up TWO levels from Materials/ subfolder
         string matDir = Path.GetDirectoryName(matPath);
-        string parentDir = Path.GetDirectoryName(matDir); // Go up from Materials/ subfolder
-        if (parentDir != null)
+        string parentDir = Path.GetDirectoryName(matDir);
+        string grandparentDir = parentDir != null ? Path.GetDirectoryName(parentDir) : null;
+
+        string[] searchDirs = new[] { parentDir, grandparentDir }.Where(d => d != null).ToArray();
+        foreach (string searchDir in searchDirs)
         {
-            // Look for textures in sibling folders (Textures/, FBM folders, etc.)
-            string[] nearbyTextures = AssetDatabase.FindAssets("t:Texture2D", new[] { parentDir });
+            string[] nearbyTextures = AssetDatabase.FindAssets("t:Texture2D", new[] { searchDir });
             foreach (string texGuid in nearbyTextures)
             {
                 string texPath = AssetDatabase.GUIDToAssetPath(texGuid);
                 string texName = Path.GetFileNameWithoutExtension(texPath).ToLowerInvariant();
+                string texNameNorm = Normalize(texName);
 
-                // Fuzzy match: material name contains texture name or vice versa
-                if (matNameLower.Contains(texName) || texName.Contains(matNameLower))
+                // Normalized fuzzy match
+                if (matNameNorm.Contains(texNameNorm) || texNameNorm.Contains(matNameNorm))
                     return AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+
+                // Also try with suffixes stripped
+                foreach (string suffix in suffixes)
+                {
+                    if (matNameLower.EndsWith(suffix))
+                    {
+                        string strippedNorm = Normalize(matNameLower.Substring(0, matNameLower.Length - suffix.Length));
+                        if (texNameNorm.Contains(strippedNorm) || strippedNorm.Contains(texNameNorm))
+                            return AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+                    }
+                }
             }
         }
 
