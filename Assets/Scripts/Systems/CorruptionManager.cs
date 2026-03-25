@@ -24,11 +24,14 @@ namespace LittleCafe
         [SerializeField] private int heartActivationRadius = 5;
 
         [Header("Visuals")]
-        [Tooltip("Prefab instantiated on each corrupted tile. If null, uses a placeholder purple quad.")]
+        [Tooltip("When true, uses the code-driven particle fog. When false, uses the prefab below.")]
+        [SerializeField] private bool useParticleFog = true;
+
+        [Tooltip("Prefab instantiated on each corrupted tile. Only used when useParticleFog is false.")]
         [SerializeField] private GameObject corruptionOverlayPrefab;
 
-        /// <summary>The overlay visual prefab. Read by CorruptionOverlay.SpawnVisual().</summary>
-        public GameObject CorruptionOverlayPrefab => corruptionOverlayPrefab;
+        /// <summary>The overlay visual prefab. Returns null when particle fog is enabled (default).</summary>
+        public GameObject CorruptionOverlayPrefab => useParticleFog ? null : corruptionOverlayPrefab;
 
         // ── Internal State ────────────────────────────────────────────────
 
@@ -87,7 +90,40 @@ namespace LittleCafe
             if (heart == null || allHearts.Contains(heart)) return;
             allHearts.Add(heart);
             heartTiles[heart] = new HashSet<Vector2Int>();
+
+            // Auto-activate if the surrounding area is already revealed.
+            // Handles fog-disabled testing mode and hearts inside the starting reveal area —
+            // in both cases all OnCellRevealed events fire before hearts register,
+            // so the normal fog-gated activation never triggers.
+            CheckActivateOnRegister(heart);
+
             Debug.Log($"[CorruptionManager] Registered heart at {heart.GridPosition}. Total hearts: {allHearts.Count}");
+        }
+
+        /// <summary>
+        /// Checks whether any tile within heartActivationRadius of the heart is already revealed.
+        /// If so, activates the heart immediately and seeds its first corrupted tile.
+        /// This mirrors the logic in OnCellRevealed but runs at registration time.
+        /// </summary>
+        private void CheckActivateOnRegister(CorruptionHeart heart)
+        {
+            if (heart.IsActive) return;
+            if (FogManager.Instance == null) return;
+
+            var pos = heart.GridPosition;
+            for (int dx = -heartActivationRadius; dx <= heartActivationRadius; dx++)
+            {
+                for (int dy = -heartActivationRadius; dy <= heartActivationRadius; dy++)
+                {
+                    if (FogManager.Instance.IsCellRevealed(pos.x + dx, pos.y + dy))
+                    {
+                        heart.Activate();
+                        CorruptTile(pos.x, pos.y, heart);
+                        Debug.Log($"[CorruptionManager] Auto-activated heart at {pos} — surrounding area already revealed.");
+                        return;
+                    }
+                }
+            }
         }
 
         // ── Corruption ────────────────────────────────────────────────────
@@ -164,6 +200,18 @@ namespace LittleCafe
 
         /// <summary>Returns true if the tile at (x, y) is currently corrupted by any heart.</summary>
         public bool IsCorrupted(int x, int y) => allCorruptedTiles.Contains(new Vector2Int(x, y));
+
+        /// <summary>
+        /// Returns the set of tiles currently owned by the given heart's cluster.
+        /// Used by CorruptionHeart to find valid cells for spike growth.
+        /// Returns null if the heart is not registered.
+        /// </summary>
+        public IReadOnlyCollection<Vector2Int> GetHeartTiles(CorruptionHeart heart)
+        {
+            if (heartTiles.TryGetValue(heart, out var tiles))
+                return tiles;
+            return null;
+        }
 
         // ── Spread ────────────────────────────────────────────────────────
 
