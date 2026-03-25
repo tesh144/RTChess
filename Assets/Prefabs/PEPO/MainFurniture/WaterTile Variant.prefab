@@ -22,8 +22,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2967801716916079901, guid: d20d6505b94184281b781a3f041b684a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.242
+      value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4426939675092902258, guid: d20d6505b94184281b781a3f041b684a, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 2017673731364593462, guid: fb64121ff27cd444a99825c13590af68, type: 3}
     - target: {fileID: 4499908961894530660, guid: d20d6505b94184281b781a3f041b684a, type: 3}
       propertyPath: m_Name
       value: WaterTile Variant
@@ -71,6 +75,10 @@ PrefabInstance:
     - target: {fileID: 8218194579016044782, guid: d20d6505b94184281b781a3f041b684a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9084166635889992083, guid: d20d6505b94184281b781a3f041b684a, type: 3}
+      propertyPath: m_Name
+      value: WaterTile Variant
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
