@@ -130,9 +130,11 @@ namespace LittleCafe
 
         private void SpawnVisual()
         {
-            // Use prefab from CorruptionManager if assigned, otherwise fall back to placeholder
+            // Use prefab from CorruptionManager if assigned, otherwise fall back to particle fog
             GameObject prefab = CorruptionManager.Instance != null
                 ? CorruptionManager.Instance.CorruptionOverlayPrefab : null;
+
+            Debug.Log($"[CorruptionOverlay] SpawnVisual at {GridPosition}. prefab={(prefab != null ? prefab.name : "NULL")} — using {(prefab != null ? "PREFAB" : "PARTICLE")} path");
 
             if (prefab != null)
             {
@@ -271,6 +273,7 @@ namespace LittleCafe
                 // Start playback
                 visualChild.SetActive(true);
                 ps.Play();
+                Debug.Log($"[CorruptionOverlay] Particle fog created at {GridPosition}. PS isPlaying={ps.isPlaying}, particleCount={ps.particleCount}, material={_fogMaterial.name}, shader={_fogMaterial.shader.name}");
             }
         }
 
