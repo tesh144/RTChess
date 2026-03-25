@@ -83,22 +83,47 @@ namespace LittleCafe
 
         /// <summary>
         /// Called by CorruptionManager after GridPosition/OwnerHeart are set.
-        /// Pauses any building occupant and caches the reference for cleanup.
+        /// Handles occupants based on type:
+        ///   - Buildings: pause production
+        ///   - Workers (allied actors): pause behavior
+        ///   - Neutral creatures (non-allied actors): kill immediately
         /// </summary>
         public void InitWithOccupant(GameObject occupant)
         {
             if (occupant == null) return;
             occupantTransform = occupant.transform;
 
+            var occupantHealth = occupant.GetComponent<GridEntityHealth>();
+            var actor = occupant.GetComponent<GridEntityActor>();
+
+            // Neutral creatures (non-allied with an actor) — corruption kills them instantly
+            if (actor != null && occupantHealth != null && !occupantHealth.IsAllied)
+            {
+                occupantHealth.TakeDamage(occupantHealth.MaxHP);
+                return;
+            }
+
+            // Workers (allied with an actor) — pause their behavior
+            if (actor != null && occupantHealth != null && occupantHealth.IsAllied)
+            {
+                actor.PauseForCorruption();
+                pausedOccupant = occupant;
+
+                occupantDeathHandler = (_) =>
+                {
+                    pausedOccupant = null;
+                    occupantDeathHandler = null;
+                };
+                occupantHealth.OnEntityDestroyed += occupantDeathHandler;
+                return;
+            }
+
+            // Buildings — pause production
             if (BuildingProductionManager.Instance != null)
             {
-                // Only pause if this building actually has a production entry
-                // PauseBuilding is a no-op if the building isn't registered
                 BuildingProductionManager.Instance.PauseBuilding(occupant);
                 pausedOccupant = occupant;
 
-                // Subscribe to occupant death so we clear the reference cleanly
-                var occupantHealth = occupant.GetComponent<GridEntityHealth>();
                 if (occupantHealth != null)
                 {
                     occupantDeathHandler = (_) =>
@@ -117,9 +142,15 @@ namespace LittleCafe
         /// </summary>
         public void Cleanup()
         {
-            // Resume the building if it was paused by this overlay
+            // Resume the occupant if it was paused by this overlay
             if (pausedOccupant != null)
             {
+                // Resume worker actor
+                var actor = pausedOccupant.GetComponent<GridEntityActor>();
+                if (actor != null)
+                    actor.ResumeFromCorruption();
+
+                // Resume building production
                 if (BuildingProductionManager.Instance != null)
                     BuildingProductionManager.Instance.ResumeBuilding(pausedOccupant);
 

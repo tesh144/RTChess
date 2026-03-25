@@ -48,6 +48,9 @@ namespace LittleCafe
         [Tooltip("How long the meal buff lasts in real seconds. Converted to bar ticks on grant.")]
         [SerializeField] private float mealBuffDurationSeconds = 20f;
 
+        [Header("Corruption")]
+        private bool isCorruptionPaused = false;
+
         [Header("Debug")]
         [SerializeField] private bool verboseLogging = false;
 
@@ -295,6 +298,7 @@ namespace LittleCafe
         {
             if (!isInitialized) return;
             if (health != null && health.IsDestroyed) return;
+            if (isCorruptionPaused) return;
 
             // Decay meal buff on every bar tick
             if (hasMealBuff)
@@ -1049,6 +1053,25 @@ namespace LittleCafe
         /// While active, the worker subscribes to OnHalfBar for double-speed movement
         /// and skips MealBuffSource targets during scan.
         /// </summary>
+        // ── Corruption Pause ──────────────────────────────────────────────
+
+        /// <summary>Pause this actor — stops all tick behavior. Called by CorruptionOverlay.</summary>
+        public void PauseForCorruption()
+        {
+            isCorruptionPaused = true;
+            // Stop any in-progress movement/interaction coroutines
+            if (rotationCoroutine != null) { StopCoroutine(rotationCoroutine); rotationCoroutine = null; }
+            if (interactionCoroutine != null) { StopCoroutine(interactionCoroutine); interactionCoroutine = null; }
+        }
+
+        /// <summary>Resume this actor after corruption is cleared.</summary>
+        public void ResumeFromCorruption()
+        {
+            isCorruptionPaused = false;
+        }
+
+        // ── Meal Buff ────────────────────────────────────────────────────
+
         public void GrantMealBuff(int durationTicks)
         {
             if (hasMealBuff) return; // already buffed — prevents double-subscription
@@ -1083,6 +1106,7 @@ namespace LittleCafe
         {
             if (!isInitialized) return;
             if (health != null && health.IsDestroyed) return;
+            if (isCorruptionPaused) return;
 
             // Respect interval multiplier — same barNumber check as OnBarTick.
             // Both beat-1 and beat-3 of a given bar share the same barNumber,
