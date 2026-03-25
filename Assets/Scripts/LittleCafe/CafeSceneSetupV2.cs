@@ -223,7 +223,7 @@ namespace LittleCafe
             Debug.Log($"[CafeSceneSetupV2] Gave {startingTokens} starting tokens");
         }
 
-        // --- Rarity System ---
+        // --- Card Pool ---
 
         private void SetupCardPool()
         {
