@@ -214,6 +214,10 @@ namespace LittleCafe
             AttachComponents(go, data.hp, data.attackPower, data.isActive,
                 data.lootResourceType, data.lootHpCost, data.lootYield,
                 registryName: data.assetName, allied: false, killerAdvances: data.killerAdvances);
+
+            // Environment objects start desaturated until first worker interaction
+            if (go.GetComponent<ClockworkCraft.EnvironmentDesaturation>() == null)
+                go.AddComponent<ClockworkCraft.EnvironmentDesaturation>();
         }
 
         // ---------------------------------------------------------------

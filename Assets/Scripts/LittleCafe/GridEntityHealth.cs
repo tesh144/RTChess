@@ -133,6 +133,9 @@ namespace LittleCafe
             Vector3 hitPos = transform.position + Vector3.up * 0.5f;
             PoofEffect.Spawn(hitPos, count: 4, color: Color.white, minSize: 0.04f, maxSize: 0.1f);
 
+            // Colorize environment objects on first hit
+            GetComponent<ClockworkCraft.EnvironmentDesaturation>()?.Colorize();
+
             // Notify listeners
             OnDamaged?.Invoke(actualDamage, currentHP, maxHP);
             if (attacker != null)
