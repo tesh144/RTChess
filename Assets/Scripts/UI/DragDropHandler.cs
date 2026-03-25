@@ -348,6 +348,13 @@ namespace ClockworkGrid
         {
             if (!isDragging) return;
 
+            // Re-validate at drop time — resources may have changed since last UpdateDrag frame
+            if (!isHoveringInputBuilding)
+            {
+                Vector3 dropWorldPos = GridManager.Instance.GridToWorldPosition(targetGridX, targetGridY);
+                isValidPlacement = ValidatePlacement(dropWorldPos, out targetGridX, out targetGridY);
+            }
+
             if (!isValidPlacement)
             {
                 // SFX: drag cancelled / invalid drop

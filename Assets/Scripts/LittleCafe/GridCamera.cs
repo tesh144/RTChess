@@ -270,15 +270,15 @@ namespace LittleCafe
             // by DragDropHandler for rotation — skip camera input entirely in that case.
             bool dragHandlesInput = DragDropHandler.Instance != null && DragDropHandler.Instance.IsDragging;
 
-            // Scroll zoom (free within [currentDefaultDistance, currentMaxDistance])
-            // The starting zoom IS the minimum — players can only zoom out from there
+            // Scroll zoom (free within [minDistance, currentMaxDistance])
+            // Players can zoom in close and zoom out as far as their revealed tiles allow
             // Zoom speed scales with distance — faster when zoomed out, precise when close
             float scroll = Input.mouseScrollDelta.y;
             if (scroll != 0f && !dragHandlesInput)
             {
-                float zoomFactor = Mathf.Lerp(0.6f, 1.4f, Mathf.InverseLerp(currentDefaultDistance, currentMaxDistance, targetDistance));
+                float zoomFactor = Mathf.Lerp(0.6f, 1.4f, Mathf.InverseLerp(minDistance, currentMaxDistance, targetDistance));
                 targetDistance -= scroll * zoomSpeed * zoomFactor;
-                targetDistance = Mathf.Clamp(targetDistance, currentDefaultDistance, currentMaxDistance);
+                targetDistance = Mathf.Clamp(targetDistance, minDistance, currentMaxDistance);
             }
 
             // Right-click drag to rotate
@@ -416,7 +416,7 @@ namespace LittleCafe
 
         public void ZoomTo(float distance)
         {
-            targetDistance = Mathf.Clamp(distance, currentDefaultDistance, currentMaxDistance);
+            targetDistance = Mathf.Clamp(distance, minDistance, currentMaxDistance);
         }
 
         public void SetTarget(Vector3 worldPos)
