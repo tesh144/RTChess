@@ -229,7 +229,7 @@ namespace LittleCafe
                 // Step 3: Create child GameObject and ParticleSystem
                 visualChild = new GameObject("CorruptionFog");
                 visualChild.transform.SetParent(transform);
-                visualChild.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+                visualChild.transform.localPosition = new Vector3(0f, 0.6f, 0f);
                 visualChild.transform.localRotation = Quaternion.identity;
                 visualChild.transform.localScale    = Vector3.one;
 
@@ -239,25 +239,25 @@ namespace LittleCafe
                 var main = ps.main;
                 main.duration        = 3f;
                 main.loop            = true;
-                main.startLifetime   = 3f;
-                main.startSpeed      = 0.02f;       // very slow drift
-                main.startSize       = new ParticleSystem.MinMaxCurve(0.8f, 1.3f);  // varied sizes for organic look
-                main.maxParticles    = 40;
+                main.startLifetime   = 3.5f;
+                main.startSpeed      = 0.03f;
+                main.startSize       = new ParticleSystem.MinMaxCurve(1.2f, 1.8f);  // large — heavy overlap, no gaps
+                main.maxParticles    = 50;
                 main.simulationSpace = ParticleSystemSimulationSpace.Local;
                 main.gravityModifier = 0f;
                 main.startColor = new ParticleSystem.MinMaxGradient(
-                    new Color(0.45f, 0f, 0.75f, 0.25f),   // lower alpha — builds up via overlap
-                    new Color(0.60f, 0f, 0.85f, 0.3f)
+                    new Color(0.45f, 0f, 0.75f, 0.35f),
+                    new Color(0.60f, 0f, 0.85f, 0.4f)
                 );
 
                 var emission = ps.emission;
                 emission.enabled = true;
-                emission.rateOverTime = 12f;
+                emission.rateOverTime = 14f;
 
                 var shape = ps.shape;
                 shape.enabled   = true;
                 shape.shapeType = ParticleSystemShapeType.Box;
-                shape.scale     = new Vector3(1.1f, 0.02f, 1.1f);  // slightly wider than tile so edges bleed into neighbors
+                shape.scale     = new Vector3(1.3f, 0.15f, 1.3f);  // wider than tile — bleeds into neighbors, no gaps
 
                 // Colour over lifetime: fade in → hold → fade out
                 var gradient = new Gradient();
