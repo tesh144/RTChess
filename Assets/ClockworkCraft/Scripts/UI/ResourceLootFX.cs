@@ -116,7 +116,10 @@ namespace ClockworkCraft
             CanvasGroup cg = obj.GetComponent<CanvasGroup>();
             if (cg == null) cg = obj.AddComponent<CanvasGroup>();
 
-            // Configure visual
+            // Configure visual — always refresh size for current resolution
+            float scaled = ScaledIconSize;
+            rect.sizeDelta = new Vector2(scaled, scaled);
+
             if (useSpriteMode)
             {
                 Image img = obj.GetComponent<Image>();
@@ -132,7 +135,7 @@ namespace ClockworkCraft
                 if (tmp != null)
                 {
                     tmp.text = ResourceDisplayUI.GetEmojiForResource(resType);
-                    tmp.fontSize = ScaledIconSize;
+                    tmp.fontSize = scaled;
                 }
             }
 
