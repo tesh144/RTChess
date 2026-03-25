@@ -6,6 +6,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using ClockworkGrid;
+using ClockworkCraft;
 
 namespace LittleCafe.Editor
 {
@@ -35,6 +36,7 @@ namespace LittleCafe.Editor
         private WorkerDatabase workerDB;
         private UnitDatabase unitDB;
         private EnvironmentDatabase environmentDB;
+        private POIDatabase poiDB;
 
         [MenuItem("ClockworkCraft/Sheet Sync")]
         public static void ShowWindow()
@@ -83,6 +85,7 @@ namespace LittleCafe.Editor
             workerDB = (WorkerDatabase)EditorGUILayout.ObjectField("Worker DB", workerDB, typeof(WorkerDatabase), false);
             unitDB = (UnitDatabase)EditorGUILayout.ObjectField("Unit DB", unitDB, typeof(UnitDatabase), false);
             environmentDB = (EnvironmentDatabase)EditorGUILayout.ObjectField("Environment DB", environmentDB, typeof(EnvironmentDatabase), false);
+            poiDB = (POIDatabase)EditorGUILayout.ObjectField("POI DB", poiDB, typeof(POIDatabase), false);
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space(8);
 
@@ -183,6 +186,26 @@ namespace LittleCafe.Editor
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
 
+            EditorGUILayout.Space(4);
+
+            // Points of Interest
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Points of Interest", EditorStyles.boldLabel);
+            if (cachedData?.sheets != null && cachedData.sheets.ContainsKey("Points of Interest"))
+            {
+                var sheet = cachedData.sheets["Points of Interest"];
+                EditorGUILayout.LabelField($"  {sheet.rows.Count} entries in cache");
+                DrawSheetPreview(sheet);
+            }
+
+            EditorGUILayout.BeginHorizontal();
+            GUI.enabled = cachedData != null && poiDB != null;
+            if (GUILayout.Button("Sync POI", GUILayout.Height(28)))
+                SyncPOI();
+            GUI.enabled = cachedData != null;
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
+
             EditorGUILayout.Space(8);
 
             // Sync All
@@ -193,6 +216,7 @@ namespace LittleCafe.Editor
                 if (workerDB != null) SyncWorkers();
                 if (unitDB != null) SyncUnits();
                 if (environmentDB != null) SyncEnvironment();
+                if (poiDB != null) SyncPOI();
                 SyncDrawButton();
             }
             GUI.enabled = true;
@@ -311,6 +335,8 @@ namespace LittleCafe.Editor
                 unitDB = FindAsset<UnitDatabase>();
             if (environmentDB == null)
                 environmentDB = FindAsset<EnvironmentDatabase>();
+            if (poiDB == null)
+                poiDB = FindAsset<POIDatabase>();
         }
 
         private T FindAsset<T>() where T : ScriptableObject
@@ -602,10 +628,14 @@ namespace LittleCafe.Editor
                 if (!isEnemy && !isCorruption) continue;
 
                 string cleanName = entity.Split('(')[0].Trim();
+                // Normalise spaces for matching — sheet entries may use "Corrupted Heart"
+                // while UnitDatabase assetNames use "CorruptedHeart" (no spaces).
+                string cleanNameNoSpaces = cleanName.Replace(" ", "");
                 var existing = unitList.FirstOrDefault(u =>
                     u.assetName == cleanName ||
                     u.assetName == entity ||
-                    u.assetName.Equals(cleanName, StringComparison.OrdinalIgnoreCase));
+                    u.assetName.Equals(cleanName, StringComparison.OrdinalIgnoreCase) ||
+                    u.assetName.Replace(" ", "").Equals(cleanNameNoSpaces, StringComparison.OrdinalIgnoreCase));
 
                 if (existing == null)
                 {
@@ -828,6 +858,50 @@ namespace LittleCafe.Editor
             EditorUtility.SetDirty(environmentDB);
             AssetDatabase.SaveAssets();
             SetStatus($"Environment synced: {updated} updated", MessageType.Info);
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // Sync: Points of Interest
+        // ─────────────────────────────────────────────────────────────────
+
+        private void SyncPOI()
+        {
+            if (poiDB == null || cachedData?.sheets == null) return;
+            if (!cachedData.sheets.ContainsKey("Points of Interest")) return;
+
+            var sheet = cachedData.sheets["Points of Interest"];
+            var entries = poiDB.Entries;
+            entries.Clear();
+
+            foreach (var row in sheet.rows)
+            {
+                string typeName = GetValue(row, "Type");
+                if (string.IsNullOrEmpty(typeName)) continue;
+
+                string labelText = GetValue(row, "Label");
+                string colorHex = GetValue(row, "Color (hex)");
+                string rewardStr = GetValue(row, "Approval Reward");
+
+                Color color = Color.white;
+                if (!string.IsNullOrEmpty(colorHex))
+                    ColorUtility.TryParseHtmlString(colorHex, out color);
+
+                int reward = 0;
+                int.TryParse(rewardStr, out reward);
+
+                entries.Add(new POITypeData
+                {
+                    typeName = typeName,
+                    label = string.IsNullOrEmpty(labelText) ? typeName : labelText,
+                    bubbleColor = color,
+                    approvalReward = reward
+                });
+            }
+
+            EditorUtility.SetDirty(poiDB);
+            AssetDatabase.SaveAssets();
+            SetStatus($"POI synced: {entries.Count} entries", MessageType.Info);
+            Debug.Log($"[SheetSync] POI synced: {entries.Count} entries.");
         }
 
         // ─────────────────────────────────────────────────────────────────
