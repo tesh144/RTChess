@@ -116,8 +116,9 @@ namespace ClockworkCraft
         [Tooltip("Name of the environment or unit type whose clusters this should spawn near.")]
         public string edgeBorderOf = "";
 
-        // ── Initial corruption footprint ──
-        [Tooltip("Moore neighbourhood radius of pre-corrupted tiles around each heart on spawn. 1 = heart cell + 8 surrounding tiles.")]
+        // ── Corruption seeding ──
+        [Tooltip("Moore-neighborhood radius of tiles pre-corrupted around each heart at spawn time. " +
+                 "1 = the 8 immediately surrounding tiles. 0 = no pre-seeding.")]
         [Min(0)] public int initialCorruptionRadius = 1;
     }
 
@@ -708,6 +709,7 @@ namespace ClockworkCraft
             {
                 if (!unitData.active) continue; // skip inactive entries
                 if (!unitData.isMapGenerated) continue; // only map-generated units go into spawn entries
+                if (unitData.type == LittleCafe.GameUnitType.Corruption) continue; // corruption entities are handled by SyncCorruptionSpawnEntries, not the unit spawn list
                 if (existing.TryGetValue(unitData.assetName, out var kept))
                     synced.Add(kept);
                 else
@@ -843,10 +845,16 @@ namespace ClockworkCraft
                 SyncSpawnEntries();
             }
 
-            // ── Auto-sync corruption entries if empty ────────────────────
-            if (unitDatabase != null && corruptionSpawnEntries.Count == 0)
+            // ── Auto-sync corruption entries if empty or stale ───────────
+            // Also re-syncs if any entry has a null prefab — this catches the common case where
+            // the Inspector list was populated before the CorruptionHeart prefab was assigned,
+            // and prevents hearts from silently failing to spawn due to a null-prefab entry.
+            bool corruptionNeedsSync = unitDatabase != null &&
+                (corruptionSpawnEntries.Count == 0 ||
+                 corruptionSpawnEntries.Exists(e => e.prefab == null));
+            if (corruptionNeedsSync)
             {
-                Debug.Log("[MapGenV2] corruptionSpawnEntries empty — auto-syncing from UnitDatabase (Corruption type)");
+                Debug.Log("[MapGenV2] corruptionSpawnEntries empty or contains null prefabs — auto-syncing.");
                 SyncCorruptionSpawnEntries();
             }
 
@@ -882,6 +890,21 @@ namespace ClockworkCraft
 
             // ── Spawn corruption entities (staggered) ─────────────────
             yield return StartCoroutine(SpawnAllCorruptionEntitiesStaggered());
+
+            // DEBUG TEST: Corrupt a few tiles near the player start to verify corruption fog visual
+            if (LittleCafe.CorruptionManager.Instance != null)
+            {
+                // Create a temporary fake heart for testing
+                var testObj = new GameObject("DEBUG_TestCorruptionHeart");
+                var testHeart = testObj.AddComponent<LittleCafe.CorruptionHeart>();
+                testHeart.GridPosition = new Vector2Int(center.x + 3, center.y + 3);
+                testHeart.Activate();
+                LittleCafe.CorruptionManager.Instance.RegisterHeart(testHeart);
+                for (int dx = 0; dx < 3; dx++)
+                    for (int dy = 0; dy < 3; dy++)
+                        LittleCafe.CorruptionManager.Instance.CorruptTile(center.x + 3 + dx, center.y + 3 + dy, testHeart);
+                Debug.Log("[MapGenV2] DEBUG: Spawned test corruption 3x3 near player start");
+            }
 
             Debug.Log($"[MapGenV2] Map generated. Seed={seed}  Size={width}x{height}  Center=({center.x},{center.y})  Nodes={NodeManager.Instance?.NodeCount}");
         }
@@ -2046,25 +2069,41 @@ namespace ClockworkCraft
         const string CORRUPTION_PREFIX = "corruption:";
 
         /// <summary>
-        /// Syncs corruptionSpawnEntries from UnitDatabase entries with type == Corruption,
-        /// adding an entry for each asset not yet represented. Called automatically when
-        /// the list is empty or via the editor Sync button.
+        /// Syncs corruptionSpawnEntries from UnitDatabase entries with type == Corruption
+        /// AND isMapGenerated == true. Called automatically when the list is empty (or
+        /// contains null-prefab entries) or via the editor Sync button.
+        ///
+        /// Only map-generated corruption entities (hearts) are included. Spikes have
+        /// isMapGenerated = false and must NOT be map-placed — they grow organically
+        /// inside the cluster via CorruptionHeart.TryGrowSpike() at runtime.
+        ///
+        /// Note: Google Sheets sync never assigns Unity prefab references. In editor
+        /// context this method auto-resolves null prefabs from AssetDatabase by name
+        /// and patches the UnitDatabase entry so future syncs retain the reference.
+        /// At runtime the prefab must already be set in UnitDatabase via the Inspector.
         /// </summary>
         public void SyncCorruptionSpawnEntries()
         {
             if (unitDatabase == null) return;
 
-            // Remove invalid entries (empty name, no longer in database, or inactive)
-            var validNames = new System.Collections.Generic.HashSet<string>();
+            // Build valid-name set: active, Corruption type, AND map-generated (hearts only)
+            var validHeartNames = new System.Collections.Generic.HashSet<string>();
             foreach (var data in unitDatabase.GetByType(LittleCafe.GameUnitType.Corruption))
             {
                 if (data.active && data.isMapGenerated)
-                    validNames.Add(data.assetName);
+                    validHeartNames.Add(data.assetName);
             }
-            corruptionSpawnEntries.RemoveAll(e =>
-                string.IsNullOrEmpty(e.entityName) || !validNames.Contains(e.entityName));
 
-            // Add missing entries + update prefabs on existing ones
+            // Remove stale entries (empty name, removed from database, inactive, or not map-generated)
+            corruptionSpawnEntries.RemoveAll(e =>
+                string.IsNullOrEmpty(e.entityName) || !validHeartNames.Contains(e.entityName));
+
+            // Remove duplicates — keep only the first entry per entityName (duplicates can
+            // accumulate from earlier bad sync runs and survive the RemoveAll above)
+            var seenNames = new System.Collections.Generic.HashSet<string>();
+            corruptionSpawnEntries.RemoveAll(e => !seenNames.Add(e.entityName));
+
+            // Add missing entries + refresh prefabs on existing ones
             foreach (var data in unitDatabase.GetByType(LittleCafe.GameUnitType.Corruption))
             {
                 if (!data.active || !data.isMapGenerated) continue;
@@ -2082,6 +2121,48 @@ namespace ClockworkCraft
                     });
                 }
             }
+
+#if UNITY_EDITOR
+            // Google Sheets sync never assigns prefab references — attempt to auto-resolve
+            // any remaining null prefabs from AssetDatabase so the Inspector Sync button
+            // works without requiring manual drag-and-drop for every heart entry.
+            bool anyPrefabPatched = false;
+            foreach (var entry in corruptionSpawnEntries)
+            {
+                if (entry.prefab != null) continue;
+
+                string[] guids = UnityEditor.AssetDatabase.FindAssets($"{entry.entityName} t:Prefab");
+                foreach (string guid in guids)
+                {
+                    string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                    // Exact name match to avoid false positives (e.g. "Spike1" != "CorruptionHeart")
+                    if (!System.IO.Path.GetFileNameWithoutExtension(path)
+                            .Equals(entry.entityName, System.StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var prefabAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                    if (prefabAsset == null) continue;
+
+                    entry.prefab = prefabAsset;
+
+                    // Patch UnitDatabase so the reference survives future syncs
+                    var dbEntry = unitDatabase.GetByName(entry.entityName);
+                    if (dbEntry != null && dbEntry.prefab == null)
+                    {
+                        dbEntry.prefab = prefabAsset;
+                        UnityEditor.EditorUtility.SetDirty(unitDatabase);
+                        anyPrefabPatched = true;
+                        Debug.Log($"[MapGenV2] Auto-resolved prefab for '{entry.entityName}' → {path}");
+                    }
+                    break;
+                }
+
+                if (entry.prefab == null)
+                    Debug.LogWarning($"[MapGenV2] No prefab found for corruption entry '{entry.entityName}'. " +
+                                     "Assign it in UnitDatabase or run Tools > Corruption > Create Corruption Prefabs first.");
+            }
+            if (anyPrefabPatched)
+                UnityEditor.AssetDatabase.SaveAssets();
+#endif
         }
 
         /// <summary>
@@ -2332,14 +2413,15 @@ namespace ClockworkCraft
                 GameObject obj = Instantiate(entry.prefab, worldPos, Quaternion.identity);
                 obj.name = $"{entityName}_{spawnCount}";
 
-                // Stats are serialized on the prefab's CorruptionHeart component — just set grid position,
-                // inject UnitDatabase so the heart can spawn spikes, and pass the initial corruption radius
+                // Stats are serialized on the prefab's CorruptionHeart component — set grid position,
+                // inject UnitDatabase so the heart can grow spikes at runtime, and tell it how many
+                // surrounding tiles to pre-corrupt on Start().
                 var heart = obj.GetComponent<LittleCafe.CorruptionHeart>();
                 if (heart != null)
                 {
-                    heart.GridPosition = new Vector2Int(x, y);
-                    heart.UnitDatabase = unitDatabase;
-                    heart.InitialCorruptionRadius = entry.initialCorruptionRadius;
+                    heart.GridPosition            = new Vector2Int(x, y);
+                    heart.UnitDatabase            = unitDatabase;
+                    heart.InitialCorruptedRadius  = entry.initialCorruptionRadius;
                 }
 
                 if (enableFog)
