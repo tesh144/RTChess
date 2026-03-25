@@ -228,6 +228,14 @@ namespace LittleCafe
         {
             if (health == null) return;
 
+            // CorruptionOverlay lives on a grid tile — don't destroy the tile.
+            // The overlay handles its own cleanup via CorruptionManager.ClearTile().
+            if (health.GetComponent<CorruptionOverlay>() != null)
+            {
+                Debug.Log($"[GridEntityManager] Skipping destroy for corruption overlay on tile {health.gameObject.name}");
+                return;
+            }
+
             Debug.Log($"[GridEntityManager] Entity destroyed: {health.gameObject.name}");
 
             // Check if this was a worker (allied entity with an actor)
