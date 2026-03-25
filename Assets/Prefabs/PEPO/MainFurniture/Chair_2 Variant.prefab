@@ -58,15 +58,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8456249098463214377, guid: d20d6505b94184281b781a3f041b684a, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.80554
+      value: 1.0974678
       objectReference: {fileID: 0}
     - target: {fileID: 8456249098463214377, guid: d20d6505b94184281b781a3f041b684a, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.80554
+      value: 0.44161007
       objectReference: {fileID: 0}
     - target: {fileID: 8456249098463214377, guid: d20d6505b94184281b781a3f041b684a, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.80554
+      value: 1.0974678
+      objectReference: {fileID: 0}
+    - target: {fileID: 9084166635889992083, guid: d20d6505b94184281b781a3f041b684a, type: 3}
+      propertyPath: m_Name
+      value: Chair_2 Variant
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
