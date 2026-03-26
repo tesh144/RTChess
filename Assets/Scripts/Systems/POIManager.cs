@@ -279,7 +279,9 @@ namespace ClockworkCraft
             // Heart discovered
             if (heartRegistry.TryGetValue(coord, out var heart) && heart != null)
             {
-                AwardReward(HEART_ASSET_NAME);
+                Vector3 bubblePos = activeBubbles.TryGetValue(coord, out var hBubble) && hBubble != null
+                    ? hBubble.transform.position : Vector3.zero;
+                AwardReward(HEART_ASSET_NAME, bubblePos);
                 DismissBubble(coord);
                 heartRegistry.Remove(coord);
             }
@@ -287,7 +289,9 @@ namespace ClockworkCraft
             // Env POI discovered
             if (envRegistry.TryGetValue(coord, out var entry))
             {
-                AwardReward(entry.assetName);
+                Vector3 bubblePos = activeBubbles.TryGetValue(coord, out var eBubble) && eBubble != null
+                    ? eBubble.transform.position : Vector3.zero;
+                AwardReward(entry.assetName, bubblePos);
                 DismissBubble(coord);
                 envRegistry.Remove(coord);
             }
@@ -428,14 +432,25 @@ namespace ClockworkCraft
             activeBubbles.Remove(gridPos);
         }
 
-        private void AwardReward(string assetName)
+        private void AwardReward(string assetName, Vector3 worldPos)
         {
             if (poiEntries == null || poiEntries.Count == 0) return;
             var data = GetPOIData(assetName);
             if (data == null || data.rewardQuantity <= 0) return;
 
+            // Add the resource
             if (ResourceManager.Instance != null)
                 ResourceManager.Instance.AddResource(data.rewardType, data.rewardQuantity);
+
+            // Visual: loot fly from bubble position to resource bar
+            if (worldPos != Vector3.zero)
+            {
+                var lootFX = ClockworkCraft.ResourceLootFX.Instance;
+                if (lootFX != null)
+                    lootFX.SpawnLoot(worldPos, data.rewardType, data.rewardQuantity);
+            }
+
+            Debug.Log($"[POIManager] Awarded {data.rewardQuantity}x {data.rewardType} for discovering '{assetName}'");
         }
 
         // ── Pool ────────────────────────────────────────────────────────
