@@ -17,21 +17,48 @@ namespace LittleCafe
         public static CorruptionManager Instance { get; private set; }
 
         [Header("Spread Settings")]
-        [Tooltip("Seconds between each spread tick. Each tick spreads every active heart's corruption one tile outward.")]
+        [Tooltip("Seconds between each spread tick.")]
         [SerializeField] private float spreadInterval = 30f;
+
+        [Tooltip("Probability (0–1) that corruption spreads to each eligible neighbouring tile per tick. 1 = guaranteed, 0.25 = 25% chance.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float spreadChance = 0.25f;
+
+        [Tooltip("Seconds that spreading is paused after a corruption tile is hit by a worker.")]
+        [SerializeField] private float spreadPauseOnHit = 5f;
+
+        [Tooltip("Seconds a cleared tile is immune to re-corruption after being purged.")]
+        [SerializeField] private float recorruptionImmunity = 20f;
 
         [Tooltip("Chebyshev radius (in tiles) within which a revealed tile activates a dormant heart.")]
         [SerializeField] private int heartActivationRadius = 5;
 
-        [Header("Visuals")]
-        [Tooltip("When true, uses the code-driven particle fog. When false, uses the prefab below.")]
-        [SerializeField] private bool useParticleFog = true;
+        [Header("Audio")]
+        [Tooltip("Sound played each time corruption claims a new tile. Leave unassigned until you have a clip ready.")]
+        [SerializeField] private AudioClip spreadSound;
 
-        [Tooltip("Prefab instantiated on each corrupted tile. Only used when useParticleFog is false.")]
+        [Tooltip("Volume of the spread sound effect.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float spreadSoundVolume = 0.6f;
+
+        [Header("Visuals")]
+        [Tooltip("Prefab instantiated on each corrupted tile. Assign 'Corruption Tile' from Assets/Prefabs/Corruption/.")]
         [SerializeField] private GameObject corruptionOverlayPrefab;
 
-        /// <summary>The overlay visual prefab. Returns null when particle fog is enabled (default).</summary>
-        public GameObject CorruptionOverlayPrefab => useParticleFog ? null : corruptionOverlayPrefab;
+        [Tooltip("Height offset above the tile where the corruption visual spawns.")]
+        [SerializeField] private float corruptionVisualHeight = 0.05f;
+
+        [Tooltip("Scale applied to the corruption visual. Overrides any inherited scale from the parent tile.")]
+        [SerializeField] private float corruptionVisualScale = 1f;
+
+        /// <summary>The corruption tile visual prefab. Assigned in the Inspector.</summary>
+        public GameObject CorruptionOverlayPrefab => corruptionOverlayPrefab;
+
+        /// <summary>Y offset for the corruption visual above the tile.</summary>
+        public float CorruptionVisualHeight => corruptionVisualHeight;
+
+        /// <summary>Uniform scale for the corruption visual.</summary>
+        public float CorruptionVisualScale => corruptionVisualScale;
 
         // ── Internal State ────────────────────────────────────────────────
 
@@ -45,6 +72,11 @@ namespace LittleCafe
         private readonly HashSet<Vector2Int> allCorruptedTiles = new HashSet<Vector2Int>();
 
         private float spreadTimer;
+        private float spreadPauseTimer;
+
+        // Tiles immune to re-corruption: coord → time when immunity expires
+        private readonly Dictionary<Vector2Int, float> immuneTiles
+            = new Dictionary<Vector2Int, float>();
 
         // ── Lifecycle ──────────────────────────────────────────────────────
 
@@ -68,6 +100,13 @@ namespace LittleCafe
 
         private void Update()
         {
+            // If spread is paused (a corruption tile was hit), count down the pause first
+            if (spreadPauseTimer > 0f)
+            {
+                spreadPauseTimer -= Time.deltaTime;
+                return;
+            }
+
             spreadTimer -= Time.deltaTime;
             if (spreadTimer <= 0f)
             {
@@ -135,6 +174,13 @@ namespace LittleCafe
             if (allCorruptedTiles.Contains(coord)) return;
             if (!heartTiles.ContainsKey(owner)) return;
 
+            // Respect re-corruption immunity on cleared tiles
+            if (immuneTiles.TryGetValue(coord, out float expiryTime))
+            {
+                if (Time.time < expiryTime) return;
+                immuneTiles.Remove(coord);
+            }
+
             var tile = GridManager.Instance != null ? GridManager.Instance.GetGridTile(x, y) : null;
             if (tile == null) return;
 
@@ -150,6 +196,10 @@ namespace LittleCafe
             // Update both data structures together
             heartTiles[owner].Add(coord);
             allCorruptedTiles.Add(coord);
+
+            // Play spread sound at the tile's world position
+            if (spreadSound != null)
+                AudioSource.PlayClipAtPoint(spreadSound, tile.transform.position, spreadSoundVolume);
 
             Debug.Log($"[CorruptionManager] Corrupted tile ({x},{y}) owned by heart at {owner.GridPosition}.");
         }
@@ -177,6 +227,10 @@ namespace LittleCafe
             if (heartTiles.ContainsKey(owner))
                 heartTiles[owner].Remove(coord);
             allCorruptedTiles.Remove(coord);
+
+            // Grant re-corruption immunity so the tile can't be immediately re-corrupted
+            if (recorruptionImmunity > 0f)
+                immuneTiles[coord] = Time.time + recorruptionImmunity;
         }
 
         /// <summary>
@@ -200,6 +254,15 @@ namespace LittleCafe
 
         /// <summary>Returns true if the tile at (x, y) is currently corrupted by any heart.</summary>
         public bool IsCorrupted(int x, int y) => allCorruptedTiles.Contains(new Vector2Int(x, y));
+
+        /// <summary>
+        /// Pause corruption spreading. Called when a worker hits a corruption tile.
+        /// Resets the pause timer each hit, so sustained combat keeps it paused.
+        /// </summary>
+        public void PauseSpread()
+        {
+            spreadPauseTimer = spreadPauseOnHit;
+        }
 
         /// <summary>
         /// Returns the set of tiles currently owned by the given heart's cluster.
@@ -241,6 +304,7 @@ namespace LittleCafe
             if (GridManager.Instance == null) return;
             if (!GridManager.Instance.IsValidCell(x, y)) return;
             if (IsCorrupted(x, y)) return;
+            if (Random.value > spreadChance) return;
             CorruptTile(x, y, owner);
         }
 

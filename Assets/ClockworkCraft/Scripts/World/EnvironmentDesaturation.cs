@@ -18,11 +18,13 @@ namespace ClockworkCraft
     public class EnvironmentDesaturation : MonoBehaviour
     {
         private static readonly int SaturationID = Shader.PropertyToID("_Saturation");
+        private static readonly int TintColorID = Shader.PropertyToID("_TintColor");
+        private static readonly int TintStrengthID = Shader.PropertyToID("_TintStrength");
 
         [Header("Desaturation Settings")]
         [Tooltip("Saturation amount before the first interaction (0 = grayscale, 1 = full color)")]
         [Range(0f,1f)]
-        public float DesaturatedValue = 0.5f;
+        public float DesaturatedValue = 0.65f;
 
         [Tooltip("Saturation amount after the first interaction")]
         [Range(0f,1f)]
@@ -30,6 +32,14 @@ namespace ClockworkCraft
 
         [Tooltip("Seconds for the transition from desaturated to full color")]
         public float TransitionDuration = 0.3f;
+
+        [Header("Tint")]
+        [Tooltip("Color to tint this object (e.g. pink for corruption). White = no tint.")]
+        public Color TintColor = Color.white;
+
+        [Tooltip("Strength of the tint overlay (0 = none, 1 = full tint)")]
+        [Range(0f,1f)]
+        public float TintStrength = 0f;
 
         private Renderer[] renderers;
         private MaterialPropertyBlock mpb;
@@ -42,13 +52,42 @@ namespace ClockworkCraft
 
             mpb = new MaterialPropertyBlock();
 
-            // Apply initial desaturation to all renderers
+            // Apply initial desaturation and tint to all renderers
             for (int i = 0; i < renderers.Length; i++)
             {
                 renderers[i].GetPropertyBlock(mpb);
                 mpb.SetFloat(SaturationID, DesaturatedValue);
+                mpb.SetColor(TintColorID, TintColor);
+                mpb.SetFloat(TintStrengthID, TintStrength);
                 renderers[i].SetPropertyBlock(mpb);
             }
+        }
+
+        /// <summary>
+        /// Apply a tint color and strength at runtime. Use to mark objects as corrupted, etc.
+        /// </summary>
+        public void SetTint(Color color, float strength)
+        {
+            TintColor = color;
+            TintStrength = strength;
+
+            if (renderers == null || mpb == null) return;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+                renderers[i].GetPropertyBlock(mpb);
+                mpb.SetColor(TintColorID, color);
+                mpb.SetFloat(TintStrengthID, strength);
+                renderers[i].SetPropertyBlock(mpb);
+            }
+        }
+
+        /// <summary>
+        /// Remove any tint. Resets to white / strength 0.
+        /// </summary>
+        public void ClearTint()
+        {
+            SetTint(Color.white, 0f);
         }
 
         /// <summary>

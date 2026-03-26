@@ -77,7 +77,7 @@ MonoBehaviour:
     drawWeight: 0
     gridSize: {x: 1, y: 1}
     visualScale: 1
-    prefab: {fileID: 3119510917662581751, guid: 8ec6bc77c596f0a4a901c5b5dd5b9370, type: 3}
+    prefab: {fileID: 6759347119158193349, guid: f242e5b1259fb42e09a905f57e5d6eb0, type: 3}
     icon: {fileID: 21300000, guid: d31140797c9bd5e47ad93c6fbde7822b, type: 2}
   - active: 1
     assetName: Spike1

@@ -28,8 +28,6 @@ namespace LittleCafe
         public GridEntityHealth Health { get; private set; }
 
         private GameObject visualChild;
-        private Material _fogMaterial;
-        private Texture2D _fogTexture;
         private bool _subscribedToFog;
         private GameObject pausedOccupant;
         private Transform occupantTransform; // Cached for visual positioning
@@ -41,13 +39,14 @@ namespace LittleCafe
         {
             Health = gameObject.AddComponent<GridEntityHealth>();
             // workerCanInteract=true, isAllied=false so workers target it
-            // isSlotTakeable=false — worker stays put after destroying overlay, re-targets next cycle
-            Health.Initialize(maxHP, atkPower: 0, canInteract: true, allied: false, slotTakeable: false);
+            // isSlotTakeable=true — worker advances into the tile after clearing corruption
+            Health.Initialize(maxHP, atkPower: 0, canInteract: true, allied: false, slotTakeable: true);
         }
 
         private void Start()
         {
             Health.OnEntityDestroyed += OnOverlayDestroyed;
+            Health.OnDamaged += OnOverlayDamaged;
             SpawnVisual();
 
             // Hide visual if tile is in fog — show when revealed
@@ -63,7 +62,10 @@ namespace LittleCafe
         private void OnDestroy()
         {
             if (Health != null)
+            {
                 Health.OnEntityDestroyed -= OnOverlayDestroyed;
+                Health.OnDamaged -= OnOverlayDamaged;
+            }
             if (_subscribedToFog && FogManager.Instance != null)
                 FogManager.Instance.OnCellRevealed -= OnFogRevealed;
         }
@@ -88,10 +90,19 @@ namespace LittleCafe
         ///   - Workers (allied actors): pause behavior
         ///   - Neutral creatures (non-allied actors): kill immediately
         /// </summary>
+        // Corruption tint color — applied to occupants sharing a tile with corruption
+        private static readonly Color CorruptionTint = new Color(1f, 0.4f, 0.7f); // pink
+        private const float CorruptionTintStrength = 0.5f;
+
         public void InitWithOccupant(GameObject occupant)
         {
             if (occupant == null) return;
             occupantTransform = occupant.transform;
+
+            // Tint the occupant pink to show corruption influence
+            var desat = occupant.GetComponent<ClockworkCraft.EnvironmentDesaturation>();
+            if (desat != null)
+                desat.SetTint(CorruptionTint, CorruptionTintStrength);
 
             var occupantHealth = occupant.GetComponent<GridEntityHealth>();
             var actor = occupant.GetComponent<GridEntityActor>();
@@ -145,6 +156,11 @@ namespace LittleCafe
             // Resume the occupant if it was paused by this overlay
             if (pausedOccupant != null)
             {
+                // Clear corruption tint
+                var desat = pausedOccupant.GetComponent<ClockworkCraft.EnvironmentDesaturation>();
+                if (desat != null)
+                    desat.ClearTint();
+
                 // Resume worker actor
                 var actor = pausedOccupant.GetComponent<GridEntityActor>();
                 if (actor != null)
@@ -163,10 +179,6 @@ namespace LittleCafe
                 occupantDeathHandler = null;
             }
 
-            // Destroy fog material and texture to avoid memory leaks
-            if (_fogMaterial != null) { Destroy(_fogMaterial); _fogMaterial = null; }
-            if (_fogTexture  != null) { Destroy(_fogTexture);  _fogTexture  = null; }
-
             // Destroy visual child
             if (visualChild != null)
             {
@@ -177,6 +189,13 @@ namespace LittleCafe
 
         // ── Private ───────────────────────────────────────────────────────
 
+        private void OnOverlayDamaged(int damageDealt, int currentHP, int maxHP)
+        {
+            // Pause corruption spreading when a worker hits a corruption tile
+            if (CorruptionManager.Instance != null)
+                CorruptionManager.Instance.PauseSpread();
+        }
+
         private void OnOverlayDestroyed(GridEntityHealth _)
         {
             if (CorruptionManager.Instance != null)
@@ -185,151 +204,24 @@ namespace LittleCafe
 
         private void SpawnVisual()
         {
-            // Use prefab from CorruptionManager if assigned, otherwise fall back to particle fog
             GameObject prefab = CorruptionManager.Instance != null
                 ? CorruptionManager.Instance.CorruptionOverlayPrefab : null;
 
-            Debug.Log($"[CorruptionOverlay] SpawnVisual at {GridPosition}. prefab={(prefab != null ? prefab.name : "NULL")} — using {(prefab != null ? "PREFAB" : "PARTICLE")} path");
-
-            if (prefab != null)
+            if (prefab == null)
             {
-                // If there's an occupant (tree, building, etc.), parent to it and
-                // position at RefHeight so the fire sits on top of the object.
-                // If no occupant (empty ground), parent to the tile at ground level.
-                if (occupantTransform != null)
-                {
-                    Transform refHeight = FindRefHeight(occupantTransform);
-                    if (refHeight != null)
-                    {
-                        visualChild = Instantiate(prefab, refHeight);
-                        visualChild.transform.localPosition = Vector3.zero;
-                    }
-                    else
-                    {
-                        // No RefHeight — place at top of occupant using renderer bounds
-                        visualChild = Instantiate(prefab, occupantTransform);
-                        float height = EstimateHeight(occupantTransform);
-                        visualChild.transform.localPosition = new Vector3(0f, height, 0f);
-                    }
-                }
-                else
-                {
-                    // Empty ground — parent to tile, sit on surface
-                    visualChild = Instantiate(prefab, transform);
-                    visualChild.transform.localPosition = new Vector3(0f, 0.05f, 0f);
-                }
-
-                visualChild.name = "CorruptionVisual";
-                visualChild.SetActive(true);
+                Debug.LogWarning($"[CorruptionOverlay] No corruption overlay prefab assigned on CorruptionManager. Tile ({GridPosition}) has no visual.");
+                return;
             }
-            else
-            {
-                // Code-driven purple fog particle system — no prefab or texture assets needed
 
-                // Step 1: Generate soft-circle texture (radial alpha gradient)
-                _fogTexture = new Texture2D(32, 32, TextureFormat.RGBA32, false);
-                Vector2 center = new Vector2(15.5f, 15.5f);
-                for (int px = 0; px < 32; px++)
-                {
-                    for (int py = 0; py < 32; py++)
-                    {
-                        float dist = Vector2.Distance(new Vector2(px, py), center);
-                        float t = Mathf.Clamp01(1f - dist / 16f);
-                        float alpha = t * t;
-                        _fogTexture.SetPixel(px, py, new Color(1f, 1f, 1f, alpha));
-                    }
-                }
-                _fogTexture.Apply();
-
-                // Step 2: Create material (Particles/Standard Unlit, alpha-blended)
-                var sh = Shader.Find("Particles/Standard Unlit");
-                if (sh == null)
-                {
-                    Debug.LogError("[CorruptionOverlay] Shader 'Particles/Standard Unlit' not found.");
-                    return;
-                }
-                _fogMaterial = new Material(sh);
-                _fogMaterial.mainTexture = _fogTexture;
-                _fogMaterial.SetFloat("_Mode", 2f);
-                _fogMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                _fogMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                _fogMaterial.SetInt("_ZWrite", 0);
-                _fogMaterial.EnableKeyword("_ALPHABLEND_ON");
-                _fogMaterial.renderQueue = 3000;
-
-                // Step 3: Create child GameObject and ParticleSystem
-                visualChild = new GameObject("CorruptionFog");
-                visualChild.transform.SetParent(transform);
-                visualChild.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-                visualChild.transform.localRotation = Quaternion.identity;
-                visualChild.transform.localScale    = Vector3.one;
-
-                var ps = visualChild.AddComponent<ParticleSystem>();
-
-                // Step 4: Configure ParticleSystem modules
-                var main = ps.main;
-                main.duration        = 3f;
-                main.loop            = true;
-                main.startLifetime   = 3.5f;
-                main.startSpeed      = 0.03f;
-                main.startSize       = new ParticleSystem.MinMaxCurve(1.2f, 1.8f);  // large — heavy overlap, no gaps
-                main.maxParticles    = 50;
-                main.simulationSpace = ParticleSystemSimulationSpace.Local;
-                main.gravityModifier = 0f;
-                main.startColor = new ParticleSystem.MinMaxGradient(
-                    new Color(0.45f, 0f, 0.75f, 0.35f),
-                    new Color(0.60f, 0f, 0.85f, 0.4f)
-                );
-
-                var emission = ps.emission;
-                emission.enabled = true;
-                emission.rateOverTime = 14f;
-
-                var shape = ps.shape;
-                shape.enabled   = true;
-                shape.shapeType = ParticleSystemShapeType.Box;
-                shape.scale     = new Vector3(1.3f, 0.15f, 1.3f);  // wider than tile — bleeds into neighbors, no gaps
-
-                // Colour over lifetime: fade in → hold → fade out
-                var gradient = new Gradient();
-                gradient.alphaKeys = new GradientAlphaKey[]
-                {
-                    new GradientAlphaKey(0f, 0.0f),
-                    new GradientAlphaKey(1f, 0.2f),
-                    new GradientAlphaKey(1f, 0.8f),
-                    new GradientAlphaKey(0f, 1.0f),
-                };
-                gradient.colorKeys = new GradientColorKey[]
-                {
-                    new GradientColorKey(Color.white, 0f),
-                    new GradientColorKey(Color.white, 1f),
-                };
-                var colOverLife = ps.colorOverLifetime;
-                colOverLife.enabled = true;
-                colOverLife.color   = new ParticleSystem.MinMaxGradient(gradient);
-
-                // Size over lifetime: grow then gently shrink
-                var sizeCurve = new AnimationCurve(
-                    new Keyframe(0f,   0.6f),
-                    new Keyframe(0.3f, 1.0f),
-                    new Keyframe(1f,   0.8f)
-                );
-                var sizeOverLife = ps.sizeOverLifetime;
-                sizeOverLife.enabled = true;
-                sizeOverLife.size    = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
-
-                // Renderer
-                var psr = visualChild.GetComponent<ParticleSystemRenderer>();
-                psr.material         = _fogMaterial;
-                psr.renderMode       = ParticleSystemRenderMode.Billboard;
-                psr.sortingOrder     = 10;
-                psr.sortingLayerName = "Default";
-
-                // Start playback
-                visualChild.SetActive(true);
-                ps.Play();
-                Debug.Log($"[CorruptionOverlay] Particle fog created at {GridPosition}. PS isPlaying={ps.isPlaying}, particleCount={ps.particleCount}, material={_fogMaterial.name}, shader={_fogMaterial.shader.name}");
-            }
+            float height = CorruptionManager.Instance != null
+                ? CorruptionManager.Instance.CorruptionVisualHeight : 0.05f;
+            visualChild = Instantiate(prefab, transform);
+            visualChild.transform.localPosition = new Vector3(0f, height, 0f);
+            float scale = CorruptionManager.Instance != null
+                ? CorruptionManager.Instance.CorruptionVisualScale : 1f;
+            visualChild.transform.localScale = Vector3.one * scale;
+            visualChild.name = "CorruptionVisual";
+            visualChild.SetActive(true);
         }
 
         /// <summary>Find a child named "RefHeight" in the hierarchy.</summary>

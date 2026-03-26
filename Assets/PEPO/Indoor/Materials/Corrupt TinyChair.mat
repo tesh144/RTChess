@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Mu_TinyChair_BaseColor
+  m_Name: Corrupt TinyChair
   m_Shader: {fileID: 4800000, guid: 7a03ff2246c624b0e9b7c7dca69a0044, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -44,7 +44,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: ad304a7000a2f418887f49e71fc066af, type: 3}
+        m_Texture: {fileID: 2800000, guid: b846ad7d77c07472cbed4e29f4d4e87f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:

@@ -4,6 +4,8 @@ Shader "Custom/UnlitSaturation"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Saturation ("Saturation", Range(0, 1)) = 1
+        _TintColor ("Tint Color", Color) = (1, 1, 1, 1)
+        _TintStrength ("Tint Strength", Range(0, 1)) = 0
     }
 
     SubShader
@@ -33,6 +35,8 @@ Shader "Custom/UnlitSaturation"
             sampler2D _MainTex;
             float4 _MainTex_ST;
             float _Saturation;
+            fixed4 _TintColor;
+            float _TintStrength;
 
             v2f vert (appdata v)
             {
@@ -49,6 +53,9 @@ Shader "Custom/UnlitSaturation"
                 // Perceptual luminance greyscale
                 float grey = dot(col.rgb, float3(0.299, 0.587, 0.114));
                 col.rgb = lerp(float3(grey, grey, grey), col.rgb, _Saturation);
+
+                // Optional tint overlay (e.g. pink for corruption)
+                col.rgb = lerp(col.rgb, col.rgb * _TintColor.rgb, _TintStrength);
 
                 return col;
             }

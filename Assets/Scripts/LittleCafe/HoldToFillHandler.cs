@@ -18,7 +18,10 @@ namespace LittleCafe
         [SerializeField] private float minChunkInterval = 0.08f;
 
         [Header("Resource Stream VFX")]
-        [SerializeField] private float streamFlyDuration = 0.4f;
+        [Tooltip("Duration of the pop-in scale (0→1) at the resource bar before the icon flies. Mirrors the gather burst phase.")]
+        [SerializeField] private float streamPopInDuration = 0.15f;
+        [Tooltip("Duration of the arc flight from resource bar to building.")]
+        [SerializeField] private float streamFlyDuration = 0.55f;
         [SerializeField] private float streamArcHeight = 1.5f;
         [SerializeField] private float streamIconSize = 64f;
 
@@ -400,7 +403,7 @@ namespace LittleCafe
             iconRect.anchorMin = new Vector2(0.5f, 0.5f);
             iconRect.anchorMax = new Vector2(0.5f, 0.5f);
             iconRect.anchoredPosition = startLocal;
-            iconRect.localScale = Vector3.one;
+            iconRect.localScale = Vector3.zero;
 
             Image iconImage = icon.AddComponent<Image>();
             iconImage.raycastTarget = false;
@@ -426,6 +429,19 @@ namespace LittleCafe
             particleCanvas.sortingOrder = 100;
 
             icon.SetActive(true);
+
+            // ── Pop-in at resource bar (mirrors gather's burst phase) ──
+            float popElapsed = 0f;
+            while (popElapsed < streamPopInDuration)
+            {
+                if (icon == null) yield break;
+                popElapsed += Time.deltaTime;
+                float popT = Mathf.Clamp01(popElapsed / streamPopInDuration);
+                float popScale = Mathf.SmoothStep(0f, 1f, popT);
+                iconRect.localScale = Vector3.one * popScale;
+                yield return null;
+            }
+            iconRect.localScale = Vector3.one;
 
             // ── Fly from bar to building ──
             float elapsed = 0f;
@@ -463,6 +479,10 @@ namespace LittleCafe
                 pos.y += arc;
 
                 iconRect.anchoredPosition = pos;
+
+                // Scale: shrink to 0.5x in final 20% (mirrors ResourceLootFX gather arrival)
+                float scale = t > 0.8f ? Mathf.Lerp(1f, 0.5f, (t - 0.8f) / 0.2f) : 1f;
+                iconRect.localScale = Vector3.one * scale;
 
                 // Fade out in final 20%
                 cg.alpha = t < 0.8f ? 1f : Mathf.Lerp(1f, 0f, (t - 0.8f) / 0.2f);

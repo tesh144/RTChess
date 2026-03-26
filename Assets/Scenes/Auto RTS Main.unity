@@ -1742,18 +1742,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiDatabase
+    - target: {fileID: 1817720487229440558, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionVisualHeight
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1817720487229440558, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: corruptionOverlayPrefab
       value: 
-      objectReference: {fileID: 11400000, guid: 32ecb81c2ad084adfa2db6a00b87b351, type: 2}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: bubbleParent
-      value: 
-      objectReference: {fileID: 8201178190721191329, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: bubblePrefab
-      value: 
-      objectReference: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+      objectReference: {fileID: 2881067372029442596, guid: 1edc148ad0f4c48159f40a43193655de, type: 3}
     - target: {fileID: 1872223307927959791, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: titleLogo
       value: 
@@ -1782,10 +1778,6 @@ PrefabInstance:
       propertyPath: backgroundColorOverlay
       value: 
       objectReference: {fileID: 2027892301}
-    - target: {fileID: 3858417341043816194, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: baseChunkInterval
-      value: 0.25
-      objectReference: {fileID: 0}
     - target: {fileID: 3909088470510346116, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 823.7514
@@ -1825,110 +1817,6 @@ PrefabInstance:
     - target: {fileID: 3909088470510346116, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: mapWidth
-      value: 60
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: enableFog
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: mapHeight
-      value: 60
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionDatabase
-      value: 
-      objectReference: {fileID: 11400000, guid: 5b1863fb6efc4f6458e11a5290e36838, type: 2}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.size
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: unitSpawnEntries.Array.size
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionSpawnEntries.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].spawnMode
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[1].spawnWeight
-      value: 6.6
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[3].spawnWeight
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[5].spawnWeight
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].spawnWeight
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[5].edgeBorderOf
-      value: Tree
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].edgeBorderOf
-      value: Water
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[4].fragmentation
-      value: 0.763
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].clusterSpread
-      value: 0.6
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].fragmentation
-      value: 0.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[3].environmentName
-      value: Coral
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].environmentName
-      value: Reed
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionSpawnEntries.Array.data[0].prefab
-      value: 
-      objectReference: {fileID: 3119510917662581751, guid: 8ec6bc77c596f0a4a901c5b5dd5b9370, type: 3}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionSpawnEntries.Array.data[0].entityName
-      value: CorruptedHeart
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionSpawnEntries.Array.data[0].minSpacing
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionSpawnEntries.Array.data[0].spawnCount
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionSpawnEntries.Array.data[0].clusterSpread
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionSpawnEntries.Array.data[0].fragmentation
-      value: 0.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionSpawnEntries.Array.data[0].minDistFromCenter
-      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7692711440160710592, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: m_Name
