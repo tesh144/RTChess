@@ -22,6 +22,10 @@ namespace ClockworkCraft
         [SerializeField] private GameObject bubblePrefab;
         [SerializeField] private POIDatabase poiDatabase;
 
+        [Header("Databases (for icon lookup)")]
+        [SerializeField] private EnvironmentDatabase environmentDatabase;
+        [SerializeField] private UnitDatabase unitDatabase;
+
         [Header("Points of Interest")]
         [Tooltip("POI entries — synced from Google Sheets via SheetSyncEditor.")]
         [SerializeField] private List<POITypeData> poiEntries = new List<POITypeData>();
@@ -365,6 +369,33 @@ namespace ClockworkCraft
 
         // ── Bubble Management ───────────────────────────────────────────
 
+        /// <summary>Look up the icon sprite for a POI by asset name from the source database.</summary>
+        private Sprite LookupIcon(string assetName, POITypeData data)
+        {
+            if (data == null) return null;
+            switch (data.sourceType)
+            {
+                case POISourceType.Environment:
+                    if (environmentDatabase != null)
+                    {
+                        var env = environmentDatabase.GetByName(assetName);
+                        if (env != null) return env.icon;
+                    }
+                    break;
+                case POISourceType.Unit:
+                    if (unitDatabase != null)
+                    {
+                        var unit = unitDatabase.GetByName(assetName);
+                        if (unit != null) return unit.icon;
+                    }
+                    break;
+                case POISourceType.Building:
+                    // Buildings use BuildingDatabase — add if needed
+                    break;
+            }
+            return null;
+        }
+
         private void ShowBubble(Vector2Int gridPos, string assetName, BubbleType bubbleType)
         {
             if (activeBubbles.ContainsKey(gridPos)) return;
@@ -378,13 +409,14 @@ namespace ClockworkCraft
 
             var data = GetPOIData(assetName);
             string text = data != null ? data.label : assetName;
+            Sprite icon = LookupIcon(assetName, data);
 
             Vector3 worldPos = GridManager.Instance != null
                 ? GridManager.Instance.GridToWorldPosition(gridPos.x, gridPos.y)
                 : new Vector3(gridPos.x, 0f, gridPos.y);
             worldPos.y += heightAboveGround;
 
-            bubble.Setup(bubbleType, text, worldPos);
+            bubble.Setup(bubbleType, text, worldPos, icon);
             activeBubbles[gridPos] = bubble;
             Debug.Log($"[POIManager] Bubble shown: '{text}' ({bubbleType}) at grid {gridPos} → world {worldPos}");
         }

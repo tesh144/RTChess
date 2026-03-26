@@ -113,7 +113,7 @@ namespace ClockworkCraft
 
         private void SetupTether(BubbleType bubbleType, Vector3 bubblePos)
         {
-            groundPosition = new Vector3(bubblePos.x, 0f, bubblePos.z);
+            groundPosition = new Vector3(bubblePos.x, -0.5f, bubblePos.z);
 
             if (tether == null)
             {
@@ -203,7 +203,7 @@ namespace ClockworkCraft
         /// Activate this bubble at the given world position.
         /// Toggles the matching BubbleType child on (all others off) and sets the label.
         /// </summary>
-        public void Setup(BubbleType bubbleType, string text, Vector3 worldPos)
+        public void Setup(BubbleType bubbleType, string text, Vector3 worldPos, Sprite icon = null)
         {
             basePosition = worldPos;
             transform.position = worldPos;
@@ -223,6 +223,17 @@ namespace ClockworkCraft
 
                     var tmp = obj.GetComponentInChildren<TextMeshProUGUI>();
                     if (tmp != null) tmp.text = text;
+
+                    // Set the icon if provided
+                    if (icon != null)
+                    {
+                        var iconImg = GetIconImage();
+                        if (iconImg != null)
+                        {
+                            iconImg.sprite = icon;
+                            iconImg.enabled = true;
+                        }
+                    }
                 }
                 else
                 {
