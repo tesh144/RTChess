@@ -230,17 +230,12 @@ namespace LittleCafe
                 revealedTiles = FogManager.Instance.GetRevealedCount();
             }
 
-            // Default distance grows with revealed tiles (gentle curve)
-            currentDefaultDistance = baseDefaultDistance + revealedTiles * distancePerRevealedTile;
-            currentDefaultDistance = Mathf.Clamp(currentDefaultDistance, minDistance, absoluteMaxDistance);
+            // Default (starting) distance is fixed — never changes
+            currentDefaultDistance = baseDefaultDistance;
 
-            // Max distance is a multiplier above default
-            currentMaxDistance = currentDefaultDistance * maxDistanceMultiplier;
+            // Only the MAX zoom-out ceiling grows with revealed tiles
+            currentMaxDistance = baseMaxDistance + revealedTiles * distancePerRevealedTile;
             currentMaxDistance = Mathf.Clamp(currentMaxDistance, baseMaxDistance, absoluteMaxDistance);
-
-            // Ensure max is always >= default
-            if (currentMaxDistance < currentDefaultDistance)
-                currentMaxDistance = currentDefaultDistance;
 
             // Pan distance also grows with revealed tiles
             currentMaxPanDistance = basePanDistance + revealedTiles * panDistancePerRevealedTile;
