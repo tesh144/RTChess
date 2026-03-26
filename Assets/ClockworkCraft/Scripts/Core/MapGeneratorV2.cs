@@ -207,6 +207,10 @@ namespace ClockworkCraft
         private Vector2Int center;
         private System.Random rng;
 
+        /// <summary>All connected same-type groups found after placement. Public read-only for POIManager etc.</summary>
+        public IReadOnlyList<EnvironmentGathering> DetectedGatherings => detectedGatherings;
+        private readonly List<EnvironmentGathering> detectedGatherings = new List<EnvironmentGathering>();
+
         // ─────────────────────────────────────────────────────────────────
         // Lifecycle
         // ─────────────────────────────────────────────────────────────────
@@ -867,6 +871,7 @@ namespace ClockworkCraft
             InitPlanGrid();
             PlaceAllEntries();
             PlaceCorruptionEntities(); // runs after env + units so it respects their cells
+            DetectGatherings();       // find all connected same-type groups on the grid
 
             // ── Fog ───────────────────────────────────────────────────
             FogManager.Instance?.Initialize(width, height);
@@ -896,7 +901,8 @@ namespace ClockworkCraft
             // ── Spawn corruption entities (staggered) ─────────────────
             yield return StartCoroutine(SpawnAllCorruptionEntitiesStaggered());
 
-            // Initialize POI system now that all objects are registered
+            // Pass gatherings to POI system, then initialize
+            POIManager.Instance?.RegisterGatherings(detectedGatherings);
             POIManager.Instance?.Initialize();
 
             Debug.Log($"[MapGenV2] Map generated. Seed={seed}  Size={width}x{height}  Center=({center.x},{center.y})  Nodes={NodeManager.Instance?.NodeCount}");
@@ -1514,6 +1520,88 @@ namespace ClockworkCraft
         }
 
         // ─────────────────────────────────────────────────────────────────
+        // Gathering Detection
+        // ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Flood-fills planGrid to find all connected groups of same-type environment
+        /// objects (4-connected: up/down/left/right). Runs once after PlaceAllEntries +
+        /// PlaceCorruptionEntities. Results stored in detectedGatherings for POIManager
+        /// to filter against POIDatabase.
+        /// </summary>
+        void DetectGatherings()
+        {
+            detectedGatherings.Clear();
+            bool[,] visited = new bool[width, height];
+
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                if (visited[x, y]) continue;
+                string cellName = planGrid[x, y];
+                if (string.IsNullOrEmpty(cellName)) continue;
+                if (cellName == "__center__" || cellName == "__footprint__") continue;
+                if (cellName.StartsWith(UNIT_PREFIX)) continue;
+                if (cellName.StartsWith(CORRUPTION_PREFIX)) continue;
+
+                var gathering = FloodFillGathering(x, y, cellName, visited);
+                detectedGatherings.Add(gathering);
+            }
+
+            Debug.Log($"[MapGenV2] Gathering detection: {detectedGatherings.Count} gatherings found.");
+        }
+
+        /// <summary>
+        /// BFS flood-fill from (startX, startY), collecting all 4-connected cells
+        /// sharing the same assetName. Marks cells as visited.
+        /// </summary>
+        EnvironmentGathering FloodFillGathering(int startX, int startY, string assetName, bool[,] visited)
+        {
+            var cells = new List<Vector2Int>();
+            var queue = new Queue<Vector2Int>();
+
+            queue.Enqueue(new Vector2Int(startX, startY));
+            visited[startX, startY] = true;
+
+            int sumX = 0, sumY = 0;
+
+            while (queue.Count > 0)
+            {
+                var pos = queue.Dequeue();
+                cells.Add(pos);
+                sumX += pos.x;
+                sumY += pos.y;
+
+                // 4-connected neighbors (cardinal directions only)
+                int nx, ny;
+
+                nx = pos.x + 1; ny = pos.y;
+                if (nx < width && !visited[nx, ny] && planGrid[nx, ny] == assetName)
+                { visited[nx, ny] = true; queue.Enqueue(new Vector2Int(nx, ny)); }
+
+                nx = pos.x - 1; ny = pos.y;
+                if (nx >= 0 && !visited[nx, ny] && planGrid[nx, ny] == assetName)
+                { visited[nx, ny] = true; queue.Enqueue(new Vector2Int(nx, ny)); }
+
+                nx = pos.x; ny = pos.y + 1;
+                if (ny < height && !visited[nx, ny] && planGrid[nx, ny] == assetName)
+                { visited[nx, ny] = true; queue.Enqueue(new Vector2Int(nx, ny)); }
+
+                nx = pos.x; ny = pos.y - 1;
+                if (ny >= 0 && !visited[nx, ny] && planGrid[nx, ny] == assetName)
+                { visited[nx, ny] = true; queue.Enqueue(new Vector2Int(nx, ny)); }
+            }
+
+            return new EnvironmentGathering
+            {
+                assetName = assetName,
+                cells = cells,
+                centroid = new Vector2Int(sumX / cells.Count, sumY / cells.Count),
+                size = cells.Count
+            };
+        }
+
+        // ─────────────────────────────────────────────────────────────────
         // Spawn Phase
         // ─────────────────────────────────────────────────────────────────
 
@@ -1706,7 +1794,6 @@ namespace ClockworkCraft
                     TriggerAppearAnimation(obj);
 
                 GridManager.Instance?.PlaceUnit(x, y, obj, CellState.Resource);
-                // Register as POI candidate if this env type is in the POI database
                 POIManager.Instance?.RegisterEnvPOI(new Vector2Int(x, y), envData.assetName);
 
                 count++;

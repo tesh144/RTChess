@@ -226,19 +226,34 @@ _Anything one agent needs to flag for the other._
   - **Current POI entries**: Row 2: Tree/Cluster/5/Forest/Grey. Row 3: Heart of Corruption/Singular/1/!!!/Red.
   - **Spreadsheet ID**: `1UvfldgEvr3dM_OqHfNyDHi_8qGoiO72CwTDrCRbUNy0`
   - **Sheet IDs**: PointsOfInterest=764607241, Ref=1089629018, Environment & Loot=1027353443, Buildings & Production=2122729009.
-- 2026-03-25: PENDING CODE CHANGES FOR POI SYSTEM (Claude Code can do these):
-  - **POITypeData.cs**: Add fields: `groupingType` (enum: Singular, Cluster, Area), `quantityMinimum` (int), `tier` (enum: Gold, Grey, Red). Existing fields: typeName, label, bubbleColor, approvalReward.
-  - **SheetSyncEditor.cs**: Add `SyncPOI()` method reading PointsOfInterest sheet from SheetCache. Column mapping: Object→typeName, Name→label, Color→tier, Reward Type→approvalReward (parse currency), Reward Quantity→approvalReward amount, Grouping→groupingType, Quantity Minimum→quantityMinimum.
-  - **SheetSyncEditor.cs**: Update `SyncEnvironment()` column indices (all shifted +1 due to Icon column insert). Object was C(index 2)→D(index 3), Drops was D(3)→E(4), etc.
-  - **POIDatabase.asset**: Create ScriptableObject instance in Assets/Scripts/Data/ or Assets/Data/. Populate via SyncPOI().
-  - **SheetCache.json**: Add PointsOfInterest section with current sheet data.
+- 2026-03-25: PENDING CODE CHANGES FOR POI SYSTEM — ✅ DONE BY CO-WORK (2026-03-26):
+  - All items below completed. See 2026-03-26 session entries.
 - 2026-03-26: SESSION — DROPDOWN REWIRING + SHEET CLEANUP:
-  - **Buildings & Production Input Card (col G) rewired**: Data validation → ONE_OF_RANGE Ref!$E:$E (Output combo — superset that covers all input options). Existing values updated to emoji format: None→❌ None, HoldToFill→⏳ Hold to Fill, Any→🎲 Any Resource, Worker→👷 Worker (Generic).
-  - **Environment & Loot Drops (col E) rewired**: Data validation → ONE_OF_RANGE Ref!$F:$F. Scrap row "AnyResource"→"🎲 Any Resource".
-  - **Environment & Loot Drop on Death (col M) rewired**: Data validation → ONE_OF_RANGE Ref!$F:$F. All "None"→"❌ None".
-  - **PointsOfInterest headers formatted**: Dark background (0.2,0.2,0.2), white bold text, centered, 140px column widths.
-  - **Ref!G1 header formatted**: Matching dark style.
-  - **NOTE for Claude Code**: Ref column layout is now A-G (was A-F). SyncEnvironment() column indices still need updating (+1 shift from Icon column insert). SyncPOI() still needs creation.
+  - **All dropdown validations across all sheets** now reference Ref tab dynamically (ONE_OF_RANGE). No more static ONE_OF_LIST.
+  - **Ref!D Manual column expanded**: Added 🎲 RandomTier0-3, 🎲 RandomBuilding, 🍖 Meal.
+  - **Ref!E Output combo formula updated**: Now includes Buildings & Production (was missing). Full list: Units + Buildings + Environment + Manual (44 entries).
+  - **DrawButton**: Output→Ref!E, Cost Type→Ref!F. Fixed Scrapper emoji.
+  - **Buildings & Production**: Input Card→Ref!E, Resource Use→Ref!F, Output Card→Ref!E. All values updated to emoji format.
+  - **Environment & Loot**: Drops→Ref!F, Drop on Death→Ref!F. Values fixed.
+  - **PointsOfInterest**: Active→checkbox, Object→Ref!E, Grouping→ONE_OF_LIST, Color→ONE_OF_LIST Gold/Grey/Red, Reward Type→Ref!F. Fixed stale "Refs" tab references and swapped validations.
+  - **Ref column layout**: A=Objects, B=Units, C=Currencies, D=Manual (18 entries), E=Output combo (Units+Buildings+Objects+Manual), F=Drops combo (Currencies+Manual). 6 columns total.
+- 2026-03-26: POI BUBBLE SYSTEM CODE (Co-Work):
+  - **BubbleType.cs** (NEW): Enum with POI_Gold, POI_Grey, POI_Red, Bubble_Insert, Bubble_Collect, Bubble_Alert. Child GameObjects must be named exactly as enum values.
+  - **POITypeData.cs** (REWRITTEN): Added POIGrouping enum (Singular/Cluster/Area), POITier enum (Gold/Grey/Red), new fields: groupingType, quantityMinimum, tier, rewardType (ResourceType), rewardQuantity. Legacy bubbleColor + approvalReward kept as [HideInInspector]. GetBubbleType() helper maps tier→BubbleType.
+  - **POIBubble.cs** (REWRITTEN): Auto-discovers children by name matching BubbleType enum values on Awake. Setup(BubbleType, text, worldPos) toggles the correct child and finds its TextMeshProUGUI label. DeactivateAllChildren() on dismiss. Legacy Setup(text, color, worldPos) overload preserved.
+  - **POIManager.cs** (UPDATED): ShowBubble now takes BubbleType param. RegisterHeart uses POI_Red. RefreshEnvWindow reads tier from POITypeData.GetBubbleType(). AwardReward uses data.rewardType + data.rewardQuantity instead of hardcoded Approval. New `bubbleParent` Transform field for World Canvas parenting. Pool creates instances under bubbleParent.
+  - **SheetSyncEditor.cs SyncPOI()** (REWRITTEN): Sheet key changed "Points of Interest"→"PointsOfInterest". Column mapping: Active (filter FALSE), Object→typeName (StripEmoji), Grouping→groupingType, Quantity Minimum→quantityMinimum, Name→label, Color→tier (POITier enum parse), Reward Type→rewardType (ResourceType enum parse), Reward Quantity→rewardQuantity.
+- 2026-03-26: REMAINING WORK FOR CLAUDE CODE:
+  - **SheetSyncEditor.cs SyncEnvironment()**: Column indices still shifted +1 from Icon column insert. Object was index 2→3, Drops was 3→4, etc. Must update all column references or switch to column-name-based lookup.
+  - **SheetCache.json**: Add "PointsOfInterest" section with current sheet data (4 entries: Tree/Forest/Grey, Corrupted Heart/!!!/Red, Water/River/Grey, Coral/Treasure/Gold). Columns: Active, Object, Grouping, Quantity Minimum, Name, Color, Reward Type, Reward Quantity.
+  - **POIDatabase.asset**: Must be created in Unity Editor (Create → RTChess → POI Database). Then assign to POIManager.poiDatabase in Inspector. Run SyncPOI to populate.
+  - **POIManager Inspector setup**: Assign bubblePrefab (the BubblePopup prefab), poiDatabase, and bubbleParent (World Canvas or child holder).
+- 2026-03-26: GATHERING DETECTION SYSTEM (Co-Work):
+  - **EnvironmentGathering.cs** (NEW): Data class for a contiguous group of same-type environment tiles. Fields: assetName, cells (List<Vector2Int>), centroid, size. Named "Gathering" to avoid collision with SpawnMode.Clustered.
+  - **MapGeneratorV2.cs**: Added `detectedGatherings` list + public `DetectedGatherings` read-only property. `DetectGatherings()` runs after PlaceAllEntries+PlaceCorruptionEntities — BFS flood-fill (4-connected, cardinal only) finds all same-type groups. `FloodFillGathering()` does the BFS. Results passed to `POIManager.RegisterGatherings()` before Initialize().
+  - **POIManager.cs**: Added `RegisterGatherings(IReadOnlyList<EnvironmentGathering>)` — filters gatherings against POIDatabase, only Cluster/Area types that meet quantityMinimum get registered at centroid. `RegisterEnvPOI()` now only handles Singular-type POIs (skips Cluster/Area to avoid double-registration).
+  - **MapGeneratorV2.cs cleanup**: Fully reverted prior unauthorized cluster detection code (DetectClusters, FloodFillCluster, RegisterClusterPOIs, poiDatabase field, EnvironmentCluster class all removed). Restored per-object RegisterEnvPOI call.
+  - **Design decisions** (confirmed via AskUserQuestion): 4-connected adjacency, one-time on generation, MapGen stores all gatherings blindly + POIManager filters via POIDatabase, "Gathering" naming.
 - 2026-03-22: DATA CONSISTENCY AUDIT & FIXES:
   - **TrainingFacility**: Removed from BuildingDatabase.asset (correctly — not in Google Sheets)
   - **Fighter**: Restored to WorkerDatabase.asset (was incorrectly deleted; Google Sheets shows it as Worker type with tier 3, hp 10). Values synced from sheet.

@@ -1200,6 +1200,9 @@ GameObject:
   - component: {fileID: 6200111342857342382}
   - component: {fileID: 6648184956035917266}
   - component: {fileID: 9104673038744843579}
+  - component: {fileID: 9055338779001516434}
+  - component: {fileID: 8937671244261437048}
+  - component: {fileID: 3807376596032473918}
   m_Layer: 5
   m_Name: WorldCanvas_Popups
   m_TagString: Untagged
@@ -1290,6 +1293,147 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &9055338779001516434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7538023331211881960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef3f3617cfcb7449b89d1062e397ac2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClockworkGrid.UIPanel
+  pageId: 
+  isDarkMode: 0
+  pairedPanel: {fileID: 0}
+  elementList:
+  - path: Holder
+    name: Holder
+    transform: {fileID: 2896519561119590049}
+    components: 
+  - path: Holder/AllBubbles
+    name: AllBubbles
+    transform: {fileID: 717489451445670571}
+    components: 
+  - path: Holder/AllBubbles/Bubble_Insert
+    name: Bubble_Insert
+    transform: {fileID: 8914269780227902453}
+    components: '[Image]'
+  - path: Holder/AllBubbles/Bubble_Insert/PictureSample
+    name: PictureSample
+    transform: {fileID: 3772854261253565671}
+    components: '[Image]'
+  - path: Holder/AllBubbles/Bubble_Insert/PictureSample/Fill
+    name: Fill
+    transform: {fileID: 9071290925843785904}
+    components: '[Image]'
+  - path: Holder/AllBubbles/Bubble_Insert/PictureSample/Icon
+    name: Icon
+    transform: {fileID: 4971710052148115690}
+    components: '[Image] [Mask]'
+  - path: Holder/AllBubbles/Bubble_Insert/PictureSample/Icon/Mask Layer
+    name: Mask Layer
+    transform: {fileID: 2869315275779848343}
+    components: '[Image]'
+  - path: Holder/AllBubbles/Bubble_Insert/PictureSample/Icon_Back
+    name: Icon_Back
+    transform: {fileID: 4343158120608665377}
+    components: '[Image] [Mask]'
+  - path: Holder/AllBubbles/Bubble_Insert/PictureSample/Icon_Back/Mask Layer
+    name: Mask Layer
+    transform: {fileID: 252581283852098369}
+    components: '[Image]'
+  - path: Holder/AllBubbles/Bubble_Insert/PictureSample/Icon_Back/Icon_Fill
+    name: Icon_Fill
+    transform: {fileID: 7908116447648136834}
+    components: '[Image] [Mask]'
+  - path: Holder/AllBubbles/Bubble_Alert
+    name: Bubble_Alert
+    transform: {fileID: 6202919908449284836}
+    components: '[Image]'
+  - path: Holder/AllBubbles/Bubble_Alert/PictureSample (2)
+    name: PictureSample (2)
+    transform: {fileID: 6948008363995912877}
+    components: '[Image]'
+  - path: Holder/AllBubbles/Bubble_Alert/PictureSample (2)/Icon
+    name: Icon
+    transform: {fileID: 3849771458840254359}
+    components: '[Image]'
+  - path: Holder/AllBubbles/Bubble_Collect
+    name: Bubble_Collect
+    transform: {fileID: 5292470404043644810}
+    components: '[Image]'
+  - path: Holder/AllBubbles/Bubble_Collect/PictureSample (1)
+    name: PictureSample (1)
+    transform: {fileID: 2125619543883169067}
+    components: '[Image]'
+  - path: Holder/AllBubbles/Bubble_Collect/PictureSample (1)/Icon
+    name: Icon
+    transform: {fileID: 1070437700676866798}
+    components: '[Image]'
+  - path: Holder/AllBubbles/POI_Gold
+    name: POI_Gold
+    transform: {fileID: 1779964849095825603}
+    components: '[Image]'
+  - path: Holder/AllBubbles/POI_Gold/PictureFrmae_(Mask)
+    name: PictureFrmae_(Mask)
+    transform: {fileID: 4214538733786745398}
+    components: '[Image]'
+  - path: Holder/AllBubbles/POI_Gold/PictureFrmae_(Mask)/Icon
+    name: Icon
+    transform: {fileID: 2013220921271341920}
+    components: '[Image]'
+  - path: Holder/AllBubbles/POI_Grey
+    name: POI_Grey
+    transform: {fileID: 8383130735511740825}
+    components: '[Image]'
+  - path: Holder/AllBubbles/POI_Grey/PictureFrmae_(Mask)
+    name: PictureFrmae_(Mask)
+    transform: {fileID: 4718823316937226075}
+    components: '[Image]'
+  - path: Holder/AllBubbles/POI_Grey/PictureFrmae_(Mask)/Icon
+    name: Icon
+    transform: {fileID: 6536685516003660798}
+    components: '[Image]'
+  - path: Holder/AllBubbles/POI_Red
+    name: POI_Red
+    transform: {fileID: 6632445118056216303}
+    components: '[Image]'
+  - path: Holder/AllBubbles/POI_Red/PictureFrmae_(Mask)
+    name: PictureFrmae_(Mask)
+    transform: {fileID: 7945201461768179153}
+    components: '[Image]'
+  - path: Holder/AllBubbles/POI_Red/PictureFrmae_(Mask)/Icon
+    name: Icon
+    transform: {fileID: 885309576918247582}
+    components: '[Image]'
+--- !u!114 &8937671244261437048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7538023331211881960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6da159bb123d4169b572e0cc6cbd1ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.BubbleController
+--- !u!114 &3807376596032473918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7538023331211881960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b2f17ad3f6e21e4b95a16582e863dda, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.POIBubble
+  canvasGroup: {fileID: 0}
 --- !u!1 &8001566026593614940
 GameObject:
   m_ObjectHideFlags: 0

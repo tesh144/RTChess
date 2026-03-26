@@ -867,34 +867,55 @@ namespace LittleCafe.Editor
         private void SyncPOI()
         {
             if (poiDB == null || cachedData?.sheets == null) return;
-            if (!cachedData.sheets.ContainsKey("Points of Interest")) return;
+            if (!cachedData.sheets.ContainsKey("PointsOfInterest")) return;
 
-            var sheet = cachedData.sheets["Points of Interest"];
+            var sheet = cachedData.sheets["PointsOfInterest"];
             var entries = poiDB.Entries;
             entries.Clear();
 
             foreach (var row in sheet.rows)
             {
-                string typeName = GetValue(row, "Type");
-                if (string.IsNullOrEmpty(typeName)) continue;
+                // Sheet columns: Active, Object, Grouping, Quantity Minimum, Name, Color, Reward Type, Reward Quantity
+                string activeStr = GetValue(row, "Active");
+                if (activeStr == "FALSE") continue;
 
-                string labelText = GetValue(row, "Label");
-                string colorHex = GetValue(row, "Color (hex)");
-                string rewardStr = GetValue(row, "Approval Reward");
+                string objectName = StripEmoji(GetValue(row, "Object"));
+                if (string.IsNullOrEmpty(objectName)) continue;
 
-                Color color = Color.white;
-                if (!string.IsNullOrEmpty(colorHex))
-                    ColorUtility.TryParseHtmlString(colorHex, out color);
+                string labelText = GetValue(row, "Name");
+                string groupingStr = GetValue(row, "Grouping");
+                string quantityStr = GetValue(row, "Quantity Minimum");
+                string colorStr = GetValue(row, "Color");
+                string rewardTypeStr = StripEmoji(GetValue(row, "Reward Type"));
+                string rewardQtyStr = GetValue(row, "Reward Quantity");
 
-                int reward = 0;
-                int.TryParse(rewardStr, out reward);
+                // Parse grouping
+                POIGrouping grouping = POIGrouping.Singular;
+                if (!string.IsNullOrEmpty(groupingStr))
+                    System.Enum.TryParse(groupingStr, true, out grouping);
+
+                // Parse tier from Color column
+                POITier tier = POITier.Grey;
+                if (!string.IsNullOrEmpty(colorStr))
+                    System.Enum.TryParse(colorStr, true, out tier);
+
+                // Parse reward
+                int rewardQty = 0;
+                int.TryParse(rewardQtyStr, out rewardQty);
+
+                ResourceType rewardType = ResourceType.None;
+                if (!string.IsNullOrEmpty(rewardTypeStr))
+                    System.Enum.TryParse(rewardTypeStr.Replace(" ", ""), true, out rewardType);
 
                 entries.Add(new POITypeData
                 {
-                    typeName = typeName,
-                    label = string.IsNullOrEmpty(labelText) ? typeName : labelText,
-                    bubbleColor = color,
-                    approvalReward = reward
+                    typeName = objectName,
+                    label = string.IsNullOrEmpty(labelText) ? objectName : labelText,
+                    groupingType = grouping,
+                    quantityMinimum = int.TryParse(quantityStr, out int qMin) ? qMin : 1,
+                    tier = tier,
+                    rewardType = rewardType,
+                    rewardQuantity = rewardQty
                 });
             }
 

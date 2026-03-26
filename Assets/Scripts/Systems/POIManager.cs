@@ -14,10 +14,13 @@ namespace ClockworkCraft
     {
         public static POIManager Instance { get; private set; }
 
-        [Header("Prefab & Database")]
+        [Header("Prefab")]
         [Tooltip("The bubble popup prefab (must have or will get a POIBubble component).")]
         [SerializeField] private GameObject bubblePrefab;
-        [SerializeField] private POIDatabase poiDatabase;
+
+        [Header("Points of Interest")]
+        [Tooltip("POI entries — synced from Google Sheets via SheetSyncEditor.")]
+        [SerializeField] private List<POITypeData> poiEntries = new List<POITypeData>();
 
         [Header("Window Settings")]
         [Tooltip("Maximum number of env-object POI bubbles shown at once.")]
@@ -35,6 +38,9 @@ namespace ClockworkCraft
         [SerializeField] private float popInDuration = 0.25f;
         [SerializeField] private float fadeOutDuration = 0.4f;
         [SerializeField] private float heightAboveGround = 2.5f;
+
+        /// <summary>Public access to POI entries (for SheetSyncEditor).</summary>
+        public List<POITypeData> Entries => poiEntries;
 
         // ── Registries ──────────────────────────────────────────────────
 
@@ -56,6 +62,19 @@ namespace ClockworkCraft
 
         // Pool
         private readonly List<POIBubble> pool = new List<POIBubble>();
+
+        /// <summary>Find POI data by asset name (case-insensitive substring match).</summary>
+        private POITypeData GetPOIData(string assetName)
+        {
+            if (string.IsNullOrEmpty(assetName)) return null;
+            foreach (var entry in poiEntries)
+            {
+                if (!entry.active || string.IsNullOrEmpty(entry.typeName)) continue;
+                if (assetName.IndexOf(entry.typeName, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    return entry;
+            }
+            return null;
+        }
 
         // ── Lifecycle ───────────────────────────────────────────────────
 
@@ -100,19 +119,61 @@ namespace ClockworkCraft
             heartRegistry.Remove(pos);
         }
 
-        /// <summary>Called by MapGeneratorV2 after each env object spawn.</summary>
+        /// <summary>
+        /// Called by MapGeneratorV2 after each env object spawn.
+        /// Only registers Singular-type POIs here — Cluster/Area types are handled
+        /// by RegisterGatherings() which checks quantityMinimum.
+        /// </summary>
         public void RegisterEnvPOI(Vector2Int gridPos, string assetName)
         {
-            if (poiDatabase == null) return;
-            // Only register if this asset type has a POI entry
-            if (poiDatabase.GetByTypeName(assetName) == null) return;
-            if (envRegistry.ContainsKey(gridPos)) return;
+            if (poiEntries == null || poiEntries.Count == 0) return;
+            var data = GetPOIData(assetName);
+            if (data == null || !data.active) return;
 
+            // Cluster/Area types are handled by RegisterGatherings — skip per-object registration
+            if (data.groupingType != POIGrouping.Singular) return;
+
+            if (envRegistry.ContainsKey(gridPos)) return;
             envRegistry[gridPos] = new EnvPOIEntry
             {
                 gridPos = gridPos,
                 assetName = assetName
             };
+        }
+
+        /// <summary>
+        /// Called by MapGeneratorV2 after spawning, before Initialize().
+        /// Filters gatherings against POIDatabase: only Cluster/Area types that meet
+        /// quantityMinimum get a POI registered at the gathering centroid.
+        /// Singular-type POIs are still handled per-object via RegisterEnvPOI().
+        /// </summary>
+        public void RegisterGatherings(IReadOnlyList<EnvironmentGathering> gatherings)
+        {
+            if (poiEntries == null || poiEntries.Count == 0 || gatherings == null) return;
+
+            int registered = 0;
+            foreach (var gathering in gatherings)
+            {
+                var data = GetPOIData(gathering.assetName);
+                if (data == null || !data.active) continue;
+
+                // Singular POIs are registered per-object by RegisterEnvPOI — skip here
+                if (data.groupingType == POIGrouping.Singular) continue;
+
+                // Must meet the minimum size threshold
+                if (gathering.size < data.quantityMinimum) continue;
+
+                // Register at the gathering centroid
+                if (envRegistry.ContainsKey(gathering.centroid)) continue;
+                envRegistry[gathering.centroid] = new EnvPOIEntry
+                {
+                    gridPos = gathering.centroid,
+                    assetName = gathering.assetName
+                };
+                registered++;
+            }
+
+            Debug.Log($"[POIManager] Registered {registered} gathering POIs from {gatherings.Count} total gatherings.");
         }
 
         /// <summary>Called by MapGeneratorV2 after all spawning is complete.</summary>
@@ -194,7 +255,7 @@ namespace ClockworkCraft
             int filled = 0;
             for (int i = 0; i < candidates.Count && filled < openSlots; i++)
             {
-                var data = poiDatabase.GetByTypeName(candidates[i].entry.assetName);
+                var data = GetPOIData(candidates[i].entry.assetName);
                 var bubbleType = data != null ? data.GetBubbleType() : BubbleType.POI_Grey;
                 ShowBubble(candidates[i].pos, candidates[i].entry.assetName, bubbleType);
                 filled++;
@@ -231,7 +292,7 @@ namespace ClockworkCraft
             var bubble = GetFromPool();
             if (bubble == null) return;
 
-            var data = poiDatabase != null ? poiDatabase.GetByTypeName(assetName) : null;
+            var data = GetPOIData(assetName);
             string text = data != null ? data.label : assetName;
 
             Vector3 worldPos = GridManager.Instance != null
@@ -252,8 +313,8 @@ namespace ClockworkCraft
 
         private void AwardReward(string assetName)
         {
-            if (poiDatabase == null) return;
-            var data = poiDatabase.GetByTypeName(assetName);
+            if (poiEntries == null || poiEntries.Count == 0) return;
+            var data = GetPOIData(assetName);
             if (data == null || data.rewardQuantity <= 0) return;
 
             if (ResourceManager.Instance != null)
