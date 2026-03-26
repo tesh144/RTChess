@@ -141,6 +141,12 @@ namespace LittleCafe
 
             currentDefaultDistance = baseDefaultDistance;
             currentMaxDistance = baseMaxDistance;
+            targetDistance = baseDefaultDistance;
+            currentDistance = baseDefaultDistance;
+
+            // Set ortho size immediately so there's no zoom pop on first frame
+            if (cam != null && cam.orthographic)
+                cam.orthographicSize = baseDefaultDistance;
 
             isAutoRotating = autoRotateOnStart;
         }
