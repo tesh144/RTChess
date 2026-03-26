@@ -199,21 +199,3 @@ MonoBehaviour:
     fallbackEmoji: "\U0001F49C"
     startingAmount: 0
     unlockedAtStart: 0
-  - currencyName: Scrap
-    resourceType: 32
-    icon: {fileID: 21300000, guid: b2def69b6e62b40818aa1aaa65141dcc, type: 3}
-    fallbackEmoji: "\U0001F527"
-    startingAmount: 0
-    unlockedAtStart: 0
-  - currencyName: Reed
-    resourceType: 33
-    icon: {fileID: 21300000, guid: 44a2c2e36a59a4eba9986c83f34a7bd3, type: 3}
-    fallbackEmoji: "\U0001F33F"
-    startingAmount: 0
-    unlockedAtStart: 0
-  - currencyName: Any Resource
-    resourceType: 34
-    icon: {fileID: 21300000, guid: b2def69b6e62b40818aa1aaa65141dcc, type: 3}
-    fallbackEmoji: "\U0001F3B2"
-    startingAmount: 0
-    unlockedAtStart: 0

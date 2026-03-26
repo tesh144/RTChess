@@ -526,10 +526,10 @@ namespace ClockworkCraft
             }
             deckStats.Add(fighterCard);
 
-            // ── Environment production cards (Lizard, TreeSeed, Scrap) ──
-            // These are outputs from Rabbit Farm, Garden, and Scrapper buildings.
+            // ── Environment production cards (Lizard, Scrap) ──
+            // These are outputs from Rabbit Farm and Scrapper buildings.
             // They live in EnvironmentDatabase but need UnitStats in CardPool for FindByName().
-            string[] envProductionNames = { "Lizard", "TreeSeed", "Scrap" };
+            string[] envProductionNames = { "Lizard", "Scrap" };
             if (environmentDatabase != null)
             {
                 foreach (string envName in envProductionNames)
@@ -668,9 +668,9 @@ namespace ClockworkCraft
                 entry.spawnWeight = 2f;
                 entry.minSpacing  = 8;
             }
-            else if (lower.Contains("mountain"))
+            else if (lower.Contains("coral"))
             {
-                // Mountains: rare scattered landmarks
+                // Coral: rare scattered landmarks
                 entry.spawnMode   = SpawnMode.Scattered;
                 entry.spawnWeight = 3f;
                 entry.minSpacing  = 6;

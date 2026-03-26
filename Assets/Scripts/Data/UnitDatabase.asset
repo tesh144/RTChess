@@ -99,7 +99,7 @@ MonoBehaviour:
     drawWeight: 0
     gridSize: {x: 1, y: 1}
     visualScale: 1
-    prefab: {fileID: 5310634814577635811, guid: 465cf5512f6b444d0aca541502f10bed, type: 3}
+    prefab: {fileID: 5748110252235294801, guid: f39d522e8610f430e96160cffe477710, type: 3}
     icon: {fileID: 21300000, guid: 8878f43695de94b4e99e0b9b6328c26b, type: 3}
   - active: 1
     assetName: Spike2
@@ -121,5 +121,5 @@ MonoBehaviour:
     drawWeight: 0
     gridSize: {x: 1, y: 1}
     visualScale: 1
-    prefab: {fileID: 5028432610595724756, guid: cc8d22feddd3c4a3991944784e631183, type: 3}
+    prefab: {fileID: 5748110252235294801, guid: f39d522e8610f430e96160cffe477710, type: 3}
     icon: {fileID: 21300000, guid: 8878f43695de94b4e99e0b9b6328c26b, type: 3}
