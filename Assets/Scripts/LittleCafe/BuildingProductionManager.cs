@@ -60,6 +60,14 @@ namespace LittleCafe
         [Tooltip("Glow/frame color behind icon.")]
         public Color popupGlowColor = new Color(1f, 0.9f, 0.5f, 0.6f);
 
+        // ─── Designed Bubble Prefab (replaces procedural popups) ──────
+        [Header("Designed Bubble (WorldCanvas_Popups)")]
+        [Tooltip("Assign the WorldCanvas_Popups prefab here. When set, Bubble_Collect and Bubble_Insert variants are used instead of procedural popups. Must have a POIBubble component.")]
+        [SerializeField] private GameObject buildingBubblePrefab;
+
+        [Tooltip("World-space scale for building bubbles (same as POIManager.bubbleWorldScale).")]
+        [SerializeField] private float buildingBubbleScale = 0.005f;
+
         // ─── Database ───────────────────────────────────────────────────
         [Header("Database References")]
         [Tooltip("WorkerDatabase — used to look up the 'Worker' unit for Home production.")]
@@ -115,6 +123,9 @@ namespace LittleCafe
             public GameObject popupCanvasObj;
             public Image popupIconImage;
             public SphereCollider popupCollider;
+
+            // Designed insert bubble (shown when building awaits input/resources)
+            public GameObject insertBubbleObj;
 
             public float EffectiveInterval => baseInterval + (intervalBonus * collectCount);
             public int EffectiveFillCost => productionCostAmount + (productionCostIncrement * collectCount);
@@ -207,6 +218,10 @@ namespace LittleCafe
 
             entries.Add(entry);
 
+            // Show insert bubble for buildings that start in a waiting state (not HoldToFill — that has its own fill bar)
+            if ((entry.waitingForInput || entry.waitingForResources) && !entry.waitingForHoldFill)
+                SpawnInsertBubble(entry);
+
             if (stats.productionInputType == ProductionInputType.HoldToFill)
                 OnHoldFillStateChanged?.Invoke(buildingObj, true);
 
@@ -294,6 +309,7 @@ namespace LittleCafe
                     entry.waitingForInput = false;
                     entry.elapsedTime = 0f;
                     entry.timerRevealed = false;
+                    DismissInsertBubble(entry);
 
                     // Show timer
                     if (entry.timerCanvasObj != null)
@@ -338,6 +354,54 @@ namespace LittleCafe
         {
             if (entry.popupCanvasObj != null) Destroy(entry.popupCanvasObj);
             if (entry.timerCanvasObj != null) Destroy(entry.timerCanvasObj);
+            DismissInsertBubble(entry);
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // Designed Insert Bubble (Bubble_Insert variant)
+        // ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Show a Bubble_Insert above a building that is waiting for input or resources.
+        /// Only used when buildingBubblePrefab is assigned.
+        /// </summary>
+        private void SpawnInsertBubble(ProductionEntry entry)
+        {
+            if (buildingBubblePrefab == null) return;
+            if (entry.buildingObj == null) return;
+            if (entry.insertBubbleObj != null) return; // Already showing
+
+            Vector3 pos = entry.buildingObj.transform.position + Vector3.up * GetPopupY(entry);
+
+            var obj = Instantiate(buildingBubblePrefab);
+            obj.name = $"InsertBubble_{entry.buildingObj.name}";
+            obj.transform.position = pos;
+
+            var bubble = obj.GetComponent<POIBubble>();
+            if (bubble == null) bubble = obj.AddComponent<POIBubble>();
+            bubble.SetTargetScale(Vector3.one * buildingBubbleScale);
+            bubble.SetAnimParams(0.25f, bobAmplitude, bobSpeed * 0.5f, 0.3f);
+            bubble.Setup(BubbleType.Bubble_Insert, "", pos);
+
+            entry.insertBubbleObj = obj;
+        }
+
+        /// <summary>Dismiss and destroy the insert bubble for a building.</summary>
+        private void DismissInsertBubble(ProductionEntry entry)
+        {
+            if (entry.insertBubbleObj == null) return;
+
+            var bubble = entry.insertBubbleObj.GetComponent<POIBubble>();
+            if (bubble != null && bubble.IsActive)
+                bubble.Dismiss(); // Animated fade-out
+            else
+                Destroy(entry.insertBubbleObj); // Immediate cleanup
+
+            // Schedule destruction after dismiss animation
+            if (entry.insertBubbleObj != null)
+                Destroy(entry.insertBubbleObj, 1f);
+
+            entry.insertBubbleObj = null;
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -585,7 +649,10 @@ namespace LittleCafe
                         new Dictionary<ResourceType, int> { { entry.productionCostResourceType, entry.productionCostAmount } });
                     Debug.Log($"[BuildingProduction] RESOURCE GATE '{entry.buildingObj?.name}': need {entry.productionCostAmount}x {entry.productionCostResourceType}(int={(int)entry.productionCostResourceType}), have={have}, rm={(rm == null ? "NULL" : "ok")}, spent={spent}");
                     if (spent)
+                    {
                         entry.waitingForResources = false;
+                        DismissInsertBubble(entry);
+                    }
                     else
                         continue; // not enough resources — skip tick
                 }
@@ -683,49 +750,92 @@ namespace LittleCafe
             else if ((IsTierBuildingOutput(entry.outputType) || IsTierUnitOutput(entry.outputType)) && entry.pendingCard != null)
                 rewardIcon = entry.pendingCard.iconSprite;
 
-            GameObject canvasObj;
+            // Dismiss any lingering insert bubble when the collect popup appears
+            DismissInsertBubble(entry);
 
-            if (popupPrefab != null)
+            Vector3 popupPos = entry.buildingObj.transform.position + Vector3.up * GetPopupY(entry);
+
+            // ── Designed Bubble path (Bubble_Collect) ──
+            if (buildingBubblePrefab != null)
             {
-                canvasObj = Instantiate(popupPrefab);
+                GameObject canvasObj = Instantiate(buildingBubblePrefab);
                 canvasObj.name = $"ProductionPopup_{entry.buildingObj.name}";
-                entry.popupIconImage = FindChildImage(canvasObj, "Icon");
+                canvasObj.transform.position = popupPos;
+
+                var bubble = canvasObj.GetComponent<POIBubble>();
+                if (bubble == null) bubble = canvasObj.AddComponent<POIBubble>();
+                bubble.SetTargetScale(Vector3.one * buildingBubbleScale);
+                bubble.SetAnimParams(0.25f, bobAmplitude, bobSpeed * 0.5f, 0.3f);
+                bubble.Setup(BubbleType.Bubble_Collect, "", popupPos);
+
+                // Set the reward icon on the variant's "Icon" Image child
+                var iconImg = bubble.GetIconImage();
+                if (iconImg != null && rewardIcon != null)
+                {
+                    iconImg.sprite = rewardIcon;
+                    iconImg.enabled = true;
+                }
+                entry.popupIconImage = iconImg;
+
+                // Collider for tap detection — on a separate unscaled child
+                GameObject colliderHolder = new GameObject("TapCollider");
+                colliderHolder.transform.SetParent(canvasObj.transform, false);
+                float canvasScale = canvasObj.transform.localScale.x;
+                if (canvasScale > 0f)
+                    colliderHolder.transform.localScale = Vector3.one / canvasScale;
+
+                SphereCollider col = colliderHolder.AddComponent<SphereCollider>();
+                col.radius = 0.6f;
+                col.isTrigger = false;
+
+                entry.popupCanvasObj = canvasObj;
+                entry.popupCollider = col;
             }
+            // ── Legacy path (procedural or custom popup prefab) ──
             else
             {
-                canvasObj = CreateDefaultPopupCanvas(entry);
+                GameObject canvasObj;
+
+                if (popupPrefab != null)
+                {
+                    canvasObj = Instantiate(popupPrefab);
+                    canvasObj.name = $"ProductionPopup_{entry.buildingObj.name}";
+                    entry.popupIconImage = FindChildImage(canvasObj, "Icon");
+                }
+                else
+                {
+                    canvasObj = CreateDefaultPopupCanvas(entry);
+                }
+
+                canvasObj.transform.position = popupPos;
+
+                // Set the icon sprite
+                if (entry.popupIconImage != null && rewardIcon != null)
+                {
+                    entry.popupIconImage.sprite = rewardIcon;
+                    entry.popupIconImage.enabled = true;
+                }
+
+                // Collider for tap detection — on a separate unscaled child
+                GameObject colliderHolder = new GameObject("TapCollider");
+                colliderHolder.transform.SetParent(canvasObj.transform, false);
+                float canvasScale = canvasObj.transform.localScale.x;
+                if (canvasScale > 0f)
+                    colliderHolder.transform.localScale = Vector3.one / canvasScale;
+
+                SphereCollider col = colliderHolder.AddComponent<SphereCollider>();
+                col.radius = 0.6f;
+                col.isTrigger = false;
+
+                entry.popupCanvasObj = canvasObj;
+                entry.popupCollider = col;
             }
-
-            canvasObj.transform.position = entry.buildingObj.transform.position + Vector3.up * GetPopupY(entry);
-
-            // Set the icon sprite
-            if (entry.popupIconImage != null && rewardIcon != null)
-            {
-                entry.popupIconImage.sprite = rewardIcon;
-                entry.popupIconImage.enabled = true;
-            }
-
-            // Collider for tap detection — on a separate unscaled child
-            // so it doesn't inherit the Canvas's tiny localScale
-            GameObject colliderHolder = new GameObject("TapCollider");
-            colliderHolder.transform.SetParent(canvasObj.transform, false);
-            // Reset scale to world-space 1:1 (undo parent canvas scale)
-            float canvasScale = canvasObj.transform.localScale.x;
-            if (canvasScale > 0f)
-                colliderHolder.transform.localScale = Vector3.one / canvasScale;
-
-            SphereCollider col = colliderHolder.AddComponent<SphereCollider>();
-            col.radius = 0.6f; // ~0.6 world units tap target
-            col.isTrigger = false; // Must be non-trigger for Physics.Raycast
-
-            entry.popupCanvasObj = canvasObj;
-            entry.popupCollider = col;
 
             // SFX
             if (GameSFXManager.Instance != null)
                 GameSFXManager.Instance.PlayPopupAppear();
 
-            StartCoroutine(PopupSpawnAnimation(canvasObj));
+            StartCoroutine(PopupSpawnAnimation(entry.popupCanvasObj));
 
             if (verboseLogging)
             {
@@ -1075,6 +1185,10 @@ namespace LittleCafe
                 entry.holdFillProgress = 0;
                 OnHoldFillStateChanged?.Invoke(entry.buildingObj, true);
             }
+
+            // Show insert bubble again for buildings returning to waiting state (not HoldToFill)
+            if ((entry.waitingForInput || entry.waitingForResources) && !entry.waitingForHoldFill)
+                SpawnInsertBubble(entry);
 
             // Hide timer until next tick reveals it
             if (entry.timerCanvasObj != null)
