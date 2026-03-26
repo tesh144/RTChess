@@ -532,8 +532,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.CorruptionManager
   spreadInterval: 30
   heartActivationRadius: 5
-  useParticleFog: 1
-  corruptionOverlayPrefab: {fileID: 2274087348341675862, guid: 4bc9b527bd2cb4ba9bd20a667243c636, type: 3}
+  useParticleFog: 0
+  corruptionOverlayPrefab: {fileID: 6539504230762062765, guid: 1edc148ad0f4c48159f40a43193655de, type: 3}
 --- !u!1 &9035113113404508760
 GameObject:
   m_ObjectHideFlags: 0
