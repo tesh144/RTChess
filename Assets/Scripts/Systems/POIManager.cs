@@ -67,14 +67,14 @@ namespace ClockworkCraft
         // Pool
         private readonly List<POIBubble> pool = new List<POIBubble>();
 
-        /// <summary>Find POI data by asset name (case-insensitive substring match).</summary>
+        /// <summary>Find POI data by exact asset name match (case-insensitive).</summary>
         private POITypeData GetPOIData(string assetName)
         {
             if (string.IsNullOrEmpty(assetName)) return null;
             foreach (var entry in poiEntries)
             {
                 if (!entry.active || string.IsNullOrEmpty(entry.typeName)) continue;
-                if (assetName.IndexOf(entry.typeName, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                if (string.Equals(entry.typeName, assetName, System.StringComparison.OrdinalIgnoreCase))
                     return entry;
             }
             return null;
@@ -103,6 +103,7 @@ namespace ClockworkCraft
                     active           = src.active,
                     typeName         = src.typeName,
                     label            = src.label,
+                    sourceType       = src.sourceType,
                     groupingType     = src.groupingType,
                     quantityMinimum  = src.quantityMinimum,
                     tier             = src.tier,
@@ -136,6 +137,9 @@ namespace ClockworkCraft
 
         // ── Public API ──────────────────────────────────────────────────
 
+        /// <summary>UnitDatabase assetName for corruption hearts — used for POI lookup.</summary>
+        private const string HEART_ASSET_NAME = "CorruptedHeart";
+
         /// <summary>Called by CorruptionHeart after it registers with CorruptionManager.</summary>
         public void RegisterHeart(CorruptionHeart heart)
         {
@@ -144,8 +148,10 @@ namespace ClockworkCraft
             if (heartRegistry.ContainsKey(pos)) return;
             heartRegistry[pos] = heart;
 
-            // Hearts always get a bubble immediately — use POI_Red
-            ShowBubble(pos, "Corruption", BubbleType.POI_Red);
+            // Hearts always get a bubble immediately — look up POI data for label/tier
+            var data = GetPOIData(HEART_ASSET_NAME);
+            var bubbleType = data != null ? data.GetBubbleType() : BubbleType.POI_Red;
+            ShowBubble(pos, HEART_ASSET_NAME, bubbleType);
         }
 
         /// <summary>Called by CorruptionHeart.OnDestroy().</summary>
@@ -236,7 +242,7 @@ namespace ClockworkCraft
             // Heart discovered
             if (heartRegistry.TryGetValue(coord, out var heart) && heart != null)
             {
-                AwardReward("Corruption");
+                AwardReward(HEART_ASSET_NAME);
                 DismissBubble(coord);
                 heartRegistry.Remove(coord);
             }

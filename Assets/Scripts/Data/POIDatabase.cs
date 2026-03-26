@@ -12,8 +12,8 @@ namespace ClockworkCraft
         public List<POITypeData> Entries => entries;
 
         /// <summary>
-        /// Find the first entry whose typeName appears (case-insensitive) inside the given assetName.
-        /// E.g. assetName "PineTree_01" matches typeName "Tree".
+        /// Find the entry whose typeName exactly matches the given assetName (case-insensitive).
+        /// typeName stores the real database assetName (e.g. "Tree", "CorruptedHeart").
         /// Returns null if no match.
         /// </summary>
         public POITypeData GetByTypeName(string assetName)
@@ -22,7 +22,7 @@ namespace ClockworkCraft
             foreach (var entry in entries)
             {
                 if (string.IsNullOrEmpty(entry.typeName)) continue;
-                if (assetName.IndexOf(entry.typeName, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                if (string.Equals(entry.typeName, assetName, System.StringComparison.OrdinalIgnoreCase))
                     return entry;
             }
             return null;

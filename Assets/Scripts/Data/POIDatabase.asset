@@ -12,4 +12,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89b13ce5562484144aa54ac46e1ae742, type: 3}
   m_Name: POIDatabase
   m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.POIDatabase
-  entries: []
+  entries:
+  - active: 1
+    typeName: Tree
+    label: Forest
+    sourceType: 0
+    groupingType: 1
+    quantityMinimum: 5
+    tier: 1
+    rewardType: 12
+    rewardQuantity: 1
+    bubbleColor: {r: 0, g: 0, b: 0, a: 0}
+    approvalReward: 0
+  - active: 1
+    typeName: CorruptedHeart
+    label: Corruption
+    sourceType: 1
+    groupingType: 0
+    quantityMinimum: 1
+    tier: 2
+    rewardType: 12
+    rewardQuantity: 2
+    bubbleColor: {r: 0, g: 0, b: 0, a: 0}
+    approvalReward: 0
+  - active: 1
+    typeName: Water
+    label: River
+    sourceType: 0
+    groupingType: 1
+    quantityMinimum: 5
+    tier: 1
+    rewardType: 12
+    rewardQuantity: 1
+    bubbleColor: {r: 0, g: 0, b: 0, a: 0}
+    approvalReward: 0
+  - active: 1
+    typeName: Coral
+    label: Treasure
+    sourceType: 0
+    groupingType: 0
+    quantityMinimum: 1
+    tier: 0
+    rewardType: 12
+    rewardQuantity: 2
+    bubbleColor: {r: 0, g: 0, b: 0, a: 0}
+    approvalReward: 0

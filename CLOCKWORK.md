@@ -17,6 +17,12 @@
 | Cards & Deck | 1675160473 |
 | Map Generation | 1697855788 |
 | Timers & Animations | 1150895612 |
+| DrawButton | 1441998793 |
+| PointsOfInterest | 764607241 |
+| Ref | 1089629018 |
+
+**Sheets that must be synced every session (pull from Google Sheets → SheetCache.json → .asset files):**
+Buildings & Production, Workers & Entities, Environment & Loot, DrawButton, PointsOfInterest. All five are read by `SheetSyncEditor.cs`. POI data flows: Sheet → SheetCache.json → POIDatabase.asset → POIManager (via "Sync from Database" button).
 
 **Visual Style (MUST follow for all sheets):**
 - **Header row:** Dark bg `rgb(0.157, 0.157, 0.2)`, white text, Arial 11, bold, center-aligned. Frozen.

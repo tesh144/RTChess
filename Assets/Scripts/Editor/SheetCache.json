@@ -80,6 +80,15 @@
         {"Draw Button Order": "31", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "32", "Cooldown (s)": "15"},
         {"Draw Button Order": "32", "Output": "🏠 RandomBuilding", "Cost Type": "💰 Gold", "Cost Amount": "33", "Cooldown (s)": "15"}
       ]
+    },
+    "PointsOfInterest": {
+      "headers": ["Active", "Object", "Grouping", "Quantity Minimum", "Name", "Color", "Reward Type", "Reward Quantity"],
+      "rows": [
+        {"Active": "TRUE", "Object": "🌲 Tree", "Grouping": "Cluster", "Quantity Minimum": "5", "Name": "Forest", "Color": "Grey", "Reward Type": "🌙 Moonstone", "Reward Quantity": "1"},
+        {"Active": "TRUE", "Object": "🗼 Corrupted Heart", "Grouping": "Singular", "Quantity Minimum": "1", "Name": "Corruption", "Color": "Red", "Reward Type": "🌙 Moonstone", "Reward Quantity": "2"},
+        {"Active": "TRUE", "Object": "💧 Water", "Grouping": "Cluster", "Quantity Minimum": "5", "Name": "River", "Color": "Grey", "Reward Type": "🌙 Moonstone", "Reward Quantity": "1"},
+        {"Active": "TRUE", "Object": "🪸 Coral", "Grouping": "Singular", "Quantity Minimum": "1", "Name": "Treasure", "Color": "Gold", "Reward Type": "🌙 Moonstone", "Reward Quantity": "2"}
+      ]
     }
   }
 }

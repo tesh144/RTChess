@@ -36,7 +36,7 @@ namespace LittleCafe.Editor
         private WorkerDatabase workerDB;
         private UnitDatabase unitDB;
         private EnvironmentDatabase environmentDB;
-        private POIDatabase poiDB;
+        // POI data now lives on POIManager (scene object), not a ScriptableObject
 
         [MenuItem("ClockworkCraft/Sheet Sync")]
         public static void ShowWindow()
@@ -85,7 +85,7 @@ namespace LittleCafe.Editor
             workerDB = (WorkerDatabase)EditorGUILayout.ObjectField("Worker DB", workerDB, typeof(WorkerDatabase), false);
             unitDB = (UnitDatabase)EditorGUILayout.ObjectField("Unit DB", unitDB, typeof(UnitDatabase), false);
             environmentDB = (EnvironmentDatabase)EditorGUILayout.ObjectField("Environment DB", environmentDB, typeof(EnvironmentDatabase), false);
-            poiDB = (POIDatabase)EditorGUILayout.ObjectField("POI DB", poiDB, typeof(POIDatabase), false);
+            EditorGUILayout.LabelField("POI", "→ POIManager (scene)");
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space(8);
 
@@ -191,15 +191,15 @@ namespace LittleCafe.Editor
             // Points of Interest
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField("Points of Interest", EditorStyles.boldLabel);
-            if (cachedData?.sheets != null && cachedData.sheets.ContainsKey("Points of Interest"))
+            if (cachedData?.sheets != null && cachedData.sheets.ContainsKey("PointsOfInterest"))
             {
-                var sheet = cachedData.sheets["Points of Interest"];
+                var sheet = cachedData.sheets["PointsOfInterest"];
                 EditorGUILayout.LabelField($"  {sheet.rows.Count} entries in cache");
                 DrawSheetPreview(sheet);
             }
 
             EditorGUILayout.BeginHorizontal();
-            GUI.enabled = cachedData != null && poiDB != null;
+            GUI.enabled = cachedData != null;
             if (GUILayout.Button("Sync POI", GUILayout.Height(28)))
                 SyncPOI();
             GUI.enabled = cachedData != null;
@@ -216,7 +216,7 @@ namespace LittleCafe.Editor
                 if (workerDB != null) SyncWorkers();
                 if (unitDB != null) SyncUnits();
                 if (environmentDB != null) SyncEnvironment();
-                if (poiDB != null) SyncPOI();
+                SyncPOI();
                 SyncDrawButton();
             }
             GUI.enabled = true;
@@ -335,8 +335,7 @@ namespace LittleCafe.Editor
                 unitDB = FindAsset<UnitDatabase>();
             if (environmentDB == null)
                 environmentDB = FindAsset<EnvironmentDatabase>();
-            if (poiDB == null)
-                poiDB = FindAsset<POIDatabase>();
+            // POI data syncs to POIManager (scene object) — no asset to find
         }
 
         private T FindAsset<T>() where T : ScriptableObject
@@ -866,11 +865,19 @@ namespace LittleCafe.Editor
 
         private void SyncPOI()
         {
-            if (poiDB == null || cachedData?.sheets == null) return;
+            if (cachedData?.sheets == null) return;
             if (!cachedData.sheets.ContainsKey("PointsOfInterest")) return;
 
+            // POI data lives on POIManager (scene object), same pattern as DrawButtonController
+            var poiManager = GameObject.FindFirstObjectByType<POIManager>();
+            if (poiManager == null)
+            {
+                SetStatus("POIManager not found in scene", MessageType.Warning);
+                return;
+            }
+
             var sheet = cachedData.sheets["PointsOfInterest"];
-            var entries = poiDB.Entries;
+            var entries = poiManager.Entries;
             entries.Clear();
 
             foreach (var row in sheet.rows)
@@ -882,6 +889,14 @@ namespace LittleCafe.Editor
                 string objectName = StripEmoji(GetValue(row, "Object"));
                 if (string.IsNullOrEmpty(objectName)) continue;
 
+                // Resolve sheet name to actual database assetName + source type
+                string resolvedName = ResolveAssetName(objectName, out POISourceType sourceType);
+                if (resolvedName == null)
+                {
+                    Debug.LogWarning($"[SheetSync] POI object '{objectName}' not found in any database — skipping.");
+                    continue;
+                }
+
                 string labelText = GetValue(row, "Name");
                 string groupingStr = GetValue(row, "Grouping");
                 string quantityStr = GetValue(row, "Quantity Minimum");
@@ -889,7 +904,7 @@ namespace LittleCafe.Editor
                 string rewardTypeStr = StripEmoji(GetValue(row, "Reward Type"));
                 string rewardQtyStr = GetValue(row, "Reward Quantity");
 
-                // Parse grouping
+                // Parse grouping — sheet values: Singular, Cluster, Area
                 POIGrouping grouping = POIGrouping.Singular;
                 if (!string.IsNullOrEmpty(groupingStr))
                     System.Enum.TryParse(groupingStr, true, out grouping);
@@ -909,8 +924,10 @@ namespace LittleCafe.Editor
 
                 entries.Add(new POITypeData
                 {
-                    typeName = objectName,
+                    active = true,
+                    typeName = resolvedName,
                     label = string.IsNullOrEmpty(labelText) ? objectName : labelText,
+                    sourceType = sourceType,
                     groupingType = grouping,
                     quantityMinimum = int.TryParse(quantityStr, out int qMin) ? qMin : 1,
                     tier = tier,
@@ -919,10 +936,64 @@ namespace LittleCafe.Editor
                 });
             }
 
-            EditorUtility.SetDirty(poiDB);
-            AssetDatabase.SaveAssets();
-            SetStatus($"POI synced: {entries.Count} entries", MessageType.Info);
-            Debug.Log($"[SheetSync] POI synced: {entries.Count} entries.");
+            EditorUtility.SetDirty(poiManager);
+            SetStatus($"POI synced: {entries.Count} entries → POIManager", MessageType.Info);
+            Debug.Log($"[SheetSync] POI synced: {entries.Count} entries to POIManager.");
+        }
+
+        /// <summary>
+        /// Resolves a sheet object name (e.g. "Corrupted Heart") to the real database assetName
+        /// (e.g. "CorruptedHeart") by searching EnvironmentDB, UnitDB, and BuildingDB.
+        /// Matches by stripping spaces and comparing case-insensitively.
+        /// Returns null if not found in any database.
+        /// </summary>
+        private string ResolveAssetName(string sheetName, out POISourceType sourceType)
+        {
+            sourceType = POISourceType.Environment;
+            if (string.IsNullOrEmpty(sheetName)) return null;
+
+            string normalized = sheetName.Replace(" ", "").ToLowerInvariant();
+
+            // Search EnvironmentDatabase
+            if (environmentDB != null)
+            {
+                foreach (var entry in environmentDB.AllEnvironment)
+                {
+                    if (entry.assetName.Replace(" ", "").ToLowerInvariant() == normalized)
+                    {
+                        sourceType = POISourceType.Environment;
+                        return entry.assetName;
+                    }
+                }
+            }
+
+            // Search UnitDatabase
+            if (unitDB != null)
+            {
+                foreach (var entry in unitDB.AllUnits)
+                {
+                    if (entry.assetName.Replace(" ", "").ToLowerInvariant() == normalized)
+                    {
+                        sourceType = POISourceType.Unit;
+                        return entry.assetName;
+                    }
+                }
+            }
+
+            // Search BuildingDatabase
+            if (buildingDB != null)
+            {
+                foreach (var entry in buildingDB.AllBuildings)
+                {
+                    if (entry.assetName.Replace(" ", "").ToLowerInvariant() == normalized)
+                    {
+                        sourceType = POISourceType.Building;
+                        return entry.assetName;
+                    }
+                }
+            }
+
+            return null;
         }
 
         // ─────────────────────────────────────────────────────────────────

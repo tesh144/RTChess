@@ -47,6 +47,12 @@ namespace LittleCafe.Editor
         protected override string NameField => "currencyName";
     }
 
+    [CustomPropertyDrawer(typeof(POITypeData))]
+    public class POITypeDataDrawer : NamedEntryDrawer
+    {
+        protected override string NameField => "label";
+    }
+
     /// <summary>
     /// Base drawer — shows the name field value as the foldout label,
     /// then draws all child properties when expanded.

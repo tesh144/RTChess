@@ -16,14 +16,23 @@ namespace ClockworkCraft
         Red
     }
 
+    /// <summary>Which database the linked object belongs to.</summary>
+    public enum POISourceType
+    {
+        Environment,
+        Unit,
+        Building
+    }
+
     [System.Serializable]
     public class POITypeData
     {
         public bool active = true;        // mirrors Active column in sheet
 
         [Header("Identity")]
-        public string typeName;           // matched against assetName (e.g. "Tree", "Corruption")
+        public string typeName;           // exact assetName from the source database (e.g. "Tree", "CorruptedHeart")
         public string label;              // displayed on bubble (e.g. "Forest", "!!!")
+        public POISourceType sourceType;  // which database this object belongs to
 
         [Header("Grouping")]
         public POIGrouping groupingType;  // Singular, Cluster, Area
