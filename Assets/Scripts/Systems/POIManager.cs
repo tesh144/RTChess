@@ -14,9 +14,10 @@ namespace ClockworkCraft
     {
         public static POIManager Instance { get; private set; }
 
-        [Header("Prefab")]
+        [Header("Prefab & Database")]
         [Tooltip("The bubble popup prefab (must have or will get a POIBubble component).")]
         [SerializeField] private GameObject bubblePrefab;
+        [SerializeField] private POIDatabase poiDatabase;
 
         [Header("Points of Interest")]
         [Tooltip("POI entries — synced from Google Sheets via SheetSyncEditor.")]
