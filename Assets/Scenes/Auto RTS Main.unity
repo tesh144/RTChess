@@ -1751,6 +1751,14 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
     - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: unitDatabase
+      value: 
+      objectReference: {fileID: 11400000, guid: fb9df1513bc1548a59841afb135f9146, type: 2}
+    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: environmentDatabase
+      value: 
+      objectReference: {fileID: 11400000, guid: b1d02fb45bceb4196845695e148a593e, type: 2}
+    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: poiEntries.Array.size
       value: 4
       objectReference: {fileID: 0}
@@ -1874,14 +1882,6 @@ PrefabInstance:
       propertyPath: poiEntries.Array.data[3].quantityMinimum
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 1817720487229440558, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionVisualHeight
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1817720487229440558, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionOverlayPrefab
-      value: 
-      objectReference: {fileID: 2881067372029442596, guid: 1edc148ad0f4c48159f40a43193655de, type: 3}
     - target: {fileID: 1872223307927959791, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: titleLogo
       value: 
@@ -1950,54 +1950,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.size
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].spawnMode
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[3].spawnWeight
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[5].spawnWeight
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].spawnWeight
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[5].edgeBorderOf
-      value: Tree
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].edgeBorderOf
-      value: Water
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].clusterSpread
-      value: 0.6
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].fragmentation
-      value: 0.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[3].environmentName
-      value: Coral
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].environmentName
-      value: Reed
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionSpawnEntries.Array.data[0].prefab
-      value: 
-      objectReference: {fileID: 6759347119158193349, guid: f242e5b1259fb42e09a905f57e5d6eb0, type: 3}
     - target: {fileID: 7692711440160710592, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: m_Name
       value: Managers

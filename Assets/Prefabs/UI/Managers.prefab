@@ -319,9 +319,55 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cf91ee5e0268674186edfa1637ca57a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.POIManager
-  bubblePrefab: {fileID: 0}
-  poiDatabase: {fileID: 0}
-  poiEntries: []
+  bubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+  poiDatabase: {fileID: 11400000, guid: 32ecb81c2ad084adfa2db6a00b87b351, type: 2}
+  environmentDatabase: {fileID: 11400000, guid: b1d02fb45bceb4196845695e148a593e, type: 2}
+  unitDatabase: {fileID: 11400000, guid: fb9df1513bc1548a59841afb135f9146, type: 2}
+  poiEntries:
+  - active: 1
+    typeName: Tree
+    label: Forest
+    sourceType: 0
+    groupingType: 1
+    quantityMinimum: 5
+    tier: 1
+    rewardType: 12
+    rewardQuantity: 1
+    bubbleColor: {r: 0, g: 0, b: 0, a: 0}
+    approvalReward: 0
+  - active: 1
+    typeName: CorruptedHeart
+    label: Corruption
+    sourceType: 1
+    groupingType: 0
+    quantityMinimum: 1
+    tier: 2
+    rewardType: 12
+    rewardQuantity: 2
+    bubbleColor: {r: 0, g: 0, b: 0, a: 0}
+    approvalReward: 0
+  - active: 1
+    typeName: Water
+    label: River
+    sourceType: 0
+    groupingType: 1
+    quantityMinimum: 5
+    tier: 1
+    rewardType: 12
+    rewardQuantity: 1
+    bubbleColor: {r: 0, g: 0, b: 0, a: 0}
+    approvalReward: 0
+  - active: 1
+    typeName: Coral
+    label: Treasure
+    sourceType: 0
+    groupingType: 0
+    quantityMinimum: 1
+    tier: 0
+    rewardType: 12
+    rewardQuantity: 2
+    bubbleColor: {r: 0, g: 0, b: 0, a: 0}
+    approvalReward: 0
   maxEnvBubbles: 5
   fogBorderRadius: 3
   heartPoolSize: 6
@@ -330,6 +376,7 @@ MonoBehaviour:
   popInDuration: 0.25
   fadeOutDuration: 0.4
   heightAboveGround: 2.5
+  bubbleWorldScale: 0.005
 --- !u!1 &6706931420203540427
 GameObject:
   m_ObjectHideFlags: 0
