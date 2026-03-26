@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using ClockworkGrid;
 using LittleCafe;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace ClockworkCraft
 {
@@ -75,6 +78,40 @@ namespace ClockworkCraft
                     return entry;
             }
             return null;
+        }
+
+        // ── Sync ────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Copy entries from the assigned POIDatabase into the inline poiEntries list.
+        /// Called from Inspector context menu or editor button.
+        /// </summary>
+        [ContextMenu("Sync from Database")]
+        public void SyncFromDatabase()
+        {
+            if (poiDatabase == null)
+            {
+                Debug.LogWarning("[POIManager] No POIDatabase assigned — can't sync.");
+                return;
+            }
+
+            poiEntries.Clear();
+            foreach (var src in poiDatabase.Entries)
+            {
+                poiEntries.Add(new POITypeData
+                {
+                    active           = src.active,
+                    typeName         = src.typeName,
+                    label            = src.label,
+                    groupingType     = src.groupingType,
+                    quantityMinimum  = src.quantityMinimum,
+                    tier             = src.tier,
+                    rewardType       = src.rewardType,
+                    rewardQuantity   = src.rewardQuantity
+                });
+            }
+
+            Debug.Log($"[POIManager] Synced {poiEntries.Count} entries from POIDatabase.");
         }
 
         // ── Lifecycle ───────────────────────────────────────────────────
@@ -363,3 +400,29 @@ namespace ClockworkCraft
         }
     }
 }
+
+#if UNITY_EDITOR
+namespace ClockworkCraft
+{
+    [CustomEditor(typeof(POIManager))]
+    public class POIManagerEditor : Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            POIManager mgr = (POIManager)target;
+
+            // Sync button at top — same as MapGeneratorV2
+            EditorGUILayout.Space(4);
+            if (GUILayout.Button("Sync from Database"))
+            {
+                Undo.RecordObject(mgr, "Sync POI from Database");
+                mgr.SyncFromDatabase();
+                EditorUtility.SetDirty(mgr);
+            }
+
+            EditorGUILayout.Space(4);
+            DrawDefaultInspector();
+        }
+    }
+}
+#endif
