@@ -99,12 +99,12 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   yaw: 45
   pitch: 35
-  minDistance: 3
+  minDistance: 5
   absoluteMaxDistance: 40
   zoomSpeed: 3
   zoomSmoothing: 8
-  baseDefaultDistance: 8
-  baseMaxDistance: 12
+  baseDefaultDistance: 5
+  baseMaxDistance: 5
   distancePerRevealedTile: 0.06
   maxDistanceMultiplier: 1.3
   smoothSpeed: 7
