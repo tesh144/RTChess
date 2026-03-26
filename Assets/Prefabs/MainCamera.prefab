@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2862063219117132221}
   - component: {fileID: 898176248449032296}
   - component: {fileID: 7861838874997902642}
+  - component: {fileID: 1234567890123456789}
   m_Layer: 0
   m_Name: MainCamera
   m_TagString: MainCamera
@@ -84,6 +85,42 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!114 &1234567890123456789
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6612830678633953524}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d746c2e17e02470285fa687cee0f6cd, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  yaw: 45
+  pitch: 35
+  minDistance: 3
+  absoluteMaxDistance: 40
+  zoomSpeed: 3
+  zoomSmoothing: 8
+  baseDefaultDistance: 8
+  baseMaxDistance: 12
+  distancePerRevealedTile: 0.06
+  maxDistanceMultiplier: 1.3
+  smoothSpeed: 7
+  orbitSmoothTime: 0.1
+  manualRotateSpeed: 0.3
+  panSpeed: 5
+  basePanDistance: 5
+  panDistancePerRevealedTile: 0.05
+  absoluteMaxPanDistance: 80
+  autoRotateOnStart: 1
+  autoRotateSpeed: 6
+  coiBlendSpeed: 3
+  fieldOfView: 60
+  nearClip: 0.3
+  farClip: 1000
+  distancePadding: 1.5
 --- !u!81 &7861838874997902642
 AudioListener:
   m_ObjectHideFlags: 0

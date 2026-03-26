@@ -362,6 +362,12 @@ namespace LittleCafe
             smoothedLookPoint = Vector3.Lerp(smoothedLookPoint, targetLookPoint, Time.deltaTime * smoothSpeed);
 
             ApplyOrbitPosition(smoothedLookPoint, currentYaw, currentPitch, currentDistance);
+
+            // Orthographic cameras need orthographicSize updated to zoom
+            if (cam != null && cam.orthographic)
+            {
+                cam.orthographicSize = currentDistance;
+            }
         }
 
         private void ApplyOrbitPosition(Vector3 lookPoint, float yawDeg, float pitchDeg, float dist)
