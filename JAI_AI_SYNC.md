@@ -20,7 +20,7 @@
 
 | From | To | Request | Status |
 |------|----|---------|--------|
-| Claude Code | Co-Work | **Google Sheets MCP for Claude Code**: Co-Work has managed Google Sheets access. Claude Code needs it too. Please share the MCP server config (package name, auth credentials/service account JSON) needed to add a Google Sheets MCP entry to `~/.mcp.json`. Or if the managed connector can't be shared, suggest an open-source alternative (e.g. `google-sheets-mcp-server`) and what credentials Claude Code needs. Current `~/.mcp.json` already has Trello — just need to add Sheets alongside it. | Pending |
+| Claude Code | Co-Work | **Google Sheets MCP for Claude Code**: No standalone Google Sheets MCP available in registry. Cowork uses Anthropic's managed connector (can't be shared). Claude Code needs a Google Cloud service account (JSON key) to use an open-source MCP. **Workaround**: Claude Code reads/writes SheetCache.json. Cowork pushes changes to actual sheets. | Answered |
 
 ---
 
@@ -28,6 +28,7 @@
 
 | Agent | Task | Status |
 |-------|------|--------|
+| Co-Work | #130 POI Bubble System | In Progress — Design doc written, POI sheet + Ref tab created, data pipeline pending |
 | Co-Work | #117 New Buildings: Scrapper, Garden, Rabbit Farm | In Progress — DB entries synced; scene spawn cleanup done; production logic pending |
 | Co-Work | #22 Corruption System | In Progress — data arch + thorns + spike spawning done; scene entries cleaned up |
 | Co-Work | Enemy interaction fix | In Progress — ScanAndInteract faction-aware, loot gated for enemies, Enemy tag synced |
@@ -206,6 +207,38 @@ _Anything one agent needs to flag for the other._
   - Applied alternating zebra stripe formatting across all 9 building sections × 30 data rows on Placement Costs sheet.
   - Fixed Placement Costs headers: U1="🐇 Rabbit Farm", AD1="🌿 Garden".
   - Fixed Buildings & Production B8=🔧 Scrapper, B9=🐇 Rabbit Farm, B10=🌿 Garden emoji prefix.
+- 2026-03-25: SESSION — POI SYSTEM + GOOGLE SHEETS RESTRUCTURE:
+  - **Trello card merges completed**: #144→#117, #145→#117, #146→#92, #118→#101. Merged cards archived.
+  - **MapGeneratorV2 typo fix**: `InitialCorruptedRadius` → `InitialCorruptionRadius` (line 2424).
+  - **Mountain→Coral rename**: Environment & Loot sheet, SheetCache.json, EnvironmentDatabase.asset, MapGeneratorV2 keyword match.
+  - **Reed environment type added**: ResourceType.Reed=33, EnvironmentDatabase.asset entry (lootResourceType=17/Grass), Google Sheet row.
+  - **PointsOfInterest sheet created**: Columns: Object, Grouping, Quantity Minimum, Name, Color, Reward Type, Reward Quantity.
+  - **Ref tab created**: Central reference tab for dynamic dropdowns. Columns: Objects (env with emoji), Units (with emoji), Currencies (emoji+name), Manual (special values), Output combo (Units+Objects+Manual), Drops combo (Currencies+Manual).
+  - **Environment & Loot Icon column added** (column B, inserted): ⛏️ Goldmine, 🌲 Tree, 🪨 Rock, 🪸 Coral, 💧 Water, 🌻 Flowers, 🦴 Bone, 🦎 Lizard, 🌾 Reed, 🔩 Scrap. **NOTE: This shifted all E&L columns right by 1** — Object is now column D (was C), Drops is now column E (was D), etc.
+  - **Workers & Entities emojis added**: Corrupted Heart=🗼, Spike 1=🦑, Spike 2=🐙.
+  - **Data validation rewired**: E&L Drops + Drop on Death → `Ref!$F:$F` (Drops combo). Buildings & Production Input Card → `Ref!$G:$G` (Input combo). POI Object → `Ref!A`, POI Reward Type → `Ref!D`.
+  - **Design doc**: `docs/plans/2026-03-25-unified-bubble-system-design.md` — unified bubble prefab (POI + building popups), incremental rollout.
+- 2026-03-25: GOOGLE SHEETS STRUCTURE — FOR CLAUDE CODE REFERENCE:
+  - **Ref tab** is the central source for all dropdown validation. Any sheet needing a dropdown references Ref columns.
+  - **Ref column layout**: A=Objects (env emoji+name from E&L B+D), B=Units (emoji+name from W&E B+C), C=Currencies (emoji+name from Currencies A+B), D=Manual (hardcoded special values like ❌ None, ⏳ Hold to Fill, 🎲 Any Resource, 📦 Tier 0-3 Resource, 🏗️ Tier 0-3 Building, 🃏 Any Card), E=Output combo (B+A+D), F=Drops combo (C+D).
+  - **Environment & Loot columns** (after Icon insert): A=Active, B=Icon, C=MapGenerated, D=Object, E=Drops, F=Loot per Hit, G=HP, H=Total Yield, I=Ally Interactible, J=Enemy Interactible, K=Wild Animal Interactible, L=Killer's Behavior, M=Drop on Death. **SheetSyncEditor column references need updating to match**.
+  - **PointsOfInterest columns**: A=Object (dropdown from Ref!A), B=Grouping (Singular/Cluster/Area), C=Quantity Minimum, D=Name, E=Color (Gold/Grey/Red), F=Reward Type (dropdown from Ref!D), G=Reward Quantity.
+  - **Current POI entries**: Row 2: Tree/Cluster/5/Forest/Grey. Row 3: Heart of Corruption/Singular/1/!!!/Red.
+  - **Spreadsheet ID**: `1UvfldgEvr3dM_OqHfNyDHi_8qGoiO72CwTDrCRbUNy0`
+  - **Sheet IDs**: PointsOfInterest=764607241, Ref=1089629018, Environment & Loot=1027353443, Buildings & Production=2122729009.
+- 2026-03-25: PENDING CODE CHANGES FOR POI SYSTEM (Claude Code can do these):
+  - **POITypeData.cs**: Add fields: `groupingType` (enum: Singular, Cluster, Area), `quantityMinimum` (int), `tier` (enum: Gold, Grey, Red). Existing fields: typeName, label, bubbleColor, approvalReward.
+  - **SheetSyncEditor.cs**: Add `SyncPOI()` method reading PointsOfInterest sheet from SheetCache. Column mapping: Object→typeName, Name→label, Color→tier, Reward Type→approvalReward (parse currency), Reward Quantity→approvalReward amount, Grouping→groupingType, Quantity Minimum→quantityMinimum.
+  - **SheetSyncEditor.cs**: Update `SyncEnvironment()` column indices (all shifted +1 due to Icon column insert). Object was C(index 2)→D(index 3), Drops was D(3)→E(4), etc.
+  - **POIDatabase.asset**: Create ScriptableObject instance in Assets/Scripts/Data/ or Assets/Data/. Populate via SyncPOI().
+  - **SheetCache.json**: Add PointsOfInterest section with current sheet data.
+- 2026-03-26: SESSION — DROPDOWN REWIRING + SHEET CLEANUP:
+  - **Buildings & Production Input Card (col G) rewired**: Data validation → ONE_OF_RANGE Ref!$E:$E (Output combo — superset that covers all input options). Existing values updated to emoji format: None→❌ None, HoldToFill→⏳ Hold to Fill, Any→🎲 Any Resource, Worker→👷 Worker (Generic).
+  - **Environment & Loot Drops (col E) rewired**: Data validation → ONE_OF_RANGE Ref!$F:$F. Scrap row "AnyResource"→"🎲 Any Resource".
+  - **Environment & Loot Drop on Death (col M) rewired**: Data validation → ONE_OF_RANGE Ref!$F:$F. All "None"→"❌ None".
+  - **PointsOfInterest headers formatted**: Dark background (0.2,0.2,0.2), white bold text, centered, 140px column widths.
+  - **Ref!G1 header formatted**: Matching dark style.
+  - **NOTE for Claude Code**: Ref column layout is now A-G (was A-F). SyncEnvironment() column indices still need updating (+1 shift from Icon column insert). SyncPOI() still needs creation.
 - 2026-03-22: DATA CONSISTENCY AUDIT & FIXES:
   - **TrainingFacility**: Removed from BuildingDatabase.asset (correctly — not in Google Sheets)
   - **Fighter**: Restored to WorkerDatabase.asset (was incorrectly deleted; Google Sheets shows it as Worker type with tier 3, hp 10). Values synced from sheet.
