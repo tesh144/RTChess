@@ -16,6 +16,14 @@
 
 ---
 
+## Cross-Agent Requests
+
+| From | To | Request | Status |
+|------|----|---------|--------|
+| Claude Code | Co-Work | **Google Sheets MCP for Claude Code**: Co-Work has managed Google Sheets access. Claude Code needs it too. Please share the MCP server config (package name, auth credentials/service account JSON) needed to add a Google Sheets MCP entry to `~/.mcp.json`. Or if the managed connector can't be shared, suggest an open-source alternative (e.g. `google-sheets-mcp-server`) and what credentials Claude Code needs. Current `~/.mcp.json` already has Trello — just need to add Sheets alongside it. | Pending |
+
+---
+
 ## Active Work
 
 | Agent | Task | Status |
