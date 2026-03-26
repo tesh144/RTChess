@@ -15,13 +15,9 @@ namespace ClockworkCraft
         public static POIManager Instance { get; private set; }
 
         [Header("Prefab & Database")]
-        [Tooltip("Assign any prefab that has a POIBubble component (or will have one added at runtime).")]
+        [Tooltip("The bubble popup prefab (must have or will get a POIBubble component).")]
         [SerializeField] private GameObject bubblePrefab;
         [SerializeField] private POIDatabase poiDatabase;
-
-        [Header("World Canvas")]
-        [Tooltip("Parent transform for pooled bubble instances. Set this to the World Canvas or a child holder.")]
-        [SerializeField] private Transform bubbleParent;
 
         [Header("Window Settings")]
         [Tooltip("Maximum number of env-object POI bubbles shown at once.")]
@@ -272,7 +268,7 @@ namespace ClockworkCraft
             int total = maxEnvBubbles + heartPoolSize;
 
             // Parent under the world canvas if set, otherwise under this transform
-            Transform parent = bubbleParent != null ? bubbleParent : transform;
+            Transform parent = transform;
 
             for (int i = 0; i < total; i++)
             {
@@ -294,7 +290,7 @@ namespace ClockworkCraft
             }
             // Pool exhausted — create overflow instance
             if (bubblePrefab == null) return null;
-            Transform parent = bubbleParent != null ? bubbleParent : transform;
+            Transform parent = transform;
             var obj = Instantiate(bubblePrefab, parent);
             var overflow = obj.GetComponent<POIBubble>();
             if (overflow == null) overflow = obj.AddComponent<POIBubble>();
