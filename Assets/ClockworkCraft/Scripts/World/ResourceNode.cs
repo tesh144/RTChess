@@ -30,11 +30,27 @@ namespace ClockworkCraft
         [Tooltip("Bonus resources awarded on node death (in addition to normal conversion loot).")]
         public int lootBonusAmount = 3;
 
+        // Core resources that AnyResource can randomly select from
+        private static readonly ResourceType[] CoreResources = {
+            ResourceType.Gold, ResourceType.Wood, ResourceType.Food,
+            ResourceType.Stone, ResourceType.Water, ResourceType.Flowers
+        };
+
         public int GridX { get; private set; }
         public int GridY { get; private set; }
 
         private int currentHp;
         private int accumulatedDamage;   // Tracks HP damage since last loot trigger
+
+        /// <summary>
+        /// Returns the actual resource to drop. For AnyResource, picks a random core resource each call.
+        /// </summary>
+        public ResourceType GetDropResourceType()
+        {
+            if (resourceType == ResourceType.AnyResource)
+                return CoreResources[Random.Range(0, CoreResources.Length)];
+            return resourceType;
+        }
 
         public void Initialize(int x, int y)
         {
@@ -96,14 +112,14 @@ namespace ClockworkCraft
                 accumulatedDamage = 0;
             }
 
-            if (ResourceLootFX.Instance != null && finalLoot > 0)
+            if (finalLoot > 0)
             {
+                ResourceType dropType = GetDropResourceType();
                 Vector3 hitPos = transform.position + Vector3.up * 0.5f;
-                ResourceLootFX.Instance.SpawnLoot(hitPos, resourceType, finalLoot);
-            }
-            else if (finalLoot > 0)
-            {
-                ResourceManager.Instance?.AddResource(resourceType, finalLoot);
+                if (ResourceLootFX.Instance != null)
+                    ResourceLootFX.Instance.SpawnLoot(hitPos, dropType, finalLoot);
+                else
+                    ResourceManager.Instance?.AddResource(dropType, finalLoot);
             }
 
             // SFX: resource fully depleted

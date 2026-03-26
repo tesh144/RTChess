@@ -78,7 +78,7 @@ MonoBehaviour:
     icon: {fileID: 0}
   - active: 1
     isMapGenerated: 1
-    assetName: Mountain
+    assetName: Coral
     type: 0
     isFunctional: 0
     isWalkable: 0
@@ -95,8 +95,8 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 1865641483583068949, guid: 99a009e1eb04c4f02a193e9a6ba30d54, type: 3}
-    icon: {fileID: 0}
+    prefab: {fileID: 4012027452609465193, guid: cf6297bd52b93456abb6c4e2f259e09f, type: 3}
+    icon: {fileID: 21300000, guid: 6e2e356a6111c44c1a65e14168b022ae, type: 3}
   - active: 1
     isMapGenerated: 1
     assetName: Water
@@ -171,7 +171,7 @@ MonoBehaviour:
     allyInteractible: 1
     enemyInteractible: 0
     wildAnimalInteractible: 0
-    lootResourceType: 32
+    lootResourceType: 34
     lootHpCost: 1
     lootYield: 1
     hp: 5
@@ -202,9 +202,9 @@ MonoBehaviour:
     dropOnDeath: 0
     prefab: {fileID: 1892183304342524014, guid: 4e6d21bc162164252ac1f96ac5200e76, type: 3}
     icon: {fileID: 21300000, guid: 61a131e43a2714e839cb36184ba05de6, type: 3}
-  - active: 0
-    isMapGenerated: 0
-    assetName: TreeSeed
+  - active: 1
+    isMapGenerated: 1
+    assetName: Reed
     type: 0
     isFunctional: 0
     isWalkable: 0
@@ -213,7 +213,7 @@ MonoBehaviour:
     allyInteractible: 1
     enemyInteractible: 0
     wildAnimalInteractible: 0
-    lootResourceType: 2
+    lootResourceType: 17
     lootHpCost: 1
     lootYield: 1
     hp: 5

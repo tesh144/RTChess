@@ -852,11 +852,13 @@ namespace LittleCafe
                     {
                         float topY = GridEntityHPBar.GetTopOfObject(target.transform, 0.5f);
                         Vector3 hitPos = target.transform.position + Vector3.up * topY;
+                        // Use GetDropResourceType() so AnyResource resolves to a random core resource per hit
+                        ClockworkCraft.ResourceType dropType = resourceNode.GetDropResourceType();
 
                         var lootFX = ClockworkCraft.ResourceLootFX.Instance;
                         if (lootFX != null)
                         {
-                            lootFX.SpawnLoot(hitPos, resourceNode.resourceType, lootCount);
+                            lootFX.SpawnLoot(hitPos, dropType, lootCount);
 
                             // SFX: loot burst
                             if (GameSFXManager.Instance != null)
@@ -865,7 +867,7 @@ namespace LittleCafe
                         else
                         {
                             // Fallback: add resource directly if FX system isn't available
-                            ClockworkCraft.ResourceManager.Instance?.AddResource(resourceNode.resourceType, lootCount);
+                            ClockworkCraft.ResourceManager.Instance?.AddResource(dropType, lootCount);
                         }
                     }
                 }

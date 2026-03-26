@@ -57,5 +57,7 @@ namespace ClockworkCraft
         Approval,       // Thumbs up
         Heart,          // Pink heart
         Scrap,          // Scrap material — produced by the Scrapper building
+        Reed,           // Reed — harvested from reed environment objects
+        AnyResource,    // Random resource — each hit drops a random core resource type
     }
 }
