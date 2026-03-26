@@ -15,8 +15,13 @@ namespace ClockworkCraft
         public static POIManager Instance { get; private set; }
 
         [Header("Prefab & Database")]
-        [SerializeField] private POIBubble bubblePrefab;
+        [Tooltip("Assign any prefab that has a POIBubble component (or will have one added at runtime).")]
+        [SerializeField] private GameObject bubblePrefab;
         [SerializeField] private POIDatabase poiDatabase;
+
+        [Header("World Canvas")]
+        [Tooltip("Parent transform for pooled bubble instances. Set this to the World Canvas or a child holder.")]
+        [SerializeField] private Transform bubbleParent;
 
         [Header("Window Settings")]
         [Tooltip("Maximum number of env-object POI bubbles shown at once.")]
@@ -86,8 +91,8 @@ namespace ClockworkCraft
             if (heartRegistry.ContainsKey(pos)) return;
             heartRegistry[pos] = heart;
 
-            // Hearts always get a bubble immediately
-            ShowBubble(pos, "Corruption");
+            // Hearts always get a bubble immediately — use POI_Red
+            ShowBubble(pos, "Corruption", BubbleType.POI_Red);
         }
 
         /// <summary>Called by CorruptionHeart.OnDestroy().</summary>
@@ -136,7 +141,7 @@ namespace ClockworkCraft
             // Heart discovered
             if (heartRegistry.TryGetValue(coord, out var heart) && heart != null)
             {
-                AwardApproval("Corruption");
+                AwardReward("Corruption");
                 DismissBubble(coord);
                 heartRegistry.Remove(coord);
             }
@@ -144,7 +149,7 @@ namespace ClockworkCraft
             // Env POI discovered
             if (envRegistry.TryGetValue(coord, out var entry))
             {
-                AwardApproval(entry.assetName);
+                AwardReward(entry.assetName);
                 DismissBubble(coord);
                 envRegistry.Remove(coord);
             }
@@ -193,7 +198,9 @@ namespace ClockworkCraft
             int filled = 0;
             for (int i = 0; i < candidates.Count && filled < openSlots; i++)
             {
-                ShowBubble(candidates[i].pos, candidates[i].entry.assetName);
+                var data = poiDatabase.GetByTypeName(candidates[i].entry.assetName);
+                var bubbleType = data != null ? data.GetBubbleType() : BubbleType.POI_Grey;
+                ShowBubble(candidates[i].pos, candidates[i].entry.assetName, bubbleType);
                 filled++;
             }
         }
@@ -221,7 +228,7 @@ namespace ClockworkCraft
 
         // ── Bubble Management ───────────────────────────────────────────
 
-        private void ShowBubble(Vector2Int gridPos, string assetName)
+        private void ShowBubble(Vector2Int gridPos, string assetName, BubbleType bubbleType)
         {
             if (activeBubbles.ContainsKey(gridPos)) return;
 
@@ -230,14 +237,13 @@ namespace ClockworkCraft
 
             var data = poiDatabase != null ? poiDatabase.GetByTypeName(assetName) : null;
             string text = data != null ? data.label : assetName;
-            Color color = data != null ? data.bubbleColor : Color.white;
 
             Vector3 worldPos = GridManager.Instance != null
                 ? GridManager.Instance.GridToWorldPosition(gridPos.x, gridPos.y)
                 : new Vector3(gridPos.x, 0f, gridPos.y);
             worldPos.y += heightAboveGround;
 
-            bubble.Setup(text, color, worldPos);
+            bubble.Setup(bubbleType, text, worldPos);
             activeBubbles[gridPos] = bubble;
         }
 
@@ -248,14 +254,14 @@ namespace ClockworkCraft
             activeBubbles.Remove(gridPos);
         }
 
-        private void AwardApproval(string assetName)
+        private void AwardReward(string assetName)
         {
             if (poiDatabase == null) return;
             var data = poiDatabase.GetByTypeName(assetName);
-            if (data == null || data.approvalReward <= 0) return;
+            if (data == null || data.rewardQuantity <= 0) return;
 
             if (ResourceManager.Instance != null)
-                ResourceManager.Instance.AddResource(ResourceType.Approval, data.approvalReward);
+                ResourceManager.Instance.AddResource(data.rewardType, data.rewardQuantity);
         }
 
         // ── Pool ────────────────────────────────────────────────────────
@@ -265,11 +271,16 @@ namespace ClockworkCraft
             if (bubblePrefab == null) return;
             int total = maxEnvBubbles + heartPoolSize;
 
+            // Parent under the world canvas if set, otherwise under this transform
+            Transform parent = bubbleParent != null ? bubbleParent : transform;
+
             for (int i = 0; i < total; i++)
             {
-                var bubble = Instantiate(bubblePrefab, transform);
+                var obj = Instantiate(bubblePrefab, parent);
+                var bubble = obj.GetComponent<POIBubble>();
+                if (bubble == null) bubble = obj.AddComponent<POIBubble>();
                 bubble.SetAnimParams(popInDuration, bobHeight, bobDuration, fadeOutDuration);
-                bubble.gameObject.SetActive(false);
+                obj.SetActive(false);
                 pool.Add(bubble);
             }
         }
@@ -283,9 +294,12 @@ namespace ClockworkCraft
             }
             // Pool exhausted — create overflow instance
             if (bubblePrefab == null) return null;
-            var overflow = Instantiate(bubblePrefab, transform);
+            Transform parent = bubbleParent != null ? bubbleParent : transform;
+            var obj = Instantiate(bubblePrefab, parent);
+            var overflow = obj.GetComponent<POIBubble>();
+            if (overflow == null) overflow = obj.AddComponent<POIBubble>();
             overflow.SetAnimParams(popInDuration, bobHeight, bobDuration, fadeOutDuration);
-            overflow.gameObject.SetActive(false);
+            obj.SetActive(false);
             pool.Add(overflow);
             return overflow;
         }
