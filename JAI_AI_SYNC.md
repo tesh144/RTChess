@@ -123,6 +123,9 @@
 | 2026-03-24 | Co-Work | Same-faction skip: ScanAndInteract, ScanAndInteractWildAnimal, TryMoveForward all now skip same-faction targets. Enemies don't attack enemies, allies don't attack allies. Prevents spike-on-heart friendly fire. |
 | 2026-03-24 | Co-Work | Starvation guard: IncrementIdleCounter() now requires IsAllied in addition to RotateAndInteract. Enemy spikes sharing the same behavior type no longer starve to death from idling. |
 | 2026-03-24 | Co-Work | isMapGenerated for units: Added field to UnitData.cs. Set in UnitDatabase.asset (Dinosaur/Mammoth/Heart=true, Spike1/Spike2=false). SyncUnitSpawnEntries() now filters by isMapGenerated. SheetSyncEditor syncs MapGenerated column for units. Scene file unitSpawnEntries cleaned: removed Spike1/Spike2 (size 5→3). |
+| 2026-03-26 | Co-Work | POI bubble scale fix: Root cause was WorldCanvas_Popups (2560×1440) at localScale 1 = each pixel was 1 world unit (bubbles invisible/enormous). Added targetScale to POIBubble (animations scale relative to it), bubbleWorldScale field to POIManager (default 0.005). Added diagnostic logging + Diagnose button. |
+| 2026-03-26 | Co-Work | Building bubble integration: BuildingProductionManager now supports designed bubbles via buildingBubblePrefab field. Bubble_Collect replaces procedural popup (shows reward icon). Bubble_Insert shows when building awaits input/resources (not HoldToFill). SpawnInsertBubble/DismissInsertBubble lifecycle managed at register, feed, resource-gate, and collect. |
+| 2026-03-26 | Co-Work | POIBubble.GetIconImage(): New method finds "Icon" Image within active variant — used by BuildingProductionManager for reward/input icons on Bubble_Collect/Bubble_Insert. |
 
 ---
 

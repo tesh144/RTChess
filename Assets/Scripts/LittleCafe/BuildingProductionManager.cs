@@ -777,12 +777,12 @@ namespace LittleCafe
                 }
                 entry.popupIconImage = iconImg;
 
-                // Collider for tap detection — on a separate unscaled child
+                // Collider for tap detection — on a separate unscaled child.
+                // Use buildingBubbleScale (not localScale.x, which is zero during pop-in).
                 GameObject colliderHolder = new GameObject("TapCollider");
                 colliderHolder.transform.SetParent(canvasObj.transform, false);
-                float canvasScale = canvasObj.transform.localScale.x;
-                if (canvasScale > 0f)
-                    colliderHolder.transform.localScale = Vector3.one / canvasScale;
+                if (buildingBubbleScale > 0f)
+                    colliderHolder.transform.localScale = Vector3.one / buildingBubbleScale;
 
                 SphereCollider col = colliderHolder.AddComponent<SphereCollider>();
                 col.radius = 0.6f;
@@ -835,7 +835,10 @@ namespace LittleCafe
             if (GameSFXManager.Instance != null)
                 GameSFXManager.Instance.PlayPopupAppear();
 
-            StartCoroutine(PopupSpawnAnimation(entry.popupCanvasObj));
+            // Designed bubbles have their own pop-in animation via POIBubble.Update —
+            // only run the legacy coroutine for procedural/prefab popups.
+            if (buildingBubblePrefab == null)
+                StartCoroutine(PopupSpawnAnimation(entry.popupCanvasObj));
 
             if (verboseLogging)
             {

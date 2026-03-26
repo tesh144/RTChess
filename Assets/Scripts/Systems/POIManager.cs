@@ -43,6 +43,9 @@ namespace ClockworkCraft
         [SerializeField] private float fadeOutDuration = 0.4f;
         [SerializeField] private float heightAboveGround = 2.5f;
 
+        [Tooltip("World-space scale applied to each bubble Canvas. The prefab is 2560×1440px — at 0.005 each pixel ≈ 0.005 world units, giving a ~5-unit-wide bubble.")]
+        [SerializeField] private float bubbleWorldScale = 0.005f;
+
         /// <summary>Public access to POI entries (for SheetSyncEditor).</summary>
         public List<POITypeData> Entries => poiEntries;
 
@@ -78,6 +81,35 @@ namespace ClockworkCraft
                     return entry;
             }
             return null;
+        }
+
+        // ── Diagnostics ────────────────────────────────────────────────
+
+        /// <summary>Log the full state of the POI system to the console.</summary>
+        [ContextMenu("Diagnose POI System")]
+        public void DiagnosePOISystem()
+        {
+            Debug.Log("═══════════ POI System Diagnostic ═══════════");
+            Debug.Log($"  bubblePrefab: {(bubblePrefab != null ? bubblePrefab.name : "NULL ← ASSIGN THIS")}");
+            Debug.Log($"  poiDatabase:  {(poiDatabase != null ? poiDatabase.name : "NULL")}");
+            Debug.Log($"  poiEntries:   {poiEntries?.Count ?? 0} entries");
+            if (poiEntries != null)
+            {
+                foreach (var e in poiEntries)
+                    Debug.Log($"    [{(e.active ? "ON" : "off")}] {e.typeName} → \"{e.label}\" | {e.sourceType} | {e.groupingType} | min={e.quantityMinimum} | tier={e.tier}");
+            }
+            Debug.Log($"  bubbleWorldScale: {bubbleWorldScale}");
+            Debug.Log($"  Pool size:    {pool.Count}");
+            if (pool.Count > 0 && pool[0].Panel != null)
+                Debug.Log($"  UIPanel elements on first bubble: {pool[0].Panel.ElementCount}");
+            Debug.Log($"  heartRegistry:  {heartRegistry.Count}");
+            Debug.Log($"  envRegistry:    {envRegistry.Count}");
+            Debug.Log($"  activeBubbles:  {activeBubbles.Count}");
+            foreach (var kvp in activeBubbles)
+                Debug.Log($"    grid {kvp.Key} → {kvp.Value.CurrentType} active={kvp.Value.IsActive}");
+            Debug.Log($"  FogManager: {(FogManager.Instance != null ? "OK" : "NULL")}");
+            Debug.Log($"  GridManager: {(GridManager.Instance != null ? "OK" : "NULL")}");
+            Debug.Log("═══════════════════════════════════════════════");
         }
 
         // ── Sync ────────────────────────────────────────────────────────
@@ -127,6 +159,7 @@ namespace ClockworkCraft
             Instance = this;
 
             CreatePool();
+            Debug.Log($"[POIManager] Awake. Pool size: {pool.Count}, poiEntries: {poiEntries?.Count ?? 0}, bubblePrefab: {(bubblePrefab != null ? bubblePrefab.name : "NULL")}");
         }
 
         private void OnDestroy()
@@ -304,6 +337,9 @@ namespace ClockworkCraft
                 ShowBubble(candidates[i].pos, candidates[i].entry.assetName, bubbleType);
                 filled++;
             }
+
+            if (candidates.Count > 0 || envRegistry.Count > 0)
+                Debug.Log($"[POIManager] RefreshEnvWindow: {envRegistry.Count} registered, {candidates.Count} candidates near border, {filled} new bubbles shown, {activeEnvCount + filled}/{maxEnvBubbles} slots used.");
         }
 
         private int MinManhattanDistToRevealed(Vector2Int pos)
@@ -334,7 +370,11 @@ namespace ClockworkCraft
             if (activeBubbles.ContainsKey(gridPos)) return;
 
             var bubble = GetFromPool();
-            if (bubble == null) return;
+            if (bubble == null)
+            {
+                Debug.LogWarning($"[POIManager] ShowBubble failed — pool exhausted and no prefab. gridPos={gridPos}, asset={assetName}");
+                return;
+            }
 
             var data = GetPOIData(assetName);
             string text = data != null ? data.label : assetName;
@@ -346,6 +386,7 @@ namespace ClockworkCraft
 
             bubble.Setup(bubbleType, text, worldPos);
             activeBubbles[gridPos] = bubble;
+            Debug.Log($"[POIManager] Bubble shown: '{text}' ({bubbleType}) at grid {gridPos} → world {worldPos}");
         }
 
         private void DismissBubble(Vector2Int gridPos)
@@ -369,21 +410,36 @@ namespace ClockworkCraft
 
         private void CreatePool()
         {
-            if (bubblePrefab == null) return;
-            int total = maxEnvBubbles + heartPoolSize;
+            if (bubblePrefab == null)
+            {
+                Debug.LogError("[POIManager] bubblePrefab is NULL — no bubbles will appear. Assign WorldCanvas_Popups in the Inspector.");
+                return;
+            }
 
-            // Parent under the world canvas if set, otherwise under this transform
+            int total = maxEnvBubbles + heartPoolSize;
             Transform parent = transform;
+            Vector3 scale = Vector3.one * bubbleWorldScale;
 
             for (int i = 0; i < total; i++)
             {
-                var obj = Instantiate(bubblePrefab, parent);
-                var bubble = obj.GetComponent<POIBubble>();
-                if (bubble == null) bubble = obj.AddComponent<POIBubble>();
-                bubble.SetAnimParams(popInDuration, bobHeight, bobDuration, fadeOutDuration);
-                obj.SetActive(false);
-                pool.Add(bubble);
+                var bubble = CreateBubbleInstance(parent, scale);
+                if (bubble != null) pool.Add(bubble);
             }
+
+            // Validate first bubble has UIPanel elements
+            if (pool.Count > 0 && pool[0].Panel != null && pool[0].Panel.ElementCount == 0)
+                Debug.LogWarning("[POIManager] Bubble prefab UIPanel has 0 elements — run Tools > ClockworkCraft > Setup UI Panels on the prefab.");
+        }
+
+        private POIBubble CreateBubbleInstance(Transform parent, Vector3 scale)
+        {
+            var obj = Instantiate(bubblePrefab, parent);
+            var bubble = obj.GetComponent<POIBubble>();
+            if (bubble == null) bubble = obj.AddComponent<POIBubble>();
+            bubble.SetAnimParams(popInDuration, bobHeight, bobDuration, fadeOutDuration);
+            bubble.SetTargetScale(scale);
+            obj.SetActive(false);
+            return bubble;
         }
 
         private POIBubble GetFromPool()
@@ -395,12 +451,7 @@ namespace ClockworkCraft
             }
             // Pool exhausted — create overflow instance
             if (bubblePrefab == null) return null;
-            Transform parent = transform;
-            var obj = Instantiate(bubblePrefab, parent);
-            var overflow = obj.GetComponent<POIBubble>();
-            if (overflow == null) overflow = obj.AddComponent<POIBubble>();
-            overflow.SetAnimParams(popInDuration, bobHeight, bobDuration, fadeOutDuration);
-            obj.SetActive(false);
+            var overflow = CreateBubbleInstance(transform, Vector3.one * bubbleWorldScale);
             pool.Add(overflow);
             return overflow;
         }
@@ -424,6 +475,13 @@ namespace ClockworkCraft
                 Undo.RecordObject(mgr, "Sync POI from Database");
                 mgr.SyncFromDatabase();
                 EditorUtility.SetDirty(mgr);
+            }
+
+            // Runtime diagnostic button (play mode only)
+            if (Application.isPlaying)
+            {
+                if (GUILayout.Button("Diagnose POI System"))
+                    mgr.DiagnosePOISystem();
             }
 
             EditorGUILayout.Space(4);

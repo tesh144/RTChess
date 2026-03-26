@@ -221,9 +221,9 @@ MonoBehaviour:
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
-  - environmentName: Mountain
+  - environmentName: Coral
     spawnMode: 0
-    spawnWeight: 1
+    spawnWeight: 3
     minSpacing: 6
     fragmentation: 0.3
     clusterSpread: 0.6
@@ -236,6 +236,13 @@ MonoBehaviour:
     clusterSpread: 0.7
     edgeBorderOf: 
   - environmentName: Flowers
+    spawnMode: 2
+    spawnWeight: 2
+    minSpacing: 0
+    fragmentation: 0.3
+    clusterSpread: 0.6
+    edgeBorderOf: Tree
+  - environmentName: Reed
     spawnMode: 2
     spawnWeight: 3
     minSpacing: 0
@@ -259,7 +266,7 @@ MonoBehaviour:
     edgeBorderOf: 
   corruptionSpawnEntries:
   - entityName: CorruptedHeart
-    prefab: {fileID: 3119510917662581751, guid: 8ec6bc77c596f0a4a901c5b5dd5b9370, type: 3}
+    prefab: {fileID: 6759347119158193349, guid: f242e5b1259fb42e09a905f57e5d6eb0, type: 3}
     spawnMode: 0
     spawnCount: 5
     minDistFromCenter: 10
@@ -314,6 +321,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.POIManager
   bubblePrefab: {fileID: 0}
   poiDatabase: {fileID: 0}
+  poiEntries: []
   maxEnvBubbles: 5
   fogBorderRadius: 3
   heartPoolSize: 6
@@ -531,9 +539,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.CorruptionManager
   spreadInterval: 30
+  spreadChance: 0.25
+  spreadPauseOnHit: 5
+  recorruptionImmunity: 20
   heartActivationRadius: 5
-  useParticleFog: 0
-  corruptionOverlayPrefab: {fileID: 6539504230762062765, guid: 1edc148ad0f4c48159f40a43193655de, type: 3}
+  spreadSound: {fileID: 0}
+  spreadSoundVolume: 0.6
+  corruptionOverlayPrefab: {fileID: 2881067372029442596, guid: 1edc148ad0f4c48159f40a43193655de, type: 3}
+  corruptionVisualHeight: 0
+  corruptionVisualScale: 1
 --- !u!1 &9035113113404508760
 GameObject:
   m_ObjectHideFlags: 0
@@ -581,6 +595,7 @@ MonoBehaviour:
   baseChunkInterval: 0.25
   chunkDecayFactor: 0.85
   minChunkInterval: 0.08
+  streamPopInDuration: 0.15
   streamFlyDuration: 0.4
   streamArcHeight: 1.5
   streamIconSize: 64
