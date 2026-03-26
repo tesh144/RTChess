@@ -50,12 +50,17 @@ namespace ClockworkCraft
         private float bobDuration = 1.4f;
         private float fadeOutDuration = 0.4f;
 
+        // Rise-in animation params
+        private float riseDistance = 0.8f;
+        private float riseInDuration = 0.3f;
+        private float tetherDrawDuration = 0.2f;
+
         // Target scale — set by POIManager to control world-space size.
         // Pop-in and dismiss animations scale relative to this, not Vector3.one.
         private Vector3 targetScale = Vector3.one;
 
         // State
-        private enum State { Inactive, PoppingIn, Bobbing, Dismissing }
+        private enum State { Inactive, RisingIn, DrawingTether, Bobbing, Dismissing }
         private State state = State.Inactive;
         private float timer;
         private Vector3 basePosition;
@@ -245,15 +250,18 @@ namespace ClockworkCraft
                 Debug.LogWarning("[POIBubble] No UIPanel component found — bubble will be blank.");
             }
 
-            if (canvasGroup != null) canvasGroup.alpha = 1f;
+            if (canvasGroup != null) canvasGroup.alpha = 0f;
 
-            // Tether line from bubble down to the fog tile
+            // Prepare tether but hide until DrawingTether phase
             SetupTether(bubbleType, worldPos);
+            HideTether();
 
+            // Start below target position
+            transform.position = worldPos + Vector3.down * riseDistance;
             transform.localScale = Vector3.zero;
             gameObject.SetActive(true);
 
-            state = State.PoppingIn;
+            state = State.RisingIn;
             timer = 0f;
             bobTimer = 0f;
         }
@@ -268,6 +276,9 @@ namespace ClockworkCraft
         public void Dismiss()
         {
             if (state == State.Inactive || state == State.Dismissing) return;
+            // Ensure fully visible before starting dismiss (in case dismissed during rise)
+            if (canvasGroup != null) canvasGroup.alpha = 1f;
+            transform.localScale = targetScale;
             state = State.Dismissing;
             timer = 0f;
         }
@@ -307,23 +318,71 @@ namespace ClockworkCraft
         {
             switch (state)
             {
-                case State.PoppingIn:  UpdatePopIn();  break;
-                case State.Bobbing:    UpdateBob();    break;
-                case State.Dismissing: UpdateDismiss(); break;
+                case State.RisingIn:     UpdateRiseIn();     break;
+                case State.DrawingTether: UpdateDrawTether(); break;
+                case State.Bobbing:      UpdateBob();        break;
+                case State.Dismissing:   UpdateDismiss();    break;
             }
         }
 
-        private void UpdatePopIn()
+        private void UpdateRiseIn()
         {
             timer += Time.deltaTime;
-            float t = Mathf.Clamp01(timer / popInDuration);
+            float t = Mathf.Clamp01(timer / riseInDuration);
 
-            float eased = 1f + 2.70158f * Mathf.Pow(t - 1f, 3f) + 1.70158f * Mathf.Pow(t - 1f, 2f);
-            transform.localScale = targetScale * eased;
+            // Position: EaseOutQuad rise from below to basePosition
+            float posEased = t * (2f - t); // EaseOutQuad
+            Vector3 startPos = basePosition + Vector3.down * riseDistance;
+            transform.position = Vector3.Lerp(startPos, basePosition, posEased);
+
+            // Scale: OutBack from zero to targetScale
+            float scaleEased = 1f + 2.70158f * Mathf.Pow(t - 1f, 3f) + 1.70158f * Mathf.Pow(t - 1f, 2f);
+            transform.localScale = targetScale * scaleEased;
+
+            // Alpha: fade in over first 60%
+            if (canvasGroup != null)
+                canvasGroup.alpha = Mathf.Clamp01(t / 0.6f);
 
             if (t >= 1f)
             {
+                transform.position = basePosition;
                 transform.localScale = targetScale;
+                if (canvasGroup != null) canvasGroup.alpha = 1f;
+
+                // Transition to tether draw
+                state = State.DrawingTether;
+                timer = 0f;
+
+                // Show tether — start with bottom at bubble position
+                if (tether != null)
+                {
+                    tether.gameObject.SetActive(true);
+                    tether.SetPosition(0, basePosition);
+                    tether.SetPosition(1, basePosition); // starts collapsed
+                }
+            }
+        }
+
+        private void UpdateDrawTether()
+        {
+            timer += Time.deltaTime;
+            float t = Mathf.Clamp01(timer / tetherDrawDuration);
+
+            // EaseOutCubic: bottom endpoint sweeps from bubble down to ground
+            float eased = 1f - Mathf.Pow(1f - t, 3f);
+            Vector3 currentBottom = Vector3.Lerp(basePosition, groundPosition, eased);
+
+            if (tether != null)
+            {
+                tether.SetPosition(0, basePosition);
+                tether.SetPosition(1, currentBottom);
+            }
+
+            if (t >= 1f)
+            {
+                if (tether != null)
+                    UpdateTetherPositions(basePosition);
+
                 state = State.Bobbing;
                 bobTimer = 0f;
             }
