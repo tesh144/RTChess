@@ -22,16 +22,16 @@ namespace LittleCafe
         [SerializeField] private float pitch = 35f;
 
         [Header("Zoom - Fixed Limits")]
-        [SerializeField] private float minDistance = 8f;           // Closest zoom (hard cap)
-        [SerializeField] private float absoluteMaxDistance = 80f;  // Never zoom out further than this (increased for 120x120 grid)
+        [SerializeField] private float minDistance = 5f;           // Closest zoom — matches starting ortho size
+        [SerializeField] private float absoluteMaxDistance = 40f;  // Never zoom out further than this
         [SerializeField] private float zoomSpeed = 3f;
         [SerializeField] private float zoomSmoothing = 8f;
 
         [Header("Zoom - Adaptive Scaling")]
-        [SerializeField] private float baseDefaultDistance = 14f;  // Default zoom with few revealed tiles
-        [SerializeField] private float baseMaxDistance = 20f;      // Max zoom with few revealed tiles
-        [SerializeField] private float distancePerRevealedTile = 0.06f; // Extra distance per revealed tile (increased for smoother late-game zoom)
-        [SerializeField] private float maxDistanceMultiplier = 1.3f;    // Max = default * this multiplier
+        [SerializeField] private float baseDefaultDistance = 5f;   // Starting zoom level (ortho size)
+        [SerializeField] private float baseMaxDistance = 5f;       // Max zoom with no revealed tiles (same as default)
+        [SerializeField] private float distancePerRevealedTile = 0.06f; // Extra max-zoom per revealed tile
+        [SerializeField] private float maxDistanceMultiplier = 1.3f;    // Unused now but kept for inspector
 
         [Header("Smoothing")]
         [SerializeField] private float smoothSpeed = 7f;
