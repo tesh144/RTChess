@@ -90,7 +90,7 @@ namespace LittleCafe
             {
                 sharedMats[i]     = bodyRenderers[i].sharedMaterial;
                 bodyMaterials[i]  = bodyRenderers[i].material; // auto-instantiates per-instance copy
-                originalColors[i] = sharedMats[i].color;
+                originalColors[i] = sharedMats[i].HasProperty("_Color") ? sharedMats[i].color : Color.white;
             }
             ApplyTint(tintAlpha);
 
