@@ -133,8 +133,20 @@ namespace LittleCafe
             Vector3 hitPos = transform.position + Vector3.up * 0.5f;
             PoofEffect.Spawn(hitPos, count: 4, color: Color.white, minSize: 0.04f, maxSize: 0.1f);
 
-            // Colorize environment objects on first hit
-            GetComponent<ClockworkCraft.EnvironmentDesaturation>()?.Colorize();
+            // Colorize environment objects on first hit; cascade to cardinal neighbours if already colorized
+            var desat = GetComponent<ClockworkCraft.EnvironmentDesaturation>();
+            if (desat != null)
+            {
+                if (!desat.HasColorized)
+                {
+                    desat.Colorize();
+                }
+                else
+                {
+                    // Already ungreyed — cascade to cardinal neighbours
+                    ColorizeCardinalNeighbours();
+                }
+            }
 
             // Notify listeners
             OnDamaged?.Invoke(actualDamage, currentHP, maxHP);
@@ -148,6 +160,30 @@ namespace LittleCafe
             }
 
             return actualDamage;
+        }
+
+        // ---------------------------------------------------------------
+        // Desaturation Cascade
+        // ---------------------------------------------------------------
+
+        /// <summary>Colorize objects on 4 cardinal neighbours of this entity.</summary>
+        private void ColorizeCardinalNeighbours()
+        {
+            var gm = ClockworkGrid.GridManager.Instance;
+            if (gm == null) return;
+
+            // Find our grid position
+            if (!gm.WorldToGridPosition(transform.position, out int gx, out int gy)) return;
+
+            Vector2Int[] dirs = { new Vector2Int(1,0), new Vector2Int(-1,0), new Vector2Int(0,1), new Vector2Int(0,-1) };
+            foreach (var dir in dirs)
+            {
+                GameObject occupant = gm.GetCellOccupant(gx + dir.x, gy + dir.y);
+                if (occupant == null) continue;
+                var neighbourDesat = occupant.GetComponent<ClockworkCraft.EnvironmentDesaturation>();
+                if (neighbourDesat != null && !neighbourDesat.HasColorized)
+                    neighbourDesat.Colorize();
+            }
         }
 
         // ---------------------------------------------------------------

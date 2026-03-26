@@ -79,6 +79,10 @@ namespace LittleCafe
             UpdateGridCellState();
             RevealSurroundingTiles();
 
+            // Torches colorize environment objects in a 1-tile radius on placement
+            if (fogRevealRadius >= 2)
+                ColorizeNearbyObjects(1);
+
             // Register with connectivity manager
             FurnitureConnectivityManager.Instance?.RegisterFurniture(this);
 
@@ -138,6 +142,29 @@ namespace LittleCafe
                 ? shape
                 : GridShape.Rectangle(1, 1);
             gm.PlaceWithOffsets(gridX, gridY, effectiveShape, currentRotation, gameObject, state);
+        }
+
+        /// <summary>
+        /// Colorize (un-grey) environment objects within the given radius on the grid.
+        /// Used by torches to reveal nearby objects on placement.
+        /// </summary>
+        protected void ColorizeNearbyObjects(int radius)
+        {
+            GridManager gm = GridManager.Instance;
+            if (gm == null) return;
+
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dy = -radius; dy <= radius; dy++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+                    GameObject occupant = gm.GetCellOccupant(gridX + dx, gridY + dy);
+                    if (occupant == null) continue;
+                    var desat = occupant.GetComponent<ClockworkCraft.EnvironmentDesaturation>();
+                    if (desat != null && !desat.HasColorized)
+                        desat.Colorize();
+                }
+            }
         }
 
         /// <summary>

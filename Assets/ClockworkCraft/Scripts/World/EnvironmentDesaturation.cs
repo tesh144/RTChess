@@ -44,6 +44,7 @@ namespace ClockworkCraft
         private Renderer[] renderers;
         private MaterialPropertyBlock mpb;
         private bool hasColorized;
+        public bool HasColorized => hasColorized;
 
         void Start()
         {
