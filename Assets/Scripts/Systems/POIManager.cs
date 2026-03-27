@@ -481,7 +481,20 @@ namespace ClockworkCraft
             Vector3 worldPos = GridManager.Instance != null
                 ? GridManager.Instance.GridToWorldPosition(gridPos.x, gridPos.y)
                 : new Vector3(gridPos.x, 0f, gridPos.y);
-            worldPos.y += heightAboveGround;
+
+            // Use the object's RefHeight if available, otherwise fall back to flat offset
+            float bubbleY = heightAboveGround;
+            if (GridManager.Instance != null)
+            {
+                GameObject occupant = GridManager.Instance.GetCellOccupant(gridPos.x, gridPos.y);
+                if (occupant != null)
+                {
+                    Transform refHeight = occupant.transform.Find("RefHeight");
+                    if (refHeight != null)
+                        bubbleY = refHeight.position.y - worldPos.y + 0.5f;
+                }
+            }
+            worldPos.y += bubbleY;
 
             bubble.Setup(bubbleType, text, worldPos, icon);
             activeBubbles[gridPos] = bubble;
