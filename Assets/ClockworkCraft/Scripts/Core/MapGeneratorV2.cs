@@ -2597,9 +2597,12 @@ namespace ClockworkCraft
             int dx = Mathf.Abs(x - center.x);
             int dy = Mathf.Abs(y - center.y);
 
-            // Chebyshev distance — square clearing zone, radius tiles in every direction
-            // Center tile IS part of the clearing (occupied by the center environment object)
-            return Mathf.Max(dx, dy) <= clearingRadius;
+            // Center tile itself
+            if (dx == 0 && dy == 0) return true;
+
+            // Plus/cross shape — cardinal directions only, no diagonals
+            bool onCardinal = (dx == 0 || dy == 0);
+            return onCardinal && (dx + dy) <= clearingRadius;
         }
 
         bool IsTooClose(int x, int y, List<Vector2Int> placed, int minSpacing)
