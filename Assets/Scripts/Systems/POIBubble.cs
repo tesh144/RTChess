@@ -51,9 +51,9 @@ namespace ClockworkCraft
         private float fadeOutDuration = 0.4f;
 
         // Rise-in animation params
-        private float riseDistance = 0.8f;
-        private float riseInDuration = 0.3f;
-        private float tetherDrawDuration = 0.2f;
+        private float riseDistance = 1.5f;
+        private float riseInDuration = 0.7f;
+        private float tetherDrawDuration = 0.45f;
 
         // Target scale — set by POIManager to control world-space size.
         // Pop-in and dismiss animations scale relative to this, not Vector3.one.
@@ -127,14 +127,16 @@ namespace ClockworkCraft
                 tetherObj.transform.SetParent(transform.parent ?? transform, false);
                 tether = tetherObj.AddComponent<LineRenderer>();
 
-                // Use the default sprite material (unlit, supports vertex colors)
-                tether.material = new Material(Shader.Find("Sprites/Default"));
+                // Unlit material that renders over world geometry but behind bubble UI
+                var mat = new Material(Shader.Find("Sprites/Default"));
+                mat.renderQueue = 3100; // Above opaque geometry (3000), below UI overlays
+                tether.material = mat;
                 tether.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 tether.receiveShadows = false;
                 tether.allowOcclusionWhenDynamic = false;
                 tether.positionCount = 2;
                 tether.useWorldSpace = true;
-                tether.sortingOrder = -1; // behind the bubble
+                tether.sortingOrder = 5; // above world objects, below bubble canvas
                 tether.numCapVertices = 2;
             }
 
@@ -406,28 +408,14 @@ namespace ClockworkCraft
             transform.localScale = targetScale * (1f - t);
             if (canvasGroup != null) canvasGroup.alpha = 1f - t;
 
-            // Fade tether alpha during dismiss
-            if (tether != null)
-            {
-                Color topCol = GetBubbleColor(currentType);
-                topCol.a *= (1f - t);
-                var gradient = tether.colorGradient;
-                var colorKeys = gradient.colorKeys;
-                var alphaKeys = new GradientAlphaKey[] {
-                    new GradientAlphaKey(topCol.a, 0f),
-                    new GradientAlphaKey(0.15f * (1f - t), 0.6f),
-                    new GradientAlphaKey(0f, 1f)
-                };
-                gradient.SetKeys(colorKeys, alphaKeys);
-                tether.colorGradient = gradient;
-                UpdateTetherPositions(transform.position);
-            }
+            // Hide tether immediately at dismiss start — it looks wrong lingering
+            if (tether != null && tether.gameObject.activeSelf)
+                HideTether();
 
             if (t >= 1f)
             {
                 state = State.Inactive;
                 HideAllVariants();
-                HideTether();
                 gameObject.SetActive(false);
             }
         }
