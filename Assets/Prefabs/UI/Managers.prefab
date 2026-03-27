@@ -44,20 +44,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 134dd665c7de943b9879fab3b1d8cd81, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.BuildingProductionManager
-  timerPrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+  timerPrefab: {fileID: 0}
   timerWorldSize: 0.6
   timerHeight: 1.8
   timerBgColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.7}
   timerFillColor: {r: 0.3, g: 0.85, b: 0.4, a: 1}
   timerAlmostDoneColor: {r: 1, g: 0.85, b: 0.2, a: 1}
-  popupPrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+  insertBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+  collectBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+  needBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+  buildingBubbleScale: 0.005
   popupHeight: 2
   popupWorldSize: 1
   bobAmplitude: 0.1
   bobSpeed: 2
   popupGlowColor: {r: 1, g: 0.9, b: 0.5, a: 0.6}
-  buildingBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
-  buildingBubbleScale: 0.005
   workerDatabase: {fileID: 11400000, guid: 8766a552e3b0f4eff80477d80ca948e8, type: 2}
   verboseLogging: 0
 --- !u!1 &2805789131120002912
@@ -251,11 +252,11 @@ MonoBehaviour:
   workerDatabase: {fileID: 11400000, guid: 8766a552e3b0f4eff80477d80ca948e8, type: 2}
   buildingDatabase: {fileID: 11400000, guid: 3e388a7016db146f1901e4bbd6cc21f8, type: 2}
   currencyDatabase: {fileID: 11400000, guid: f64509a589034411d8b8392b008d76c0, type: 2}
-  economyBalanceConfig: {fileID: 11400000, guid: c11171627b78b4c5cbac1b5557eb7844, type: 2}
+  economyBalanceConfig: {fileID: 11400000, guid: c474f0fe94b8ffa438b8c1c6183f546d, type: 2}
   buildingBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
   buildingBubbleScale: 0.005
   centerEnvironmentName: Goldmine
-  clearCenterCardinal: 2
+  clearingRadius: 2
   defaultEnvironmentDesaturatedValue: 0.2
   defaultEnvironmentFullColorValue: 1
   defaultEnvironmentTransitionDuration: 0.3
@@ -266,7 +267,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 8
-    clearFromCenter: 2
+    clearFromCenter: 5
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
@@ -282,7 +283,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 5
     minSpacing: 1
-    clearFromCenter: 2
+    clearFromCenter: 3
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
@@ -290,7 +291,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 6
-    clearFromCenter: 2
+    clearFromCenter: 4
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
@@ -314,7 +315,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 5
     minSpacing: 0
-    clearFromCenter: 2
+    clearFromCenter: 1
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
@@ -323,7 +324,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 9
-    clearFromCenter: 2
+    clearFromCenter: 1
     fragmentation: 0.5
     clusterSpread: 0.4
     edgeBorderOf: 
@@ -331,7 +332,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 9
-    clearFromCenter: 2
+    clearFromCenter: 1
     fragmentation: 0.5
     clusterSpread: 0.4
     edgeBorderOf: 
@@ -340,7 +341,7 @@ MonoBehaviour:
     prefab: {fileID: 6759347119158193349, guid: f242e5b1259fb42e09a905f57e5d6eb0, type: 3}
     spawnMode: 0
     spawnCount: 5
-    clearFromCenter: 10
+    clearFromCenter: 8
     minSpacing: 8
     fragmentation: 0.4
     clusterSpread: 0.5
@@ -659,7 +660,7 @@ MonoBehaviour:
   spreadPauseOnHit: 5
   recorruptionImmunity: 20
   heartActivationRadius: 5
-  spreadSound: {fileID: 0}
+  spreadSound: {fileID: 8300000, guid: 7d26ee037917106469ecbcd5289ed47d, type: 3}
   spreadSoundVolume: 0.6
   corruptionOverlayPrefab: {fileID: 2881067372029442596, guid: 1edc148ad0f4c48159f40a43193655de, type: 3}
   corruptionVisualHeight: 0

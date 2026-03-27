@@ -178,6 +178,9 @@ namespace ClockworkGrid
             if (GameSFXManager.Instance != null)
                 GameSFXManager.Instance.PlayDragStart();
 
+            // Show need bubbles on buildings that want this card
+            LittleCafe.BuildingProductionManager.Instance?.ShowNeedBubbles(GetCardInputType());
+
             // Get GridShape: prefer GridObject on the prefab, fall back to UnitStats.shape,
             // final fallback to a 1×1 rectangle.
             currentShape = null;
@@ -759,6 +762,9 @@ namespace ClockworkGrid
             // Hide placement cost display
             if (LittleCafe.PlacementCostDisplay.Instance != null)
                 LittleCafe.PlacementCostDisplay.Instance.Hide();
+
+            // Dismiss all need bubbles
+            LittleCafe.BuildingProductionManager.Instance?.HideAllNeedBubbles();
         }
 
         private bool ValidatePlacement(Vector3 worldPos, out int gridX, out int gridY)

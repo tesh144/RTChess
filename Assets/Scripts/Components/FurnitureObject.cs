@@ -79,9 +79,14 @@ namespace LittleCafe
             UpdateGridCellState();
             RevealSurroundingTiles();
 
-            // Torches colorize environment objects in a 1-tile radius on placement
+            // Torches colorize environment objects in a 1-tile radius on placement,
+            // and subscribe to fog reveal so objects that appear later also get colorized.
             if (fogRevealRadius >= 2)
+            {
                 ColorizeNearbyObjects(1);
+                if (FogManager.Instance != null)
+                    FogManager.Instance.OnCellRevealed += OnNearbyFogCellRevealed;
+            }
 
             // Register with connectivity manager
             FurnitureConnectivityManager.Instance?.RegisterFurniture(this);
@@ -142,6 +147,33 @@ namespace LittleCafe
                 ? shape
                 : GridShape.Rectangle(1, 1);
             gm.PlaceWithOffsets(gridX, gridY, effectiveShape, currentRotation, gameObject, state);
+        }
+
+        /// <summary>
+        /// Called when any fog cell is revealed. If this furniture is a torch and the revealed
+        /// cell is within 1 tile, colorize whatever just appeared there.
+        /// </summary>
+        private void OnNearbyFogCellRevealed(int x, int y)
+        {
+            int dx = Mathf.Abs(x - gridX);
+            int dy = Mathf.Abs(y - gridY);
+            if (dx > 1 || dy > 1) return; // Outside colorize radius
+
+            GridManager gm = GridManager.Instance;
+            if (gm == null) return;
+
+            GameObject occupant = gm.GetCellOccupant(x, y);
+            if (occupant == null) return;
+
+            var desat = occupant.GetComponent<ClockworkCraft.EnvironmentDesaturation>();
+            if (desat != null && !desat.HasColorized)
+                desat.Colorize();
+        }
+
+        protected virtual void OnDestroy()
+        {
+            if (fogRevealRadius >= 2 && FogManager.Instance != null)
+                FogManager.Instance.OnCellRevealed -= OnNearbyFogCellRevealed;
         }
 
         /// <summary>

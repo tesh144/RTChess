@@ -48,6 +48,9 @@ namespace ClockworkCraft
         [Tooltip("World-space scale applied to each bubble Canvas. The prefab is 2560×1440px — at 0.005 each pixel ≈ 0.005 world units, giving a ~5-unit-wide bubble.")]
         [SerializeField] private float bubbleWorldScale = 0.005f;
 
+        /// <summary>World-space canvas scale used for all POI bubbles. Other systems (e.g. BuildingProductionManager) should read this to stay consistent.</summary>
+        public float BubbleWorldScale => bubbleWorldScale;
+
         /// <summary>Public access to POI entries (for SheetSyncEditor).</summary>
         public List<POITypeData> Entries => poiEntries;
 
