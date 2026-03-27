@@ -491,7 +491,7 @@ namespace ClockworkCraft
                 {
                     Transform refHeight = occupant.transform.Find("RefHeight");
                     if (refHeight != null)
-                        bubbleY = refHeight.position.y - worldPos.y + 0.5f;
+                        bubbleY = refHeight.position.y - worldPos.y;
                 }
             }
             worldPos.y += bubbleY;
