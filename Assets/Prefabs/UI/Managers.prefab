@@ -266,47 +266,47 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 8
-    clearFromCenter: 2
+    clearFromCenter: 0
     fragmentation: 0.3
     clusterSpread: 0.6
-    edgeBorderOf: 
+    edgeBorderOf:
   - environmentName: Tree
     spawnMode: 0
     spawnWeight: 6.6
     minSpacing: 0
-    clearFromCenter: 2
+    clearFromCenter: 0
     fragmentation: 0.35
     clusterSpread: 0.15
-    edgeBorderOf: 
+    edgeBorderOf:
   - environmentName: Rock
     spawnMode: 0
     spawnWeight: 5
     minSpacing: 1
-    clearFromCenter: 2
+    clearFromCenter: 0
     fragmentation: 0.3
     clusterSpread: 0.6
-    edgeBorderOf: 
+    edgeBorderOf:
   - environmentName: Coral
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 6
-    clearFromCenter: 2
+    clearFromCenter: 0
     fragmentation: 0.3
     clusterSpread: 0.6
-    edgeBorderOf: 
+    edgeBorderOf:
   - environmentName: Water
     spawnMode: 1
     spawnWeight: 4
     minSpacing: 0
-    clearFromCenter: 2
+    clearFromCenter: 0
     fragmentation: 0.763
     clusterSpread: 0.7
-    edgeBorderOf: 
+    edgeBorderOf:
   - environmentName: Flowers
     spawnMode: 2
     spawnWeight: 1.7
     minSpacing: 0
-    clearFromCenter: 2
+    clearFromCenter: 0
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: Tree
@@ -314,24 +314,24 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 5
     minSpacing: 0
-    clearFromCenter: 2
+    clearFromCenter: 0
     fragmentation: 0.3
     clusterSpread: 0.6
-    edgeBorderOf: 
+    edgeBorderOf:
   unitSpawnEntries:
   - unitName: Dinosaur
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 9
-    clearFromCenter: 2
+    clearFromCenter: 0
     fragmentation: 0.5
     clusterSpread: 0.4
-    edgeBorderOf: 
+    edgeBorderOf:
   - unitName: Mammoth
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 9
-    clearFromCenter: 2
+    clearFromCenter: 0
     fragmentation: 0.5
     clusterSpread: 0.4
     edgeBorderOf: 
