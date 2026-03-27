@@ -126,6 +126,7 @@ namespace LittleCafe
 
             // Designed insert bubble (shown when building awaits input/resources)
             public GameObject insertBubbleObj;
+            public Image insertFillImage; // Fill bar on the insert bubble
 
             public float EffectiveInterval => baseInterval + (intervalBonus * collectCount);
             public int EffectiveFillCost => productionCostAmount + (productionCostIncrement * collectCount);
@@ -383,7 +384,35 @@ namespace LittleCafe
             bubble.SetAnimParams(0.25f, bobAmplitude, bobSpeed * 0.5f, 0.3f);
             bubble.Setup(BubbleType.Bubble_Insert, "", pos);
 
+            // Set the input icon (what the building needs)
+            Sprite inputIcon = ResolveInputIcon(entry);
+            var iconImg = bubble.GetIconImage();
+            if (iconImg != null && inputIcon != null)
+            {
+                iconImg.sprite = inputIcon;
+                iconImg.enabled = true;
+            }
+
+            // Cache the fill bar Image for updating in IncrementHoldFill
+            if (bubble.ActiveChild != null)
+            {
+                var fillTransform = bubble.ActiveChild.transform.Find("Fill");
+                if (fillTransform != null)
+                    entry.insertFillImage = fillTransform.GetComponent<Image>();
+            }
+
+            // Initialize fill bar to current progress
+            UpdateInsertFillBar(entry);
+
             entry.insertBubbleObj = obj;
+        }
+
+        /// <summary>Update the fill bar on the insert bubble to reflect current holdFillProgress.</summary>
+        private void UpdateInsertFillBar(ProductionEntry entry)
+        {
+            if (entry.insertFillImage == null) return;
+            int cost = entry.EffectiveFillCost;
+            entry.insertFillImage.fillAmount = cost > 0 ? (float)entry.holdFillProgress / cost : 0f;
         }
 
         /// <summary>Dismiss and destroy the insert bubble for a building.</summary>
@@ -402,6 +431,35 @@ namespace LittleCafe
                 Destroy(entry.insertBubbleObj, 1f);
 
             entry.insertBubbleObj = null;
+            entry.insertFillImage = null;
+        }
+
+        /// <summary>
+        /// Resolve the icon sprite for what a building needs as input.
+        /// Resource inputs use CurrencyDatabase icon, card inputs use CardPool/UnitStats icon.
+        /// </summary>
+        private Sprite ResolveInputIcon(ProductionEntry entry)
+        {
+            // Resource cost (e.g. Kitchen needs Meat)
+            if (entry.productionCostResourceType != ResourceType.None)
+                return ResourceDisplayUI.GetIconForResource(entry.productionCostResourceType);
+
+            // Card input (e.g. Barracks needs Worker) — use the input type to find the icon
+            switch (entry.inputType)
+            {
+                case ProductionInputType.Worker:
+                    if (workerDatabase != null)
+                    {
+                        var worker = workerDatabase.GetByName("Worker");
+                        if (worker != null) return worker.icon;
+                    }
+                    break;
+                case ProductionInputType.Any:
+                    // Generic card icon — try to get from CardPool or return null
+                    break;
+            }
+
+            return null;
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -1670,11 +1728,14 @@ namespace LittleCafe
             if (entry == null || !entry.waitingForHoldFill) return false;
 
             entry.holdFillProgress++;
+            UpdateInsertFillBar(entry);
+
             if (entry.holdFillProgress >= entry.EffectiveFillCost)
             {
                 entry.waitingForHoldFill = false;
                 entry.elapsedTime = 0f;
                 entry.timerRevealed = false;
+                DismissInsertBubble(entry);
                 OnHoldFillStateChanged?.Invoke(building, false);
                 return true;
             }
