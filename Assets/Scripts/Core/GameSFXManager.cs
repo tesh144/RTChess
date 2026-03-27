@@ -1,4 +1,5 @@
 #pragma warning disable CS0414, CS0219, CS0618
+using System.Collections;
 using UnityEngine;
 
 namespace ClockworkGrid
@@ -82,13 +83,19 @@ namespace ClockworkGrid
         private float lastFogRevealTime = -1f;
         private const float FOG_REVEAL_DEBOUNCE = 0.15f; // Only play once per 150ms
 
-        private float lastCoinCollectTime = -1f;
-        private int coinCollectBurstCount = 0;
-        private const int MAX_COIN_COLLECT_BURST = 15;
-        private const float COIN_BURST_RESET_TIME = 1.5f;
-        private const float COIN_STAGGER_INTERVAL = 0.06f;   // 60ms between queued sounds — guarantees distinct dings
-        private readonly System.Collections.Generic.Queue<int> coinSoundQueue = new System.Collections.Generic.Queue<int>();
-        private float nextCoinPlayTime = 0f;
+        // ─── Coin Batch SFX ────────────────────────────────────────────
+        [Header("Coin Batch SFX")]
+        [SerializeField, Tooltip("How long to wait after a coin arrives before flushing the batch")]
+        private float coinBatchWindow = 0.025f;
+        [SerializeField, Tooltip("Delay between each staggered coin ding in a batch")]
+        private float coinStaggerInterval = 0.05f;
+        [SerializeField, Tooltip("Pitch of a single coin collect (bottom of the ramp)")]
+        private float coinBasePitch = 0.9f;
+        [SerializeField, Tooltip("Pitch of the last coin in a large batch (top of the ramp)")]
+        private float coinMaxPitch = 1.3f;
+
+        private int coinQueueCount;
+        private Coroutine flushTimerCoroutine;
 
         // ─────────────────────────────────────────────────────────────────
         // Lifecycle
@@ -122,11 +129,6 @@ namespace ClockworkGrid
 
             // Generate procedural fallback clips for critical sounds
             GenerateProceduralFallbacks();
-        }
-
-        private void Update()
-        {
-            DrainCoinSoundQueue();
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -244,47 +246,53 @@ namespace ClockworkGrid
 
         /// <summary>
         /// Called when a loot particle arrives at the resource bar.
-        /// Enqueues the sound for staggered playback — even if 10 particles arrive
-        /// on the same frame, each produces a distinct, ascending-pitch ding
-        /// spaced 60ms apart. No debounce needed; the queue handles spacing.
+        /// Queues the arrival and resets a short batch window timer — when the
+        /// window expires, all queued arrivals play as a single ascending-pitch
+        /// staggered burst. Naturally groups same-frame and near-frame pickups.
         /// </summary>
         public void PlayCoinCollect()
         {
-            float timeSinceLast = Time.unscaledTime - lastCoinCollectTime;
+            coinQueueCount++;
 
-            // Reset burst after a quiet period
-            if (timeSinceLast > COIN_BURST_RESET_TIME)
-                coinCollectBurstCount = 0;
+            if (flushTimerCoroutine != null)
+            {
+                StopCoroutine(flushTimerCoroutine);
+                flushTimerCoroutine = null;
+            }
 
-            // Cap how many sounds queue per batch
-            if (coinCollectBurstCount >= MAX_COIN_COLLECT_BURST) return;
-
-            lastCoinCollectTime = Time.unscaledTime;
-            coinCollectBurstCount++;
-
-            // Enqueue the burst index — Update() drains at staggered intervals
-            coinSoundQueue.Enqueue(coinCollectBurstCount);
+            flushTimerCoroutine = StartCoroutine(CoinBatchTimerCoroutine());
         }
 
-        /// <summary>
-        /// Drains one queued coin sound per COIN_STAGGER_INTERVAL on the dedicated
-        /// coinSource AudioSource. Guarantees every arrival is audibly distinct.
-        /// </summary>
-        private void DrainCoinSoundQueue()
+        private IEnumerator CoinBatchTimerCoroutine()
         {
-            if (coinSoundQueue.Count == 0) return;
-            if (coinCollect == null || coinSource == null) return;
-            if (Time.unscaledTime < nextCoinPlayTime) return;
+            yield return new WaitForSeconds(coinBatchWindow);
+            FlushCoinQueue();
+        }
 
-            int burstIndex = coinSoundQueue.Dequeue();
+        private void FlushCoinQueue()
+        {
+            int count = coinQueueCount;
+            coinQueueCount = 0;
+            flushTimerCoroutine = null;
 
-            float pitch = 0.8f + (burstIndex * 0.12f) + Random.Range(-0.02f, 0.02f);
-            float volume = masterVolume * Mathf.Lerp(0.85f, 1.6f, (float)burstIndex / MAX_COIN_COLLECT_BURST);
+            if (count > 0)
+                StartCoroutine(PlayCoinBatchCoroutine(count));
+        }
 
-            coinSource.pitch = pitch;
-            coinSource.PlayOneShot(coinCollect, volume);
+        private IEnumerator PlayCoinBatchCoroutine(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                float pitch = (count == 1)
+                    ? coinBasePitch
+                    : coinBasePitch + (coinMaxPitch - coinBasePitch) * (i / (count - 1f));
 
-            nextCoinPlayTime = Time.unscaledTime + COIN_STAGGER_INTERVAL;
+                coinSource.pitch = pitch;
+                coinSource.PlayOneShot(coinCollect, masterVolume);
+
+                if (i < count - 1)
+                    yield return new WaitForSeconds(coinStaggerInterval);
+            }
         }
 
         /// <summary>Play when a loot particle reaches its final destination.</summary>
