@@ -174,7 +174,7 @@ MonoBehaviour:
     lootResourceType: 34
     lootHpCost: 1
     lootYield: 1
-    hp: 5
+    hp: 3
     attackPower: 0
     gridSize: {x: 1, y: 1}
     visualScale: 0

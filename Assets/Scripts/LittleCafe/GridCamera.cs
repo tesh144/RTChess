@@ -56,7 +56,7 @@ namespace LittleCafe
 
         [Header("Camera Setup")]
         [SerializeField] private float fieldOfView = 60f;
-        [SerializeField] private float nearClip = 0.3f;
+        [SerializeField] private float nearClip = 0.01f;
         [SerializeField] private float farClip = 1000f;
         // distancePadding removed — replaced by orthoDistancePadding
 

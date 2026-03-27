@@ -36,6 +36,7 @@ namespace LittleCafe.Editor
         private WorkerDatabase workerDB;
         private UnitDatabase unitDB;
         private EnvironmentDatabase environmentDB;
+        private PlacementCostsDatabase placementCostsDB;
         // POI data now lives on POIManager (scene object), not a ScriptableObject
 
         [MenuItem("ClockworkCraft/Sheet Sync")]
@@ -85,6 +86,7 @@ namespace LittleCafe.Editor
             workerDB = (WorkerDatabase)EditorGUILayout.ObjectField("Worker DB", workerDB, typeof(WorkerDatabase), false);
             unitDB = (UnitDatabase)EditorGUILayout.ObjectField("Unit DB", unitDB, typeof(UnitDatabase), false);
             environmentDB = (EnvironmentDatabase)EditorGUILayout.ObjectField("Environment DB", environmentDB, typeof(EnvironmentDatabase), false);
+            placementCostsDB = (PlacementCostsDatabase)EditorGUILayout.ObjectField("Placement Costs DB", placementCostsDB, typeof(PlacementCostsDatabase), false);
             EditorGUILayout.LabelField("POI", "→ POIManager (scene)");
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space(8);
@@ -206,6 +208,27 @@ namespace LittleCafe.Editor
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
 
+            EditorGUILayout.Space(4);
+
+            // Placement Costs
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Placement Costs", EditorStyles.boldLabel);
+            if (cachedData?.sheets != null && cachedData.sheets.ContainsKey("Placement Costs"))
+            {
+                var sheet = cachedData.sheets["Placement Costs"];
+                var itemCount = new HashSet<string>();
+                foreach (var row in sheet.rows) { var n = GetValue(row, "Item"); if (!string.IsNullOrEmpty(n)) itemCount.Add(n); }
+                EditorGUILayout.LabelField($"  {itemCount.Count} items ({string.Join(", ", itemCount)}), {sheet.rows.Count} cost entries in cache");
+            }
+
+            EditorGUILayout.BeginHorizontal();
+            GUI.enabled = cachedData != null && placementCostsDB != null;
+            if (GUILayout.Button("Sync Placement Costs", GUILayout.Height(28)))
+                SyncPlacementCosts();
+            GUI.enabled = cachedData != null;
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
+
             EditorGUILayout.Space(8);
 
             // Sync All
@@ -218,6 +241,7 @@ namespace LittleCafe.Editor
                 if (environmentDB != null) SyncEnvironment();
                 SyncPOI();
                 SyncDrawButton();
+                if (placementCostsDB != null) SyncPlacementCosts();
             }
             GUI.enabled = true;
 
@@ -253,13 +277,80 @@ namespace LittleCafe.Editor
                 // JsonUtility doesn't handle Dictionary — parse manually
                 cachedData = ParseCacheJson(json);
                 lastSyncTime = cachedData?.lastSynced ?? "Unknown";
-                SetStatus($"Cache loaded — {cachedData?.sheets?.Count ?? 0} sheets", MessageType.Info);
+
+                // Validate that every column this editor reads is present in the cache.
+                // A mismatch here means the sheet was updated and the cache regenerated
+                // without also updating the column references in this file.
+                var columnErrors = ValidateCacheColumns(cachedData);
+                if (columnErrors.Count > 0)
+                {
+                    string msg = "Cache column mismatch — sync is BLOCKED until resolved:\n" +
+                                 string.Join("\n", columnErrors);
+                    SetStatus(msg, MessageType.Error);
+                    cachedData = null;   // prevent any sync buttons from firing
+                }
+                else
+                {
+                    SetStatus($"Cache loaded — {cachedData?.sheets?.Count ?? 0} sheets", MessageType.Info);
+                }
             }
             catch (Exception e)
             {
                 cachedData = null;
                 SetStatus($"Failed to load cache: {e.Message}", MessageType.Error);
             }
+        }
+
+        /// <summary>
+        /// Checks that every column key this editor reads by name is present in the
+        /// corresponding cached sheet. Returns one error string per missing column.
+        /// If the cache or a sheet is absent the check is skipped for that sheet
+        /// (the missing-sheet warning is handled elsewhere).
+        /// </summary>
+        private List<string> ValidateCacheColumns(SheetCacheData data)
+        {
+            var errors = new List<string>();
+            if (data?.sheets == null) return errors;
+
+            void Check(string sheetKey, params string[] required)
+            {
+                if (!data.sheets.TryGetValue(sheetKey, out var sheet)) return;
+                var headers = new HashSet<string>(sheet.headers);
+                foreach (var col in required)
+                    if (!headers.Contains(col))
+                        errors.Add($"  [{sheetKey}] missing column: \"{col}\"");
+            }
+
+            Check("Buildings & Production",
+                "Building", "Active", "Prod. Interval (s)", "Interval Bonus (s)",
+                "Input Card", "Output Card", "Reveal Radius", "HP", "Attack",
+                "Ally Interactible", "Enemy Interactible", "Wild Animal Interactible",
+                "Killer's Behavior", "Tier (button)", "DrawWeight", "isRandomBuilding",
+                "Resource Use", "Resource Amount", "Resource Increment");
+
+            Check("Workers & Entities",
+                "Entity", "Type", "Active", "HP", "Attack Power",
+                "Movement Behavior", "Draw Weight", "Killer's Behavior", "Tier (button)");
+
+            Check("Environment & Loot",
+                "Object", "Active", "MapGenerated", "Drops", "Loot per Hit",
+                "HP", "Total Yield", "Ally Interactible", "Enemy Interactible",
+                "Wild Animal Interactible", "Killer's Behavior", "Drop on Death");
+
+            Check("DrawButton",
+                "Draw Button Order", "Output", "Cost Type", "Cost Amount", "Cooldown (s)");
+
+            Check("PointsOfInterest",
+                "Active", "Object", "Grouping", "Quantity Minimum",
+                "Name", "Color", "Reward Type", "Reward Quantity");
+
+            Check("Placement Costs",
+                "Item", "Tier", "#",
+                "Currency 1", "Cost 1",
+                "Currency 2", "Cost 2",
+                "Currency 3", "Cost 3");
+
+            return errors;
         }
 
         /// <summary>
@@ -335,6 +426,8 @@ namespace LittleCafe.Editor
                 unitDB = FindAsset<UnitDatabase>();
             if (environmentDB == null)
                 environmentDB = FindAsset<EnvironmentDatabase>();
+            if (placementCostsDB == null)
+                placementCostsDB = FindAsset<PlacementCostsDatabase>();
             // POI data syncs to POIManager (scene object) — no asset to find
         }
 
@@ -391,8 +484,8 @@ namespace LittleCafe.Editor
                 ProductionInputType newInput = ParseInputType(inputStr);
                 if (existing.productionInputType != newInput) { existing.productionInputType = newInput; changed = true; }
 
-                // Output type
-                string outputStr = GetValue(row, "Output");
+                // Output type (sheet column is "Output Card")
+                string outputStr = GetValue(row, "Output Card");
                 ProductionOutputType newOutput = ParseOutputType(outputStr);
                 if (existing.productionOutputType != newOutput) { existing.productionOutputType = newOutput; changed = true; }
 
@@ -403,10 +496,13 @@ namespace LittleCafe.Editor
                 changed |= TrySetInt(ref existing.hp, GetValue(row, "HP"));
                 changed |= TrySetInt(ref existing.attackPower, GetValue(row, "Attack"));
 
-                // isMealSource: derived from "Ally Interactible" column
+                // isMealSource: true only for buildings that are ally-interactible AND have no production
+                // output (i.e. Feast). Buildings like Scrapper/Rabbit Farm/Garden are ally-interactible
+                // for other reasons and must not get FeastVisualDegradation attached.
                 string interactible = GetValue(row, "Ally Interactible");
-                bool newMealSource = !string.IsNullOrEmpty(interactible) &&
+                bool allyInteractible = !string.IsNullOrEmpty(interactible) &&
                     (interactible.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || interactible == "1");
+                bool newMealSource = allyInteractible && newOutput == ProductionOutputType.None;
                 if (existing.isMealSource != newMealSource) { existing.isMealSource = newMealSource; changed = true; }
 
                 // Killer's Behavior: Advance = true, Stay = false
@@ -1076,6 +1172,161 @@ namespace LittleCafe.Editor
         }
 
         // ─────────────────────────────────────────────────────────────────
+        // Sync: Placement Costs
+        // ─────────────────────────────────────────────────────────────────
+
+        private void SyncPlacementCosts()
+        {
+            if (placementCostsDB == null || cachedData?.sheets == null) return;
+            if (!cachedData.sheets.ContainsKey("Placement Costs")) return;
+
+            var sheet = cachedData.sheets["Placement Costs"];
+
+            // Group rows by Item name
+            var byItem = new Dictionary<string, List<Dictionary<string, string>>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var row in sheet.rows)
+            {
+                string item = GetValue(row, "Item");
+                if (string.IsNullOrEmpty(item)) continue;
+                if (!byItem.ContainsKey(item)) byItem[item] = new List<Dictionary<string, string>>();
+                byItem[item].Add(row);
+            }
+
+            int updated = 0;
+            int noMatch = 0;
+
+            foreach (var kvp in byItem)
+            {
+                string sheetItemName = kvp.Key;
+                var itemRows = kvp.Value;
+
+                // Find matching entry in the database (flexible name match)
+                var entry = FindPlacementEntry(sheetItemName);
+                if (entry == null)
+                {
+                    Debug.LogWarning($"[SheetSync] Placement Costs — no matching entry for '{sheetItemName}'. " +
+                                     "Run 'Sync from Databases' in the PlacementCostsDatabase inspector first.");
+                    noMatch++;
+                    continue;
+                }
+
+                // Sort rows by # (count) ascending
+                itemRows.Sort((a, b) =>
+                {
+                    int.TryParse(GetValue(a, "#"), out int na);
+                    int.TryParse(GetValue(b, "#"), out int nb);
+                    return na.CompareTo(nb);
+                });
+
+                // Build cost tables for up to 3 slots
+                // Determine which slots are non-empty by checking any row for a non-empty currency
+                string[] currencyKeys = { "Currency 1", "Currency 2", "Currency 3" };
+                string[] costKeys     = { "Cost 1",     "Cost 2",     "Cost 3"     };
+
+                // Ensure 3 cost slots exist
+                while (entry.costs.Count < 3)
+                    entry.costs.Add(new ClockworkGrid.ResourceCostEntry());
+
+                bool changed = false;
+                for (int slot = 0; slot < 3; slot++)
+                {
+                    // Determine resource type from first non-empty value across all rows
+                    string currencyName = "";
+                    foreach (var r in itemRows)
+                    {
+                        string c = GetValue(r, currencyKeys[slot]);
+                        if (!string.IsNullOrEmpty(c)) { currencyName = c; break; }
+                    }
+
+                    // Strip emoji, whitespace, and spaces then parse ResourceType
+                    ClockworkCraft.ResourceType resType = ClockworkCraft.ResourceType.None;
+                    if (!string.IsNullOrEmpty(currencyName))
+                        Enum.TryParse<ClockworkCraft.ResourceType>(StripEmoji(currencyName).Replace(" ", "").Trim(), true, out resType);
+
+                    // Build cost table (one entry per row, in order)
+                    var costTable = new List<int>();
+                    foreach (var r in itemRows)
+                    {
+                        string costStr = GetValue(r, costKeys[slot]);
+                        int.TryParse(costStr, out int cost);
+                        costTable.Add(cost);
+                    }
+
+                    var costEntry = entry.costs[slot];
+
+                    // Only update if something changed
+                    bool typeChanged = costEntry.resourceType != resType;
+                    bool tableChanged = !CostTablesEqual(costEntry.costTable, costTable);
+
+                    if (typeChanged || tableChanged)
+                    {
+                        costEntry.resourceType = resType;
+                        costEntry.costTable = costTable;
+                        // When using a cost table, base cost and increment are ignored at runtime
+                        costEntry.baseCost = 0;
+                        costEntry.costIncrement = 0;
+                        changed = true;
+                    }
+                }
+
+                if (changed)
+                {
+                    updated++;
+                    Debug.Log($"[SheetSync] Updated placement costs for '{sheetItemName}' → entry '{entry.itemName}'");
+                }
+            }
+
+            EditorUtility.SetDirty(placementCostsDB);
+            AssetDatabase.SaveAssets();
+            string msg = $"Placement Costs synced: {updated} updated";
+            if (noMatch > 0) msg += $", {noMatch} unmatched (run 'Sync from Databases' in PlacementCostsDatabase inspector)";
+            SetStatus(msg, noMatch > 0 ? MessageType.Warning : MessageType.Info);
+        }
+
+        /// <summary>
+        /// Flexible name match: tries exact, then case-insensitive, then normalised (lowercase no-spaces),
+        /// then singular/plural tolerance. Searches all entries regardless of source database.
+        /// </summary>
+        private ClockworkGrid.ItemEconomyEntry FindPlacementEntry(string sheetName)
+        {
+            if (placementCostsDB == null) return null;
+
+            string norm = sheetName.ToLowerInvariant().Replace(" ", "");
+
+            // 1. Exact
+            foreach (var e in placementCostsDB.entries)
+                if (e.itemName == sheetName) return e;
+
+            // 2. Case-insensitive exact
+            foreach (var e in placementCostsDB.entries)
+                if (string.Equals(e.itemName, sheetName, StringComparison.OrdinalIgnoreCase)) return e;
+
+            // 3. Normalised (strip spaces, lowercase)
+            foreach (var e in placementCostsDB.entries)
+                if (e.itemName.ToLowerInvariant().Replace(" ", "") == norm) return e;
+
+            // 4. Singular/plural tolerance (sheet uses "Workers", db may use "Worker")
+            string singular = norm.TrimEnd('s');
+            foreach (var e in placementCostsDB.entries)
+            {
+                string entryNorm = e.itemName.ToLowerInvariant().Replace(" ", "");
+                if (entryNorm == singular || entryNorm.TrimEnd('s') == singular) return e;
+            }
+
+            return null;
+        }
+
+        private static bool CostTablesEqual(List<int> a, List<int> b)
+        {
+            if (a == null && b == null) return true;
+            if (a == null || b == null) return false;
+            if (a.Count != b.Count) return false;
+            for (int i = 0; i < a.Count; i++)
+                if (a[i] != b[i]) return false;
+            return true;
+        }
+
+        // ─────────────────────────────────────────────────────────────────
         // UI Helpers
         // ─────────────────────────────────────────────────────────────────
 
@@ -1154,8 +1405,11 @@ namespace LittleCafe.Editor
         {
             string clean = StripEmoji(s);
             if (string.IsNullOrEmpty(clean) || clean == "None") return ProductionInputType.None;
-            // "Any" → accepts any card type (Scrapper)
-            if (clean.Equals("Any", StringComparison.OrdinalIgnoreCase)) return ProductionInputType.Any;
+            // Sheet verbose values → enum names
+            if (clean.StartsWith("Worker", StringComparison.OrdinalIgnoreCase)) return ProductionInputType.Worker;
+            if (clean.Equals("Hold to Fill", StringComparison.OrdinalIgnoreCase) ||
+                clean.Equals("HoldToFill", StringComparison.OrdinalIgnoreCase)) return ProductionInputType.HoldToFill;
+            if (clean.StartsWith("Any", StringComparison.OrdinalIgnoreCase)) return ProductionInputType.Any;
             if (Enum.TryParse<ProductionInputType>(clean, true, out var result)) return result;
             return ProductionInputType.None;
         }
@@ -1164,7 +1418,9 @@ namespace LittleCafe.Editor
         {
             string clean = StripEmoji(s);
             if (string.IsNullOrEmpty(clean) || clean == "None") return ProductionOutputType.None;
-            // Sheet aliases → enum names
+            // Sheet verbose values → enum names
+            if (clean.StartsWith("Worker", StringComparison.OrdinalIgnoreCase)) return ProductionOutputType.Worker;
+            if (clean.Equals("Tree", StringComparison.OrdinalIgnoreCase)) return ProductionOutputType.TreeSeed;
             if (clean.Equals("Feast", StringComparison.OrdinalIgnoreCase)) return ProductionOutputType.Meal;
             if (clean.Equals("Lizard", StringComparison.OrdinalIgnoreCase)) return ProductionOutputType.Lizard;
             if (clean.Equals("Tree Seed", StringComparison.OrdinalIgnoreCase)) return ProductionOutputType.TreeSeed;
@@ -1192,11 +1448,11 @@ namespace LittleCafe.Editor
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // MiniJson — lightweight JSON parser (public domain)
-    // Handles Dictionary<string, object> and List<object> nesting
-    // ─────────────────────────────────────────────────────────────────
-    public static class MiniJson
+    // ─────────────────────────────────────────────────────────────────────────
+    // MiniJSON — lightweight JSON deserializer (Darrell Bethea, MIT licence)
+    // Parses JSON into Dictionary<string,object> / List<object> / primitives.
+    // ─────────────────────────────────────────────────────────────────────────
+    internal static class MiniJson
     {
         public static object Deserialize(string json)
         {
@@ -1204,9 +1460,13 @@ namespace LittleCafe.Editor
             return Parser.Parse(json);
         }
 
-        private sealed class Parser : IDisposable
+        sealed class Parser : IDisposable
         {
-            StringReader reader;
+            const string WORD_BREAK = "{}[],:\"";
+
+            StringReader json;
+
+            Parser(string jsonString) { json = new StringReader(jsonString); }
 
             public static object Parse(string jsonString)
             {
@@ -1214,88 +1474,104 @@ namespace LittleCafe.Editor
                     return instance.ParseValue();
             }
 
-            Parser(string jsonString) { reader = new StringReader(jsonString); }
-
-            public void Dispose() { reader.Dispose(); }
+            public void Dispose() { json.Dispose(); }
 
             Dictionary<string, object> ParseObject()
             {
                 var table = new Dictionary<string, object>();
-                reader.Read(); // skip {
+                json.Read(); // {
                 while (true)
                 {
-                    var token = NextToken();
-                    if (token == TOKEN.CURLY_CLOSE) break;
-                    if (token != TOKEN.STRING) break;
-                    string key = ParseString();
-                    if (NextToken() != TOKEN.COLON) break;
-                    table[key] = ParseValue();
-                    token = NextToken();
-                    if (token == TOKEN.CURLY_CLOSE) break;
+                    switch (NextToken)
+                    {
+                        case TOKEN.NONE: return null;
+                        case TOKEN.COMMA: continue;
+                        case TOKEN.CURLY_CLOSE: return table;
+                        default:
+                            string name = ParseString();
+                            if (name == null) return null;
+                            if (NextToken != TOKEN.COLON) return null;
+                            json.Read();
+                            table[name] = ParseValue();
+                            break;
+                    }
                 }
-                return table;
             }
 
             List<object> ParseArray()
             {
                 var array = new List<object>();
-                reader.Read(); // skip [
-                while (true)
+                json.Read(); // [
+                bool parsing = true;
+                while (parsing)
                 {
-                    var token = PeekToken();
-                    if (token == TOKEN.SQUARE_CLOSE) { reader.Read(); break; }
-                    array.Add(ParseValue());
-                    token = NextToken();
-                    if (token == TOKEN.SQUARE_CLOSE) break;
+                    TOKEN nextToken = NextToken;
+                    switch (nextToken)
+                    {
+                        case TOKEN.NONE: return null;
+                        case TOKEN.COMMA: continue;
+                        case TOKEN.SQUARED_CLOSE: parsing = false; break;
+                        default:
+                            array.Add(ParseByToken(nextToken));
+                            break;
+                    }
                 }
                 return array;
             }
 
             object ParseValue()
             {
-                var token = PeekToken();
+                TOKEN nextToken = NextToken;
+                return ParseByToken(nextToken);
+            }
+
+            object ParseByToken(TOKEN token)
+            {
                 switch (token)
                 {
                     case TOKEN.STRING: return ParseString();
-                    case TOKEN.NUMBER: return ParseNumber();
                     case TOKEN.CURLY_OPEN: return ParseObject();
-                    case TOKEN.SQUARE_OPEN: return ParseArray();
-                    case TOKEN.TRUE: reader.Read(); reader.Read(); reader.Read(); reader.Read(); return true;
-                    case TOKEN.FALSE: reader.Read(); reader.Read(); reader.Read(); reader.Read(); reader.Read(); return false;
-                    case TOKEN.NULL: reader.Read(); reader.Read(); reader.Read(); reader.Read(); return null;
-                    default: return null;
+                    case TOKEN.SQUARED_OPEN: return ParseArray();
+                    case TOKEN.TRUE: return true;
+                    case TOKEN.FALSE: return false;
+                    case TOKEN.NULL: return null;
+                    default: return ParseNumber();
                 }
             }
 
             string ParseString()
             {
                 var s = new System.Text.StringBuilder();
-                reader.Read(); // skip opening quote
-                while (true)
+                json.Read(); // "
+                bool parsing = true;
+                while (parsing)
                 {
-                    int c = reader.Read();
-                    if (c == -1 || c == '"') break;
-                    if (c == '\\')
+                    if (json.Peek() == -1) break;
+                    char c = NextChar;
+                    switch (c)
                     {
-                        c = reader.Read();
-                        switch (c)
-                        {
-                            case '"': case '\\': case '/': s.Append((char)c); break;
-                            case 'b': s.Append('\b'); break;
-                            case 'f': s.Append('\f'); break;
-                            case 'n': s.Append('\n'); break;
-                            case 'r': s.Append('\r'); break;
-                            case 't': s.Append('\t'); break;
-                            case 'u':
-                                var hex = new char[4];
-                                for (int i = 0; i < 4; i++) hex[i] = (char)reader.Read();
-                                s.Append((char)Convert.ToInt32(new string(hex), 16));
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        s.Append((char)c);
+                        case '"': parsing = false; break;
+                        case '\\':
+                            if (json.Peek() == -1) { parsing = false; break; }
+                            char escaped = NextChar;
+                            switch (escaped)
+                            {
+                                case '"': s.Append('"'); break;
+                                case '\\': s.Append('\\'); break;
+                                case '/': s.Append('/'); break;
+                                case 'b': s.Append('\b'); break;
+                                case 'f': s.Append('\f'); break;
+                                case 'n': s.Append('\n'); break;
+                                case 'r': s.Append('\r'); break;
+                                case 't': s.Append('\t'); break;
+                                case 'u':
+                                    var hex = new char[4];
+                                    for (int i = 0; i < 4; i++) hex[i] = NextChar;
+                                    s.Append((char)Convert.ToInt32(new string(hex), 16));
+                                    break;
+                            }
+                            break;
+                        default: s.Append(c); break;
                     }
                 }
                 return s.ToString();
@@ -1303,65 +1579,79 @@ namespace LittleCafe.Editor
 
             object ParseNumber()
             {
-                var s = new System.Text.StringBuilder();
-                while ("0123456789+-.eE".IndexOf((char)reader.Peek()) != -1)
+                string number = NextWord;
+                if (number.IndexOf('.') == -1)
                 {
-                    s.Append((char)reader.Read());
-                    if (reader.Peek() == -1) break;
+                    long.TryParse(number, System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture, out long parsedLong);
+                    return parsedLong;
                 }
-                string numStr = s.ToString();
-                if (numStr.Contains(".") || numStr.Contains("e") || numStr.Contains("E"))
-                {
-                    double.TryParse(numStr, System.Globalization.NumberStyles.Float,
-                        System.Globalization.CultureInfo.InvariantCulture, out double d);
-                    return d;
-                }
-                long.TryParse(numStr, out long l);
-                return l;
+                double.TryParse(number, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double parsedDouble);
+                return parsedDouble;
             }
 
-            void SkipWhitespace()
+            void EatWhitespace()
             {
-                while (" \t\n\r".IndexOf((char)reader.Peek()) != -1) reader.Read();
-            }
-
-            enum TOKEN { NONE, CURLY_OPEN, CURLY_CLOSE, SQUARE_OPEN, SQUARE_CLOSE, COLON, COMMA, STRING, NUMBER, TRUE, FALSE, NULL }
-
-            TOKEN PeekToken()
-            {
-                SkipWhitespace();
-                int c = reader.Peek();
-                switch (c)
+                while (char.IsWhiteSpace((char)json.Peek()))
                 {
-                    case '{': return TOKEN.CURLY_OPEN;
-                    case '}': return TOKEN.CURLY_CLOSE;
-                    case '[': return TOKEN.SQUARE_OPEN;
-                    case ']': return TOKEN.SQUARE_CLOSE;
-                    case ':': return TOKEN.COLON;
-                    case ',': return TOKEN.COMMA;
-                    case '"': return TOKEN.STRING;
-                    case 't': return TOKEN.TRUE;
-                    case 'f': return TOKEN.FALSE;
-                    case 'n': return TOKEN.NULL;
-                    default: return "0123456789-".IndexOf((char)c) != -1 ? TOKEN.NUMBER : TOKEN.NONE;
+                    json.Read();
+                    if (json.Peek() == -1) break;
                 }
             }
 
-            TOKEN NextToken()
+            char NextChar => (char)json.Read();
+
+            TOKEN NextToken
             {
-                SkipWhitespace();
-                int c = reader.Peek();
-                switch (c)
+                get
                 {
-                    case '{': reader.Read(); return TOKEN.CURLY_OPEN;
-                    case '}': reader.Read(); return TOKEN.CURLY_CLOSE;
-                    case '[': reader.Read(); return TOKEN.SQUARE_OPEN;
-                    case ']': reader.Read(); return TOKEN.SQUARE_CLOSE;
-                    case ':': reader.Read(); return TOKEN.COLON;
-                    case ',': reader.Read(); return TOKEN.COMMA;
-                    case '"': return TOKEN.STRING;
-                    default: return TOKEN.NONE;
+                    EatWhitespace();
+                    if (json.Peek() == -1) return TOKEN.NONE;
+                    switch ((char)json.Peek())
+                    {
+                        case '{': return TOKEN.CURLY_OPEN;
+                        case '}': json.Read(); return TOKEN.CURLY_CLOSE;
+                        case '[': return TOKEN.SQUARED_OPEN;
+                        case ']': json.Read(); return TOKEN.SQUARED_CLOSE;
+                        case ',': json.Read(); return TOKEN.COMMA;
+                        case '"': return TOKEN.STRING;
+                        case ':': return TOKEN.COLON;
+                        case '0': case '1': case '2': case '3': case '4':
+                        case '5': case '6': case '7': case '8': case '9':
+                        case '-': return TOKEN.NUMBER;
+                    }
+                    string word = NextWord;
+                    switch (word)
+                    {
+                        case "false": return TOKEN.FALSE;
+                        case "true": return TOKEN.TRUE;
+                        case "null": return TOKEN.NULL;
+                    }
+                    return TOKEN.NONE;
                 }
+            }
+
+            string NextWord
+            {
+                get
+                {
+                    var word = new System.Text.StringBuilder();
+                    while (!IsWordBreak((char)json.Peek()))
+                    {
+                        word.Append(NextChar);
+                        if (json.Peek() == -1) break;
+                    }
+                    return word.ToString();
+                }
+            }
+
+            bool IsWordBreak(char c) => char.IsWhiteSpace(c) || WORD_BREAK.IndexOf(c) != -1;
+
+            enum TOKEN
+            {
+                NONE, CURLY_OPEN, CURLY_CLOSE, SQUARED_OPEN, SQUARED_CLOSE,
+                COLON, COMMA, STRING, NUMBER, TRUE, FALSE, NULL
             }
         }
     }

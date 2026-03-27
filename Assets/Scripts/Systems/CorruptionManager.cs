@@ -157,7 +157,9 @@ namespace LittleCafe
                     if (FogManager.Instance.IsCellRevealed(pos.x + dx, pos.y + dy))
                     {
                         heart.Activate();
-                        CorruptTile(pos.x, pos.y, heart);
+                        // Do NOT corrupt the heart's own tile — SeedInitialCorruption() runs
+                        // immediately after RegisterHeart() and handles all surrounding tiles.
+                        // The heart itself is the corruption source; it must not get an overlay.
                         Debug.Log($"[CorruptionManager] Auto-activated heart at {pos} — surrounding area already revealed.");
                         return;
                     }
@@ -173,6 +175,14 @@ namespace LittleCafe
             var coord = new Vector2Int(x, y);
             if (allCorruptedTiles.Contains(coord)) return;
             if (!heartTiles.ContainsKey(owner)) return;
+
+            // Never corrupt the tile occupied by a CorruptionHeart — the heart IS corruption;
+            // adding an overlay on top of it would block players from attacking it directly.
+            if (GridManager.Instance != null)
+            {
+                var occupant = GridManager.Instance.GetCellOccupant(x, y);
+                if (occupant != null && occupant.GetComponent<CorruptionHeart>() != null) return;
+            }
 
             // Respect re-corruption immunity on cleared tiles
             if (immuneTiles.TryGetValue(coord, out float expiryTime))
@@ -190,8 +200,8 @@ namespace LittleCafe
             overlay.GridPosition = coord;
 
             // Pass occupant for building pausing
-            var occupant = GridManager.Instance.GetCellOccupant(x, y);
-            overlay.InitWithOccupant(occupant);
+            var tileOccupant = GridManager.Instance.GetCellOccupant(x, y);
+            overlay.InitWithOccupant(tileOccupant);
 
             // Update both data structures together
             heartTiles[owner].Add(coord);

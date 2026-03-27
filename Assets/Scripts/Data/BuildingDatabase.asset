@@ -241,7 +241,7 @@ MonoBehaviour:
     allyInteractible: 1
     enemyInteractible: 1
     wildAnimalInteractible: 0
-    isMealSource: 1
+    isMealSource: 0
     productionInputType: 3
     productionInterval: 30
     productionIntervalBonus: 30
@@ -252,7 +252,7 @@ MonoBehaviour:
     productionCostAmount: 0
     productionCostIncrement: 0
   - active: 1
-    assetName: RabbitFarm
+    assetName: Rabbit Farm
     type: 3
     isFunctional: 0
     isWalkable: 0
@@ -272,7 +272,7 @@ MonoBehaviour:
     prefab: {fileID: 7955956385471571300, guid: 0c7f4560bbbe44d828921d2d5ba89416, type: 3}
     icon: {fileID: 21300000, guid: 7888857b664c547bf952682329ff6e18, type: 3}
     isRandomBuilding: 1
-    allyInteractible: 0
+    allyInteractible: 1
     enemyInteractible: 1
     wildAnimalInteractible: 0
     isMealSource: 0
@@ -282,7 +282,7 @@ MonoBehaviour:
     productionOutputType: 15
     producedResourceType: 0
     productionAmount: 1
-    productionCostResourceType: 6
+    productionCostResourceType: 18
     productionCostAmount: 3
     productionCostIncrement: 1
   - active: 1
@@ -309,11 +309,11 @@ MonoBehaviour:
     allyInteractible: 1
     enemyInteractible: 1
     wildAnimalInteractible: 0
-    isMealSource: 1
+    isMealSource: 0
     productionInputType: 4
     productionInterval: 20
     productionIntervalBonus: 20
-    productionOutputType: 0
+    productionOutputType: 16
     producedResourceType: 0
     productionAmount: 1
     productionCostResourceType: 5

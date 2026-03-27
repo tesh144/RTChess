@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: WorkerDatabase
   m_EditorClassIdentifier: 
   workerList:
-  - assetName: Worker
+  - active: 1
+    assetName: Worker
     type: 0
     isFunctional: 0
     isWalkable: 0
     isActive: 1
     behaviorType: 0
-    killerAdvances: 0
-    isSlotTakeable: 0
+    killerAdvances: 1
     tier: 0
     hp: 2
     attackPower: 1
@@ -29,14 +29,14 @@ MonoBehaviour:
     visualScale: 0
     prefab: {fileID: 9011859404534711103, guid: 40a97e5d9c6d64bf888cecc906b97fd3, type: 3}
     icon: {fileID: 21300000, guid: f9441b13b752e428b84afa421b539c3e, type: 3}
-  - assetName: Fighter
+  - active: 1
+    assetName: Fighter
     type: 8
     isFunctional: 0
     isWalkable: 0
     isActive: 1
     behaviorType: 0
-    killerAdvances: 0
-    isSlotTakeable: 0
+    killerAdvances: 1
     tier: 3
     hp: 10
     attackPower: 1

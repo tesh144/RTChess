@@ -171,7 +171,7 @@ namespace ClockworkCraft
         public WorkerDatabase workerDatabase;
         public BuildingDatabase buildingDatabase;
         public CurrencyDatabase currencyDatabase;
-        public ClockworkGrid.EconomyBalanceConfig economyBalanceConfig;
+        public ClockworkGrid.PlacementCostsDatabase economyBalanceConfig;
 
         [Header("Bubble Prefab")]
         [Tooltip("WorldCanvas_Popups prefab — shared by POI bubbles and building Insert/Collect bubbles.")]
@@ -305,16 +305,16 @@ namespace ClockworkCraft
             if (ResourceTokenManager.Instance == null)
                 new GameObject("ResourceTokenManager").AddComponent<ResourceTokenManager>();
 
-            // Auto-discover EconomyBalanceConfig if not assigned in Inspector
+            // Auto-discover PlacementCostsDatabase if not assigned in Inspector
             if (economyBalanceConfig == null)
             {
 #if UNITY_EDITOR
-                var guids = UnityEditor.AssetDatabase.FindAssets("t:EconomyBalanceConfig");
+                var guids = UnityEditor.AssetDatabase.FindAssets("t:PlacementCostsDatabase");
                 if (guids.Length > 0)
                 {
                     string assetPath = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[0]);
-                    economyBalanceConfig = UnityEditor.AssetDatabase.LoadAssetAtPath<ClockworkGrid.EconomyBalanceConfig>(assetPath);
-                    Debug.Log($"[MapGenV2] Auto-discovered EconomyBalanceConfig at {assetPath}");
+                    economyBalanceConfig = UnityEditor.AssetDatabase.LoadAssetAtPath<ClockworkGrid.PlacementCostsDatabase>(assetPath);
+                    Debug.Log($"[MapGenV2] Auto-discovered PlacementCostsDatabase at {assetPath}");
                 }
 #endif
             }

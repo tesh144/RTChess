@@ -24,7 +24,7 @@ MonoBehaviour:
     behaviorType: 1
     killerAdvances: 0
     dropOnDeath: 0
-    lootResourceType: 23
+    lootResourceType: 4
     lootHpCost: 1
     lootYield: 1
     hp: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
     behaviorType: 2
     killerAdvances: 0
     dropOnDeath: 0
-    lootResourceType: 23
+    lootResourceType: 10
     lootHpCost: 1
     lootYield: 1
     hp: 5
@@ -71,8 +71,8 @@ MonoBehaviour:
     lootResourceType: 0
     lootHpCost: 1
     lootYield: 1
-    hp: 10
-    attackPower: 1
+    hp: 5
+    attackPower: 0
     tier: -1
     drawWeight: 0
     gridSize: {x: 1, y: 1}

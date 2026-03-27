@@ -162,17 +162,22 @@ namespace LittleCafe
             int cx = GridPosition.x;
             int cy = GridPosition.y;
 
+            int seeded = 0;
             for (int dx = -InitialCorruptedRadius; dx <= InitialCorruptedRadius; dx++)
             for (int dy = -InitialCorruptedRadius; dy <= InitialCorruptedRadius; dy++)
             {
+                // Skip the heart's own tile — it IS corruption; it doesn't need an overlay on top.
+                if (dx == 0 && dy == 0) continue;
+
                 int x = cx + dx;
                 int y = cy + dy;
                 if (!GridManager.Instance.IsValidCell(x, y)) continue;
                 // CorruptTile guards against double-corruption internally
                 CorruptionManager.Instance.CorruptTile(x, y, this);
+                seeded++;
             }
 
-            Debug.Log($"[CorruptionHeart] Seeded {(2 * InitialCorruptedRadius + 1) * (2 * InitialCorruptedRadius + 1)} tiles around heart at {GridPosition}.");
+            Debug.Log($"[CorruptionHeart] Seeded {seeded} tiles around heart at {GridPosition} (own tile excluded).");
         }
 
         /// <summary>

@@ -284,7 +284,7 @@ MonoBehaviour:
     edgeBorderOf: 
   - environmentName: Coral
     spawnMode: 0
-    spawnWeight: 3
+    spawnWeight: 1
     minSpacing: 6
     fragmentation: 0.3
     clusterSpread: 0.6
@@ -298,18 +298,18 @@ MonoBehaviour:
     edgeBorderOf: 
   - environmentName: Flowers
     spawnMode: 2
-    spawnWeight: 2
+    spawnWeight: 1.7
     minSpacing: 0
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: Tree
   - environmentName: Reed
-    spawnMode: 2
-    spawnWeight: 3
+    spawnMode: 0
+    spawnWeight: 5
     minSpacing: 0
     fragmentation: 0.3
     clusterSpread: 0.6
-    edgeBorderOf: Water
+    edgeBorderOf: 
   unitSpawnEntries:
   - unitName: Dinosaur
     spawnMode: 0
@@ -541,11 +541,11 @@ MonoBehaviour:
   placementError: {fileID: 8300000, guid: 04f608b418795f946a8106b4e8ef01c7, type: 3}
   objectRemove: {fileID: 8300000, guid: e3bc349bb5d8c4e4c8525bb8f5ed3e7a, type: 3}
   buttonClick: {fileID: 8300000, guid: 995b3898a5e7da04b977debe2f4ed128, type: 3}
-  cardDraw: {fileID: 0}
+  cardDraw: {fileID: 8300000, guid: e13567dde356e9344a09f0f7972b50bb, type: 3}
   cardSlideIn: {fileID: 0}
   dragStart: {fileID: 8300000, guid: 770c131122707534c8cd0e1cc793e615, type: 3}
   dragCancel: {fileID: 8300000, guid: 5312d3fc85ca49446a442edae8487c3e, type: 3}
-  errorBuzz: {fileID: 8300000, guid: 833c9a8114fdc5f469ace53a9b8095ce, type: 3}
+  errorBuzz: {fileID: 8300000, guid: 04f608b418795f946a8106b4e8ef01c7, type: 3}
   successChime: {fileID: 8300000, guid: 728ee9b968b3f984699761f6023d4041, type: 3}
   drawReady: {fileID: 8300000, guid: f996b2870a5a021458d62c58d6283190, type: 3}
   hitImpact: {fileID: 8300000, guid: bee1d63cf8a1447b682635deea658066, type: 3}

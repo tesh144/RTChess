@@ -8,7 +8,7 @@ namespace ClockworkGrid
 {
     /// <summary>
     /// Runtime economy manager that tracks placement counts and calculates
-    /// escalating costs from EconomyBalanceConfig.
+    /// escalating costs from PlacementCostsDatabase.
     ///
     /// Usage:
     ///   var costs = EconomyManager.Instance.GetPlacementCosts("TentSmall");
@@ -22,8 +22,8 @@ namespace ClockworkGrid
         public static EconomyManager Instance { get; private set; }
 
         [Header("Config")]
-        [Tooltip("The economy balance config asset. Assigned in inspector or by MapGeneratorV2.")]
-        public EconomyBalanceConfig balanceConfig;
+        [Tooltip("The placement costs database asset. Assigned in inspector or by MapGeneratorV2.")]
+        public PlacementCostsDatabase balanceConfig;
 
         // Tracks how many times each item has been placed this session
         private Dictionary<string, int> placementCounts = new Dictionary<string, int>();
@@ -39,17 +39,17 @@ namespace ClockworkGrid
             if (balanceConfig == null)
             {
 #if UNITY_EDITOR
-                var guids = UnityEditor.AssetDatabase.FindAssets("t:EconomyBalanceConfig");
+                var guids = UnityEditor.AssetDatabase.FindAssets("t:PlacementCostsDatabase");
                 if (guids.Length > 0)
                 {
                     string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[0]);
-                    balanceConfig = UnityEditor.AssetDatabase.LoadAssetAtPath<EconomyBalanceConfig>(path);
+                    balanceConfig = UnityEditor.AssetDatabase.LoadAssetAtPath<PlacementCostsDatabase>(path);
                     if (balanceConfig != null)
                         Debug.Log($"[EconomyManager] Auto-discovered config at {path} ({balanceConfig.Count} entries)");
                 }
 #endif
                 if (balanceConfig == null)
-                    Debug.LogWarning("[EconomyManager] No EconomyBalanceConfig found — all items will appear free");
+                    Debug.LogWarning("[EconomyManager] No PlacementCostsDatabase found — all items will appear free");
             }
             else
             {
