@@ -158,7 +158,11 @@ namespace LittleCafe
         }
 
         /// <summary>Set the bubble prefab at runtime (called by MapGeneratorV2 since BPM is AddComponent'd).</summary>
-        public void SetBubblePrefab(GameObject prefab) { buildingBubblePrefab = prefab; }
+        public void SetBubblePrefab(GameObject prefab)
+        {
+            buildingBubblePrefab = prefab;
+            Debug.Log($"[BuildingProduction] Bubble prefab set: {(prefab != null ? prefab.name : "NULL")}");
+        }
 
         void OnDestroy()
         {
