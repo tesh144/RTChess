@@ -29,44 +29,46 @@ namespace LittleCafe
         public static BuildingProductionManager Instance { get; private set; }
 
         // ─── Timer Visual Settings ──────────────────────────────────────
-        [Header("Radial Timer (World-Space Canvas)")]
+        [Header("Radial Timer")]
         [Tooltip("Optional prefab for the timer Canvas. If null, a default is created programmatically.")]
         public GameObject timerPrefab;
 
-        [Tooltip("World-space size of the timer canvas (meters).")]
-        public float timerWorldSize = 0.6f;
-        [Tooltip("Height above building center.")]
-        public float timerHeight = 1.8f;
-        [Tooltip("Background ring color (unfilled portion).")]
-        public Color timerBgColor = new Color(0.15f, 0.15f, 0.15f, 0.7f);
-        [Tooltip("Fill ring color (progress portion).")]
-        public Color timerFillColor = new Color(0.3f, 0.85f, 0.4f, 1f);
-        [Tooltip("Fill color when almost complete (final 10%).")]
-        public Color timerAlmostDoneColor = new Color(1f, 0.85f, 0.2f, 1f);
+        // Procedural timer appearance — only used when timerPrefab is null
+        [HideInInspector] public float timerWorldSize = 0.6f;
+        [HideInInspector] public float timerHeight = 1.8f;
+        [HideInInspector] public Color timerBgColor = new Color(0.15f, 0.15f, 0.15f, 0.7f);
+        [HideInInspector] public Color timerFillColor = new Color(0.3f, 0.85f, 0.4f, 1f);
+        [HideInInspector] public Color timerAlmostDoneColor = new Color(1f, 0.85f, 0.2f, 1f);
 
-        // ─── Popup Visual Settings ──────────────────────────────────────
-        [Header("Reward Popup (World-Space Canvas)")]
-        [Tooltip("Optional prefab for the popup Canvas. If null, a default is created programmatically.")]
-        public GameObject popupPrefab;
+        // ─── Insert Bubble ───────────────────────────────────────────────
+        [Header("Insert Bubble")]
+        [Tooltip("Prefab for the insert bubble shown when a building is waiting for input or resources. Must have a POIBubble component (Bubble_Insert variant). If null, no insert bubble is shown.")]
+        public GameObject insertBubblePrefab;
 
-        [Tooltip("Height above building center where popup floats.")]
-        public float popupHeight = 2.0f;
-        [Tooltip("World-space size of the popup canvas (meters).")]
-        public float popupWorldSize = 1.0f;
-        [Tooltip("Bob amplitude (world units).")]
-        public float bobAmplitude = 0.1f;
-        [Tooltip("Bob speed.")]
-        public float bobSpeed = 2f;
-        [Tooltip("Glow/frame color behind icon.")]
-        public Color popupGlowColor = new Color(1f, 0.9f, 0.5f, 0.6f);
+        // ─── Collect Bubble ─────────────────────────────────────────────
+        [Header("Collect Bubble")]
+        [Tooltip("Prefab for the collect bubble shown when production is ready. Must have a POIBubble component (Bubble_Collect variant). If null, falls back to a procedural world-space popup.")]
+        public GameObject collectBubblePrefab;
 
-        // ─── Designed Bubble Prefab (replaces procedural popups) ──────
-        [Header("Designed Bubble (WorldCanvas_Popups)")]
-        [Tooltip("Assign the WorldCanvas_Popups prefab here. When set, Bubble_Collect and Bubble_Insert variants are used instead of procedural popups. Must have a POIBubble component.")]
-        [SerializeField] private GameObject buildingBubblePrefab;
+        // ─── Need Bubble ─────────────────────────────────────────────────
+        [Header("Need Bubble")]
+        [Tooltip("Prefab shown over buildings that want the card currently being dragged. Must have a POIBubble component (Bubble_Need variant). If null, no need bubble is shown.")]
+        public GameObject needBubblePrefab;
 
-        [Tooltip("World-space scale for building bubbles (same as POIManager.bubbleWorldScale).")]
-        [SerializeField] private float buildingBubbleScale = 0.005f;
+        // Fallback scale used only if POIManager isn't available at spawn time.
+        [HideInInspector] public float buildingBubbleScale = 0.005f;
+
+        /// <summary>Bubble scale — reads from POIManager so all bubbles stay in sync. Falls back to buildingBubbleScale if POIManager isn't up yet.</summary>
+        private float BubbleScale => ClockworkCraft.POIManager.Instance != null
+            ? ClockworkCraft.POIManager.Instance.BubbleWorldScale
+            : buildingBubbleScale;
+
+        // Procedural collect popup appearance — only used when collectBubblePrefab is null
+        [HideInInspector] public float popupHeight = 2.0f;
+        [HideInInspector] public float popupWorldSize = 1.0f;
+        [HideInInspector] public float bobAmplitude = 0.1f;
+        [HideInInspector] public float bobSpeed = 2f;
+        [HideInInspector] public Color popupGlowColor = new Color(1f, 0.9f, 0.5f, 0.6f);
 
         // ─── Database ───────────────────────────────────────────────────
         [Header("Database References")]
@@ -128,6 +130,9 @@ namespace LittleCafe
             public GameObject insertBubbleObj;
             public Image insertFillImage; // Fill bar on the insert bubble
 
+            // Need bubble (shown while player is dragging a card this building wants)
+            public GameObject needBubbleObj;
+
             public float EffectiveInterval => baseInterval + (intervalBonus * collectCount);
             public int EffectiveFillCost => productionCostAmount + (productionCostIncrement * collectCount);
         }
@@ -147,6 +152,12 @@ namespace LittleCafe
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+
+            // Auto-find WorkerDatabase if not assigned in Inspector or by MapGeneratorV2
+            if (workerDatabase == null)
+                workerDatabase = Resources.FindObjectsOfTypeAll<WorkerDatabase>().Length > 0
+                    ? Resources.FindObjectsOfTypeAll<WorkerDatabase>()[0]
+                    : null;
         }
 
         void Start()
@@ -157,13 +168,19 @@ namespace LittleCafe
                 IntervalTimer.Instance.OnBar += OnIntervalTick;
         }
 
-        /// <summary>Set the bubble prefab and scale at runtime (called by MapGeneratorV2 since BPM is AddComponent'd).</summary>
-        public void SetBubblePrefab(GameObject prefab, float scale = 0.005f)
+        /// <summary>Set the bubble prefabs and scale at runtime (called by MapGeneratorV2 since BPM is AddComponent'd).
+        /// Pass the same prefab for both if using a single WorldCanvas_Popups with Bubble_Insert/Bubble_Collect variants.</summary>
+        public void SetBubblePrefabs(GameObject insertPrefab, GameObject collectPrefab, float scale = 0.005f)
         {
-            buildingBubblePrefab = prefab;
+            if (insertBubblePrefab == null) insertBubblePrefab = insertPrefab;
+            if (collectBubblePrefab == null) collectBubblePrefab = collectPrefab;
             buildingBubbleScale = scale;
-            Debug.Log($"[BuildingProduction] Bubble prefab set: {(prefab != null ? prefab.name : "NULL")}, scale: {scale}");
+            Debug.Log($"[BuildingProduction] Bubble prefabs set — insert: {(insertBubblePrefab != null ? insertBubblePrefab.name : "NULL")}, collect: {(collectBubblePrefab != null ? collectBubblePrefab.name : "NULL")}, scale: {scale}");
         }
+
+        /// <summary>Legacy single-prefab setter — sets both insert and collect to the same prefab if not already assigned.</summary>
+        public void SetBubblePrefab(GameObject prefab, float scale = 0.005f)
+            => SetBubblePrefabs(prefab, prefab, scale);
 
         void OnDestroy()
         {
@@ -364,6 +381,7 @@ namespace LittleCafe
             if (entry.popupCanvasObj != null) Destroy(entry.popupCanvasObj);
             if (entry.timerCanvasObj != null) Destroy(entry.timerCanvasObj);
             DismissInsertBubble(entry);
+            DismissNeedBubble(entry);
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -372,11 +390,11 @@ namespace LittleCafe
 
         /// <summary>
         /// Show a Bubble_Insert above a building that is waiting for input or resources.
-        /// Only used when buildingBubblePrefab is assigned.
+        /// Only used when insertBubblePrefab is assigned.
         /// </summary>
         private void SpawnInsertBubble(ProductionEntry entry)
         {
-            if (buildingBubblePrefab == null) return;
+            if (insertBubblePrefab == null) return;
             if (entry.buildingObj == null) return;
             if (entry.insertBubbleObj != null) return; // Already showing
 
@@ -389,13 +407,13 @@ namespace LittleCafe
                     ClockworkCraft.POIManager.Instance?.DismissBubble(new Vector2Int(gx, gy));
             }
 
-            var obj = Instantiate(buildingBubblePrefab, transform);
+            var obj = Instantiate(insertBubblePrefab, transform);
             obj.name = $"InsertBubble_{entry.buildingObj.name}";
             obj.transform.position = pos;
 
             var bubble = obj.GetComponent<POIBubble>();
             if (bubble == null) bubble = obj.AddComponent<POIBubble>();
-            bubble.SetTargetScale(Vector3.one * buildingBubbleScale);
+            bubble.SetTargetScale(Vector3.one * BubbleScale);
             bubble.SetAnimParams(0.25f, bobAmplitude, bobSpeed * 0.5f, 0.3f);
             bubble.Setup(BubbleType.Bubble_Insert, "", pos);
 
@@ -449,6 +467,68 @@ namespace LittleCafe
             entry.insertFillImage = null;
         }
 
+        // ─────────────────────────────────────────────────────────────────
+        // Need Bubble (Bubble_Need — shown during drag when building wants the dragged card)
+        // ─────────────────────────────────────────────────────────────────
+
+        /// <summary>Show Bubble_Need on all buildings that are currently waiting and accept the given input type.
+        /// Called by DragDropHandler when a drag begins.</summary>
+        public void ShowNeedBubbles(ProductionInputType inputType)
+        {
+            if (needBubblePrefab == null) return;
+            foreach (var entry in entries)
+            {
+                bool wantsInput = (entry.waitingForInput && (entry.inputType == inputType || entry.inputType == ProductionInputType.Any))
+                               || (entry.waitingForResources && inputType == ProductionInputType.Any);
+                if (wantsInput)
+                    SpawnNeedBubble(entry);
+            }
+        }
+
+        /// <summary>Dismiss all active need bubbles. Called by DragDropHandler when a drag ends.</summary>
+        public void HideAllNeedBubbles()
+        {
+            foreach (var entry in entries)
+                DismissNeedBubble(entry);
+        }
+
+        private void SpawnNeedBubble(ProductionEntry entry)
+        {
+            if (needBubblePrefab == null) return;
+            if (entry.buildingObj == null) return;
+            if (entry.needBubbleObj != null) return; // Already showing
+
+            Vector3 pos = entry.buildingObj.transform.position + Vector3.up * GetPopupY(entry);
+
+            var obj = Instantiate(needBubblePrefab, transform);
+            obj.name = $"NeedBubble_{entry.buildingObj.name}";
+            obj.transform.position = pos;
+
+            var bubble = obj.GetComponent<POIBubble>();
+            if (bubble == null) bubble = obj.AddComponent<POIBubble>();
+            bubble.SetTargetScale(Vector3.one * BubbleScale);
+            bubble.SetAnimParams(0.2f, bobAmplitude * 1.2f, bobSpeed * 1.2f, 0.25f);
+            bubble.Setup(BubbleType.Bubble_Need, "", pos);
+
+            entry.needBubbleObj = obj;
+        }
+
+        private void DismissNeedBubble(ProductionEntry entry)
+        {
+            if (entry.needBubbleObj == null) return;
+
+            var bubble = entry.needBubbleObj.GetComponent<POIBubble>();
+            if (bubble != null && bubble.IsActive)
+                bubble.Dismiss();
+            else
+                Destroy(entry.needBubbleObj);
+
+            if (entry.needBubbleObj != null)
+                Destroy(entry.needBubbleObj, 1f);
+
+            entry.needBubbleObj = null;
+        }
+
         /// <summary>
         /// Resolve the icon sprite for what a building needs as input.
         /// Resource inputs use CurrencyDatabase icon, card inputs use CardPool/UnitStats icon.
@@ -494,7 +574,7 @@ namespace LittleCafe
         private float GetPopupY(ProductionEntry entry)
         {
             float baseHeight = entry.objectTopHeight > 0f ? entry.objectTopHeight : popupHeight;
-            return baseHeight + 0.5f; // Slightly higher than timer
+            return baseHeight + 0.15f; // Just above the object top
         }
 
         private void CreateTimerCanvas(ProductionEntry entry)
@@ -829,15 +909,15 @@ namespace LittleCafe
             Vector3 popupPos = entry.buildingObj.transform.position + Vector3.up * GetPopupY(entry);
 
             // ── Designed Bubble path (Bubble_Collect) ──
-            if (buildingBubblePrefab != null)
+            if (collectBubblePrefab != null)
             {
-                GameObject canvasObj = Instantiate(buildingBubblePrefab, transform);
+                GameObject canvasObj = Instantiate(collectBubblePrefab, transform);
                 canvasObj.name = $"ProductionPopup_{entry.buildingObj.name}";
                 canvasObj.transform.position = popupPos;
 
                 var bubble = canvasObj.GetComponent<POIBubble>();
                 if (bubble == null) bubble = canvasObj.AddComponent<POIBubble>();
-                bubble.SetTargetScale(Vector3.one * buildingBubbleScale);
+                bubble.SetTargetScale(Vector3.one * BubbleScale);
                 bubble.SetAnimParams(0.25f, bobAmplitude, bobSpeed * 0.5f, 0.3f);
                 bubble.Setup(BubbleType.Bubble_Collect, "", popupPos);
 
@@ -859,21 +939,10 @@ namespace LittleCafe
                         CollectReward(entries[capturedIndex]);
                 };
             }
-            // ── Legacy path (procedural or custom popup prefab) ──
+            // ── Legacy path (procedural popup) ──
             else
             {
-                GameObject canvasObj;
-
-                if (popupPrefab != null)
-                {
-                    canvasObj = Instantiate(popupPrefab);
-                    canvasObj.name = $"ProductionPopup_{entry.buildingObj.name}";
-                    entry.popupIconImage = FindChildImage(canvasObj, "Icon");
-                }
-                else
-                {
-                    canvasObj = CreateDefaultPopupCanvas(entry);
-                }
+                GameObject canvasObj = CreateDefaultPopupCanvas(entry);
 
                 canvasObj.transform.position = popupPos;
 
@@ -904,8 +973,8 @@ namespace LittleCafe
                 GameSFXManager.Instance.PlayPopupAppear();
 
             // Designed bubbles have their own pop-in animation via POIBubble.Update —
-            // only run the legacy coroutine for procedural/prefab popups.
-            if (buildingBubblePrefab == null)
+            // only run the legacy coroutine for procedural popups.
+            if (collectBubblePrefab == null)
                 StartCoroutine(PopupSpawnAnimation(entry.popupCanvasObj));
 
             if (verboseLogging)
