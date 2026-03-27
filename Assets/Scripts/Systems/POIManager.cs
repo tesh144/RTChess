@@ -81,6 +81,9 @@ namespace ClockworkCraft
         private Coroutine staggerCoroutine;
         private const float STAGGER_DELAY = 1.2f; // seconds between each bubble appearance
 
+        // Last player activity position — bubbles closer to this appear first
+        private Vector2Int lastActivityPos;
+
         /// <summary>Find POI data by exact asset name match (case-insensitive).</summary>
         private POITypeData GetPOIData(string assetName)
         {
@@ -282,9 +285,16 @@ namespace ClockworkCraft
         /// <summary>Delay between celebration burst and loot fly (seconds).</summary>
         private const float LOOT_FLY_DELAY = 0.25f;
 
+        /// <summary>Call when the player places something to update bubble priority sorting.</summary>
+        public void SetLastActivityPosition(Vector2Int gridPos)
+        {
+            lastActivityPos = gridPos;
+        }
+
         private void OnCellRevealed(int x, int y)
         {
             var coord = new Vector2Int(x, y);
+            lastActivityPos = coord; // Fog reveal = player activity
 
             // Heart discovered
             if (heartRegistry.TryGetValue(coord, out var heart) && heart != null)
@@ -365,8 +375,13 @@ namespace ClockworkCraft
                     candidates.Add((pos, kvp.Value, minDist));
             }
 
-            // Sort by distance ascending (most discoverable first)
-            candidates.Sort((a, b) => a.dist.CompareTo(b.dist));
+            // Sort by distance to last player activity (closest to action first)
+            candidates.Sort((a, b) =>
+            {
+                int distA = Mathf.Abs(a.pos.x - lastActivityPos.x) + Mathf.Abs(a.pos.y - lastActivityPos.y);
+                int distB = Mathf.Abs(b.pos.x - lastActivityPos.x) + Mathf.Abs(b.pos.y - lastActivityPos.y);
+                return distA.CompareTo(distB);
+            });
 
             // Fill open slots
             int filled = 0;
