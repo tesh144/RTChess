@@ -24,7 +24,7 @@ MonoBehaviour:
     behaviorType: 1
     killerAdvances: 0
     dropOnDeath: 0
-    lootResourceType: 4
+    lootResourceType: 23
     lootHpCost: 1
     lootYield: 1
     hp: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
     behaviorType: 2
     killerAdvances: 0
     dropOnDeath: 0
-    lootResourceType: 10
+    lootResourceType: 23
     lootHpCost: 1
     lootYield: 1
     hp: 5

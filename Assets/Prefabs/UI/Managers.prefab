@@ -253,6 +253,7 @@ MonoBehaviour:
   currencyDatabase: {fileID: 11400000, guid: f64509a589034411d8b8392b008d76c0, type: 2}
   economyBalanceConfig: {fileID: 11400000, guid: c11171627b78b4c5cbac1b5557eb7844, type: 2}
   buildingBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+  buildingBubbleScale: 0.005
   centerEnvironmentName: Goldmine
   clearingRadius: 2
   defaultEnvironmentDesaturatedValue: 0.2
@@ -265,6 +266,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 8
+    clearFromCenter: 2
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
@@ -272,6 +274,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 6.6
     minSpacing: 0
+    clearFromCenter: 2
     fragmentation: 0.35
     clusterSpread: 0.15
     edgeBorderOf: 
@@ -279,6 +282,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 5
     minSpacing: 1
+    clearFromCenter: 2
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
@@ -286,6 +290,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 6
+    clearFromCenter: 2
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
@@ -293,6 +298,7 @@ MonoBehaviour:
     spawnMode: 1
     spawnWeight: 4
     minSpacing: 0
+    clearFromCenter: 2
     fragmentation: 0.763
     clusterSpread: 0.7
     edgeBorderOf: 
@@ -300,6 +306,7 @@ MonoBehaviour:
     spawnMode: 2
     spawnWeight: 1.7
     minSpacing: 0
+    clearFromCenter: 2
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: Tree
@@ -307,6 +314,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 5
     minSpacing: 0
+    clearFromCenter: 2
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
@@ -315,6 +323,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 9
+    clearFromCenter: 2
     fragmentation: 0.5
     clusterSpread: 0.4
     edgeBorderOf: 
@@ -322,6 +331,7 @@ MonoBehaviour:
     spawnMode: 0
     spawnWeight: 1
     minSpacing: 9
+    clearFromCenter: 2
     fragmentation: 0.5
     clusterSpread: 0.4
     edgeBorderOf: 
@@ -330,7 +340,7 @@ MonoBehaviour:
     prefab: {fileID: 6759347119158193349, guid: f242e5b1259fb42e09a905f57e5d6eb0, type: 3}
     spawnMode: 0
     spawnCount: 5
-    minDistFromCenter: 10
+    clearFromCenter: 10
     minSpacing: 8
     fragmentation: 0.4
     clusterSpread: 0.5
@@ -426,16 +436,12 @@ MonoBehaviour:
     quantityMinimum: 1
     tier: 0
     rewardType: 12
-    rewardQuantity: 2
+    rewardQuantity: 3
     bubbleColor: {r: 0, g: 0, b: 0, a: 0}
     approvalReward: 0
   maxEnvBubbles: 5
   fogBorderRadius: 3
   heartPoolSize: 6
-  bobHeight: 0.15
-  bobDuration: 1.4
-  popInDuration: 0.25
-  fadeOutDuration: 0.4
   heightAboveGround: 2.5
   bubbleWorldScale: 0.005
 --- !u!1 &6706931420203540427
