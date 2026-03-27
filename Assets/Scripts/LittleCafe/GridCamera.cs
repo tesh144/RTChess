@@ -43,8 +43,8 @@ namespace LittleCafe
 
         [Header("Pan (WASD)")]
         [SerializeField] private float panSpeed = 5f;
-        [SerializeField] private float basePanDistance = 5f;              // Pan radius with few revealed tiles
-        [SerializeField] private float panDistancePerRevealedTile = 0.05f; // Extra pan radius per revealed tile
+        [SerializeField] private float basePanDistance = 15f;             // Pan radius with few revealed tiles (generous breathing room)
+        [SerializeField] private float panDistancePerRevealedTile = 0.1f;  // Extra pan radius per revealed tile
         [SerializeField] private float absoluteMaxPanDistance = 80f;      // Never pan further than this
 
         [Header("Auto Rotation")]
