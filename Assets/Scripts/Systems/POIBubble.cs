@@ -136,7 +136,7 @@ namespace ClockworkCraft
                 tether.allowOcclusionWhenDynamic = false;
                 tether.positionCount = 2;
                 tether.useWorldSpace = true;
-                tether.sortingOrder = -1; // behind bubble canvas
+                tether.sortingOrder = 5; // above ground geometry, behind bubble UI
                 tether.numCapVertices = 2;
             }
 

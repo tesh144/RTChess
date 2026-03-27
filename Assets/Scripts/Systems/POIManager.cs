@@ -499,6 +499,12 @@ namespace ClockworkCraft
             activeBubbles.Remove(gridPos);
         }
 
+        /// <summary>Dismiss any POI bubble at this grid position. Called by BuildingProductionManager to prevent stacking.</summary>
+        public void DismissBubbleAt(Vector2Int gridPos)
+        {
+            DismissBubble(gridPos);
+        }
+
         /// <summary>
         /// Returns the bubble's world position if one is active for this coord,
         /// otherwise falls back to the grid-cell world position so loot fly

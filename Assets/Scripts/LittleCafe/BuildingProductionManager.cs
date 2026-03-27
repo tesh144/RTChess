@@ -382,6 +382,13 @@ namespace LittleCafe
 
             Vector3 pos = entry.buildingObj.transform.position + Vector3.up * GetPopupY(entry);
 
+            // Dismiss any POI bubble at this building's grid position to prevent stacking
+            if (ClockworkGrid.GridManager.Instance != null && entry.buildingObj != null)
+            {
+                if (ClockworkGrid.GridManager.Instance.WorldToGridPosition(entry.buildingObj.transform.position, out int gx, out int gy))
+                    ClockworkCraft.POIManager.Instance?.DismissBubbleAt(new Vector2Int(gx, gy));
+            }
+
             var obj = Instantiate(buildingBubblePrefab, transform);
             obj.name = $"InsertBubble_{entry.buildingObj.name}";
             obj.transform.position = pos;
