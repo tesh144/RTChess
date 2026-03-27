@@ -852,7 +852,7 @@ namespace LittleCafe
                 entry.popupCanvasObj = canvasObj;
 
                 // Use UI tap via POIBubble.OnTapped instead of physics collider
-                int capturedIndex = i;
+                int capturedIndex = entries.IndexOf(entry);
                 bubble.OnTapped += () =>
                 {
                     if (capturedIndex < entries.Count)
