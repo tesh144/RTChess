@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 namespace ClockworkCraft
 {
@@ -123,6 +124,43 @@ namespace ClockworkCraft
         {
             if (amountText == null) return;
             amountText.text = amount.ToString();
+        }
+
+        /// <summary>
+        /// Pop-in animation for first appearance. Scale from zero with OutBack ease + fade in.
+        /// </summary>
+        public void PlayAppearAnimation()
+        {
+            StartCoroutine(AppearCoroutine());
+        }
+
+        private IEnumerator AppearCoroutine()
+        {
+            float duration = 0.35f;
+            CanvasGroup cg = GetComponent<CanvasGroup>();
+            if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
+
+            transform.localScale = Vector3.zero;
+            cg.alpha = 0f;
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+
+                // OutBack ease for scale
+                float s = 1f + 2.70158f * Mathf.Pow(t - 1f, 3f) + 1.70158f * Mathf.Pow(t - 1f, 2f);
+                transform.localScale = Vector3.one * s;
+
+                // Alpha fades in over first 60%
+                cg.alpha = Mathf.Clamp01(t / 0.6f);
+
+                yield return null;
+            }
+
+            transform.localScale = Vector3.one;
+            cg.alpha = 1f;
         }
 
         /// <summary>

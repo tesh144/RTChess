@@ -211,6 +211,7 @@ namespace ClockworkCraft
             slotObj.transform.SetSiblingIndex(siblingIndex);
 
             activeSlots[type] = slot;
+            slot.PlayAppearAnimation();
             Debug.Log($"[ResourceDisplayUI] Created slot for {type} at index {siblingIndex}");
             return slot;
         }
