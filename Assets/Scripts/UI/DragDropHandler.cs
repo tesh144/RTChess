@@ -206,6 +206,7 @@ namespace ClockworkGrid
             {
                 preDragCameraTarget = cam.CurrentTarget;
                 preDragZoomDistance = cam.CurrentDistance;
+                Debug.Log($"[DragDrop] Captured preDragZoomDistance={preDragZoomDistance}");
                 preDragAutoRotate = cam.IsAutoRotating;
                 cam.SetAutoRotate(false);
                 // Zoom in slightly from player's current level — bypass minDistance clamp
@@ -618,6 +619,7 @@ namespace ClockworkGrid
                 placeCam.FocusOnPosition(worldPos);
 
                 // Restore to player's zoom level before drag
+                Debug.Log($"[DragDrop] Restoring zoom to preDragZoomDistance={preDragZoomDistance}");
                 placeCam.ZoomTo(preDragZoomDistance);
             }
 
