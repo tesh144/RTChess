@@ -133,6 +133,15 @@ namespace LittleCafe
 
             cam = GetComponent<Camera>();
 
+            // Apply camera settings immediately so they're never stale,
+            // even if PointAtGrid() is called late or not at all
+            if (cam != null)
+            {
+                cam.fieldOfView = fieldOfView;
+                cam.nearClipPlane = nearClip;
+                cam.farClipPlane = farClip;
+            }
+
             // Initialize current = target (no smooth transition on first frame)
             targetYaw = yaw;
             targetPitch = pitch;
@@ -376,11 +385,15 @@ namespace LittleCafe
             float yawRad = yawDeg * Mathf.Deg2Rad;
             float pitchRad = pitchDeg * Mathf.Deg2Rad;
 
+            // In orthographic mode, physical distance doesn't affect rendering —
+            // only orthographicSize matters. Use a fixed safe distance to avoid clipping.
+            float physicalDist = (cam != null && cam.orthographic) ? absoluteMaxDistance : dist;
+
             Vector3 offset = new Vector3(
                 Mathf.Sin(yawRad) * Mathf.Cos(pitchRad),
                 Mathf.Sin(pitchRad),
                 Mathf.Cos(yawRad) * Mathf.Cos(pitchRad)
-            ) * dist;
+            ) * physicalDist;
 
             transform.position = lookPoint + offset;
             transform.LookAt(lookPoint);
