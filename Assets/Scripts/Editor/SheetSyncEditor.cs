@@ -497,7 +497,7 @@ namespace LittleCafe.Editor
                 changed |= TrySetInt(ref existing.attackPower, GetValue(row, "Attack"));
 
                 // isMealSource: true only for buildings that are ally-interactible AND have no production
-                // output (i.e. Feast). Buildings like Scrapper/Rabbit Farm/Garden are ally-interactible
+                // output (i.e. Feast). Buildings like Scrapper/Hutch/Garden are ally-interactible
                 // for other reasons and must not get FeastVisualDegradation attached.
                 string interactible = GetValue(row, "Ally Interactible");
                 bool allyInteractible = !string.IsNullOrEmpty(interactible) &&

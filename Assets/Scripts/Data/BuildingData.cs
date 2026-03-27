@@ -55,7 +55,7 @@ namespace LittleCafe
         Tier2Unit,          // Random unit/worker from tier 2 pool
         Tier3Unit,          // Random unit/worker from tier 3 pool
         Scrap,              // Produces Scrap resource (from Scrapper — any card in → Scrap out)
-        Lizard,             // Produces a Lizard environment entity (Rabbit Farm)
+        Lizard,             // Produces a Lizard environment entity (Hutch)
         TreeSeed            // Produces a Tree Seed entity (Garden)
     }
 

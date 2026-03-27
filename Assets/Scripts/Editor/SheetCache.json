@@ -183,7 +183,7 @@
         {
           "Active": "TRUE",
           "Icon": "🐇",
-          "Building": "Rabbit Farm",
+          "Building": "Hutch",
           "Tier (button)": "Tier 4",
           "isRandomBuilding": "TRUE",
           "DrawWeight": "0.3",
@@ -1627,7 +1627,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "1",
           "Currency 1": "🌲 Wood",
@@ -1638,7 +1638,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "2",
           "Currency 1": "🌲 Wood",
@@ -1649,7 +1649,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "3",
           "Currency 1": "🌲 Wood",
@@ -1660,7 +1660,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "4",
           "Currency 1": "🌲 Wood",
@@ -1671,7 +1671,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "5",
           "Currency 1": "🌲 Wood",
@@ -1682,7 +1682,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "6",
           "Currency 1": "🌲 Wood",
@@ -1693,7 +1693,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "7",
           "Currency 1": "🌲 Wood",
@@ -1704,7 +1704,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "8",
           "Currency 1": "🌲 Wood",
@@ -1715,7 +1715,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "9",
           "Currency 1": "🌲 Wood",
@@ -1726,7 +1726,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "10",
           "Currency 1": "🌲 Wood",
@@ -1737,7 +1737,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "11",
           "Currency 1": "🌲 Wood",
@@ -1748,7 +1748,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "12",
           "Currency 1": "🌲 Wood",
@@ -1759,7 +1759,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "13",
           "Currency 1": "🌲 Wood",
@@ -1770,7 +1770,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "14",
           "Currency 1": "🌲 Wood",
@@ -1781,7 +1781,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "15",
           "Currency 1": "🌲 Wood",
@@ -1792,7 +1792,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "16",
           "Currency 1": "🌲 Wood",
@@ -1803,7 +1803,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "17",
           "Currency 1": "🌲 Wood",
@@ -1814,7 +1814,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "18",
           "Currency 1": "🌲 Wood",
@@ -1825,7 +1825,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "19",
           "Currency 1": "🌲 Wood",
@@ -1836,7 +1836,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "20",
           "Currency 1": "🌲 Wood",
@@ -1847,7 +1847,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "21",
           "Currency 1": "🌲 Wood",
@@ -1858,7 +1858,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "22",
           "Currency 1": "🌲 Wood",
@@ -1869,7 +1869,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "23",
           "Currency 1": "🌲 Wood",
@@ -1880,7 +1880,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "24",
           "Currency 1": "🌲 Wood",
@@ -1891,7 +1891,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "25",
           "Currency 1": "🌲 Wood",
@@ -1902,7 +1902,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "26",
           "Currency 1": "🌲 Wood",
@@ -1913,7 +1913,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "27",
           "Currency 1": "🌲 Wood",
@@ -1924,7 +1924,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "28",
           "Currency 1": "🌲 Wood",
@@ -1935,7 +1935,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "29",
           "Currency 1": "🌲 Wood",
@@ -1946,7 +1946,7 @@
           "Cost 3": ""
         },
         {
-          "Item": "Rabbit Farm",
+          "Item": "Hutch",
           "Tier": "-",
           "#": "30",
           "Currency 1": "🌲 Wood",

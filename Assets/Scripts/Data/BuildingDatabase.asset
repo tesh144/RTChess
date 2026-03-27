@@ -201,8 +201,8 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     killerAdvances: 0
     fogRevealRadius: 1
-    prefab: {fileID: 4069388665601599064, guid: 5cfe09c1bdd804de3a2fa60089dad974, type: 3}
-    icon: {fileID: 21300000, guid: 8a401058293854ec38fc11f322ac7245, type: 3}
+    prefab: {fileID: 4912067625501910485, guid: 9ed5ac8420c704bb495cb77fdd709507, type: 3}
+    icon: {fileID: 21300000, guid: 433aa7d7cdc5040448be5385d4ca39ac, type: 3}
     isRandomBuilding: 1
     allyInteractible: 1
     enemyInteractible: 1
@@ -252,7 +252,7 @@ MonoBehaviour:
     productionCostAmount: 0
     productionCostIncrement: 0
   - active: 1
-    assetName: Rabbit Farm
+    assetName: Hutch
     type: 3
     isFunctional: 0
     isWalkable: 0
@@ -269,8 +269,8 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     killerAdvances: 1
     fogRevealRadius: 1
-    prefab: {fileID: 7955956385471571300, guid: 0c7f4560bbbe44d828921d2d5ba89416, type: 3}
-    icon: {fileID: 21300000, guid: 7888857b664c547bf952682329ff6e18, type: 3}
+    prefab: {fileID: 6611601216155316018, guid: b9b16457d79f346f2808e28e4dcf60b2, type: 3}
+    icon: {fileID: 21300000, guid: d317cb0f2a65a4eeeb4bc8d9cc32aaa1, type: 3}
     isRandomBuilding: 1
     allyInteractible: 1
     enemyInteractible: 1
