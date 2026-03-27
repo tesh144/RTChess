@@ -225,7 +225,8 @@ namespace ClockworkCraft
                 var obj = panel.GetObject(variantName);
                 if (obj != null)
                 {
-                    obj.SetActive(true);
+                    // Enable the variant AND all parents up to this transform
+                    EnableWithParents(obj);
                     activeChild = obj;
 
                     var tmp = obj.GetComponentInChildren<TextMeshProUGUI>();
@@ -307,22 +308,22 @@ namespace ClockworkCraft
 
         private void HideAllVariants()
         {
-            if (panel != null)
-            {
-                // Hide all panel-tracked variants (enum-named objects)
-                for (int i = 0; i < bubbleTypeNames.Length; i++)
-                {
-                    var obj = panel.GetObject(bubbleTypeNames[i]);
-                    if (obj != null) obj.SetActive(false);
-                }
-            }
-
-            // Ensure all parent containers are ACTIVE so variants can be shown
-            // Walk up from each direct child and enable the chain
+            // Hide every direct child of the root (containers + variants at top level)
             for (int i = 0; i < transform.childCount; i++)
-                transform.GetChild(i).gameObject.SetActive(true);
+                transform.GetChild(i).gameObject.SetActive(false);
 
             activeChild = null;
+        }
+
+        /// <summary>Enable a GameObject and every parent up to (but not including) this transform.</summary>
+        private void EnableWithParents(GameObject obj)
+        {
+            Transform t = obj.transform;
+            while (t != null && t != transform)
+            {
+                t.gameObject.SetActive(true);
+                t = t.parent;
+            }
         }
 
         // ── Animation ─────────────────────────────────────────────────────
