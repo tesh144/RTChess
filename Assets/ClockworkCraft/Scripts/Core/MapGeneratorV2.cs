@@ -171,13 +171,16 @@ namespace ClockworkCraft
         [Tooltip("WorldCanvas_Popups prefab — shared by POI bubbles and building Insert/Collect bubbles.")]
         public GameObject buildingBubblePrefab;
 
+        [Tooltip("World-space scale for building bubbles. Increase to make Insert/Collect bubbles bigger.")]
+        public float buildingBubbleScale = 0.008f;
+
         [Header("Center")]
         [Tooltip("EnvironmentDatabase entry to place at dead center.")]
         public string centerEnvironmentName = "Goldmine";
 
         [Tooltip("Cardinal clearing distance from center. 2 = 2 tiles along each cardinal axis kept empty.")]
         [Min(0)]
-        public int clearingRadius = 2;
+        public int cardinalClearingDistance = 2;
 
         [Header("Environment Desaturation")]
         [Tooltip("Saturation amount before first worker interaction (0 = grayscale, 1 = full color)")]
@@ -345,7 +348,7 @@ namespace ClockworkCraft
             {
                 var bpm = new GameObject("BuildingProductionManager").AddComponent<BuildingProductionManager>();
                 bpm.workerDatabase = workerDatabase;
-                bpm.SetBubblePrefab(buildingBubblePrefab);
+                bpm.SetBubblePrefab(buildingBubblePrefab, buildingBubbleScale);
             }
             else
             {
@@ -353,7 +356,7 @@ namespace ClockworkCraft
                 if (bpm.workerDatabase == null && workerDatabase != null)
                     bpm.workerDatabase = workerDatabase;
                 if (buildingBubblePrefab != null)
-                    bpm.SetBubblePrefab(buildingBubblePrefab);
+                    bpm.SetBubblePrefab(buildingBubblePrefab, buildingBubbleScale);
             }
 
             // Ensure hold-to-fill handler (input handler for HoldToFill buildings like Kitchen)
@@ -971,8 +974,8 @@ namespace ClockworkCraft
             }
 
             // Calculate total tile budget from mapDensity (shared by env + units)
-            // Cardinal cross: 4 arms of clearingRadius tiles + center = 4*clearingRadius + 1
-            int clearingSize = 4 * clearingRadius + 1;
+            // Cardinal cross: 4 arms of cardinalClearingDistance tiles + center = 4*cardinalClearingDistance + 1
+            int clearingSize = 4 * cardinalClearingDistance + 1;
             int availableTiles = (width * height) - clearingSize;
             int totalBudget = Mathf.RoundToInt(availableTiles * mapDensity);
 
@@ -2582,9 +2585,9 @@ namespace ClockworkCraft
             int dy = Mathf.Abs(y - center.y);
 
             // Cardinal cross only: tile must be on the same row OR column as center,
-            // within clearingRadius steps. Diagonals are NOT cleared.
-            if (dx == 0 && dy <= clearingRadius) return true;
-            if (dy == 0 && dx <= clearingRadius) return true;
+            // within cardinalClearingDistance steps. Diagonals are NOT cleared.
+            if (dx == 0 && dy <= cardinalClearingDistance) return true;
+            if (dy == 0 && dx <= cardinalClearingDistance) return true;
             return false;
         }
 

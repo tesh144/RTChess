@@ -157,11 +157,12 @@ namespace LittleCafe
                 IntervalTimer.Instance.OnBar += OnIntervalTick;
         }
 
-        /// <summary>Set the bubble prefab at runtime (called by MapGeneratorV2 since BPM is AddComponent'd).</summary>
-        public void SetBubblePrefab(GameObject prefab)
+        /// <summary>Set the bubble prefab and scale at runtime (called by MapGeneratorV2 since BPM is AddComponent'd).</summary>
+        public void SetBubblePrefab(GameObject prefab, float scale = 0.008f)
         {
             buildingBubblePrefab = prefab;
-            Debug.Log($"[BuildingProduction] Bubble prefab set: {(prefab != null ? prefab.name : "NULL")}");
+            buildingBubbleScale = scale;
+            Debug.Log($"[BuildingProduction] Bubble prefab set: {(prefab != null ? prefab.name : "NULL")}, scale: {scale}");
         }
 
         void OnDestroy()
