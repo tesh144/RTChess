@@ -158,7 +158,7 @@ namespace LittleCafe
         }
 
         /// <summary>Set the bubble prefab and scale at runtime (called by MapGeneratorV2 since BPM is AddComponent'd).</summary>
-        public void SetBubblePrefab(GameObject prefab, float scale = 0.008f)
+        public void SetBubblePrefab(GameObject prefab, float scale = 0.005f)
         {
             buildingBubblePrefab = prefab;
             buildingBubbleScale = scale;
@@ -850,8 +850,7 @@ namespace LittleCafe
                 }
                 entry.popupIconImage = iconImg;
 
-                // Collider for tap detection — on a separate unscaled child.
-                // Use buildingBubbleScale (not localScale.x, which is zero during pop-in).
+                // Collider for tap detection — inverse-scaled so radius is in world units
                 GameObject colliderHolder = new GameObject("TapCollider");
                 colliderHolder.transform.SetParent(canvasObj.transform, false);
                 if (buildingBubbleScale > 0f)

@@ -172,7 +172,7 @@ namespace ClockworkCraft
         public GameObject buildingBubblePrefab;
 
         [Tooltip("World-space scale for building bubbles. Increase to make Insert/Collect bubbles bigger.")]
-        public float buildingBubbleScale = 0.008f;
+        public float buildingBubbleScale = 0.005f;
 
         [Header("Center")]
         [Tooltip("EnvironmentDatabase entry to place at dead center.")]
