@@ -307,12 +307,18 @@ namespace ClockworkCraft
 
         private void HideAllVariants()
         {
-            if (panel == null) return;
+            // Hide ALL children, not just enum-named ones — prevents stray elements from showing
+            for (int i = 0; i < transform.childCount; i++)
+                transform.GetChild(i).gameObject.SetActive(false);
 
-            for (int i = 0; i < bubbleTypeNames.Length; i++)
+            // Also hide panel-tracked objects in case they're nested deeper
+            if (panel != null)
             {
-                var obj = panel.GetObject(bubbleTypeNames[i]);
-                if (obj != null) obj.SetActive(false);
+                for (int i = 0; i < bubbleTypeNames.Length; i++)
+                {
+                    var obj = panel.GetObject(bubbleTypeNames[i]);
+                    if (obj != null) obj.SetActive(false);
+                }
             }
 
             activeChild = null;
