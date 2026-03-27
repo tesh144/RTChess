@@ -31,7 +31,8 @@ namespace LittleCafe
         [SerializeField] private float baseDefaultDistance = 5f;   // Starting zoom level (ortho size)
         [SerializeField] private float baseMaxDistance = 5f;       // Max zoom with no revealed tiles (same as default)
         [SerializeField] private float distancePerRevealedTile = 0.06f; // Extra max-zoom per revealed tile
-        [SerializeField] private float maxDistanceMultiplier = 1.3f;    // Unused now but kept for inspector
+        [Tooltip("Extra distance added to physical camera position to prevent near-plane clipping.")]
+        [SerializeField] private float orthoDistancePadding = 10f;
 
         [Header("Smoothing")]
         [SerializeField] private float smoothSpeed = 7f;
@@ -57,7 +58,7 @@ namespace LittleCafe
         [SerializeField] private float fieldOfView = 60f;
         [SerializeField] private float nearClip = 0.3f;
         [SerializeField] private float farClip = 1000f;
-        [SerializeField] private float distancePadding = 1.5f;
+        // distancePadding removed — replaced by orthoDistancePadding
 
         // Adaptive pan distance (grows with revealed tiles, like zoom)
         private float currentMaxPanDistance;
@@ -207,13 +208,6 @@ namespace LittleCafe
             if (FogManager.Instance != null)
                 FogManager.Instance.OnCellRevealed += OnFogCellRevealed;
 
-            if (cam != null)
-            {
-                cam.fieldOfView = fieldOfView;
-                cam.nearClipPlane = nearClip;
-                cam.farClipPlane = farClip;
-            }
-
             ApplyOrbitPosition(smoothedLookPoint, currentYaw, currentPitch, currentDistance);
             Debug.Log($"[GridCamera] Ready: center={gridCenter}, default={currentDefaultDistance:F1}, max={currentMaxDistance:F1}");
         }
@@ -256,10 +250,15 @@ namespace LittleCafe
         /// <summary>
         /// Smoothly zoom to the current default distance (call after placing an object).
         /// </summary>
+        /// <summary>
+        /// Recalculate zoom bounds after placement. Does NOT change the current zoom level —
+        /// the player stays at whatever zoom they had. Only the max zoom ceiling is updated.
+        /// </summary>
         public void ZoomToDefault()
         {
             RecalculateZoomLevels();
-            targetDistance = currentDefaultDistance;
+            // Clamp current zoom in case the bounds changed, but don't snap to a different level
+            targetDistance = Mathf.Clamp(targetDistance, minDistance, currentMaxDistance);
         }
 
         // --- LateUpdate pipeline ---
@@ -385,11 +384,17 @@ namespace LittleCafe
             float yawRad = yawDeg * Mathf.Deg2Rad;
             float pitchRad = pitchDeg * Mathf.Deg2Rad;
 
+            // In orthographic mode, physical distance doesn't affect visible size (only orthographicSize does).
+            // Add padding so the camera sits further back, preventing near-plane clipping.
+            float physicalDist = dist;
+            if (cam != null && cam.orthographic)
+                physicalDist = dist + orthoDistancePadding;
+
             Vector3 offset = new Vector3(
                 Mathf.Sin(yawRad) * Mathf.Cos(pitchRad),
                 Mathf.Sin(pitchRad),
                 Mathf.Cos(yawRad) * Mathf.Cos(pitchRad)
-            ) * dist;
+            ) * physicalDist;
 
             transform.position = lookPoint + offset;
             transform.LookAt(lookPoint);
