@@ -60,8 +60,10 @@ namespace LittleCafe
         [SerializeField] private float farClip = 1000f;
         // distancePadding removed — replaced by orthoDistancePadding
 
-        // Adaptive pan distance (grows with revealed tiles, like zoom)
-        private float currentMaxPanDistance;
+        // Revealed area bounds — pan is clamped to this + padding
+        private Vector2 revealedMin = new Vector2(float.MaxValue, float.MaxValue);
+        private Vector2 revealedMax = new Vector2(float.MinValue, float.MinValue);
+        private float currentMaxPanDistance; // kept for fallback
 
         // Target state (what we're smoothing toward)
         private Vector3 targetLookPoint;
@@ -219,6 +221,16 @@ namespace LittleCafe
         private void OnFogCellRevealed(int x, int y)
         {
             RecalculateZoomLevels();
+
+            // Expand revealed bounds for pan clamping
+            if (GridManager.Instance != null)
+            {
+                Vector3 wp = GridManager.Instance.GridToWorldPosition(x, y);
+                if (wp.x < revealedMin.x) revealedMin.x = wp.x;
+                if (wp.z < revealedMin.y) revealedMin.y = wp.z;
+                if (wp.x > revealedMax.x) revealedMax.x = wp.x;
+                if (wp.z > revealedMax.y) revealedMax.y = wp.z;
+            }
         }
 
         /// <summary>
@@ -414,17 +426,24 @@ namespace LittleCafe
 
         private void EnforcePanBounds()
         {
-            Vector3 offset = targetLookPoint - gridCenter;
-            offset.y = 0f;
-            if (offset.magnitude > currentMaxPanDistance)
+            // If no cells revealed yet, use radius-from-center fallback
+            if (revealedMin.x > revealedMax.x)
             {
-                offset = offset.normalized * currentMaxPanDistance;
-                targetLookPoint = new Vector3(
-                    gridCenter.x + offset.x,
-                    targetLookPoint.y,
-                    gridCenter.z + offset.z
-                );
+                Vector3 offset = targetLookPoint - gridCenter;
+                offset.y = 0f;
+                if (offset.magnitude > basePanDistance)
+                {
+                    offset = offset.normalized * basePanDistance;
+                    targetLookPoint = new Vector3(gridCenter.x + offset.x, targetLookPoint.y, gridCenter.z + offset.z);
+                }
+                return;
             }
+
+            // Clamp to revealed bounding box + padding
+            float pad = basePanDistance;
+            float clampedX = Mathf.Clamp(targetLookPoint.x, revealedMin.x - pad, revealedMax.x + pad);
+            float clampedZ = Mathf.Clamp(targetLookPoint.z, revealedMin.y - pad, revealedMax.y + pad);
+            targetLookPoint = new Vector3(clampedX, targetLookPoint.y, clampedZ);
         }
 
         // --- ICameraSystem API ---
