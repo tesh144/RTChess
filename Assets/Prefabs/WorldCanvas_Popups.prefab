@@ -1201,8 +1201,8 @@ GameObject:
   - component: {fileID: 6648184956035917266}
   - component: {fileID: 9104673038744843579}
   - component: {fileID: 9055338779001516434}
-  - component: {fileID: 8937671244261437048}
   - component: {fileID: 3807376596032473918}
+  - component: {fileID: 2066967550988694410}
   m_Layer: 5
   m_Name: WorldCanvas_Popups
   m_TagString: Untagged
@@ -1409,18 +1409,6 @@ MonoBehaviour:
     name: Icon
     transform: {fileID: 885309576918247582}
     components: '[Image]'
---- !u!114 &8937671244261437048
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7538023331211881960}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e6da159bb123d4169b572e0cc6cbd1ad, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.BubbleController
 --- !u!114 &3807376596032473918
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1433,7 +1421,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b2f17ad3f6e21e4b95a16582e863dda, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.POIBubble
-  canvasGroup: {fileID: 0}
+  canvasGroup: {fileID: 2066967550988694410}
+  tetherWidthTop: 0.06
+  tetherWidthBottom: 0.02
+--- !u!225 &2066967550988694410
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7538023331211881960}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &8001566026593614940
 GameObject:
   m_ObjectHideFlags: 0

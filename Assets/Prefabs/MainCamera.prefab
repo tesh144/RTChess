@@ -44,7 +44,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 1, g: 1, b: 1, a: 0}
+  m_BackGroundColor: {r: 0.8867924, g: 0.8867924, b: 0.8867924, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -65,8 +65,8 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
+  near clip plane: 0.1
+  far clip plane: 150
   field of view: 60
   orthographic: 1
   orthographic size: 5
@@ -85,6 +85,14 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!81 &7861838874997902642
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6612830678633953524}
+  m_Enabled: 1
 --- !u!114 &1234567890123456789
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -95,8 +103,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6d746c2e17e02470285fa687cee0f6cd, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   yaw: 45
   pitch: 35
   minDistance: 5
@@ -118,14 +126,6 @@ MonoBehaviour:
   autoRotateSpeed: 6
   coiBlendSpeed: 3
   fieldOfView: 60
-  nearClip: 0.3
-  farClip: 1000
+  nearClip: 0.1
+  farClip: 150
   distancePadding: 1.5
---- !u!81 &7861838874997902642
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6612830678633953524}
-  m_Enabled: 1
