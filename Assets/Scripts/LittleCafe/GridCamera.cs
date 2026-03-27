@@ -9,9 +9,9 @@ namespace LittleCafe
     /// auto-rotation, zoom, pan, shake, drag-follow, and center-of-interest tracking.
     /// Implements ICameraSystem so DragDropHandler works with it via CameraSystemLocator.
     ///
-    /// Adaptive zoom: maxDistance and defaultDistance grow proportionally as
-    /// the player reveals more tiles. Scroll wheel is free within [minDistance, currentMaxDistance].
-    /// After placing an object the camera zooms out to defaultDistance.
+    /// Adaptive zoom: max zoom-out ceiling grows as the player reveals tiles.
+    /// Scroll wheel is free within [minDistance, currentMaxDistance].
+    /// Default (starting) zoom is fixed. Drag temporarily bypasses minDistance.
     /// </summary>
     public class GridCamera : MonoBehaviour, ICameraSystem
     {
@@ -108,8 +108,8 @@ namespace LittleCafe
         private Camera cam;
 
         // Adaptive zoom state
-        private float currentDefaultDistance;   // The "standard" zoom level (grows with revealed tiles)
-        private float currentMaxDistance;        // The furthest the player can scroll out (grows too)
+        private float currentDefaultDistance;   // Fixed at baseDefaultDistance (5) — never changes
+        private float currentMaxDistance;        // The furthest the player can scroll out (grows with exploration)
 
         // --- ICameraSystem properties ---
         public Vector3 CurrentTarget => targetLookPoint;
