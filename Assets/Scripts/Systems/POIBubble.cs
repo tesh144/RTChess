@@ -90,6 +90,7 @@ namespace ClockworkCraft
         public bool IsActive => state != State.Inactive;
         public BubbleType CurrentType => currentType;
         public GameObject ActiveChild => activeChild;
+        public UIPanel Panel => panel;
 
         /// <summary>Set the world-space scale for this bubble. Animations scale relative to this.</summary>
         public void SetTargetScale(Vector3 scale) => targetScale = scale;
