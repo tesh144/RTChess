@@ -1422,7 +1422,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.POIBubble
   canvasGroup: {fileID: 2066967550988694410}
-  tetherWidthTop: 0.06
+  tetherWidthTop: 0.25
   tetherWidthBottom: 0.02
 --- !u!225 &2066967550988694410
 CanvasGroup:
