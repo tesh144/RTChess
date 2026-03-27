@@ -167,13 +167,17 @@ namespace ClockworkCraft
         public CurrencyDatabase currencyDatabase;
         public ClockworkGrid.EconomyBalanceConfig economyBalanceConfig;
 
+        [Header("Bubble Prefab")]
+        [Tooltip("WorldCanvas_Popups prefab — shared by POI bubbles and building Insert/Collect bubbles.")]
+        public GameObject buildingBubblePrefab;
+
         [Header("Center")]
         [Tooltip("EnvironmentDatabase entry to place at dead center.")]
         public string centerEnvironmentName = "Goldmine";
 
-        [Tooltip("Radius around center kept empty. 1 = 3x3 clearing.")]
+        [Tooltip("Cardinal clearing distance from center. 2 = 2 tiles along each cardinal axis kept empty.")]
         [Min(0)]
-        public int clearingRadius = 1;
+        public int clearingRadius = 2;
 
         [Header("Environment Desaturation")]
         [Tooltip("Saturation amount before first worker interaction (0 = grayscale, 1 = full color)")]
@@ -341,10 +345,15 @@ namespace ClockworkCraft
             {
                 var bpm = new GameObject("BuildingProductionManager").AddComponent<BuildingProductionManager>();
                 bpm.workerDatabase = workerDatabase;
+                bpm.SetBubblePrefab(buildingBubblePrefab);
             }
-            else if (FindFirstObjectByType<BuildingProductionManager>().workerDatabase == null && workerDatabase != null)
+            else
             {
-                FindFirstObjectByType<BuildingProductionManager>().workerDatabase = workerDatabase;
+                var bpm = FindFirstObjectByType<BuildingProductionManager>();
+                if (bpm.workerDatabase == null && workerDatabase != null)
+                    bpm.workerDatabase = workerDatabase;
+                if (buildingBubblePrefab != null)
+                    bpm.SetBubblePrefab(buildingBubblePrefab);
             }
 
             // Ensure hold-to-fill handler (input handler for HoldToFill buildings like Kitchen)
@@ -962,7 +971,8 @@ namespace ClockworkCraft
             }
 
             // Calculate total tile budget from mapDensity (shared by env + units)
-            int clearingSize = (2 * clearingRadius + 1) * (2 * clearingRadius + 1);
+            // Cardinal cross: 4 arms of clearingRadius tiles + center = 4*clearingRadius + 1
+            int clearingSize = 4 * clearingRadius + 1;
             int availableTiles = (width * height) - clearingSize;
             int totalBudget = Mathf.RoundToInt(availableTiles * mapDensity);
 
@@ -2568,11 +2578,14 @@ namespace ClockworkCraft
         {
             if (x == center.x && y == center.y) return false;
 
-            // Chebyshev distance for a square clearing zone
-            // clearingRadius=1 → 3x3 clear area (1 tile around center in all directions)
             int dx = Mathf.Abs(x - center.x);
             int dy = Mathf.Abs(y - center.y);
-            return Mathf.Max(dx, dy) <= clearingRadius;
+
+            // Cardinal cross only: tile must be on the same row OR column as center,
+            // within clearingRadius steps. Diagonals are NOT cleared.
+            if (dx == 0 && dy <= clearingRadius) return true;
+            if (dy == 0 && dx <= clearingRadius) return true;
+            return false;
         }
 
         bool IsTooClose(int x, int y, List<Vector2Int> placed, int minSpacing)

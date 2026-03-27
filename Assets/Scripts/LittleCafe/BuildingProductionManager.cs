@@ -157,6 +157,9 @@ namespace LittleCafe
                 IntervalTimer.Instance.OnBar += OnIntervalTick;
         }
 
+        /// <summary>Set the bubble prefab at runtime (called by MapGeneratorV2 since BPM is AddComponent'd).</summary>
+        public void SetBubblePrefab(GameObject prefab) { buildingBubblePrefab = prefab; }
+
         void OnDestroy()
         {
             if (IntervalTimer.Instance != null)
