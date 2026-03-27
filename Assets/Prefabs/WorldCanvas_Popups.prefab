@@ -760,7 +760,7 @@ RectTransform:
   m_GameObject: {fileID: 3526870229456426695}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.6187, y: 1.6187, z: 1.6187}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2125619543883169067}
@@ -836,7 +836,7 @@ RectTransform:
   m_GameObject: {fileID: 4677511749507149281}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.6187, y: 1.6187, z: 1.6187}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6948008363995912877}
@@ -1422,8 +1422,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClockworkCraft.POIBubble
   canvasGroup: {fileID: 2066967550988694410}
+  riseDistance: 2.5
+  riseInDuration: 0.7
+  tetherDrawDuration: 0.45
   tetherWidthTop: 0.25
   tetherWidthBottom: 0.02
+  bobHeight: 0.15
+  bobDuration: 1.4
+  fadeOutDuration: 0.4
 --- !u!225 &2066967550988694410
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2060,7 +2066,7 @@ RectTransform:
   m_GameObject: {fileID: 9084721657165621620}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.6187, y: 1.6187, z: 1.6187}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3772854261253565671}

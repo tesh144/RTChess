@@ -254,7 +254,7 @@ MonoBehaviour:
   economyBalanceConfig: {fileID: 11400000, guid: c11171627b78b4c5cbac1b5557eb7844, type: 2}
   buildingBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
   centerEnvironmentName: Goldmine
-  cardinalClearingDistance: 2
+  clearingRadius: 2
   defaultEnvironmentDesaturatedValue: 0.2
   defaultEnvironmentFullColorValue: 1
   defaultEnvironmentTransitionDuration: 0.3

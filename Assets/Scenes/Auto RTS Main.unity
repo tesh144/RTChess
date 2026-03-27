@@ -794,11 +794,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 755167175}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &782458940 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3909088470510346116, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-  m_PrefabInstance: {fileID: 4778128516260304820}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &864240722
 GameObject:
   m_ObjectHideFlags: 0
@@ -927,66 +922,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 864240722}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &947827066
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 947827067}
-  - component: {fileID: 947827068}
-  m_Layer: 0
-  m_Name: BuildingProductionManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &947827067
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 947827066}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 782458940}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &947827068
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 947827066}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 134dd665c7de943b9879fab3b1d8cd81, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.BuildingProductionManager
-  timerPrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
-  timerWorldSize: 0.6
-  timerHeight: 1.8
-  timerBgColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.7}
-  timerFillColor: {r: 0.3, g: 0.85, b: 0.4, a: 1}
-  timerAlmostDoneColor: {r: 1, g: 0.85, b: 0.2, a: 1}
-  popupPrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
-  popupHeight: 2
-  popupWorldSize: 1
-  bobAmplitude: 0.1
-  bobSpeed: 2
-  popupGlowColor: {r: 1, g: 0.9, b: 0.5, a: 0.6}
-  buildingBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
-  buildingBubbleScale: 0.005
-  workerDatabase: {fileID: 11400000, guid: 8766a552e3b0f4eff80477d80ca948e8, type: 2}
-  verboseLogging: 0
 --- !u!1 &989645338
 GameObject:
   m_ObjectHideFlags: 0
@@ -1706,146 +1641,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiDatabase
-      value: 
-      objectReference: {fileID: 11400000, guid: 32ecb81c2ad084adfa2db6a00b87b351, type: 2}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: bubblePrefab
-      value: 
-      objectReference: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: unitDatabase
-      value: 
-      objectReference: {fileID: 11400000, guid: fb9df1513bc1548a59841afb135f9146, type: 2}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: environmentDatabase
-      value: 
-      objectReference: {fileID: 11400000, guid: b1d02fb45bceb4196845695e148a593e, type: 2}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.size
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[0].tier
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[1].tier
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[2].tier
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[0].label
-      value: Forest
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[1].label
-      value: Corruption
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[2].label
-      value: River
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[3].label
-      value: Treasure
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[0].active
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[1].active
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[2].active
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[3].active
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[0].typeName
-      value: Tree
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[1].typeName
-      value: CorruptedHeart
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[2].typeName
-      value: Water
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[3].typeName
-      value: Coral
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[0].rewardType
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[1].rewardType
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[1].sourceType
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[2].rewardType
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[3].rewardType
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[0].groupingType
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[2].groupingType
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[0].rewardQuantity
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[1].rewardQuantity
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[2].rewardQuantity
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[3].rewardQuantity
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[0].quantityMinimum
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[1].quantityMinimum
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[2].quantityMinimum
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[3].quantityMinimum
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 1872223307927959791, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: titleLogo
       value: 
@@ -1923,6 +1718,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: 0b57db5008acc244293961bf19124be7, type: 3}
     - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: clearingRadius
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: buildingBubblePrefab
       value: 
       objectReference: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
@@ -1932,10 +1731,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 3909088470510346116, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 947827067}
+    m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
 --- !u!1001 &5338089454353429927

@@ -60,7 +60,7 @@ namespace ClockworkCraft
             // Coverage info
             {
                 int totalTiles = gen.mapWidth * gen.mapHeight;
-                int clearingSize = 4 * gen.cardinalClearingDistance + 1;
+                int clearingSize = (2 * gen.clearingRadius + 1) * (2 * gen.clearingRadius + 1);
                 int available = totalTiles - clearingSize;
                 int totalBudget = Mathf.RoundToInt(available * densityProp.floatValue);
                 float coveragePercent = ((float)totalBudget / available) * 100f;
@@ -161,7 +161,7 @@ namespace ClockworkCraft
                 if (e.spawnWeight > 0f) totalCombinedWeight += e.spawnWeight;
 
             int totalTilesForBudget = gen.mapWidth * gen.mapHeight
-                - (4 * gen.cardinalClearingDistance + 1);
+                - (2 * gen.clearingRadius + 1) * (2 * gen.clearingRadius + 1);
             int totalSpawnBudget = Mathf.RoundToInt(totalTilesForBudget * densityProp.floatValue);
 
             // ── Environment entry cards ──────────────────────────────
@@ -245,7 +245,7 @@ namespace ClockworkCraft
                     SerializedProperty nameProp      = entryProp.FindPropertyRelative("entityName");
                     SerializedProperty modeProp      = entryProp.FindPropertyRelative("spawnMode");
                     SerializedProperty countProp     = entryProp.FindPropertyRelative("spawnCount");
-                    SerializedProperty minDistProp   = entryProp.FindPropertyRelative("minDistFromCenter");
+                    SerializedProperty minDistProp   = entryProp.FindPropertyRelative("clearFromCenter");
                     SerializedProperty spacingProp   = entryProp.FindPropertyRelative("minSpacing");
 
                     string entryName = nameProp.stringValue;
@@ -261,8 +261,8 @@ namespace ClockworkCraft
                     EditorGUILayout.PropertyField(modeProp, new GUIContent("Spawn Mode"));
                     EditorGUILayout.PropertyField(countProp, new GUIContent("Spawn Count",
                         "Exact number of this entity to place on the map."));
-                    EditorGUILayout.PropertyField(minDistProp, new GUIContent("Min Dist from Center",
-                        "Minimum Chebyshev distance from player start."));
+                    EditorGUILayout.PropertyField(minDistProp, new GUIContent("Clear From Center",
+                        "Won't appear within this many tiles of the starting gold mine."));
 
                     switch (mode)
                     {
@@ -331,6 +331,10 @@ namespace ClockworkCraft
             switch (mode)
             {
                 case SpawnMode.Scattered:
+                    SerializedProperty clearProp = entryProp.FindPropertyRelative("clearFromCenter");
+                    if (clearProp != null)
+                        EditorGUILayout.PropertyField(clearProp, new GUIContent("Clear From Center",
+                            "Won't appear within this many tiles of the starting gold mine."));
                     EditorGUILayout.PropertyField(spacingProp, new GUIContent("Min Spacing"));
                     break;
 

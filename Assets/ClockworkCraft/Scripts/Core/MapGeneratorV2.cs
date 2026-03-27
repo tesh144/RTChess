@@ -39,6 +39,9 @@ namespace ClockworkCraft
         [Tooltip("Minimum cell distance between two instances (Scattered mode only).")]
         [Min(0)] public int minSpacing = 0;
 
+        [Tooltip("Won't appear within this many tiles of the starting gold mine (Scattered mode only).")]
+        [Min(0)] public int clearFromCenter = 2;
+
         // ── Cluster settings (only used when spawnMode == Clustered) ──
         [Tooltip("0 = few large cohesive blobs. 1 = many small clusters with loose break-off pieces.")]
         [Range(0f, 1f)] public float fragmentation = 0.3f;
@@ -67,6 +70,9 @@ namespace ClockworkCraft
 
         [Tooltip("Minimum cell distance between two instances (Scattered mode only).")]
         [Min(0)] public int minSpacing = 4;
+
+        [Tooltip("Won't appear within this many tiles of the starting gold mine (Scattered mode only).")]
+        [Min(0)] public int clearFromCenter = 2;
 
         // ── Cluster settings ──
         [Tooltip("0 = few large packs. 1 = many small scattered groups.")]
@@ -100,8 +106,8 @@ namespace ClockworkCraft
         [Tooltip("Exact number of this entity to place on the map. Set to 0 to disable.")]
         [Min(0)] public int spawnCount = 5;
 
-        [Tooltip("Minimum Chebyshev distance from the player start before an entity may spawn.")]
-        [Min(0)] public int minDistFromCenter = 10;
+        [Tooltip("Won't appear within this many tiles of the starting gold mine.")]
+        [Min(0)] public int clearFromCenter = 10;
 
         [Tooltip("Minimum Chebyshev distance between two instances of this entity (Scattered mode).")]
         [Min(0)] public int minSpacing = 8;
@@ -178,9 +184,9 @@ namespace ClockworkCraft
         [Tooltip("EnvironmentDatabase entry to place at dead center.")]
         public string centerEnvironmentName = "Goldmine";
 
-        [Tooltip("Cardinal clearing distance from center. 2 = 2 tiles along each cardinal axis kept empty.")]
+        [Tooltip("Radius around center kept empty. 2 = 5x5 clearing (2 tiles in every direction).")]
         [Min(0)]
-        public int cardinalClearingDistance = 2;
+        public int clearingRadius = 2;
 
         [Header("Environment Desaturation")]
         [Tooltip("Saturation amount before first worker interaction (0 = grayscale, 1 = full color)")]
@@ -974,8 +980,7 @@ namespace ClockworkCraft
             }
 
             // Calculate total tile budget from mapDensity (shared by env + units)
-            // Cardinal cross: 4 arms of cardinalClearingDistance tiles + center = 4*cardinalClearingDistance + 1
-            int clearingSize = 4 * cardinalClearingDistance + 1;
+            int clearingSize = (2 * clearingRadius + 1) * (2 * clearingRadius + 1);
             int availableTiles = (width * height) - clearingSize;
             int totalBudget = Mathf.RoundToInt(availableTiles * mapDensity);
 
@@ -1476,6 +1481,11 @@ namespace ClockworkCraft
                 bool placed = false;
                 foreach (var candidate in candidates)
                 {
+                    // Min distance from start check
+                    if (candidate.clearFromCenter > 0 &&
+                        Mathf.Max(Mathf.Abs(pos.x - center.x), Mathf.Abs(pos.y - center.y)) < candidate.clearFromCenter)
+                        continue;
+
                     // Spacing check
                     if (candidate.minSpacing > 0 &&
                         IsTooClose(pos.x, pos.y, placedPositions[candidate.environmentName], candidate.minSpacing))
@@ -2077,6 +2087,11 @@ namespace ClockworkCraft
                     if (roll < cum) { picked = c; break; }
                 }
 
+                // Min distance from start check
+                if (picked.entry.clearFromCenter > 0 &&
+                    Mathf.Max(Mathf.Abs(pos.x - center.x), Mathf.Abs(pos.y - center.y)) < picked.entry.clearFromCenter)
+                    continue;
+
                 // Spacing check
                 if (picked.entry.minSpacing > 0 &&
                     IsTooClose(pos.x, pos.y, placedPositions[picked.entry.unitName], picked.entry.minSpacing))
@@ -2329,7 +2344,7 @@ namespace ClockworkCraft
 
         void PlaceCorruptionScattered(CorruptionSpawnEntry entry, string planName)
         {
-            // Build candidate list: empty cells, outside clearing, beyond minDistFromCenter
+            // Build candidate list: empty cells, outside clearing, beyond clearFromCenter
             var candidates = new List<Vector2Int>();
             for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
@@ -2339,7 +2354,7 @@ namespace ClockworkCraft
 
                 int dx = Mathf.Abs(x - center.x);
                 int dy = Mathf.Abs(y - center.y);
-                if (Mathf.Max(dx, dy) < entry.minDistFromCenter) continue;
+                if (Mathf.Max(dx, dy) < entry.clearFromCenter) continue;
 
                 candidates.Add(new Vector2Int(x, y));
             }
@@ -2403,7 +2418,7 @@ namespace ClockworkCraft
                     int ddx = Mathf.Abs(sx - center.x);
                     int ddy = Mathf.Abs(sy - center.y);
                     if (planGrid[sx, sy] == null && !IsInClearing(sx, sy)
-                        && Mathf.Max(ddx, ddy) >= entry.minDistFromCenter)
+                        && Mathf.Max(ddx, ddy) >= entry.clearFromCenter)
                     {
                         seed = new Vector2Int(sx, sy);
                         found = true;
@@ -2471,7 +2486,7 @@ namespace ClockworkCraft
                 if (IsInClearing(x, y)) continue;
                 int ddx = Mathf.Abs(x - center.x);
                 int ddy = Mathf.Abs(y - center.y);
-                if (Mathf.Max(ddx, ddy) < entry.minDistFromCenter) continue;
+                if (Mathf.Max(ddx, ddy) < entry.clearFromCenter) continue;
 
                 bool adjacent = false;
                 foreach (var d in dirs)
@@ -2584,11 +2599,8 @@ namespace ClockworkCraft
             int dx = Mathf.Abs(x - center.x);
             int dy = Mathf.Abs(y - center.y);
 
-            // Cardinal cross only: tile must be on the same row OR column as center,
-            // within cardinalClearingDistance steps. Diagonals are NOT cleared.
-            if (dx == 0 && dy <= cardinalClearingDistance) return true;
-            if (dy == 0 && dx <= cardinalClearingDistance) return true;
-            return false;
+            // Chebyshev distance — square clearing zone, radius tiles in every direction
+            return Mathf.Max(dx, dy) <= clearingRadius;
         }
 
         bool IsTooClose(int x, int y, List<Vector2Int> placed, int minSpacing)
