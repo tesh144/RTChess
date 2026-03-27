@@ -571,6 +571,15 @@ namespace ClockworkGrid
                     unitObj.AddComponent<LittleCafe.FeastVisualDegradation>();
             }
 
+            // Trigger placement animation on AnimatorHolder (works for all prefabs, no FurnitureObject needed)
+            Transform animHolder = unitObj.transform.Find("AnimatorHolder");
+            if (animHolder != null)
+            {
+                Animator anim = animHolder.GetComponent<Animator>();
+                if (anim != null)
+                    anim.SetTrigger("appear");
+            }
+
             // Update furniture connectivity after placement
             if (placedWithFurniture && LittleCafe.FurnitureConnectivityManager.Instance != null)
             {
