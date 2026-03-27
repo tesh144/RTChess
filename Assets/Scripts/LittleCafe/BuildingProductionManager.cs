@@ -574,7 +574,7 @@ namespace LittleCafe
         private float GetPopupY(ProductionEntry entry)
         {
             float baseHeight = entry.objectTopHeight > 0f ? entry.objectTopHeight : popupHeight;
-            return baseHeight + 0.15f; // Just above the object top
+            return baseHeight;
         }
 
         private void CreateTimerCanvas(ProductionEntry entry)
