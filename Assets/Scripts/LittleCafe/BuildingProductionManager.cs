@@ -377,7 +377,7 @@ namespace LittleCafe
 
             Vector3 pos = entry.buildingObj.transform.position + Vector3.up * GetPopupY(entry);
 
-            var obj = Instantiate(buildingBubblePrefab);
+            var obj = Instantiate(buildingBubblePrefab, transform);
             obj.name = $"InsertBubble_{entry.buildingObj.name}";
             obj.transform.position = pos;
 
@@ -819,7 +819,7 @@ namespace LittleCafe
             // ── Designed Bubble path (Bubble_Collect) ──
             if (buildingBubblePrefab != null)
             {
-                GameObject canvasObj = Instantiate(buildingBubblePrefab);
+                GameObject canvasObj = Instantiate(buildingBubblePrefab, transform);
                 canvasObj.name = $"ProductionPopup_{entry.buildingObj.name}";
                 canvasObj.transform.position = popupPos;
 
