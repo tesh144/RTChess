@@ -21,7 +21,7 @@ namespace ClockworkCraft
 
         [Header("Tether Line")]
         [Tooltip("Width of the tether line at the bubble end.")]
-        [SerializeField] private float tetherWidthTop = 0.06f;
+        [SerializeField] private float tetherWidthTop = 0.25f;
         [Tooltip("Width of the tether line at the ground end.")]
         [SerializeField] private float tetherWidthBottom = 0.02f;
 
