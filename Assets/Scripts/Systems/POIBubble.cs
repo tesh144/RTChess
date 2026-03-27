@@ -51,7 +51,7 @@ namespace ClockworkCraft
         private float fadeOutDuration = 0.4f;
 
         // Rise-in animation params
-        private float riseDistance = 1.5f;
+        private float riseDistance = 2.5f;
         private float riseInDuration = 0.7f;
         private float tetherDrawDuration = 0.45f;
 
