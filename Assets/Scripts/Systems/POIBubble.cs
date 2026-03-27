@@ -200,8 +200,14 @@ namespace ClockworkCraft
 
         private void HideAllVariants()
         {
-            for (int i = 0; i < transform.childCount; i++)
-                transform.GetChild(i).gameObject.SetActive(false);
+            // Hide EVERY descendant — not just direct children.
+            // This ensures nested variants (inside AllBubbles etc.) are all off.
+            var all = GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (all[i] == transform) continue;
+                all[i].gameObject.SetActive(false);
+            }
             activeChild = null;
         }
 
