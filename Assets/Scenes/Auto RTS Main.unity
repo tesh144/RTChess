@@ -1746,10 +1746,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 78387799121497973, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: poiEntries.Array.data[3].rewardQuantity
-      value: 3
-      objectReference: {fileID: 0}
+    - target: {fileID: 1817720487229440558, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: spreadSound
+      value: 
+      objectReference: {fileID: 8300000, guid: cdc89eba8f23ec841829517f999d2aa8, type: 3}
     - target: {fileID: 1872223307927959791, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: titleLogo
       value: 
@@ -1818,6 +1818,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: clearingRadius
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
+      propertyPath: economyBalanceConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: c474f0fe94b8ffa438b8c1c6183f546d, type: 2}
     - target: {fileID: 7692711440160710592, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: m_Name
       value: Managers

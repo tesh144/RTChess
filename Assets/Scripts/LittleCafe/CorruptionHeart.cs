@@ -148,8 +148,9 @@ namespace LittleCafe
         // ── Private ───────────────────────────────────────────────────────
 
         /// <summary>
-        /// Pre-corrupt all tiles in the Moore neighbourhood (radius = InitialCorruptedRadius)
-        /// around this heart. Called once in Start(), immediately after RegisterHeart().
+        /// Pre-corrupt the four orthogonal tiles (up/down/left/right) around this heart,
+        /// extending outward by InitialCorruptedRadius in each direction.
+        /// Called once in EnsureInitialized(), immediately after RegisterHeart().
         /// The heart is still dormant — tiles are marked but corruption won't spread until
         /// the player activates the heart by exploring nearby.
         /// </summary>
@@ -162,22 +163,27 @@ namespace LittleCafe
             int cx = GridPosition.x;
             int cy = GridPosition.y;
 
-            int seeded = 0;
-            for (int dx = -InitialCorruptedRadius; dx <= InitialCorruptedRadius; dx++)
-            for (int dy = -InitialCorruptedRadius; dy <= InitialCorruptedRadius; dy++)
+            // Orthogonal directions only: up, down, left, right
+            var directions = new Vector2Int[]
             {
-                // Skip the heart's own tile — it IS corruption; it doesn't need an overlay on top.
-                if (dx == 0 && dy == 0) continue;
+                new Vector2Int( 0,  1), // up
+                new Vector2Int( 0, -1), // down
+                new Vector2Int(-1,  0), // left
+                new Vector2Int( 1,  0), // right
+            };
 
-                int x = cx + dx;
-                int y = cy + dy;
+            int seeded = 0;
+            foreach (var dir in directions)
+            for (int r = 1; r <= InitialCorruptedRadius; r++)
+            {
+                int x = cx + dir.x * r;
+                int y = cy + dir.y * r;
                 if (!GridManager.Instance.IsValidCell(x, y)) continue;
-                // CorruptTile guards against double-corruption internally
                 CorruptionManager.Instance.CorruptTile(x, y, this);
                 seeded++;
             }
 
-            Debug.Log($"[CorruptionHeart] Seeded {seeded} tiles around heart at {GridPosition} (own tile excluded).");
+            Debug.Log($"[CorruptionHeart] Seeded {seeded} orthogonal tiles around heart at {GridPosition}.");
         }
 
         /// <summary>

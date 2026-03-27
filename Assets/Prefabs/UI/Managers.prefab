@@ -345,7 +345,7 @@ MonoBehaviour:
     fragmentation: 0.4
     clusterSpread: 0.5
     edgeBorderOf: 
-    initialCorruptionRadius: 0
+    initialCorruptionRadius: 1
 --- !u!1 &5602963096750714910
 GameObject:
   m_ObjectHideFlags: 0
