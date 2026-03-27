@@ -42,11 +42,7 @@ namespace ClockworkCraft
         [Tooltip("Pre-instantiated pool size for heart bubbles (in addition to maxEnvBubbles).")]
         [SerializeField] private int heartPoolSize = 6;
 
-        [Header("Animation")]
-        [SerializeField] private float bobHeight = 0.15f;
-        [SerializeField] private float bobDuration = 1.4f;
-        [SerializeField] private float popInDuration = 0.25f;
-        [SerializeField] private float fadeOutDuration = 0.4f;
+            [Header("Positioning")]
         [SerializeField] private float heightAboveGround = 2.5f;
 
         [Tooltip("World-space scale applied to each bubble Canvas. The prefab is 2560×1440px — at 0.005 each pixel ≈ 0.005 world units, giving a ~5-unit-wide bubble.")]
@@ -492,17 +488,12 @@ namespace ClockworkCraft
             Debug.Log($"[POIManager] Bubble shown: '{text}' ({bubbleType}) at grid {gridPos} → world {worldPos}");
         }
 
-        private void DismissBubble(Vector2Int gridPos)
+        /// <summary>Dismiss any bubble at this grid position and return it to the pool.</summary>
+        public void DismissBubble(Vector2Int gridPos)
         {
             if (!activeBubbles.TryGetValue(gridPos, out var bubble)) return;
             bubble.Dismiss();
             activeBubbles.Remove(gridPos);
-        }
-
-        /// <summary>Dismiss any POI bubble at this grid position. Called by BuildingProductionManager to prevent stacking.</summary>
-        public void DismissBubbleAt(Vector2Int gridPos)
-        {
-            DismissBubble(gridPos);
         }
 
         /// <summary>
@@ -576,7 +567,6 @@ namespace ClockworkCraft
             var obj = Instantiate(bubblePrefab, parent);
             var bubble = obj.GetComponent<POIBubble>();
             if (bubble == null) bubble = obj.AddComponent<POIBubble>();
-            bubble.SetAnimParams(popInDuration, bobHeight, bobDuration, fadeOutDuration);
             bubble.SetTargetScale(scale);
             obj.SetActive(false);
             return bubble;

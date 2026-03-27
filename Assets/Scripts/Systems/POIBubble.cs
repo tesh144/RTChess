@@ -6,12 +6,13 @@ using ClockworkGrid;
 namespace ClockworkCraft
 {
     /// <summary>
-    /// World-space billboard bubble with variant toggling and animations.
-    /// Pooled by POIManager — call Setup() to activate, Dismiss() to fade out and return to pool.
+    /// World-space bubble with variant toggling and animations.
+    /// Used for both POI markers (fog-edge hints) and building popups (Insert/Collect/Alert).
     ///
-    /// Uses UIPanel (on the same GameObject) to access children by name.
-    /// Children named after BubbleType enum values (POI_Gold, POI_Grey, etc.)
-    /// are toggled on/off — only the active variant is visible.
+    /// Lifecycle: Setup() → RisingIn → [DrawingTether] → Bobbing → Dismiss() → Inactive
+    ///
+    /// Variants are children named after BubbleType enum values. Setup() hides all,
+    /// then enables the matching one. UIPanel tracks them by name.
     /// </summary>
     [RequireComponent(typeof(UIPanel))]
     public class POIBubble : MonoBehaviour
@@ -19,23 +20,49 @@ namespace ClockworkCraft
         [Header("References")]
         [SerializeField] private CanvasGroup canvasGroup;
 
-        [Header("Tether Line")]
-        [Tooltip("Width of the tether line at the bubble end.")]
+        [Header("Rise Animation")]
+        [Tooltip("How far below the target position the bubble starts.")]
+        [SerializeField] private float riseDistance = 2.5f;
+        [Tooltip("Duration of the rise-in phase (seconds).")]
+        [SerializeField] private float riseInDuration = 0.7f;
+
+        [Header("Tether")]
+        [Tooltip("Duration of the tether draw phase after rise completes (seconds). POI only.")]
+        [SerializeField] private float tetherDrawDuration = 0.45f;
+        [Tooltip("Width at the bubble end.")]
         [SerializeField] private float tetherWidthTop = 0.25f;
-        [Tooltip("Width of the tether line at the ground end.")]
+        [Tooltip("Width at the ground end.")]
         [SerializeField] private float tetherWidthBottom = 0.02f;
+
+        [Header("Bob")]
+        [Tooltip("Vertical bob amplitude (world units).")]
+        [SerializeField] private float bobHeight = 0.15f;
+        [Tooltip("Full bob cycle duration (seconds).")]
+        [SerializeField] private float bobDuration = 1.4f;
+
+        [Header("Dismiss")]
+        [Tooltip("Duration of the fade-out/shrink on dismiss (seconds).")]
+        [SerializeField] private float fadeOutDuration = 0.4f;
+
+        // ── Internal State ───────────────────────────────────────────────
 
         private UIPanel panel;
         private BubbleType currentType;
         private GameObject activeChild;
+        private Vector3 targetScale = Vector3.one;
 
-        // Tether — LineRenderer connecting the bubble to the ground tile it represents
+        private enum State { Inactive, RisingIn, DrawingTether, Bobbing, Dismissing }
+        private State state = State.Inactive;
+        private float timer;
+        private Vector3 basePosition;
+        private float bobTimer;
+
+        // Tether
         private LineRenderer tether;
-        private Vector3 groundPosition;  // world pos of the fog tile (y = ground level)
+        private Vector3 groundPosition;
 
-        // All BubbleType names cached once
+        // Cached enum names for variant lookup
         private static readonly string[] bubbleTypeNames;
-
         static POIBubble()
         {
             var values = System.Enum.GetValues(typeof(BubbleType));
@@ -44,198 +71,77 @@ namespace ClockworkCraft
                 bubbleTypeNames[i] = values.GetValue(i).ToString();
         }
 
-        // Animation params — injected by POIManager via SetAnimParams()
-        private float popInDuration = 0.25f;
-        private float bobHeight = 0.15f;
-        private float bobDuration = 1.4f;
-        private float fadeOutDuration = 0.4f;
-
-        // Rise-in animation params
-        private float riseDistance = 2.5f;
-        private float riseInDuration = 0.7f;
-        private float tetherDrawDuration = 0.45f;
-
-        // Target scale — set by POIManager to control world-space size.
-        // Pop-in and dismiss animations scale relative to this, not Vector3.one.
-        private Vector3 targetScale = Vector3.one;
-
-        // State
-        private enum State { Inactive, RisingIn, DrawingTether, Bobbing, Dismissing }
-        private State state = State.Inactive;
-        private float timer;
-        private Vector3 basePosition;
-        private float bobTimer;
-
-        // ── Lifecycle ─────────────────────────────────────────────────────
+        // ── Lifecycle ────────────────────────────────────────────────────
 
         private void Awake()
         {
             panel = GetComponent<UIPanel>();
-
-            // On instantiate: everything off. Setup() turns on only what's needed.
             HideAllVariants();
         }
 
-        // ── Properties ────────────────────────────────────────────────────
+        private void OnDestroy()
+        {
+            if (tether != null)
+                Destroy(tether.gameObject);
+        }
+
+        // ── Properties ───────────────────────────────────────────────────
 
         public bool IsActive => state != State.Inactive;
         public BubbleType CurrentType => currentType;
         public GameObject ActiveChild => activeChild;
 
-        /// <summary>The underlying UIPanel for direct element access.</summary>
-        public UIPanel Panel => panel;
+        /// <summary>Set the world-space scale for this bubble. Animations scale relative to this.</summary>
+        public void SetTargetScale(Vector3 scale) => targetScale = scale;
 
-        /// <summary>
-        /// Find the Image component named "Icon" within the active variant.
-        /// Used by BuildingProductionManager to set reward/input icons on Bubble_Collect/Bubble_Insert.
-        /// </summary>
-        public Image GetIconImage()
+        /// <summary>Override animation params. Used by BuildingProductionManager for Insert/Collect bubbles.</summary>
+        public void SetAnimParams(float riseIn, float bob, float bobDur, float fadeOut)
         {
-            if (activeChild == null) return null;
-            foreach (var img in activeChild.GetComponentsInChildren<Image>(true))
-            {
-                if (img.gameObject.name == "Icon") return img;
-            }
-            return null;
-        }
-
-        // ── Tether Line ──────────────────────────────────────────────────
-
-        /// <summary>Returns the accent color for a BubbleType (used for the tether gradient top).</summary>
-        private static Color GetBubbleColor(BubbleType type)
-        {
-            switch (type)
-            {
-                case BubbleType.POI_Gold:       return new Color(0.95f, 0.75f, 0.25f, 0.9f);   // warm gold
-                case BubbleType.POI_Grey:       return new Color(0.55f, 0.60f, 0.72f, 0.9f);   // cool blue-grey
-                case BubbleType.POI_Red:        return new Color(0.90f, 0.25f, 0.25f, 0.9f);   // danger red
-                case BubbleType.Bubble_Insert:  return new Color(0.40f, 0.75f, 0.95f, 0.9f);   // soft blue
-                case BubbleType.Bubble_Collect: return new Color(0.45f, 0.85f, 0.45f, 0.9f);   // green
-                case BubbleType.Bubble_Alert:   return new Color(1.00f, 0.60f, 0.20f, 0.9f);   // alert orange
-                default:                        return new Color(0.55f, 0.60f, 0.72f, 0.9f);
-            }
-        }
-
-        /// <summary>Fog grey — the color the tether fades into at ground level.</summary>
-        private static readonly Color fogGrey = new Color(0.78f, 0.78f, 0.78f, 0.0f);
-
-        private void SetupTether(BubbleType bubbleType, Vector3 bubblePos)
-        {
-            groundPosition = new Vector3(bubblePos.x, -0.5f, bubblePos.z);
-
-            if (tether == null)
-            {
-                // Create a child GameObject so the LineRenderer isn't affected by Canvas scaling
-                var tetherObj = new GameObject("Tether");
-                tetherObj.transform.SetParent(transform.parent ?? transform, false);
-                tether = tetherObj.AddComponent<LineRenderer>();
-
-                // Unlit material that renders over world geometry but behind bubble UI
-                var mat = new Material(Shader.Find("Sprites/Default"));
-                mat.renderQueue = 3100; // Above opaque geometry (3000), below UI overlays
-                tether.material = mat;
-                tether.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                tether.receiveShadows = false;
-                tether.allowOcclusionWhenDynamic = false;
-                tether.positionCount = 2;
-                tether.useWorldSpace = true;
-                tether.sortingOrder = 5; // above ground geometry, behind bubble UI
-                tether.numCapVertices = 2;
-            }
-
-            // Width: thicker at bubble, tapers toward ground
-            tether.startWidth = tetherWidthTop;
-            tether.endWidth = tetherWidthBottom;
-
-            // Gradient: bubble color at top → fog grey (transparent) at bottom
-            Color topColor = GetBubbleColor(bubbleType);
-            var gradient = new Gradient();
-            gradient.SetKeys(
-                new GradientColorKey[] {
-                    new GradientColorKey(topColor, 0f),
-                    new GradientColorKey(fogGrey, 1f)
-                },
-                new GradientAlphaKey[] {
-                    new GradientAlphaKey(topColor.a, 0f),
-                    new GradientAlphaKey(0.15f, 0.6f),
-                    new GradientAlphaKey(0f, 1f)
-                }
-            );
-            tether.colorGradient = gradient;
-
-            UpdateTetherPositions(bubblePos);
-            tether.gameObject.SetActive(true);
-        }
-
-        private void UpdateTetherPositions(Vector3 bubblePos)
-        {
-            if (tether == null) return;
-            tether.SetPosition(0, bubblePos);
-            tether.SetPosition(1, groundPosition);
-        }
-
-        private void HideTether()
-        {
-            if (tether != null)
-                tether.gameObject.SetActive(false);
-        }
-
-        private void DestroyTether()
-        {
-            if (tether != null)
-            {
-                Destroy(tether.gameObject);
-                tether = null;
-            }
-        }
-
-        // ── Public API ────────────────────────────────────────────────────
-
-        /// <summary>Inject animation params from POIManager inspector fields.</summary>
-        public void SetAnimParams(float popIn, float bob, float bobDur, float fadeOut)
-        {
-            popInDuration = popIn;
+            riseInDuration = riseIn;
             bobHeight = bob;
             bobDuration = bobDur;
             fadeOutDuration = fadeOut;
         }
 
-        /// <summary>
-        /// Set the target world-space scale for this bubble.
-        /// Animations scale relative to this value instead of Vector3.one.
-        /// </summary>
-        public void SetTargetScale(Vector3 scale)
+        /// <summary>Find the Image named "Icon" within the active variant.</summary>
+        public Image GetIconImage()
         {
-            targetScale = scale;
+            if (activeChild == null) return null;
+            foreach (var img in activeChild.GetComponentsInChildren<Image>(true))
+                if (img.gameObject.name == "Icon") return img;
+            return null;
         }
 
+        /// <summary>Returns true if UIPanel has a child for this BubbleType.</summary>
+        public bool HasVariant(BubbleType type)
+        {
+            return panel != null && panel.Get(type.ToString()) != null;
+        }
+
+        // ── Setup / Dismiss ──────────────────────────────────────────────
+
         /// <summary>
-        /// Activate this bubble at the given world position.
-        /// Toggles the matching BubbleType child on (all others off) and sets the label.
+        /// Activate this bubble. Shows the matching variant, starts the rise animation.
+        /// POI types (Gold/Grey/Red) get a tether line; building types don't.
         /// </summary>
         public void Setup(BubbleType bubbleType, string text, Vector3 worldPos, Sprite icon = null)
         {
             basePosition = worldPos;
-            transform.position = worldPos;
-
-            // Toggle the correct variant via UIPanel
-            HideAllVariants();
             currentType = bubbleType;
 
+            // Show the correct variant
+            HideAllVariants();
             if (panel != null)
             {
-                string variantName = bubbleType.ToString();
-                var obj = panel.GetObject(variantName);
+                var obj = panel.GetObject(bubbleType.ToString());
                 if (obj != null)
                 {
-                    // Enable the variant AND all parents up to this transform
                     EnableWithParents(obj);
                     activeChild = obj;
 
                     var tmp = obj.GetComponentInChildren<TextMeshProUGUI>();
                     if (tmp != null) tmp.text = text;
 
-                    // Set the icon if provided
                     if (icon != null)
                     {
                         var iconImg = GetIconImage();
@@ -246,27 +152,22 @@ namespace ClockworkCraft
                         }
                     }
                 }
-                else
-                {
-                    Debug.LogWarning($"[POIBubble] Variant '{variantName}' not found in UIPanel ({panel.ElementCount} elements). Check that Setup UI Panels has been run on the prefab.");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("[POIBubble] No UIPanel component found — bubble will be blank.");
             }
 
+            // Alpha starts at zero — rise animation fades in
             if (canvasGroup != null) canvasGroup.alpha = 0f;
 
-            // Tether line only for POI bubbles, not building Insert/Collect/Alert
-            bool isPOI = bubbleType == BubbleType.POI_Gold || bubbleType == BubbleType.POI_Grey || bubbleType == BubbleType.POI_Red;
+            // Tether only for POI bubbles
+            bool isPOI = bubbleType == BubbleType.POI_Gold ||
+                         bubbleType == BubbleType.POI_Grey ||
+                         bubbleType == BubbleType.POI_Red;
             if (isPOI)
             {
                 SetupTether(bubbleType, worldPos);
-                HideTether();
+                if (tether != null) tether.gameObject.SetActive(false);
             }
 
-            // Start below target position
+            // Start below target
             transform.position = worldPos + Vector3.down * riseDistance;
             transform.localScale = Vector3.zero;
             gameObject.SetActive(true);
@@ -276,24 +177,17 @@ namespace ClockworkCraft
             bobTimer = 0f;
         }
 
-        /// <summary>Legacy overload for backwards compatibility.</summary>
-        public void Setup(string text, Color color, Vector3 worldPos)
-        {
-            Setup(BubbleType.POI_Grey, text, worldPos);
-        }
-
-        /// <summary>Start fade-out, then deactivate and return to pool.</summary>
+        /// <summary>Start fade-out, then deactivate.</summary>
         public void Dismiss()
         {
             if (state == State.Inactive || state == State.Dismissing) return;
-            // Ensure fully visible before starting dismiss (in case dismissed during rise)
             if (canvasGroup != null) canvasGroup.alpha = 1f;
             transform.localScale = targetScale;
             state = State.Dismissing;
             timer = 0f;
         }
 
-        /// <summary>Set the label text on the currently active variant.</summary>
+        /// <summary>Set the label text on the active variant.</summary>
         public void SetLabel(string text)
         {
             if (activeChild == null) return;
@@ -301,24 +195,16 @@ namespace ClockworkCraft
             if (tmp != null) tmp.text = text;
         }
 
-        /// <summary>Returns true if UIPanel has a child for this BubbleType.</summary>
-        public bool HasVariant(BubbleType type)
-        {
-            return panel != null && panel.Get(type.ToString()) != null;
-        }
-
-        // ── Variant Toggling ──────────────────────────────────────────────
+        // ── Variant Toggling ─────────────────────────────────────────────
 
         private void HideAllVariants()
         {
-            // Hide every direct child of the root (containers + variants at top level)
             for (int i = 0; i < transform.childCount; i++)
                 transform.GetChild(i).gameObject.SetActive(false);
-
             activeChild = null;
         }
 
-        /// <summary>Enable a GameObject and every parent up to (but not including) this transform.</summary>
+        /// <summary>Enable obj and every parent up to (not including) this transform.</summary>
         private void EnableWithParents(GameObject obj)
         {
             Transform t = obj.transform;
@@ -329,17 +215,71 @@ namespace ClockworkCraft
             }
         }
 
-        // ── Animation ─────────────────────────────────────────────────────
+        // ── Tether ───────────────────────────────────────────────────────
+
+        private static readonly Color fogGrey = new Color(0.78f, 0.78f, 0.78f, 0f);
+
+        private static Color GetTetherColor(BubbleType type)
+        {
+            switch (type)
+            {
+                case BubbleType.POI_Gold: return new Color(0.95f, 0.75f, 0.25f, 0.9f);
+                case BubbleType.POI_Grey: return new Color(0.55f, 0.60f, 0.72f, 0.9f);
+                case BubbleType.POI_Red:  return new Color(0.90f, 0.25f, 0.25f, 0.9f);
+                default:                  return new Color(0.55f, 0.60f, 0.72f, 0.9f);
+            }
+        }
+
+        private void SetupTether(BubbleType bubbleType, Vector3 bubblePos)
+        {
+            groundPosition = new Vector3(bubblePos.x, -0.5f, bubblePos.z);
+
+            if (tether == null)
+            {
+                var tetherObj = new GameObject("Tether");
+                tetherObj.transform.SetParent(transform.parent ?? transform, false);
+                tether = tetherObj.AddComponent<LineRenderer>();
+                tether.material = new Material(Shader.Find("Sprites/Default"))
+                    { renderQueue = 3100 };
+                tether.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                tether.receiveShadows = false;
+                tether.allowOcclusionWhenDynamic = false;
+                tether.positionCount = 2;
+                tether.useWorldSpace = true;
+                tether.sortingOrder = 5;
+                tether.numCapVertices = 2;
+            }
+
+            tether.startWidth = tetherWidthTop;
+            tether.endWidth = tetherWidthBottom;
+
+            Color top = GetTetherColor(bubbleType);
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[] { new GradientColorKey(top, 0f), new GradientColorKey(fogGrey, 1f) },
+                new[] { new GradientAlphaKey(top.a, 0f), new GradientAlphaKey(0.15f, 0.6f), new GradientAlphaKey(0f, 1f) }
+            );
+            tether.colorGradient = gradient;
+        }
+
+        // ── Animation ────────────────────────────────────────────────────
 
         private void Update()
         {
             switch (state)
             {
-                case State.RisingIn:     UpdateRiseIn();     break;
-                case State.DrawingTether: UpdateDrawTether(); break;
-                case State.Bobbing:      UpdateBob();        break;
-                case State.Dismissing:   UpdateDismiss();    break;
+                case State.RisingIn:      UpdateRiseIn();      break;
+                case State.DrawingTether: UpdateDrawTether();  break;
+                case State.Bobbing:       UpdateBob();         break;
+                case State.Dismissing:    UpdateDismiss();     break;
             }
+        }
+
+        private void LateUpdate()
+        {
+            // Billboard: face camera
+            if (state != State.Inactive && Camera.main != null)
+                transform.rotation = Camera.main.transform.rotation;
         }
 
         private void UpdateRiseIn()
@@ -347,14 +287,13 @@ namespace ClockworkCraft
             timer += Time.deltaTime;
             float t = Mathf.Clamp01(timer / riseInDuration);
 
-            // Position: EaseOutQuad rise from below to basePosition
-            float posEased = t * (2f - t); // EaseOutQuad
-            Vector3 startPos = basePosition + Vector3.down * riseDistance;
-            transform.position = Vector3.Lerp(startPos, basePosition, posEased);
+            // Position: EaseOutQuad
+            float posEased = t * (2f - t);
+            transform.position = Vector3.Lerp(basePosition + Vector3.down * riseDistance, basePosition, posEased);
 
-            // Scale: OutBack from zero to targetScale
-            float scaleEased = 1f + 2.70158f * Mathf.Pow(t - 1f, 3f) + 1.70158f * Mathf.Pow(t - 1f, 2f);
-            transform.localScale = targetScale * scaleEased;
+            // Scale: OutBack
+            float s = 1f + 2.70158f * Mathf.Pow(t - 1f, 3f) + 1.70158f * Mathf.Pow(t - 1f, 2f);
+            transform.localScale = targetScale * s;
 
             // Alpha: fade in over first 60%
             if (canvasGroup != null)
@@ -366,14 +305,14 @@ namespace ClockworkCraft
                 transform.localScale = targetScale;
                 if (canvasGroup != null) canvasGroup.alpha = 1f;
 
-                // POI bubbles draw tether line; building bubbles skip straight to bobbing
                 if (tether != null)
                 {
+                    // Start tether draw phase
                     state = State.DrawingTether;
                     timer = 0f;
                     tether.gameObject.SetActive(true);
                     tether.SetPosition(0, basePosition);
-                    tether.SetPosition(1, basePosition); // starts collapsed
+                    tether.SetPosition(1, basePosition);
                 }
                 else
                 {
@@ -388,21 +327,16 @@ namespace ClockworkCraft
             timer += Time.deltaTime;
             float t = Mathf.Clamp01(timer / tetherDrawDuration);
 
-            // EaseOutCubic: bottom endpoint sweeps from bubble down to ground
+            // EaseOutCubic: sweep bottom from bubble to ground
             float eased = 1f - Mathf.Pow(1f - t, 3f);
-            Vector3 currentBottom = Vector3.Lerp(basePosition, groundPosition, eased);
-
             if (tether != null)
             {
                 tether.SetPosition(0, basePosition);
-                tether.SetPosition(1, currentBottom);
+                tether.SetPosition(1, Vector3.Lerp(basePosition, groundPosition, eased));
             }
 
             if (t >= 1f)
             {
-                if (tether != null)
-                    UpdateTetherPositions(basePosition);
-
                 state = State.Bobbing;
                 bobTimer = 0f;
             }
@@ -415,7 +349,12 @@ namespace ClockworkCraft
             float eased = -(Mathf.Cos(Mathf.PI * t) - 1f) / 2f;
             Vector3 pos = basePosition + Vector3.up * (eased * bobHeight);
             transform.position = pos;
-            UpdateTetherPositions(pos);
+
+            if (tether != null && tether.gameObject.activeSelf)
+            {
+                tether.SetPosition(0, pos);
+                tether.SetPosition(1, groundPosition);
+            }
         }
 
         private void UpdateDismiss()
@@ -426,9 +365,8 @@ namespace ClockworkCraft
             transform.localScale = targetScale * (1f - t);
             if (canvasGroup != null) canvasGroup.alpha = 1f - t;
 
-            // Hide tether immediately at dismiss start — it looks wrong lingering
             if (tether != null && tether.gameObject.activeSelf)
-                HideTether();
+                tether.gameObject.SetActive(false);
 
             if (t >= 1f)
             {
@@ -436,20 +374,6 @@ namespace ClockworkCraft
                 HideAllVariants();
                 gameObject.SetActive(false);
             }
-        }
-
-        // ── Billboarding ──────────────────────────────────────────────────
-
-        private void LateUpdate()
-        {
-            if (state == State.Inactive) return;
-            if (Camera.main != null)
-                transform.rotation = Camera.main.transform.rotation;
-        }
-
-        private void OnDestroy()
-        {
-            DestroyTether();
         }
     }
 }

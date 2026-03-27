@@ -386,7 +386,7 @@ namespace LittleCafe
             if (ClockworkGrid.GridManager.Instance != null && entry.buildingObj != null)
             {
                 if (ClockworkGrid.GridManager.Instance.WorldToGridPosition(entry.buildingObj.transform.position, out int gx, out int gy))
-                    ClockworkCraft.POIManager.Instance?.DismissBubbleAt(new Vector2Int(gx, gy));
+                    ClockworkCraft.POIManager.Instance?.DismissBubble(new Vector2Int(gx, gy));
             }
 
             var obj = Instantiate(buildingBubblePrefab, transform);
