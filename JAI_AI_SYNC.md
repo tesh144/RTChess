@@ -55,13 +55,25 @@ Both agents working on the bubble system. Check ownership before editing:
 - `WorldCanvas_Popups.prefab` — the shared bubble prefab
 - `MapGeneratorV2.cs` — bubble scale, EnsureManagers
 
-**Claude Code done today:**
+**Claude Code done (2026-03-27):**
+- POIBubble.cs full refactor: clean state machine, serialized params, dead code removed
+- POIManager.cs cleanup: removed duplicate anim fields, DismissBubble now public
 - Bubble 2-phase appear animation (rise 2.5u + tether draw)
 - Staggered appearances (1.2s queue), activity-based priority
 - Icon from database auto-lookup, discovery reward loot fly
 - Fix bubble stacking (building bubbles dismiss POI at same pos)
 - Tether sortingOrder fix (renders in front of tiles)
+- Replaced physics SphereCollider tap with UI Button (OnTapped event on POIBubble)
+- Matched building bubble scale to POI scale (both 0.005)
 - Camera audit: orthoDistancePadding, ZoomToDefault preserves zoom, dead fields removed
+- ClockworkCraftSceneSetup no longer destroys existing GridCamera
+- Reverted ortho fixed-distance (broke other behaviours), reverted ZoomToDefault removal
+- POIDiscoveryFX starburst effect added
+- Currency bar pop-in animation on first appearance
+- Loot icon size: fixed Inspector-tunable iconSize (72), screen-fraction removed
+- Appear animation trigger moved to DragDropHandler (no FurnitureObject dependency)
+- Torch colorize + worker interaction cascade for desaturation
+- MealBuffVisual _Color guard on Unlit/Texture materials
 - ClockworkCraftSceneSetup no longer destroys existing GridCamera
 
 ---
