@@ -385,15 +385,11 @@ namespace LittleCafe
             float yawRad = yawDeg * Mathf.Deg2Rad;
             float pitchRad = pitchDeg * Mathf.Deg2Rad;
 
-            // In orthographic mode, physical distance doesn't affect rendering —
-            // only orthographicSize matters. Use a fixed safe distance to avoid clipping.
-            float physicalDist = (cam != null && cam.orthographic) ? absoluteMaxDistance : dist;
-
             Vector3 offset = new Vector3(
                 Mathf.Sin(yawRad) * Mathf.Cos(pitchRad),
                 Mathf.Sin(pitchRad),
                 Mathf.Cos(yawRad) * Mathf.Cos(pitchRad)
-            ) * physicalDist;
+            ) * dist;
 
             transform.position = lookPoint + offset;
             transform.LookAt(lookPoint);
