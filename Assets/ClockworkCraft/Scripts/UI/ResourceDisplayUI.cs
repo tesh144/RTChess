@@ -279,11 +279,13 @@ namespace ClockworkCraft
                         isNew = true;
                     }
 
+                    bool wasHidden = !slot.gameObject.activeSelf;
+
                     slot.UpdateAmount(amount);
                     slot.gameObject.SetActive(true);
 
-                    // Play appear animation after SetActive so the coroutine can run
-                    if (isNew)
+                    // Play appear animation when first created or re-appearing after being hidden
+                    if (isNew || wasHidden)
                         slot.PlayAppearAnimation();
                 }
                 else
