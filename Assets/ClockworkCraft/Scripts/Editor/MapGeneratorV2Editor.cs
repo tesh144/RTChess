@@ -60,7 +60,7 @@ namespace ClockworkCraft
             // Coverage info
             {
                 int totalTiles = gen.mapWidth * gen.mapHeight;
-                int clearingSize = (2 * gen.clearingRadius + 1) * (2 * gen.clearingRadius + 1);
+                int clearingSize = (2 * gen.clearCenterCardinal + 1) * (2 * gen.clearCenterCardinal + 1);
                 int available = totalTiles - clearingSize;
                 int totalBudget = Mathf.RoundToInt(available * densityProp.floatValue);
                 float coveragePercent = ((float)totalBudget / available) * 100f;
@@ -161,7 +161,7 @@ namespace ClockworkCraft
                 if (e.spawnWeight > 0f) totalCombinedWeight += e.spawnWeight;
 
             int totalTilesForBudget = gen.mapWidth * gen.mapHeight
-                - (2 * gen.clearingRadius + 1) * (2 * gen.clearingRadius + 1);
+                - (2 * gen.clearCenterCardinal + 1) * (2 * gen.clearCenterCardinal + 1);
             int totalSpawnBudget = Mathf.RoundToInt(totalTilesForBudget * densityProp.floatValue);
 
             // ── Environment entry cards ──────────────────────────────

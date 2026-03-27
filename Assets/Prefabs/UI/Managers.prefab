@@ -255,7 +255,7 @@ MonoBehaviour:
   buildingBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
   buildingBubbleScale: 0.005
   centerEnvironmentName: Goldmine
-  clearingRadius: 2
+  clearCenterCardinal: 2
   defaultEnvironmentDesaturatedValue: 0.2
   defaultEnvironmentFullColorValue: 1
   defaultEnvironmentTransitionDuration: 0.3

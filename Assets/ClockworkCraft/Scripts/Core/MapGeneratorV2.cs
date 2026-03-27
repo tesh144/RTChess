@@ -184,9 +184,9 @@ namespace ClockworkCraft
         [Tooltip("EnvironmentDatabase entry to place at dead center.")]
         public string centerEnvironmentName = "Goldmine";
 
-        [Tooltip("Radius around center kept empty. 2 = 5x5 clearing (2 tiles in every direction).")]
+        [Tooltip("Cardinal-only clearing radius around center goldmine. 2 = cross shape extending 2 tiles N/S/E/W. Separate from per-entry clearFromCenter.")]
         [Min(0)]
-        public int clearingRadius = 2;
+        public int clearCenterCardinal = 2;
 
         [Header("Environment Desaturation")]
         [Tooltip("Saturation amount before first worker interaction (0 = grayscale, 1 = full color)")]
@@ -980,7 +980,7 @@ namespace ClockworkCraft
             }
 
             // Calculate total tile budget from mapDensity (shared by env + units)
-            int clearingSize = (2 * clearingRadius + 1) * (2 * clearingRadius + 1);
+            int clearingSize = (2 * clearCenterCardinal + 1) * (2 * clearCenterCardinal + 1);
             int availableTiles = (width * height) - clearingSize;
             int totalBudget = Mathf.RoundToInt(availableTiles * mapDensity);
 
@@ -2602,7 +2602,7 @@ namespace ClockworkCraft
 
             // Plus/cross shape — cardinal directions only, no diagonals
             bool onCardinal = (dx == 0 || dy == 0);
-            return onCardinal && (dx + dy) <= clearingRadius;
+            return onCardinal && (dx + dy) <= clearCenterCardinal;
         }
 
         bool IsTooClose(int x, int y, List<Vector2Int> placed, int minSpacing)
