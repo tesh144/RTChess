@@ -43,8 +43,8 @@ namespace ClockworkCraft
         public float flyCurveHeight = 80f;
 
         [Header("Visual")]
-        [Tooltip("Icon size as a fraction of screen height (0.03 = 3% of screen height).")]
-        public float iconScreenFraction = 0.03f;
+        [Tooltip("Fixed icon size in canvas units. Adjustable in Inspector.")]
+        public float iconSize = 28f;
 
         // Pool — separate pools for sprite-based and text-based particles
         private Canvas canvas;
@@ -53,8 +53,15 @@ namespace ClockworkCraft
         private readonly Queue<GameObject> spritePool = new Queue<GameObject>();
         private readonly Queue<GameObject> textPool = new Queue<GameObject>();
 
-        /// <summary>Returns icon size in pixels, proportional to screen height. Consistent across all resolutions and DPI.</summary>
-        private float ScaledIconSize => Screen.height * iconScreenFraction;
+        /// <summary>Returns icon size in canvas units, accounting for canvas scale factor.</summary>
+        private float ScaledIconSize
+        {
+            get
+            {
+                float scale = canvas != null ? canvas.scaleFactor : 1f;
+                return iconSize / Mathf.Max(scale, 0.01f);
+            }
+        }
 
         void Awake()
         {
