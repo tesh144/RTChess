@@ -136,7 +136,7 @@ namespace ClockworkCraft
                 tether.allowOcclusionWhenDynamic = false;
                 tether.positionCount = 2;
                 tether.useWorldSpace = true;
-                tether.sortingOrder = 5; // above world objects, below bubble canvas
+                tether.sortingOrder = -1; // behind bubble canvas
                 tether.numCapVertices = 2;
             }
 
@@ -254,9 +254,13 @@ namespace ClockworkCraft
 
             if (canvasGroup != null) canvasGroup.alpha = 0f;
 
-            // Prepare tether but hide until DrawingTether phase
-            SetupTether(bubbleType, worldPos);
-            HideTether();
+            // Tether line only for POI bubbles, not building Insert/Collect/Alert
+            bool isPOI = bubbleType == BubbleType.POI_Gold || bubbleType == BubbleType.POI_Grey || bubbleType == BubbleType.POI_Red;
+            if (isPOI)
+            {
+                SetupTether(bubbleType, worldPos);
+                HideTether();
+            }
 
             // Start below target position
             transform.position = worldPos + Vector3.down * riseDistance;
@@ -351,16 +355,19 @@ namespace ClockworkCraft
                 transform.localScale = targetScale;
                 if (canvasGroup != null) canvasGroup.alpha = 1f;
 
-                // Transition to tether draw
-                state = State.DrawingTether;
-                timer = 0f;
-
-                // Show tether — start with bottom at bubble position
+                // POI bubbles draw tether line; building bubbles skip straight to bobbing
                 if (tether != null)
                 {
+                    state = State.DrawingTether;
+                    timer = 0f;
                     tether.gameObject.SetActive(true);
                     tether.SetPosition(0, basePosition);
                     tether.SetPosition(1, basePosition); // starts collapsed
+                }
+                else
+                {
+                    state = State.Bobbing;
+                    bobTimer = 0f;
                 }
             }
         }
