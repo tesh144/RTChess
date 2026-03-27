@@ -44,7 +44,7 @@ namespace ClockworkCraft
 
         [Header("Visual")]
         [Tooltip("Fixed icon size in canvas units. Adjustable in Inspector.")]
-        public float iconSize = 28f;
+        public float iconSize = 72f;
 
         // Pool — separate pools for sprite-based and text-based particles
         private Canvas canvas;
