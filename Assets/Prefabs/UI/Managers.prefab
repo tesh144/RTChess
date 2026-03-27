@@ -256,7 +256,7 @@ MonoBehaviour:
   buildingBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
   buildingBubbleScale: 0.005
   centerEnvironmentName: Goldmine
-  clearingRadius: 2
+  clearCenterCardinal: 2
   defaultEnvironmentDesaturatedValue: 0.2
   defaultEnvironmentFullColorValue: 1
   defaultEnvironmentTransitionDuration: 0.3
@@ -571,6 +571,10 @@ MonoBehaviour:
   poiDiscovery: {fileID: 8300000, guid: 0b57db5008acc244293961bf19124be7, type: 3}
   clockTick: {fileID: 8300000, guid: c338dd19bf82c4148a33654a42e1a987, type: 3}
   pitchVariation: 0.05
+  coinBatchWindow: 0.025
+  coinStaggerInterval: 0.05
+  coinBasePitch: 0.9
+  coinMaxPitch: 1.3
 --- !u!1 &7692711440160710592
 GameObject:
   m_ObjectHideFlags: 0
