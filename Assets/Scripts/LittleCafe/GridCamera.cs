@@ -22,14 +22,14 @@ namespace LittleCafe
         [SerializeField] private float pitch = 35f;
 
         [Header("Zoom - Fixed Limits")]
-        [SerializeField] private float minDistance = 3f;           // Closest zoom (allows drag-zoom-in below default)
+        [SerializeField] private float minDistance = 5f;           // Closest zoom — matches starting ortho size
         [SerializeField] private float absoluteMaxDistance = 40f;  // Never zoom out further than this
         [SerializeField] private float zoomSpeed = 3f;
         [SerializeField] private float zoomSmoothing = 8f;
 
         [Header("Zoom - Adaptive Scaling")]
         [SerializeField] private float baseDefaultDistance = 5f;   // Starting zoom level (ortho size)
-        [SerializeField] private float baseMaxDistance = 8f;       // Max zoom-out with no revealed tiles (allows some scroll room)
+        [SerializeField] private float baseMaxDistance = 5f;       // Max zoom with no revealed tiles — grows with exploration
         [SerializeField] private float distancePerRevealedTile = 0.06f; // Extra max-zoom per revealed tile
         [Tooltip("Extra distance added to physical camera position to prevent near-plane clipping.")]
         [SerializeField] private float orthoDistancePadding = 10f;
@@ -438,6 +438,15 @@ namespace LittleCafe
         public void ZoomTo(float distance)
         {
             targetDistance = Mathf.Clamp(distance, minDistance, currentMaxDistance);
+        }
+
+        /// <summary>
+        /// Zoom without clamping to minDistance. Used during drag to temporarily
+        /// zoom closer than the normal minimum. Still clamps to absoluteMaxDistance.
+        /// </summary>
+        public void ZoomToUnclamped(float distance)
+        {
+            targetDistance = Mathf.Clamp(distance, 0.5f, currentMaxDistance);
         }
 
         public void SetTarget(Vector3 worldPos)

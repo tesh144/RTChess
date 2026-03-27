@@ -208,7 +208,11 @@ namespace ClockworkGrid
                 preDragZoomDistance = cam.CurrentDistance;
                 preDragAutoRotate = cam.IsAutoRotating;
                 cam.SetAutoRotate(false);
-                cam.ZoomTo(preDragZoomDistance * dragZoomRatio);
+                // Zoom in slightly from player's current level — bypass minDistance clamp
+                if (LittleCafe.GridCamera.Instance != null)
+                    LittleCafe.GridCamera.Instance.ZoomToUnclamped(preDragZoomDistance * dragZoomRatio);
+                else
+                    cam.ZoomTo(preDragZoomDistance * dragZoomRatio);
             }
 
             arcLine.enabled = true;
