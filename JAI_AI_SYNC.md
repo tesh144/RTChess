@@ -26,12 +26,15 @@
 
 ## Active Work
 
-| Agent | Task | Status |
-|-------|------|--------|
-| Co-Work | #130 POI Bubble System | In Progress — Design doc written, POI sheet + Ref tab created, data pipeline pending |
-| Co-Work | #117 New Buildings: Scrapper, Garden, Rabbit Farm | In Progress — DB entries synced; scene spawn cleanup done; production logic pending |
-| Co-Work | #22 Corruption System | In Progress — data arch + thorns + spike spawning done; scene entries cleaned up |
-| Co-Work | Enemy interaction fix | In Progress — ScanAndInteract faction-aware, loot gated for enemies, Enemy tag synced |
+| Agent | Task | Status | Files |
+|-------|------|--------|-------|
+| Claude Code | #155 Building Bubble Migration (Insert/Collect) | In Progress — Insert fill bar + icon done, Collect already wired, HideAllVariants + EnableWithParents fixed, scale exposed on MapGenV2. Tether: POI-only, wider top, behind canvas. | `POIBubble.cs`, `BuildingProductionManager.cs`, `MapGeneratorV2.cs`, `WorldCanvas_Popups.prefab` |
+| Co-Work | #130 POI Bubble System | In Progress — Design doc written, POI sheet + Ref tab created, data pipeline pending | `POIBubble.cs`, `POIManager.cs`, `WorldCanvas_Popups.prefab` |
+| Co-Work | #117 New Buildings: Scrapper, Garden, Rabbit Farm | In Progress — DB entries synced; scene spawn cleanup done; production logic pending | `BuildingProductionManager.cs`, `DragDropHandler.cs` |
+| Co-Work | #22 Corruption System | In Progress — data arch + thorns + spike spawning done; scene entries cleaned up | |
+| Co-Work | Enemy interaction fix | In Progress — ScanAndInteract faction-aware, loot gated for enemies, Enemy tag synced | |
+
+**⚠️ CONFLICT ZONE:** `POIBubble.cs` and `WorldCanvas_Popups.prefab` are being modified by BOTH Claude Code (#155) and Co-Work (#130). Coordinate before editing these files.
 
 ---
 
