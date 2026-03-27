@@ -32,11 +32,10 @@ namespace ClockworkCraft
                 return;
             }
 
-            // Replace any stale GridCamera with a fresh one
-            var oldGC = cam.GetComponent<GridCamera>();
-            if (oldGC != null) DestroyImmediate(oldGC);
-
-            GridCamera gridCam = cam.gameObject.AddComponent<GridCamera>();
+            // Use existing GridCamera if present (preserves Inspector values)
+            GridCamera gridCam = cam.GetComponent<GridCamera>();
+            if (gridCam == null)
+                gridCam = cam.gameObject.AddComponent<GridCamera>();
             gridCam.PointAtGrid();
 
             if (cam.GetComponent<CameraPan>() == null)

@@ -194,12 +194,10 @@ namespace LittleCafe
                 return;
             }
 
-            GridCamera oldGridCam = cam.GetComponent<GridCamera>();
-            if (oldGridCam != null)
-                DestroyImmediate(oldGridCam);
-
-            // Add GridCamera and point at grid
-            GridCamera gridCam = cam.gameObject.AddComponent<GridCamera>();
+            // Use existing GridCamera if present (preserves Inspector values)
+            GridCamera gridCam = cam.GetComponent<GridCamera>();
+            if (gridCam == null)
+                gridCam = cam.gameObject.AddComponent<GridCamera>();
             gridCam.PointAtGrid();
 
             // Add CameraPan for WASD/arrow key and middle-mouse drag movement
