@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using ClockworkGrid;
@@ -73,6 +75,11 @@ namespace ClockworkCraft
 
         // Pool
         private readonly List<POIBubble> pool = new List<POIBubble>();
+
+        // Stagger queue — only one bubble appears at a time
+        private readonly Queue<System.Action> bubbleQueue = new Queue<System.Action>();
+        private Coroutine staggerCoroutine;
+        private const float STAGGER_DELAY = 1.2f; // seconds between each bubble appearance
 
         /// <summary>Find POI data by exact asset name match (case-insensitive).</summary>
         private POITypeData GetPOIData(string assetName)
@@ -188,7 +195,7 @@ namespace ClockworkCraft
             // Hearts always get a bubble immediately — look up POI data for label/tier
             var data = GetPOIData(HEART_ASSET_NAME);
             var bubbleType = data != null ? data.GetBubbleType() : BubbleType.POI_Red;
-            ShowBubble(pos, HEART_ASSET_NAME, bubbleType);
+            QueueBubble(pos, HEART_ASSET_NAME, bubbleType);
         }
 
         /// <summary>Called by CorruptionHeart.OnDestroy().</summary>
@@ -272,6 +279,9 @@ namespace ClockworkCraft
 
         // ── Fog Event ───────────────────────────────────────────────────
 
+        /// <summary>Delay between celebration burst and loot fly (seconds).</summary>
+        private const float LOOT_FLY_DELAY = 0.25f;
+
         private void OnCellRevealed(int x, int y)
         {
             var coord = new Vector2Int(x, y);
@@ -279,9 +289,17 @@ namespace ClockworkCraft
             // Heart discovered
             if (heartRegistry.TryGetValue(coord, out var heart) && heart != null)
             {
-                Vector3 bubblePos = activeBubbles.TryGetValue(coord, out var hBubble) && hBubble != null
-                    ? hBubble.transform.position : Vector3.zero;
-                AwardReward(HEART_ASSET_NAME, bubblePos);
+                Vector3 bubblePos = GetBubbleOrGridPos(coord);
+                BubbleType bType = activeBubbles.TryGetValue(coord, out var hBub) && hBub != null
+                    ? hBub.CurrentType : BubbleType.POI_Red;
+
+                // 1. Celebration burst + SFX (immediate)
+                POIDiscoveryFX.Play(bubblePos, bType);
+
+                // 2. Loot fly (delayed so the burst lands first)
+                StartCoroutine(DelayedAwardReward(HEART_ASSET_NAME, bubblePos));
+
+                // 3. Dismiss bubble (starts fade-out alongside burst)
                 DismissBubble(coord);
                 heartRegistry.Remove(coord);
             }
@@ -289,15 +307,29 @@ namespace ClockworkCraft
             // Env POI discovered
             if (envRegistry.TryGetValue(coord, out var entry))
             {
-                Vector3 bubblePos = activeBubbles.TryGetValue(coord, out var eBubble) && eBubble != null
-                    ? eBubble.transform.position : Vector3.zero;
-                AwardReward(entry.assetName, bubblePos);
+                Vector3 bubblePos = GetBubbleOrGridPos(coord);
+                BubbleType bType = activeBubbles.TryGetValue(coord, out var eBub) && eBub != null
+                    ? eBub.CurrentType : BubbleType.POI_Grey;
+
+                // 1. Celebration burst + SFX (immediate)
+                POIDiscoveryFX.Play(bubblePos, bType);
+
+                // 2. Loot fly (delayed so the burst lands first)
+                StartCoroutine(DelayedAwardReward(entry.assetName, bubblePos));
+
+                // 3. Dismiss bubble (starts fade-out alongside burst)
                 DismissBubble(coord);
                 envRegistry.Remove(coord);
             }
 
             // Border expanded — refresh which env POIs qualify
             RefreshEnvWindow();
+        }
+
+        private IEnumerator DelayedAwardReward(string assetName, Vector3 worldPos)
+        {
+            yield return new WaitForSeconds(LOOT_FLY_DELAY);
+            AwardReward(assetName, worldPos);
         }
 
         // ── Rolling Window ──────────────────────────────────────────────
@@ -342,7 +374,7 @@ namespace ClockworkCraft
             {
                 var data = GetPOIData(candidates[i].entry.assetName);
                 var bubbleType = data != null ? data.GetBubbleType() : BubbleType.POI_Grey;
-                ShowBubble(candidates[i].pos, candidates[i].entry.assetName, bubbleType);
+                QueueBubble(candidates[i].pos, candidates[i].entry.assetName, bubbleType);
                 filled++;
             }
 
@@ -400,7 +432,27 @@ namespace ClockworkCraft
             return null;
         }
 
-        private void ShowBubble(Vector2Int gridPos, string assetName, BubbleType bubbleType)
+        /// <summary>Queue a bubble to appear — staggered so only one pops in at a time.</summary>
+        private void QueueBubble(Vector2Int gridPos, string assetName, BubbleType bubbleType)
+        {
+            bubbleQueue.Enqueue(() => ShowBubbleImmediate(gridPos, assetName, bubbleType));
+
+            if (staggerCoroutine == null)
+                staggerCoroutine = StartCoroutine(StaggerCoroutine());
+        }
+
+        private IEnumerator StaggerCoroutine()
+        {
+            while (bubbleQueue.Count > 0)
+            {
+                var action = bubbleQueue.Dequeue();
+                action();
+                yield return new WaitForSeconds(STAGGER_DELAY);
+            }
+            staggerCoroutine = null;
+        }
+
+        private void ShowBubbleImmediate(Vector2Int gridPos, string assetName, BubbleType bubbleType)
         {
             if (activeBubbles.ContainsKey(gridPos)) return;
 
@@ -432,22 +484,42 @@ namespace ClockworkCraft
             activeBubbles.Remove(gridPos);
         }
 
+        /// <summary>
+        /// Returns the bubble's world position if one is active for this coord,
+        /// otherwise falls back to the grid-cell world position so loot fly
+        /// still has a valid origin even when no bubble was shown.
+        /// </summary>
+        private Vector3 GetBubbleOrGridPos(Vector2Int coord)
+        {
+            if (activeBubbles.TryGetValue(coord, out var bubble) && bubble != null)
+                return bubble.transform.position;
+
+            // No active bubble — use grid world position instead
+            if (GridManager.Instance != null)
+                return GridManager.Instance.GridToWorldPosition(coord.x, coord.y);
+
+            return new Vector3(coord.x, 0f, coord.y);
+        }
+
         private void AwardReward(string assetName, Vector3 worldPos)
         {
             if (poiEntries == null || poiEntries.Count == 0) return;
             var data = GetPOIData(assetName);
             if (data == null || data.rewardQuantity <= 0) return;
 
-            // Add the resource
-            if (ResourceManager.Instance != null)
-                ResourceManager.Instance.AddResource(data.rewardType, data.rewardQuantity);
-
-            // Visual: loot fly from bubble position to resource bar
-            if (worldPos != Vector3.zero)
+            // Visual: loot fly from bubble/grid position to resource bar.
+            // SpawnLoot adds the resource per-particle on arrival, so no
+            // direct AddResource call — avoids double-counting.
+            var lootFX = ClockworkCraft.ResourceLootFX.Instance;
+            if (lootFX != null)
             {
-                var lootFX = ClockworkCraft.ResourceLootFX.Instance;
-                if (lootFX != null)
-                    lootFX.SpawnLoot(worldPos, data.rewardType, data.rewardQuantity);
+                lootFX.SpawnLoot(worldPos, data.rewardType, data.rewardQuantity);
+            }
+            else
+            {
+                // Fallback: no loot FX available, add silently
+                if (ResourceManager.Instance != null)
+                    ResourceManager.Instance.AddResource(data.rewardType, data.rewardQuantity);
             }
 
             Debug.Log($"[POIManager] Awarded {data.rewardQuantity}x {data.rewardType} for discovering '{assetName}'");
