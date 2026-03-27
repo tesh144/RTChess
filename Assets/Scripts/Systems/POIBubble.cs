@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -92,6 +93,9 @@ namespace ClockworkCraft
         public GameObject ActiveChild => activeChild;
         public UIPanel Panel => panel;
 
+        /// <summary>Fired when the bubble is tapped/clicked. Subscribe to handle collect/interact.</summary>
+        public event Action OnTapped;
+
         /// <summary>Set the world-space scale for this bubble. Animations scale relative to this.</summary>
         public void SetTargetScale(Vector3 scale) => targetScale = scale;
 
@@ -152,6 +156,9 @@ namespace ClockworkCraft
                             iconImg.enabled = true;
                         }
                     }
+
+                    // Make the variant tappable via Unity UI
+                    WireUpButton(obj);
                 }
             }
 
@@ -178,12 +185,35 @@ namespace ClockworkCraft
             bobTimer = 0f;
         }
 
+        /// <summary>Add a Button to the variant so UI taps fire OnTapped.</summary>
+        private void WireUpButton(GameObject variant)
+        {
+            // Need a raycast-target Image for the Button to work.
+            // Use the first Image found, or add a transparent one.
+            var img = variant.GetComponent<Image>();
+            if (img != null)
+                img.raycastTarget = true;
+
+            var btn = variant.GetComponent<Button>();
+            if (btn == null) btn = variant.AddComponent<Button>();
+            btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(() => OnTapped?.Invoke());
+
+            // Make the button fully transparent (no visual change on press)
+            var colors = btn.colors;
+            colors.highlightedColor = Color.white;
+            colors.pressedColor = Color.white;
+            colors.selectedColor = Color.white;
+            btn.colors = colors;
+        }
+
         /// <summary>Start fade-out, then deactivate.</summary>
         public void Dismiss()
         {
             if (state == State.Inactive || state == State.Dismissing) return;
             if (canvasGroup != null) canvasGroup.alpha = 1f;
             transform.localScale = targetScale;
+            OnTapped = null; // Clear subscribers so pooled bubbles don't fire stale callbacks
             state = State.Dismissing;
             timer = 0f;
         }
@@ -211,10 +241,15 @@ namespace ClockworkCraft
             activeChild = null;
         }
 
-        /// <summary>Enable obj and every parent up to (not including) this transform.</summary>
+        /// <summary>Enable obj, all its descendants, and every parent up to root.</summary>
         private void EnableWithParents(GameObject obj)
         {
-            Transform t = obj.transform;
+            // Enable the variant and ALL its children (Icon, Fill, backgrounds, etc.)
+            foreach (var child in obj.GetComponentsInChildren<Transform>(true))
+                child.gameObject.SetActive(true);
+
+            // Enable parent chain so the variant is actually visible
+            Transform t = obj.transform.parent;
             while (t != null && t != transform)
             {
                 t.gameObject.SetActive(true);

@@ -849,19 +849,15 @@ namespace LittleCafe
                     iconImg.enabled = true;
                 }
                 entry.popupIconImage = iconImg;
-
-                // Collider for tap detection — inverse-scaled so radius is in world units
-                GameObject colliderHolder = new GameObject("TapCollider");
-                colliderHolder.transform.SetParent(canvasObj.transform, false);
-                if (buildingBubbleScale > 0f)
-                    colliderHolder.transform.localScale = Vector3.one / buildingBubbleScale;
-
-                SphereCollider col = colliderHolder.AddComponent<SphereCollider>();
-                col.radius = 0.6f;
-                col.isTrigger = false;
-
                 entry.popupCanvasObj = canvasObj;
-                entry.popupCollider = col;
+
+                // Use UI tap via POIBubble.OnTapped instead of physics collider
+                int capturedIndex = i;
+                bubble.OnTapped += () =>
+                {
+                    if (capturedIndex < entries.Count)
+                        CollectReward(entries[capturedIndex]);
+                };
             }
             // ── Legacy path (procedural or custom popup prefab) ──
             else
