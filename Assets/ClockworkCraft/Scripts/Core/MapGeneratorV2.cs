@@ -1656,7 +1656,7 @@ namespace ClockworkCraft
             if (GridEntityManager.Instance != null)
             {
                 GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
-                ApplyEnvironmentDesaturationDefaults(obj);
+                ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
             }
 
             GridManager.Instance?.PlaceUnit(center.x, center.y, obj, CellState.Resource);
@@ -1721,7 +1721,7 @@ namespace ClockworkCraft
                 if (GridEntityManager.Instance != null)
                 {
                     GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
-                    ApplyEnvironmentDesaturationDefaults(obj);
+                    ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
                 }
 
                 // ── Appear animation (only if visible) ───────────────
@@ -1787,7 +1787,7 @@ namespace ClockworkCraft
                 if (GridEntityManager.Instance != null)
                 {
                     GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
-                    ApplyEnvironmentDesaturationDefaults(obj);
+                    ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
                 }
 
                 if (obj.activeSelf)
