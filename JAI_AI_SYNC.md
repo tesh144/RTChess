@@ -34,7 +34,35 @@
 | Co-Work | #22 Corruption System | In Progress — data arch + thorns + spike spawning done; scene entries cleaned up | |
 | Co-Work | Enemy interaction fix | In Progress — ScanAndInteract faction-aware, loot gated for enemies, Enemy tag synced | |
 
-**⚠️ CONFLICT ZONE:** `POIBubble.cs` and `WorldCanvas_Popups.prefab` are being modified by BOTH Claude Code (#155) and Co-Work (#130). Coordinate before editing these files.
+**⚠️ CONFLICT ZONE — ALL HANDS ON POI BUBBLES (2026-03-27)**
+
+Both agents working on the bubble system. Check ownership before editing:
+
+**Claude Code owns:**
+- `POIBubble.cs` — animation states, tether, variant toggling, Setup()
+- `POIManager.cs` — bubble pool, stagger queue, ShowBubble, DismissBubble, reward, icon lookup
+- `GridCamera.cs` — zoom, ortho padding, all camera behaviour
+
+**Co-Work owns:**
+- `SheetSyncEditor.cs` — SyncPOI(), SyncEnvironment() column fixes
+- `SheetCache.json` — PointsOfInterest data section
+- Google Sheets structure and validation
+
+**Shared (coordinate before editing):**
+- `BuildingProductionManager.cs` — building bubble creation (Insert/Collect)
+- `DragDropHandler.cs` — camera zoom during drag
+- `POITypeData.cs` — data fields
+- `WorldCanvas_Popups.prefab` — the shared bubble prefab
+- `MapGeneratorV2.cs` — bubble scale, EnsureManagers
+
+**Claude Code done today:**
+- Bubble 2-phase appear animation (rise 2.5u + tether draw)
+- Staggered appearances (1.2s queue), activity-based priority
+- Icon from database auto-lookup, discovery reward loot fly
+- Fix bubble stacking (building bubbles dismiss POI at same pos)
+- Tether sortingOrder fix (renders in front of tiles)
+- Camera audit: orthoDistancePadding, ZoomToDefault preserves zoom, dead fields removed
+- ClockworkCraftSceneSetup no longer destroys existing GridCamera
 
 ---
 
