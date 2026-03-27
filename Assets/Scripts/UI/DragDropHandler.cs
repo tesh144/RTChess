@@ -406,10 +406,7 @@ namespace ClockworkGrid
                 if (feedCam != null)
                 {
                     feedCam.SetAutoRotate(preDragAutoRotate);
-                    if (LittleCafe.GridCamera.Instance != null)
-                        LittleCafe.GridCamera.Instance.ZoomToDefault();
-                    else
-                        feedCam.ZoomTo(preDragZoomDistance);
+                    feedCam.ZoomTo(preDragZoomDistance);
                 }
 
                 CleanupDragVisuals();
@@ -616,11 +613,8 @@ namespace ClockworkGrid
                 // Update orbit pivot to the placed object's position
                 placeCam.FocusOnPosition(worldPos);
 
-                // Zoom out to adaptive default (grows with revealed tiles)
-                if (LittleCafe.GridCamera.Instance != null)
-                    LittleCafe.GridCamera.Instance.ZoomToDefault();
-                else
-                    placeCam.ZoomTo(preDragZoomDistance);
+                // Restore to player's zoom level before drag
+                placeCam.ZoomTo(preDragZoomDistance);
             }
 
             // Cleanup
