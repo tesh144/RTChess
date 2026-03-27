@@ -71,6 +71,9 @@ namespace ClockworkCraft
         private void Awake()
         {
             panel = GetComponent<UIPanel>();
+
+            // On instantiate: everything off. Setup() turns on only what's needed.
+            HideAllVariants();
         }
 
         // ── Properties ────────────────────────────────────────────────────
