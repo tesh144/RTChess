@@ -86,6 +86,10 @@ namespace LittleCafe
             // Avoid duplicates
             if (fillBarCanvases.ContainsKey(building)) return;
 
+            // Skip legacy fill bar if the bubble system handles it (Insert bubble has its own Fill image)
+            if (BuildingProductionManager.Instance != null && BuildingProductionManager.Instance.HasBubblePrefab)
+                return;
+
             // Root with world-space Canvas
             GameObject root = new GameObject($"FillBar_{building.name}");
 

@@ -168,6 +168,9 @@ namespace LittleCafe
                 IntervalTimer.Instance.OnBar += OnIntervalTick;
         }
 
+        /// <summary>True if the designed bubble prefab system is active (replaces legacy procedural popups).</summary>
+        public bool HasBubblePrefab => insertBubblePrefab != null || collectBubblePrefab != null;
+
         /// <summary>Set the bubble prefabs and scale at runtime (called by MapGeneratorV2 since BPM is AddComponent'd).
         /// Pass the same prefab for both if using a single WorldCanvas_Popups with Bubble_Insert/Bubble_Collect variants.</summary>
         public void SetBubblePrefabs(GameObject insertPrefab, GameObject collectPrefab, float scale = 0.005f)
