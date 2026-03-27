@@ -39,8 +39,8 @@ namespace ClockworkCraft
         [Tooltip("Minimum cell distance between two instances (Scattered mode only).")]
         [Min(0)] public int minSpacing = 0;
 
-        [Tooltip("Won't appear within this many tiles of the starting gold mine (Scattered mode only).")]
-        [Min(0)] public int clearFromCenter = 2;
+        [Tooltip("Won't appear within this many tiles of the starting gold mine (Scattered mode only). Independent of the global Clearing Radius — whichever is larger takes effect.")]
+        [Min(0)] public int clearFromCenter = 0;
 
         // ── Cluster settings (only used when spawnMode == Clustered) ──
         [Tooltip("0 = few large cohesive blobs. 1 = many small clusters with loose break-off pieces.")]
@@ -71,8 +71,8 @@ namespace ClockworkCraft
         [Tooltip("Minimum cell distance between two instances (Scattered mode only).")]
         [Min(0)] public int minSpacing = 4;
 
-        [Tooltip("Won't appear within this many tiles of the starting gold mine (Scattered mode only).")]
-        [Min(0)] public int clearFromCenter = 2;
+        [Tooltip("Won't appear within this many tiles of the starting gold mine (Scattered mode only). Independent of the global Clearing Radius — whichever is larger takes effect.")]
+        [Min(0)] public int clearFromCenter = 0;
 
         // ── Cluster settings ──
         [Tooltip("0 = few large packs. 1 = many small scattered groups.")]
@@ -174,7 +174,7 @@ namespace ClockworkCraft
         public ClockworkGrid.PlacementCostsDatabase economyBalanceConfig;
 
         [Header("Bubble Prefab")]
-        [Tooltip("WorldCanvas_Popups prefab — shared by POI bubbles and building Insert/Collect bubbles.")]
+        [Tooltip("WorldCanvas_Popups prefab — used for POI bubbles and as the default for both Insert and Collect building bubbles. Individual overrides can be set directly on BuildingProductionManager.")]
         public GameObject buildingBubblePrefab;
 
         [Tooltip("World-space scale for building bubbles. Increase to make Insert/Collect bubbles bigger.")]
@@ -354,7 +354,7 @@ namespace ClockworkCraft
             {
                 var bpm = new GameObject("BuildingProductionManager").AddComponent<BuildingProductionManager>();
                 bpm.workerDatabase = workerDatabase;
-                bpm.SetBubblePrefab(buildingBubblePrefab, buildingBubbleScale);
+                bpm.SetBubblePrefabs(buildingBubblePrefab, buildingBubblePrefab, buildingBubbleScale);
             }
             else
             {
@@ -362,7 +362,7 @@ namespace ClockworkCraft
                 if (bpm.workerDatabase == null && workerDatabase != null)
                     bpm.workerDatabase = workerDatabase;
                 if (buildingBubblePrefab != null)
-                    bpm.SetBubblePrefab(buildingBubblePrefab, buildingBubbleScale);
+                    bpm.SetBubblePrefabs(buildingBubblePrefab, buildingBubblePrefab, buildingBubbleScale);
             }
 
             // Ensure hold-to-fill handler (input handler for HoldToFill buildings like Kitchen)
@@ -2594,12 +2594,11 @@ namespace ClockworkCraft
 
         bool IsInClearing(int x, int y)
         {
-            if (x == center.x && y == center.y) return false;
-
             int dx = Mathf.Abs(x - center.x);
             int dy = Mathf.Abs(y - center.y);
 
             // Chebyshev distance — square clearing zone, radius tiles in every direction
+            // Center tile IS part of the clearing (occupied by the center environment object)
             return Mathf.Max(dx, dy) <= clearingRadius;
         }
 
