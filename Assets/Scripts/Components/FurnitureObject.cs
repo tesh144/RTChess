@@ -152,20 +152,27 @@ namespace LittleCafe
         /// <summary>
         /// Called when any fog cell is revealed. If this furniture is a torch and the revealed
         /// cell is within 1 tile, colorize whatever just appeared there.
+        /// Waits one frame so FogHideable has time to reactivate the GameObject before we colorize.
         /// </summary>
         private void OnNearbyFogCellRevealed(int x, int y)
         {
             int dx = Mathf.Abs(x - gridX);
             int dy = Mathf.Abs(y - gridY);
-            if (dx > 1 || dy > 1) return; // Outside colorize radius
+            if (dx > 1 || dy > 1) return;
+            StartCoroutine(ColorizeRevealedCell(x, y));
+        }
+
+        private System.Collections.IEnumerator ColorizeRevealedCell(int x, int y)
+        {
+            yield return null; // Wait one frame for FogHideable to activate the object
 
             GridManager gm = GridManager.Instance;
-            if (gm == null) return;
+            if (gm == null) yield break;
 
             GameObject occupant = gm.GetCellOccupant(x, y);
-            if (occupant == null) return;
+            if (occupant == null) yield break;
 
-            var desat = occupant.GetComponent<ClockworkCraft.EnvironmentDesaturation>();
+            var desat = occupant.GetComponentInChildren<ClockworkCraft.EnvironmentDesaturation>();
             if (desat != null && !desat.HasColorized)
                 desat.Colorize();
         }
@@ -192,7 +199,7 @@ namespace LittleCafe
                     if (dx == 0 && dy == 0) continue;
                     GameObject occupant = gm.GetCellOccupant(gridX + dx, gridY + dy);
                     if (occupant == null) continue;
-                    var desat = occupant.GetComponent<ClockworkCraft.EnvironmentDesaturation>();
+                    var desat = occupant.GetComponentInChildren<ClockworkCraft.EnvironmentDesaturation>();
                     if (desat != null && !desat.HasColorized)
                         desat.Colorize();
                 }
