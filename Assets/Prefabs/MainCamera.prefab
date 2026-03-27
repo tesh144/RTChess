@@ -107,7 +107,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   yaw: 45
   pitch: 35
-  minDistance: 5
+  minDistance: 15
   absoluteMaxDistance: 40
   zoomSpeed: 3
   zoomSmoothing: 8
@@ -126,6 +126,6 @@ MonoBehaviour:
   autoRotateSpeed: 6
   coiBlendSpeed: 3
   fieldOfView: 60
-  nearClip: 0.1
+  nearClip: 0.01
   farClip: 150
   distancePadding: 1.5

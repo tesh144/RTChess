@@ -68,6 +68,7 @@ namespace ClockworkGrid
         // ─── Discovery ──────────────────────────────────────────────────
         [Header("Discovery")]
         public AudioClip fogReveal;         // fog cleared (debounced per batch)
+        public AudioClip poiDiscovery;      // POI revealed celebration (bright chime)
 
         // ─── Ambient ────────────────────────────────────────────────────
         [Header("Ambient (Optional)")]
@@ -336,6 +337,15 @@ namespace ClockworkGrid
             if (Time.unscaledTime - lastFogRevealTime < FOG_REVEAL_DEBOUNCE) return;
             lastFogRevealTime = Time.unscaledTime;
             PlaySFX(fogReveal, randomPitch: true, pitchRange: 0.08f);
+        }
+
+        /// <summary>Play when a POI bubble is discovered (fog reveals the tile). Falls back to successChime if no clip assigned.</summary>
+        public void PlayPOIDiscovery()
+        {
+            if (poiDiscovery != null)
+                PlaySFX(poiDiscovery);
+            else
+                PlayUI(successChime); // fallback
         }
 
         // ─────────────────────────────────────────────────────────────────

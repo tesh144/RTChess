@@ -202,10 +202,18 @@ namespace ClockworkCraft
             };
 
             int assigned = 0;
+            int skipped = 0;
             foreach (var entry in iconMap)
             {
                 var data = GetByType(entry.type);
                 if (data == null) continue;
+
+                // Never overwrite a manually assigned icon — designer input takes priority
+                if (data.icon != null)
+                {
+                    skipped++;
+                    continue;
+                }
 
                 var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(entry.assetPath);
                 if (sprite != null)
@@ -220,7 +228,7 @@ namespace ClockworkCraft
             }
 
             UnityEditor.EditorUtility.SetDirty(this);
-            Debug.Log($"[CurrencyDatabase] Auto-assigned {assigned}/{iconMap.Length} icon sprites");
+            Debug.Log($"[CurrencyDatabase] Auto-assigned {assigned}/{iconMap.Length} icons ({skipped} skipped — already set)");
         }
 #endif
     }

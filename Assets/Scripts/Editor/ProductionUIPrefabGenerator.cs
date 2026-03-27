@@ -296,10 +296,10 @@ public class ProductionUIPrefabGenerator : Editor
         GameObject timerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TIMER_PATH);
         GameObject popupPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(POPUP_PATH);
 
-        if (timerProp != null && timerPrefab != null)
+        if (timerProp != null && timerPrefab != null && timerProp.objectReferenceValue == null)
             timerProp.objectReferenceValue = timerPrefab;
 
-        if (popupProp != null && popupPrefab != null)
+        if (popupProp != null && popupPrefab != null && popupProp.objectReferenceValue == null)
             popupProp.objectReferenceValue = popupPrefab;
 
         so.ApplyModifiedProperties();

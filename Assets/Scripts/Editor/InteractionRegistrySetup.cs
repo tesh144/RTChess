@@ -171,13 +171,15 @@ public class InteractionRegistrySetup
 
         SerializedObject so = new SerializedObject(registry);
 
-        if (mapGen.environmentDatabase != null)
+        var envProp = so.FindProperty("environmentDatabase");
+        if (mapGen.environmentDatabase != null && envProp != null && envProp.objectReferenceValue == null)
         {
-            so.FindProperty("environmentDatabase").objectReferenceValue = mapGen.environmentDatabase;
+            envProp.objectReferenceValue = mapGen.environmentDatabase;
         }
-        if (mapGen.unitDatabase != null)
+        var unitProp = so.FindProperty("unitDatabase");
+        if (mapGen.unitDatabase != null && unitProp != null && unitProp.objectReferenceValue == null)
         {
-            so.FindProperty("unitDatabase").objectReferenceValue = mapGen.unitDatabase;
+            unitProp.objectReferenceValue = mapGen.unitDatabase;
         }
 
         so.ApplyModifiedProperties();

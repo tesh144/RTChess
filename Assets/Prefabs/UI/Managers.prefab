@@ -1,5 +1,65 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2738800697049672917
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 504615884179463663}
+  - component: {fileID: 3159799759968323273}
+  m_Layer: 0
+  m_Name: BuildingProductionManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &504615884179463663
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2738800697049672917}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3909088470510346116}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3159799759968323273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2738800697049672917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 134dd665c7de943b9879fab3b1d8cd81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LittleCafe.BuildingProductionManager
+  timerPrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+  timerWorldSize: 0.6
+  timerHeight: 1.8
+  timerBgColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.7}
+  timerFillColor: {r: 0.3, g: 0.85, b: 0.4, a: 1}
+  timerAlmostDoneColor: {r: 1, g: 0.85, b: 0.2, a: 1}
+  popupPrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+  popupHeight: 2
+  popupWorldSize: 1
+  bobAmplitude: 0.1
+  bobSpeed: 2
+  popupGlowColor: {r: 1, g: 0.9, b: 0.5, a: 0.6}
+  buildingBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
+  buildingBubbleScale: 0.005
+  workerDatabase: {fileID: 11400000, guid: 8766a552e3b0f4eff80477d80ca948e8, type: 2}
+  verboseLogging: 0
 --- !u!1 &2805789131120002912
 GameObject:
   m_ObjectHideFlags: 0
@@ -192,8 +252,9 @@ MonoBehaviour:
   buildingDatabase: {fileID: 11400000, guid: 3e388a7016db146f1901e4bbd6cc21f8, type: 2}
   currencyDatabase: {fileID: 11400000, guid: f64509a589034411d8b8392b008d76c0, type: 2}
   economyBalanceConfig: {fileID: 11400000, guid: c11171627b78b4c5cbac1b5557eb7844, type: 2}
+  buildingBubblePrefab: {fileID: 7538023331211881960, guid: c4eb19d74403e4938ac324451f35672b, type: 3}
   centerEnvironmentName: Goldmine
-  clearingRadius: 1
+  cardinalClearingDistance: 2
   defaultEnvironmentDesaturatedValue: 0.2
   defaultEnvironmentFullColorValue: 1
   defaultEnvironmentTransitionDuration: 0.3
@@ -486,7 +547,7 @@ MonoBehaviour:
   dragCancel: {fileID: 8300000, guid: 5312d3fc85ca49446a442edae8487c3e, type: 3}
   errorBuzz: {fileID: 8300000, guid: 833c9a8114fdc5f469ace53a9b8095ce, type: 3}
   successChime: {fileID: 8300000, guid: 728ee9b968b3f984699761f6023d4041, type: 3}
-  drawReady: {fileID: 0}
+  drawReady: {fileID: 8300000, guid: f996b2870a5a021458d62c58d6283190, type: 3}
   hitImpact: {fileID: 8300000, guid: bee1d63cf8a1447b682635deea658066, type: 3}
   hitWeak: {fileID: 8300000, guid: c0101d4e6a84ad047844b70e663844b2, type: 3}
   entityDeath: {fileID: 8300000, guid: ff75728e6ca8ef94a8b3e458c6fe8ae9, type: 3}
@@ -500,6 +561,7 @@ MonoBehaviour:
   rewardCollect: {fileID: 8300000, guid: 0d9af7477ab3b8e41b919bf27bd35a6a, type: 3}
   handFull: {fileID: 8300000, guid: c31377739370e4c4ab3d7966a37d2883, type: 3}
   fogReveal: {fileID: 8300000, guid: affa0eea480aa8745a75e92a7b3fea7d, type: 3}
+  poiDiscovery: {fileID: 8300000, guid: 0b57db5008acc244293961bf19124be7, type: 3}
   clockTick: {fileID: 8300000, guid: c338dd19bf82c4148a33654a42e1a987, type: 3}
   pitchVariation: 0.05
 --- !u!1 &7692711440160710592
@@ -539,6 +601,7 @@ Transform:
   - {fileID: 2129646175590079657}
   - {fileID: 2663884284594737060}
   - {fileID: 4463995966958978971}
+  - {fileID: 504615884179463663}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8569992685382959820

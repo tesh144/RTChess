@@ -56,8 +56,9 @@ public class GameSFXAutoAssign : Editor
         assigned += TryAssign(so, "rewardCollect", "ThirdParty/InterfaceSounds/V1.0/Items & Collectables/Star Collect");
         assigned += TryAssign(so, "handFull", "ThirdParty/InterfaceSounds/V1.0/Interface/Buzz Error (2)");
 
-        // Discovery — whoosh for fog reveal
+        // Discovery — whoosh for fog reveal, sparkly chime for POI discovery
         assigned += TryAssign(so, "fogReveal", "ThirdParty/InterfaceSounds/V2.0 Files/quick transitions (1)");
+        assigned += TryAssign(so, "poiDiscovery", "ThirdParty/InterfaceSounds/V1.0/Items & Collectables/Special & Powerup (3)");
 
         // Ambient — subtle tick
         assigned += TryAssign(so, "clockTick", "ThirdParty/InterfaceSounds/V1.0/Items & Collectables/Count Prize (Single Tick)");
@@ -76,7 +77,9 @@ public class GameSFXAutoAssign : Editor
             return 0;
         }
 
-        // Overwrite with recommended clip (re-running the tool updates all slots)
+        // Never overwrite a manually assigned clip — designer input takes priority
+        if (prop.objectReferenceValue != null)
+            return 0;
 
         // Try .wav first, then .ogg, then .mp3
         string[] extensions = { ".wav", ".ogg", ".mp3" };
@@ -102,10 +105,11 @@ public class GameSFXAutoAssign : Editor
     static void TryClear(SerializedObject so, string propertyName)
     {
         SerializedProperty prop = so.FindProperty(propertyName);
-        if (prop != null)
+        if (prop != null && prop.objectReferenceValue == null)
         {
-            prop.objectReferenceValue = null;
-            Debug.Log($"  Cleared {propertyName} (intentionally silent)");
+            // Only log if slot is already empty (don't clear designer-assigned clips)
+            Debug.Log($"  {propertyName} is empty (intentionally silent)");
         }
+        // If designer assigned a clip, leave it alone
     }
 }

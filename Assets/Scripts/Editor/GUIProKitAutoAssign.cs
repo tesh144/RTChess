@@ -36,10 +36,10 @@ public static class GUIProKitAutoAssign
         string sliderBase = "Assets/ThirdParty/GUIProKit/Sprite/Component/Slider/Slider_Custom/";
 
         Sprite frame = LoadSprite(sliderBase + "Slider01~06_White_Frame.png");
-        if (frame != null) { assets.sliderFrame = frame; assigned++; }
+        if (frame != null && assets.sliderFrame == null) { assets.sliderFrame = frame; assigned++; }
 
         Sprite fill = LoadSprite(sliderBase + "Slider01~06_White_Fill.png");
-        if (fill != null) { assets.sliderFill = fill; assigned++; }
+        if (fill != null && assets.sliderFill == null) { assets.sliderFill = fill; assigned++; }
 
         // ── Circle Frame Sprites ────────────────────────────────────
         string framesBase = "Assets/ThirdParty/GUIProKit/Sprite/Component/Frames/";
@@ -51,7 +51,7 @@ public static class GUIProKitAutoAssign
             framesBase + "Circle/BasicFrame_Circle_116_Common.png",
             framesBase + "Frame_Common/BasicFrame_Circle_116_Common_Blue.png",
         });
-        if (circle116 != null) { assets.circleFrame116 = circle116; assigned++; }
+        if (circle116 != null && assets.circleFrame116 == null) { assets.circleFrame116 = circle116; assigned++; }
 
         Sprite circle154 = LoadSpriteFromPaths(new[]
         {
@@ -59,7 +59,7 @@ public static class GUIProKitAutoAssign
             framesBase + "Circle/BasicFrame_Circle_154_Common.png",
             framesBase + "Frame_Common/BasicFrame_Circle_154_Common_Blue.png",
         });
-        if (circle154 != null) { assets.circleFrame154 = circle154; assigned++; }
+        if (circle154 != null && assets.circleFrame154 == null) { assets.circleFrame154 = circle154; assigned++; }
 
         // If exact paths didn't work, search by GUID patterns
         if (assets.circleFrame116 == null)
@@ -93,29 +93,29 @@ public static class GUIProKitAutoAssign
         if (redFont == null)
             redFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
                 fontsBase + "MuseoModerno-CriticalNum_Red_64_Light SDF.asset");
-        if (redFont != null) { assets.criticalNumberFont = redFont; assigned++; }
+        if (redFont != null && assets.criticalNumberFont == null) { assets.criticalNumberFont = redFont; assigned++; }
 
         // Transparent variant — outline-only overlay (NOT for standalone use)
         TMP_FontAsset neutralFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
             fontsBase + "MuseoModerno-CriticalNum_Transpar_46 SDF.asset");
-        if (neutralFont != null) { assets.neutralNumberFont = neutralFont; assigned++; }
+        if (neutralFont != null && assets.neutralNumberFont == null) { assets.neutralNumberFont = neutralFont; assigned++; }
 
         // Quicksand Bold — proper SDF font for HP labels and UI numbers (fully tintable)
         TMP_FontAsset quicksandBold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
             fontsBase + "Quicksand-Bold SDF.asset");
-        if (quicksandBold != null) { assets.uiNumberFont = quicksandBold; assigned++; }
+        if (quicksandBold != null && assets.uiNumberFont == null) { assets.uiNumberFont = quicksandBold; assigned++; }
 
         // Rubik Medium — proper SDF font for UI labels and body text
         TMP_FontAsset rubikMedium = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
             fontsBase + "Rubik-Medium SDF.asset");
-        if (rubikMedium != null) { assets.uiLabelFont = rubikMedium; assigned++; }
+        if (rubikMedium != null && assets.uiLabelFont == null) { assets.uiLabelFont = rubikMedium; assigned++; }
 
         // Save
         EditorUtility.SetDirty(assets);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
-        Debug.Log($"[GUIProKitAutoAssign] Done — assigned {assigned} assets to GUIProKitAssets");
+        Debug.Log($"[GUIProKitAutoAssign] Done — assigned {assigned} assets to GUIProKitAssets (fields already set were skipped)");
 
         if (assets.sliderFrame == null) Debug.LogWarning("[GUIProKitAutoAssign] sliderFrame not found!");
         if (assets.sliderFill == null) Debug.LogWarning("[GUIProKitAutoAssign] sliderFill not found!");

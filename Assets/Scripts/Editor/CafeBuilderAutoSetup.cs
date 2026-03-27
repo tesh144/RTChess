@@ -159,6 +159,11 @@ public class CafeBuilderAutoSetup
 
         foreach (FurnitureData data in database.AllFurniture)
         {
+            // Skip entries that have a prefab or icon assigned — they've been
+            // manually configured by the designer and shouldn't be overwritten
+            if (data.prefab != null || data.icon != null)
+                continue;
+
             string nameLower = data.assetName.ToLower();
 
             // Auto-assign based on name patterns
@@ -192,9 +197,11 @@ public class CafeBuilderAutoSetup
                 decorations++;
             }
 
-            // Default grid size (can be adjusted later)
-            data.gridSize = Vector2Int.one;
-            data.visualScale = 1.0f;
+            // Default grid size (only if not already customized)
+            if (data.gridSize == Vector2Int.zero)
+                data.gridSize = Vector2Int.one;
+            if (data.visualScale <= 0f)
+                data.visualScale = 1.0f;
         }
 
         Debug.Log($"[AutoSetup] ✓ Auto-configured types:");

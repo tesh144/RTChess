@@ -319,11 +319,20 @@ namespace ClockworkGrid
             // Fly-in animation: from draw button, from a screen position, or just pop in
             if (animateFromDraw && drawButtonController != null)
             {
-                StartCoroutine(CardFlyInAnimation(card, cardObj.GetComponent<RectTransform>(), null));
+                // Move card to the draw button position immediately so it doesn't
+                // flash at its final layout position during the one-frame settle
+                var rect = cardObj.GetComponent<RectTransform>();
+                if (drawButtonController.ButtonRect != null)
+                    rect.position = drawButtonController.ButtonRect.position;
+                rect.localScale = Vector3.one * 0.01f;
+                StartCoroutine(CardFlyInAnimation(card, rect, null));
             }
             else if (flyFromScreenPos.HasValue)
             {
-                StartCoroutine(CardFlyInAnimation(card, cardObj.GetComponent<RectTransform>(), flyFromScreenPos.Value));
+                var rect = cardObj.GetComponent<RectTransform>();
+                rect.position = flyFromScreenPos.Value;
+                rect.localScale = Vector3.one * 0.01f;
+                StartCoroutine(CardFlyInAnimation(card, rect, flyFromScreenPos.Value));
             }
             else
             {
@@ -341,14 +350,7 @@ namespace ClockworkGrid
         {
             if (cardRect == null) yield break;
 
-            // Let layout settle for one frame so we know the card's final position
-            yield return null;
-
-            if (cardRect == null) yield break;
-            Vector3 finalPos = cardRect.position;
-            Vector3 finalScale = cardRect.localScale;
-
-            // Start position: override screen pos, or the draw button
+            // Determine start position up front
             Vector3 startPos;
             if (overrideStartScreenPos.HasValue)
             {
@@ -360,9 +362,27 @@ namespace ClockworkGrid
             }
             else
             {
+                cardRect.localScale = Vector3.one;
                 card.PlayAppearAnimation();
                 yield break;
             }
+
+            // Card is already at startPos with tiny scale (set in AddCard).
+            // Yield one frame so the HorizontalLayoutGroup recalculates slot positions,
+            // then force a rebuild to get the target position without the card visually
+            // jumping there (it stays at startPos because we override position each frame).
+            yield return null;
+            if (cardRect == null) yield break;
+
+            // Temporarily restore scale so layout computes correct slot size
+            cardRect.localScale = Vector3.one;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(cardRect.parent as RectTransform);
+            Vector3 finalPos = cardRect.position;
+            Vector3 finalScale = Vector3.one;
+
+            // Snap back to start before the next frame renders
+            cardRect.position = startPos;
+            cardRect.localScale = finalScale * 0.2f;
 
             // Arc height in world-space units (scales with screen)
             float arcHeight = Mathf.Abs(finalPos.y - startPos.y) * 0.5f + 80f;
