@@ -64,7 +64,18 @@ namespace ClockworkCraft
 
         void Start()
         {
-            canvas = FindFirstObjectByType<Canvas>();
+            // Find a ScreenSpaceOverlay canvas — WorldSpace canvases have different coordinate systems
+            foreach (var c in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            {
+                if (c.renderMode == RenderMode.ScreenSpaceOverlay)
+                {
+                    canvas = c;
+                    break;
+                }
+            }
+            // Fallback to any canvas if no overlay found
+            if (canvas == null)
+                canvas = FindFirstObjectByType<Canvas>();
             if (canvas != null)
                 canvasRect = canvas.GetComponent<RectTransform>();
             mainCamera = Camera.main;
