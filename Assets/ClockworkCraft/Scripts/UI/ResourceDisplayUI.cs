@@ -211,7 +211,6 @@ namespace ClockworkCraft
             slotObj.transform.SetSiblingIndex(siblingIndex);
 
             activeSlots[type] = slot;
-            slot.PlayAppearAnimation();
             Debug.Log($"[ResourceDisplayUI] Created slot for {type} at index {siblingIndex}");
             return slot;
         }
@@ -270,15 +269,22 @@ namespace ClockworkCraft
 
                 if (amount > 0)
                 {
+                    bool isNew = false;
+
                     // Ensure slot exists
                     if (!activeSlots.TryGetValue(type, out CurrencySlotUI slot) || slot == null)
                     {
                         slot = CreateSlot(type);
                         if (slot == null) continue;
+                        isNew = true;
                     }
 
                     slot.UpdateAmount(amount);
                     slot.gameObject.SetActive(true);
+
+                    // Play appear animation after SetActive so the coroutine can run
+                    if (isNew)
+                        slot.PlayAppearAnimation();
                 }
                 else
                 {
