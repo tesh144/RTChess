@@ -649,11 +649,6 @@ namespace LittleCafe.Editor
                     }
                 }
 
-                // Walkable (surface types this unit can move on)
-                string walkableStr = GetValue(row, "Walkable");
-                if (!string.IsNullOrEmpty(walkableStr) && existing.walkable != walkableStr)
-                { existing.walkable = walkableStr; changed = true; }
-
                 // Draw weight
                 float dw = 0;
                 if (float.TryParse(GetValue(row, "Draw Weight"),
