@@ -1615,11 +1615,25 @@ namespace ClockworkCraft
                 { visited[nx, ny] = true; queue.Enqueue(new Vector2Int(nx, ny)); }
             }
 
+            // Snap centroid to the nearest actual cell in the cluster
+            Vector2Int avgCenter = new Vector2Int(sumX / cells.Count, sumY / cells.Count);
+            Vector2Int bestCell = cells[0];
+            float bestDist = float.MaxValue;
+            for (int i = 0; i < cells.Count; i++)
+            {
+                float dist = (cells[i] - avgCenter).sqrMagnitude;
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestCell = cells[i];
+                }
+            }
+
             return new EnvironmentGathering
             {
                 assetName = assetName,
                 cells = cells,
-                centroid = new Vector2Int(sumX / cells.Count, sumY / cells.Count),
+                centroid = bestCell,
                 size = cells.Count
             };
         }
