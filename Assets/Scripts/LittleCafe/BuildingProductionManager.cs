@@ -198,7 +198,9 @@ namespace LittleCafe
         {
             if (insertBubblePrefab == null) insertBubblePrefab = insertPrefab;
             if (collectBubblePrefab == null) collectBubblePrefab = collectPrefab;
-            Debug.Log($"[BuildingProduction] Bubble prefabs set — insert: {(insertBubblePrefab != null ? insertBubblePrefab.name : "NULL")}, collect: {(collectBubblePrefab != null ? collectBubblePrefab.name : "NULL")}");
+            // Need bubble uses the same WorldCanvas_Popups prefab — just activates Bubble_Need child
+            if (needBubblePrefab == null) needBubblePrefab = insertPrefab;
+            Debug.Log($"[BuildingProduction] Bubble prefabs set — insert: {(insertBubblePrefab != null ? insertBubblePrefab.name : "NULL")}, collect: {(collectBubblePrefab != null ? collectBubblePrefab.name : "NULL")}, need: {(needBubblePrefab != null ? needBubblePrefab.name : "NULL")}");
         }
 
         /// <summary>Legacy single-prefab setter — sets both insert and collect to the same prefab if not already assigned.</summary>
@@ -507,11 +509,17 @@ namespace LittleCafe
         /// Called by DragDropHandler when a drag begins.</summary>
         public void ShowNeedBubbles(ProductionInputType inputType)
         {
-            if (needBubblePrefab == null) return;
+            if (needBubblePrefab == null)
+            {
+                Debug.LogWarning("[BuildingProduction] ShowNeedBubbles — needBubblePrefab is NULL!");
+                return;
+            }
+            Debug.Log($"[BuildingProduction] ShowNeedBubbles called with inputType={inputType}, entries={entries.Count}");
             foreach (var entry in entries)
             {
                 bool wantsInput = (entry.waitingForInput && (entry.inputType == inputType || entry.inputType == ProductionInputType.Any))
                                || (entry.waitingForResources && inputType == ProductionInputType.Any);
+                Debug.Log($"[BuildingProduction]   {entry.buildingObj?.name}: waitingForInput={entry.waitingForInput}, inputType={entry.inputType}, wantsInput={wantsInput}");
                 if (wantsInput)
                     SpawnNeedBubble(entry);
             }
