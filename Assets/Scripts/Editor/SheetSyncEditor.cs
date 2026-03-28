@@ -326,7 +326,7 @@ namespace LittleCafe.Editor
                 "Input Card", "Output Card", "Reveal Radius", "HP", "Attack",
                 "Ally Interactible", "Enemy Interactible", "Wild Animal Interactible",
                 "Killer's Behavior", "Tier (button)", "DrawWeight", "isRandomBuilding",
-                "Resource Use", "Resource Amount", "Resource Increment");
+                "Resource Use", "Resource Amount", "Resource Increment", "BuildOn");
 
             Check("Workers & Entities",
                 "Entity", "Type", "Active", "HP", "Attack Power",
