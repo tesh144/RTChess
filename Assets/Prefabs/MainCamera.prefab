@@ -113,7 +113,7 @@ MonoBehaviour:
   zoomSmoothing: 8
   baseDefaultDistance: 5
   baseMaxDistance: 5
-  distancePerRevealedTile: 0.06
+  distancePerRevealedTile: 0.015
   maxDistanceMultiplier: 1.3
   smoothSpeed: 7
   orbitSmoothTime: 0.1

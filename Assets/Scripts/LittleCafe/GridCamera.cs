@@ -30,7 +30,7 @@ namespace LittleCafe
         [Header("Zoom - Adaptive Scaling")]
         [SerializeField] private float baseDefaultDistance = 5f;   // Starting zoom level (ortho size)
         [SerializeField] private float baseMaxDistance = 5f;       // Max zoom with no revealed tiles — grows with exploration
-        [SerializeField] private float distancePerRevealedTile = 0.06f; // Extra max-zoom per revealed tile
+        [SerializeField] private float distancePerRevealedTile = 0.015f; // Extra max-zoom per revealed tile
         [Tooltip("Extra distance added to physical camera position to prevent near-plane clipping.")]
         [SerializeField] private float orthoDistancePadding = 10f;
 
