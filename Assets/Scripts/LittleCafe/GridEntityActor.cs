@@ -89,6 +89,7 @@ namespace LittleCafe
         // State
         private bool isInitialized = false;
         private bool isFirstTick = true; // Skip rotation on first tick so we act in initial facing
+        private bool skipNextTick = true; // Skip the very first bar tick after placement (grace period)
         private bool isMoving = false;   // Prevent overlapping moves
         private bool rrm_isRotateTick = true; // RotateRotateMove: alternates between rotate-only and rotate+move ticks
 
@@ -299,6 +300,14 @@ namespace LittleCafe
             if (!isInitialized) return;
             if (health != null && health.IsDestroyed) return;
             if (isCorruptionPaused) return;
+
+            // Grace period: skip the first tick after placement so the worker
+            // doesn't immediately attack/act the moment it's placed.
+            if (skipNextTick)
+            {
+                skipNextTick = false;
+                return;
+            }
 
             // Decay meal buff on every bar tick
             if (hasMealBuff)
