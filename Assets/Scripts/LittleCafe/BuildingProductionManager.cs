@@ -461,6 +461,7 @@ namespace LittleCafe
                 iconImg.sprite = inputIcon;
                 iconImg.enabled = true;
             }
+
             else
             {
                 Debug.LogWarning($"[BuildingProduction] Insert bubble icon issue — iconImg: {(iconImg != null ? iconImg.name : "NULL")}, inputIcon: {(inputIcon != null ? inputIcon.name : "NULL")}, costType: {entry.productionCostResourceType}, inputType: {entry.inputType}");
@@ -903,7 +904,7 @@ namespace LittleCafe
                     else if (entry.outputType == ProductionOutputType.Lizard)
                         entry.pendingCard = CardPool.Instance?.FindByName("Lizard");
                     else if (entry.outputType == ProductionOutputType.TreeSeed)
-                        entry.pendingCard = CardPool.Instance?.FindByName("TreeSeed");
+                        entry.pendingCard = CardPool.Instance?.FindByName("Tree");
                     else if (IsTierBuildingOutput(entry.outputType))
                         entry.pendingCard = DrawRandomBuildingByTier(GetTierFromOutput(entry.outputType));
                     else if (IsTierUnitOutput(entry.outputType))
