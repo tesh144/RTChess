@@ -4,39 +4,26 @@ using UnityEditor;
 using ClockworkCraft;
 
 /// <summary>
-/// One-shot editor script: populates the CurrencyDatabase asset with all currency entries
-/// and auto-assigns icon sprites from the Icons folder.
-/// Runs automatically on next domain reload, then deletes itself.
+/// One-shot editor script: populates the CurrencyDatabase asset with any missing currency entries.
+/// Never overwrites icons or values that have already been set in the Inspector.
+/// Runs automatically on domain reload (recompile / entering Play mode).
 /// </summary>
 [InitializeOnLoad]
 public static class PopulateCurrencyDatabase
 {
     static PopulateCurrencyDatabase()
     {
-        // Delay to ensure everything is loaded
         EditorApplication.delayCall += Run;
     }
 
     static void Run()
     {
-        // Find the CurrencyDatabase asset
         string[] guids = AssetDatabase.FindAssets("t:CurrencyDatabase");
-        if (guids.Length == 0)
-        {
-            Debug.LogError("[PopulateCurrencyDatabase] No CurrencyDatabase asset found!");
-            return;
-        }
+        if (guids.Length == 0) return;
 
         string path = AssetDatabase.GUIDToAssetPath(guids[0]);
         CurrencyDatabase db = AssetDatabase.LoadAssetAtPath<CurrencyDatabase>(path);
-        if (db == null)
-        {
-            Debug.LogError($"[PopulateCurrencyDatabase] Failed to load CurrencyDatabase at {path}");
-            return;
-        }
-
-        // Clear existing entries
-        db.Clear();
+        if (db == null) return;
 
         // All currency definitions: (ResourceType, name, emoji, iconPath, startingAmount, unlockedAtStart)
         var entries = new (ResourceType type, string name, string emoji, string iconPath, int starting, bool unlocked)[]
@@ -81,40 +68,32 @@ public static class PopulateCurrencyDatabase
             (ResourceType.Heart,       "Heart",        "\U0001F49C", "Assets/Icons/Icon_25px/PinkHeart - Bubble.png",                   0, false),
         };
 
-        int total = 0;
-        int iconsAssigned = 0;
+        bool dirty = false;
 
         foreach (var e in entries)
         {
-            // Load the sprite
+            var existing = db.GetByType(e.type);
+
+            if (existing != null)
+            {
+                // Currency already exists — never overwrite icon or any value the designer may have set.
+                // Only fill in the icon if it is currently null (genuinely missing, not manually cleared).
+                if (existing.icon == null && !string.IsNullOrEmpty(e.iconPath))
+                {
+                    Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(e.iconPath);
+                    if (sprite != null)
+                    {
+                        existing.icon = sprite;
+                        dirty = true;
+                    }
+                }
+                continue;
+            }
+
+            // Currency not in database yet — add it with default values.
             Sprite icon = null;
             if (!string.IsNullOrEmpty(e.iconPath))
-            {
                 icon = AssetDatabase.LoadAssetAtPath<Sprite>(e.iconPath);
-                if (icon == null)
-                {
-                    // Try loading as Texture2D (sprites might be sub-assets)
-                    var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(e.iconPath);
-                    if (tex != null)
-                    {
-                        // Get first sprite sub-asset from this texture
-                        var subAssets = AssetDatabase.LoadAllAssetsAtPath(e.iconPath);
-                        foreach (var sub in subAssets)
-                        {
-                            if (sub is Sprite s)
-                            {
-                                icon = s;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (icon == null)
-                        Debug.LogWarning($"[PopulateCurrencyDatabase] No sprite at: {e.iconPath} for {e.type}");
-                }
-
-                if (icon != null) iconsAssigned++;
-            }
 
             db.AddCurrency(new CurrencyData
             {
@@ -125,14 +104,13 @@ public static class PopulateCurrencyDatabase
                 unlockedAtStart = e.unlocked,
                 icon            = icon
             });
-            total++;
+            dirty = true;
         }
 
-        EditorUtility.SetDirty(db);
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-
-        Debug.Log($"[PopulateCurrencyDatabase] SUCCESS — Populated {total} currencies, {iconsAssigned} icons assigned. Database at: {path}");
-        Debug.Log("[PopulateCurrencyDatabase] DONE — You can safely delete Assets/Scripts/Editor/PopulateCurrencyDatabase.cs");
+        if (dirty)
+        {
+            EditorUtility.SetDirty(db);
+            AssetDatabase.SaveAssets();
+        }
     }
 }

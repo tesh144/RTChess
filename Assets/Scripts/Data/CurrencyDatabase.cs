@@ -172,7 +172,7 @@ namespace ClockworkCraft
                 (ResourceType.Wood,        "Assets/Icons/Icon_30px/Currency/Wood - Currency.png"),
                 (ResourceType.Food,        "Assets/Icons/Icon_30px/Currency/Food - Currency.png"),
                 (ResourceType.Stone,       "Assets/Icons/Icon_30px/Currency/Rock - Currency.png"),
-                (ResourceType.Water,       "Assets/ThirdParty/GUIProKit/Sprite/Demo/Demo_ItemIcon_(OriginalSize)/itemicon_waterdrop_blue.png"),
+                (ResourceType.Water,       "Assets/Icons/Icon_30px/World/PanelAsset_007.png"),
                 (ResourceType.Clay,        "Assets/Icons/Icon_30px/Currency/Clay - Currency.png"),
                 (ResourceType.Flowers,     "Assets/Icons/Icon_30px/World/Petal - World.png"),
                 (ResourceType.Gem,         "Assets/Icons/Icon_30px/Currency/Gem - Currency.png"),
