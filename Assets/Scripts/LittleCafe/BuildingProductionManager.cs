@@ -436,6 +436,10 @@ namespace LittleCafe
             // Cache the fill bar Image for updating in IncrementHoldFill
             entry.insertFillImage = bubble.GetFillImage();
 
+            // Tint the fill bar to match the requested resource color
+            if (entry.insertFillImage != null && entry.productionCostResourceType != ResourceType.None)
+                entry.insertFillImage.color = GetLightResourceColor(entry.productionCostResourceType);
+
             // Initialize fill bar to current progress
             UpdateInsertFillBar(entry);
 
@@ -532,6 +536,34 @@ namespace LittleCafe
         }
 
         /// <summary>
+        /// <summary>Returns a lighter pastel version of the resource color for the fill bar.</summary>
+        private static Color GetLightResourceColor(ResourceType type)
+        {
+            Color baseColor;
+            switch (type)
+            {
+                case ResourceType.Wood:   baseColor = new Color(0.72f, 0.48f, 0.25f); break;
+                case ResourceType.Stone:  baseColor = new Color(0.70f, 0.70f, 0.72f); break;
+                case ResourceType.Gold:   baseColor = new Color(1.00f, 0.84f, 0.25f); break;
+                case ResourceType.Water:  baseColor = new Color(0.30f, 0.65f, 0.95f); break;
+                case ResourceType.Food:   baseColor = new Color(0.95f, 0.65f, 0.20f); break;
+                case ResourceType.Meat:   baseColor = new Color(0.85f, 0.35f, 0.30f); break;
+                case ResourceType.Meat2:  baseColor = new Color(0.80f, 0.30f, 0.25f); break;
+                case ResourceType.Meat3:  baseColor = new Color(0.75f, 0.28f, 0.22f); break;
+                case ResourceType.Copper: baseColor = new Color(0.85f, 0.55f, 0.30f); break;
+                case ResourceType.Ore:    baseColor = new Color(0.65f, 0.65f, 0.70f); break;
+                case ResourceType.Gem:    baseColor = new Color(0.40f, 0.85f, 1.00f); break;
+                case ResourceType.Leaf:   baseColor = new Color(0.35f, 0.75f, 0.30f); break;
+                case ResourceType.Grass:  baseColor = new Color(0.40f, 0.80f, 0.35f); break;
+                case ResourceType.Petal:  baseColor = new Color(1.00f, 0.55f, 0.70f); break;
+                case ResourceType.Fish:   baseColor = new Color(0.45f, 0.70f, 0.90f); break;
+                case ResourceType.Clay:   baseColor = new Color(0.80f, 0.55f, 0.35f); break;
+                default:                  baseColor = new Color(0.85f, 0.85f, 0.90f); break;
+            }
+            // Lighten: lerp toward white by 40%
+            return Color.Lerp(baseColor, Color.white, 0.4f);
+        }
+
         /// Resolve the icon sprite for what a building needs as input.
         /// Resource inputs use CurrencyDatabase icon, card inputs use CardPool/UnitStats icon.
         /// </summary>
