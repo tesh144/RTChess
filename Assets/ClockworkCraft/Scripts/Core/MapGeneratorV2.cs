@@ -545,9 +545,9 @@ namespace ClockworkCraft
             }
             deckStats.Add(fighterCard);
 
-            // ── Environment production cards (Lizard, Scrap, Tree) ──
-            // These are outputs from Hutch, Scrapper, and Garden buildings.
-            // They live in EnvironmentDatabase but need UnitStats in CardPool for FindByName().
+            // ── Environment production cards ──
+            // These environment objects can be produced by buildings and delivered as cards.
+            // They exist in EnvironmentDatabase but need a UnitStats wrapper in CardPool for FindByName().
             string[] envProductionNames = { "Lizard", "Scrap", "Tree" };
             if (environmentDatabase != null)
             {
