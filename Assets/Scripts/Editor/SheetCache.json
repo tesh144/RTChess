@@ -4629,5 +4629,493 @@
       "Killer's Behavior": "Advance",
       "Drop on Death": "❌ None"
     }
+  ],
+  "Workers & Entities": [
+    {
+      "Ok": "TRUE",
+      "Icon": "👷",
+      "Entity": "Worker (Generic)",
+      "Type": "Worker",
+      "Tier (button)": "Tier 0",
+      "MapGenerated": "FALSE",
+      "Enemy": "FALSE",
+      "HP": "2",
+      "Attack Power": "1",
+      "Movement Behavior": "RotateAndInteract",
+      "Movement": "Mobile",
+      "Walkable": "None"
+    },
+    {
+      "Ok": "TRUE",
+      "Icon": "⚔️",
+      "Entity": "Fighter",
+      "Type": "Worker",
+      "Tier (button)": "Tier 3",
+      "MapGenerated": "FALSE",
+      "Enemy": "FALSE",
+      "HP": "10",
+      "Attack Power": "1",
+      "Movement Behavior": "RotateAndInteract",
+      "Movement": "Mobile",
+      "Walkable": "None"
+    },
+    {
+      "Ok": "TRUE",
+      "Icon": "🦕",
+      "Entity": "Dinosaur",
+      "Type": "Wild Animal",
+      "Tier (button)": "-",
+      "MapGenerated": "TRUE",
+      "Enemy": "TRUE",
+      "HP": "5",
+      "Attack Power": "1",
+      "Movement Behavior": "RotateAndMove",
+      "Movement": "Mobile",
+      "Walkable": "None"
+    },
+    {
+      "Ok": "TRUE",
+      "Icon": "🦣",
+      "Entity": "Mammoth",
+      "Type": "Wild Animal",
+      "Tier (button)": "-",
+      "MapGenerated": "TRUE",
+      "Enemy": "TRUE",
+      "HP": "5",
+      "Attack Power": "1",
+      "Movement Behavior": "RotateRotateMove",
+      "Movement": "Mobile",
+      "Walkable": "None"
+    },
+    {
+      "Ok": "TRUE",
+      "Icon": "🗼",
+      "Entity": "Corrupted Heart",
+      "Type": "Corruption",
+      "Tier (button)": "-",
+      "MapGenerated": "TRUE",
+      "Enemy": "TRUE",
+      "HP": "5",
+      "Attack Power": "0",
+      "Movement Behavior": "None",
+      "Movement": "Stationary",
+      "Walkable": "None"
+    },
+    {
+      "Ok": "TRUE",
+      "Icon": "🦑",
+      "Entity": "Spike 1",
+      "Type": "Corruption",
+      "Tier (button)": "-",
+      "MapGenerated": "FALSE",
+      "Enemy": "TRUE",
+      "HP": "5",
+      "Attack Power": "1",
+      "Movement Behavior": "RotateAndMoveCorrupt",
+      "Movement": "Stationary",
+      "Walkable": "Corruption"
+    },
+    {
+      "Ok": "TRUE",
+      "Icon": "🐙",
+      "Entity": "Spike 2",
+      "Type": "Corruption",
+      "Tier (button)": "-",
+      "MapGenerated": "FALSE",
+      "Enemy": "TRUE",
+      "HP": "5",
+      "Attack Power": "1",
+      "Movement Behavior": "RotateAndMoveCorrupt",
+      "Movement": "Stationary",
+      "Walkable": "Corruption"
+    }
+  ],
+  "Buildings & Production": [
+    {
+      "Active": "TRUE",
+      "Icon": "🏕",
+      "Building": "Home",
+      "Tier (button)": "Tier 0",
+      "BuildOn": "Empty",
+      "isRandomBuilding": "TRUE",
+      "DrawWeight": "1",
+      "Input Card": "❌ None",
+      "Resource Use": "❌ None",
+      "Resource Amount": "-",
+      "Resource Increment": "-",
+      "Prod. Interval (s)": "10",
+      "Interval Bonus (s)": "20",
+      "Output Card": "👷 Worker (Generic)",
+      "Killer's Behavior": "Advance",
+      "Reveal Radius": "1",
+      "Ally Interactible": "FALSE",
+      "Enemy Interactible": "TRUE",
+      "Wild Animal Interactible": "FALSE",
+      "HP": "10"
+    },
+    {
+      "Active": "TRUE",
+      "Icon": "🔥",
+      "Building": "Torch",
+      "Tier (button)": "Tier 0",
+      "BuildOn": "Empty",
+      "isRandomBuilding": "TRUE",
+      "DrawWeight": "1",
+      "Input Card": "❌ None",
+      "Resource Use": "❌ None",
+      "Resource Amount": "-",
+      "Resource Increment": "-",
+      "Prod. Interval (s)": "0",
+      "Interval Bonus (s)": "0",
+      "Output Card": "❌ None",
+      "Killer's Behavior": "Advance",
+      "Reveal Radius": "2",
+      "Ally Interactible": "FALSE",
+      "Enemy Interactible": "TRUE",
+      "Wild Animal Interactible": "TRUE",
+      "HP": "10"
+    },
+    {
+      "Active": "TRUE",
+      "Icon": "🗿",
+      "Building": "Statue",
+      "Tier (button)": "Tier 0",
+      "BuildOn": "Empty",
+      "isRandomBuilding": "TRUE",
+      "DrawWeight": "1",
+      "Input Card": "❌ None",
+      "Resource Use": "❌ None",
+      "Resource Amount": "-",
+      "Resource Increment": "-",
+      "Prod. Interval (s)": "15",
+      "Interval Bonus (s)": "30",
+      "Output Card": "🎲 RandomBuilding",
+      "Killer's Behavior": "Advance",
+      "Reveal Radius": "1",
+      "Ally Interactible": "FALSE",
+      "Enemy Interactible": "TRUE",
+      "Wild Animal Interactible": "FALSE",
+      "HP": "10"
+    },
+    {
+      "Active": "TRUE",
+      "Icon": "⚔️",
+      "Building": "Barracks",
+      "Tier (button)": "Tier 1",
+      "BuildOn": "Empty",
+      "isRandomBuilding": "TRUE",
+      "DrawWeight": "0.5",
+      "Input Card": "👷 Worker (Generic)",
+      "Resource Use": "❌ None",
+      "Resource Amount": "-",
+      "Resource Increment": "-",
+      "Prod. Interval (s)": "20",
+      "Interval Bonus (s)": "30",
+      "Output Card": "⚔️ Fighter",
+      "Killer's Behavior": "Advance",
+      "Reveal Radius": "1",
+      "Ally Interactible": "FALSE",
+      "Enemy Interactible": "TRUE",
+      "Wild Animal Interactible": "FALSE",
+      "HP": "10"
+    },
+    {
+      "Active": "TRUE",
+      "Icon": "🍳",
+      "Building": "Kitchen",
+      "Tier (button)": "Tier 1",
+      "BuildOn": "Empty",
+      "isRandomBuilding": "TRUE",
+      "DrawWeight": "0.5",
+      "Input Card": "⏳ Hold to Fill",
+      "Resource Use": "🍖 Meat",
+      "Resource Amount": "3",
+      "Resource Increment": "1",
+      "Prod. Interval (s)": "20",
+      "Interval Bonus (s)": "20",
+      "Output Card": "🍖 Meal",
+      "Killer's Behavior": "Advance",
+      "Reveal Radius": "1",
+      "Ally Interactible": "FALSE",
+      "Enemy Interactible": "TRUE",
+      "Wild Animal Interactible": "FALSE",
+      "HP": "10"
+    },
+    {
+      "Active": "TRUE",
+      "Icon": "⚔️",
+      "Building": "Feast",
+      "Tier (button)": "Tier 2",
+      "BuildOn": "Empty",
+      "isRandomBuilding": "TRUE",
+      "DrawWeight": "0.5",
+      "Input Card": "❌ None",
+      "Resource Use": "❌ None",
+      "Resource Amount": "-",
+      "Resource Increment": "-",
+      "Prod. Interval (s)": "30",
+      "Interval Bonus (s)": "15",
+      "Output Card": "❌ None",
+      "Killer's Behavior": "Stay",
+      "Reveal Radius": "1",
+      "Ally Interactible": "TRUE",
+      "Enemy Interactible": "TRUE",
+      "Wild Animal Interactible": "FALSE",
+      "HP": "10"
+    },
+    {
+      "Active": "TRUE",
+      "Icon": "🔧",
+      "Building": "Scrapper",
+      "Tier (button)": "Tier 3",
+      "BuildOn": "Empty",
+      "isRandomBuilding": "TRUE",
+      "DrawWeight": "0.3",
+      "Input Card": "🎲 Any Resource",
+      "Resource Use": "❌ None",
+      "Resource Amount": "-",
+      "Resource Increment": "-",
+      "Prod. Interval (s)": "30",
+      "Interval Bonus (s)": "30",
+      "Output Card": "🔩 Scrap",
+      "Killer's Behavior": "Advance",
+      "Reveal Radius": "1",
+      "Ally Interactible": "TRUE",
+      "Enemy Interactible": "TRUE",
+      "Wild Animal Interactible": "FALSE",
+      "HP": "5"
+    },
+    {
+      "Active": "TRUE",
+      "Icon": "🐇",
+      "Building": "Hutch",
+      "Tier (button)": "Tier 4",
+      "BuildOn": "Empty",
+      "isRandomBuilding": "TRUE",
+      "DrawWeight": "0.3",
+      "Input Card": "⏳ Hold to Fill",
+      "Resource Use": "🌸 Petal",
+      "Resource Amount": "3",
+      "Resource Increment": "1",
+      "Prod. Interval (s)": "20",
+      "Interval Bonus (s)": "20",
+      "Output Card": "🦎 Lizard",
+      "Killer's Behavior": "Advance",
+      "Reveal Radius": "1",
+      "Ally Interactible": "TRUE",
+      "Enemy Interactible": "TRUE",
+      "Wild Animal Interactible": "FALSE",
+      "HP": "5"
+    },
+    {
+      "Active": "TRUE",
+      "Icon": "🌿",
+      "Building": "Garden",
+      "Tier (button)": "Tier 5",
+      "BuildOn": "Empty",
+      "isRandomBuilding": "TRUE",
+      "DrawWeight": "0.3",
+      "Input Card": "⏳ Hold to Fill",
+      "Resource Use": "💧 Water",
+      "Resource Amount": "3",
+      "Resource Increment": "1",
+      "Prod. Interval (s)": "20",
+      "Interval Bonus (s)": "20",
+      "Output Card": "🌲 Tree",
+      "Killer's Behavior": "Advance",
+      "Reveal Radius": "1",
+      "Ally Interactible": "TRUE",
+      "Enemy Interactible": "TRUE",
+      "Wild Animal Interactible": "FALSE",
+      "HP": "5"
+    }
+  ],
+  "Currencies": [
+    {
+      "x": "💰",
+      "Currency": "Gold",
+      "ID": "1",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🌲",
+      "Currency": "Wood",
+      "ID": "2",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🍄",
+      "Currency": "Food",
+      "ID": "3",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🪨",
+      "Currency": "Stone",
+      "ID": "4",
+      "Start Amt": "0"
+    },
+    {
+      "x": "💧",
+      "Currency": "Water",
+      "ID": "5",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🧱",
+      "Currency": "Clay",
+      "ID": "6",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🌻",
+      "Currency": "Flowers",
+      "ID": "7",
+      "Start Amt": "0"
+    },
+    {
+      "x": "💎",
+      "Currency": "Gem",
+      "ID": "8",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🪙",
+      "Currency": "Copper",
+      "ID": "9",
+      "Start Amt": "0"
+    },
+    {
+      "x": "⚒",
+      "Currency": "Ore",
+      "ID": "10",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🧊",
+      "Currency": "White Marble",
+      "ID": "11",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🌙",
+      "Currency": "Moonstone",
+      "ID": "12",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🪵",
+      "Currency": "Bark",
+      "ID": "13",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🪹",
+      "Currency": "Twig",
+      "ID": "14",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🌰",
+      "Currency": "Acorn",
+      "ID": "15",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🍃",
+      "Currency": "Leaf",
+      "ID": "16",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🌿",
+      "Currency": "Grass",
+      "ID": "17",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🌸",
+      "Currency": "Petal",
+      "ID": "18",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🌾",
+      "Currency": "Rice",
+      "ID": "19",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🥥",
+      "Currency": "Coconut",
+      "ID": "20",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🥕",
+      "Currency": "Carrot",
+      "ID": "21",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🍅",
+      "Currency": "Tomato",
+      "ID": "22",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🍖",
+      "Currency": "Meat",
+      "ID": "23",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🥩",
+      "Currency": "Meat II",
+      "ID": "24",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🍗",
+      "Currency": "Meat III",
+      "ID": "25",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🐗",
+      "Currency": "Boar",
+      "ID": "26",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🐟",
+      "Currency": "Fish",
+      "ID": "27",
+      "Start Amt": "0"
+    },
+    {
+      "x": "🎃",
+      "Currency": "Pumpkin",
+      "ID": "28",
+      "Start Amt": "0"
+    },
+    {
+      "x": "💰",
+      "Currency": "Gold Bag",
+      "ID": "29",
+      "Start Amt": "0"
+    },
+    {
+      "x": "👍",
+      "Currency": "Approval",
+      "ID": "30",
+      "Start Amt": "0"
+    },
+    {
+      "x": "💜",
+      "Currency": "Heart",
+      "ID": "31",
+      "Start Amt": "0"
+    }
   ]
 }
