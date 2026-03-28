@@ -233,3 +233,25 @@ MonoBehaviour:
     dropOnDeath: 0
     prefab: {fileID: 0}
     icon: {fileID: 0}
+  - active: 1
+    isMapGenerated: 0
+    assetName: Corruption
+    type: 0
+    layerType: 1
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 0
+    killerAdvances: 1
+    allyInteractible: 1
+    enemyInteractible: 0
+    wildAnimalInteractible: 0
+    lootResourceType: 0
+    lootHpCost: 1
+    lootYield: 0
+    hp: 5
+    attackPower: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 0
+    dropOnDeath: 0
+    prefab: {fileID: 0}
+    icon: {fileID: 0}
