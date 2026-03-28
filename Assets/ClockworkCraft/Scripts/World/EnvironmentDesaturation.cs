@@ -101,6 +101,16 @@ namespace ClockworkCraft
             if (renderers == null || renderers.Length == 0) return;
 
             hasColorized = true;
+
+            // Trigger interact animation on the object's AnimatorHolder
+            Transform animHolder = transform.Find("AnimatorHolder");
+            if (animHolder != null)
+            {
+                Animator anim = animHolder.GetComponent<Animator>();
+                if (anim != null)
+                    anim.SetTrigger("interact");
+            }
+
             StartCoroutine(ColorizeCoroutine());
         }
 
