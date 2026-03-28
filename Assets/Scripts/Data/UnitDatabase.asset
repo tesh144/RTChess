@@ -65,7 +65,7 @@ MonoBehaviour:
     isEnemy: 1
     isFunctional: 0
     isWalkable: 0
-    isActive: 0
+    isActive: 1
     isMapGenerated: 1
     behaviorType: 0
     walkable: None
