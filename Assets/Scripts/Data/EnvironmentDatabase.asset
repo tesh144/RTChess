@@ -187,7 +187,7 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 0}
+    prefab: {fileID: 3124352143673571361, guid: e7052d49fb943410a9e9d0c082ff1c79, type: 3}
     icon: {fileID: 0}
   - active: 1
     isMapGenerated: 0
@@ -231,7 +231,7 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 0}
+    prefab: {fileID: 7095887754009917822, guid: abd7f52415a6e4d2389c71974565de0d, type: 3}
     icon: {fileID: 0}
   - active: 1
     isMapGenerated: 0
@@ -253,5 +253,5 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 0}
-    icon: {fileID: 0}
+    prefab: {fileID: 5352704816085721666, guid: 404728650a61047f6b20fe952d355519, type: 3}
+    icon: {fileID: 21300000, guid: a6988ea2d54c64903a55a1f022728571, type: 3}
