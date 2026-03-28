@@ -881,7 +881,7 @@ namespace LittleCafe
                 entry.elapsedTime += tickDuration;
 
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
-                float effectiveInterval = ClockworkGrid.DevCheatMenu.InstantProduction ? 1f : entry.EffectiveInterval;
+                float effectiveInterval = DevCheatMenu.InstantProduction ? 1f : entry.EffectiveInterval;
 #else
                 float effectiveInterval = entry.EffectiveInterval;
 #endif

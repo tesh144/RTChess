@@ -105,7 +105,7 @@ MonoBehaviour:
     isMapGenerated: 1
     assetName: Water
     type: 0
-    layerType: 0
+    layerType: 1
     isFunctional: 0
     isWalkable: 0
     isActive: 0
@@ -209,8 +209,8 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 4912067625501910485, guid: 9ed5ac8420c704bb495cb77fdd709507, type: 3}
-    icon: {fileID: 21300000, guid: 433aa7d7cdc5040448be5385d4ca39ac, type: 3}
+    prefab: {fileID: 1892183304342524014, guid: 4e6d21bc162164252ac1f96ac5200e76, type: 3}
+    icon: {fileID: 21300000, guid: 61a131e43a2714e839cb36184ba05de6, type: 3}
   - active: 1
     isMapGenerated: 1
     assetName: Reed
@@ -231,5 +231,5 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 8685741589378069755, guid: abd7f52415a6e4d2389c71974565de0d, type: 3}
-    icon: {fileID: 21300000, guid: dcceb7956328742f5bf173c1a5f75ffe, type: 3}
+    prefab: {fileID: 0}
+    icon: {fileID: 0}
