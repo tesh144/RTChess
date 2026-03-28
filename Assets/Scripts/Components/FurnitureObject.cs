@@ -77,16 +77,17 @@ namespace LittleCafe
 
             DetectAdjacentFurniture();
             UpdateGridCellState();
+
+            // Torches: subscribe to fog reveal BEFORE revealing tiles,
+            // so the callback catches cells revealed by this placement.
+            if (fogRevealRadius >= 2 && FogManager.Instance != null)
+                FogManager.Instance.OnCellRevealed += OnNearbyFogCellRevealed;
+
             RevealSurroundingTiles();
 
-            // Torches colorize environment objects in a 1-tile radius on placement,
-            // and subscribe to fog reveal so objects that appear later also get colorized.
+            // Also colorize any already-visible objects in range
             if (fogRevealRadius >= 2)
-            {
                 ColorizeNearbyObjects(1);
-                if (FogManager.Instance != null)
-                    FogManager.Instance.OnCellRevealed += OnNearbyFogCellRevealed;
-            }
 
             // Register with connectivity manager
             FurnitureConnectivityManager.Instance?.RegisterFurniture(this);
