@@ -12,6 +12,18 @@ namespace ClockworkGrid
         Resource
     }
 
+    /// <summary>
+    /// Surface layer type. Independent of CellState (Object layer).
+    /// A tile can hold one Object AND one Surface simultaneously.
+    /// </summary>
+    public enum SurfaceType
+    {
+        None,
+        Water,
+        Corruption,
+        Lava
+    }
+
     public class GridManager : MonoBehaviour
     {
         [Header("Grid Settings")]
@@ -32,6 +44,10 @@ namespace ClockworkGrid
         private CellState[,] cellStates;
         private GameObject[,] cellOccupants;
         private GameObject[,] gridTiles; // Store instantiated tile GameObjects
+
+        // Surface layer — independent of Object layer (cellStates/cellOccupants)
+        private SurfaceType[,] cellSurfaces;
+        private GameObject[,] surfaceOccupants;
 
         public int Width => gridWidth;
         public int Height => gridHeight;
@@ -74,6 +90,8 @@ namespace ClockworkGrid
             cellStates = new CellState[gridWidth, gridHeight];
             cellOccupants = new GameObject[gridWidth, gridHeight];
             gridTiles = new GameObject[gridWidth, gridHeight];
+            cellSurfaces = new SurfaceType[gridWidth, gridHeight];
+            surfaceOccupants = new GameObject[gridWidth, gridHeight];
 
             // Create container if not assigned
             if (gridTilesContainer == null)
@@ -301,6 +319,46 @@ namespace ClockworkGrid
             cellStates[gridX, gridY] = CellState.Empty;
             cellOccupants[gridX, gridY] = null;
         }
+
+        // ── Surface Layer API ────────────────────────────────────────────
+
+        /// <summary>
+        /// Place a surface on a tile. Does NOT affect the Object layer (cellStates/cellOccupants).
+        /// A tile can hold one Object AND one Surface simultaneously.
+        /// </summary>
+        public bool PlaceSurface(int gridX, int gridY, SurfaceType type, GameObject go)
+        {
+            if (!IsValidCell(gridX, gridY)) return false;
+            cellSurfaces[gridX, gridY] = type;
+            surfaceOccupants[gridX, gridY] = go;
+            return true;
+        }
+
+        public void RemoveSurface(int gridX, int gridY)
+        {
+            if (!IsValidCell(gridX, gridY)) return;
+            cellSurfaces[gridX, gridY] = SurfaceType.None;
+            surfaceOccupants[gridX, gridY] = null;
+        }
+
+        public SurfaceType GetSurface(int gridX, int gridY)
+        {
+            if (!IsValidCell(gridX, gridY)) return SurfaceType.None;
+            return cellSurfaces[gridX, gridY];
+        }
+
+        public bool HasSurface(int gridX, int gridY)
+        {
+            return IsValidCell(gridX, gridY) && cellSurfaces[gridX, gridY] != SurfaceType.None;
+        }
+
+        public GameObject GetSurfaceOccupant(int gridX, int gridY)
+        {
+            if (!IsValidCell(gridX, gridY)) return null;
+            return surfaceOccupants[gridX, gridY];
+        }
+
+        // ── End Surface Layer API ────────────────────────────────────────
 
         /// <summary>
         /// Get the GameObject occupying a cell, or null if empty.

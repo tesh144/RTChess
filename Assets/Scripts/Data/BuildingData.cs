@@ -111,6 +111,10 @@ namespace LittleCafe
         [Tooltip("When this building is destroyed, does the attacker advance into its cell? Advance = true, Stay = false.")]
         public bool killerAdvances = true;
 
+        [Header("Placement")]
+        [Tooltip("Surface type required for placement. 'Empty' = standard empty tile. 'Water' = tile must have water surface. Synced from BuildOn column in Buildings & Production sheet.")]
+        public string buildOn = "Empty";
+
         [Header("Fog")]
         [Tooltip("How many cells outward this building reveals fog when placed. 1 = standard plus-shape, 2 = wider reveal (e.g. Torch).")]
         public int fogRevealRadius = 1;

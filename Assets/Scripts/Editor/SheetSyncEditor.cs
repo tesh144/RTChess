@@ -489,6 +489,11 @@ namespace LittleCafe.Editor
                 ProductionOutputType newOutput = ParseOutputType(outputStr);
                 if (existing.productionOutputType != newOutput) { existing.productionOutputType = newOutput; changed = true; }
 
+                // BuildOn (placement surface requirement)
+                string buildOnVal = GetValue(row, "BuildOn");
+                if (!string.IsNullOrEmpty(buildOnVal) && existing.buildOn != buildOnVal)
+                { existing.buildOn = buildOnVal; changed = true; }
+
                 // Reveal radius
                 changed |= TrySetInt(ref existing.fogRevealRadius, GetValue(row, "Reveal Radius"));
 

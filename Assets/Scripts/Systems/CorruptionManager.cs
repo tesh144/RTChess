@@ -207,6 +207,9 @@ namespace LittleCafe
             heartTiles[owner].Add(coord);
             allCorruptedTiles.Add(coord);
 
+            // Register on the surface layer
+            GridManager.Instance?.PlaceSurface(x, y, ClockworkGrid.SurfaceType.Corruption, null);
+
             // Play spread sound at the tile's world position
             if (spreadSound != null)
                 AudioSource.PlayClipAtPoint(spreadSound, tile.transform.position, spreadSoundVolume);
@@ -237,6 +240,9 @@ namespace LittleCafe
             if (heartTiles.ContainsKey(owner))
                 heartTiles[owner].Remove(coord);
             allCorruptedTiles.Remove(coord);
+
+            // Remove from surface layer
+            GridManager.Instance?.RemoveSurface(x, y);
 
             // Grant re-corruption immunity so the tile can't be immediately re-corrupted
             if (recorruptionImmunity > 0f)

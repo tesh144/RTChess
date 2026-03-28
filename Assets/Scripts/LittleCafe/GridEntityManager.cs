@@ -267,18 +267,24 @@ namespace LittleCafe
             else
             {
                 // Environment objects (spawned by MapGeneratorV2) may not have FurnitureObject.
-                // Find and free their grid cell by searching for this object in the grid.
+                // Find and free their grid cell by searching both Object and Surface layers.
                 GridManager gm = GridManager.Instance;
                 if (gm != null)
                 {
                     for (int x = 0; x < gm.Width; x++)
                     for (int y = 0; y < gm.Height; y++)
                     {
+                        // Check Object layer
                         if (gm.GetCellOccupant(x, y) == health.gameObject)
                         {
                             gm.RemoveUnit(x, y);
-                            Debug.Log($"[GridEntityManager] Freed grid cell ({x},{y}) for destroyed '{health.gameObject.name}' (no FurnitureObject)");
-                            // Don't break — multi-cell objects could occupy multiple cells
+                            Debug.Log($"[GridEntityManager] Freed grid cell ({x},{y}) for destroyed '{health.gameObject.name}' (object layer)");
+                        }
+                        // Check Surface layer (e.g. Water)
+                        if (gm.GetSurfaceOccupant(x, y) == health.gameObject)
+                        {
+                            gm.RemoveSurface(x, y);
+                            Debug.Log($"[GridEntityManager] Freed grid cell ({x},{y}) for destroyed '{health.gameObject.name}' (surface layer)");
                         }
                     }
                 }

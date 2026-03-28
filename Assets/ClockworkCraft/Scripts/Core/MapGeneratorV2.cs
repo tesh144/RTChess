@@ -1655,6 +1655,30 @@ namespace ClockworkCraft
             desat.TransitionDuration = defaultEnvironmentTransitionDuration;
         }
 
+        /// <summary>
+        /// Place an environment object on the correct grid layer based on its EnvironmentLayerType.
+        /// Surface types (Water, Corruption) go on the surface layer; Objects go on the object layer.
+        /// </summary>
+        void PlaceOnCorrectLayer(int x, int y, GameObject obj, EnvironmentData envData)
+        {
+            if (GridManager.Instance == null) return;
+
+            if (envData.layerType == EnvironmentLayerType.Surface)
+            {
+                // Map EnvironmentLayerType.Surface → SurfaceType based on asset name
+                ClockworkGrid.SurfaceType surfaceType = ClockworkGrid.SurfaceType.Water;
+                string lower = envData.assetName.ToLowerInvariant();
+                if (lower.Contains("corrupt")) surfaceType = ClockworkGrid.SurfaceType.Corruption;
+                else if (lower.Contains("lava")) surfaceType = ClockworkGrid.SurfaceType.Lava;
+
+                GridManager.Instance.PlaceSurface(x, y, surfaceType, obj);
+            }
+            else
+            {
+                GridManager.Instance.PlaceUnit(x, y, obj, CellState.Resource);
+            }
+        }
+
         void SpawnCenter()
         {
             if (string.IsNullOrEmpty(centerEnvironmentName)) return;
@@ -1693,10 +1717,10 @@ namespace ClockworkCraft
                 ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
             }
 
-            GridManager.Instance?.PlaceUnit(center.x, center.y, obj, CellState.Resource);
+            PlaceOnCorrectLayer(center.x, center.y, obj, envData);
             TriggerAppearAnimation(obj);
 
-            Debug.Log($"[MapGenV2] Center '{centerEnvironmentName}' at ({center.x},{center.y})");
+            Debug.Log($"[MapGenV2] Center '{centerEnvironmentName}' at ({center.x},{center.y}) layer={envData.layerType}");
         }
 
         void SpawnAll()
@@ -1762,8 +1786,8 @@ namespace ClockworkCraft
                 if (obj.activeSelf)
                     TriggerAppearAnimation(obj);
 
-                // ── Grid registration ────────────────────────────────
-                GridManager.Instance?.PlaceUnit(x, y, obj, CellState.Resource);
+                // ── Grid registration (layer-aware) ─────────────────
+                PlaceOnCorrectLayer(x, y, obj, envData);
             }
         }
 
@@ -1827,7 +1851,7 @@ namespace ClockworkCraft
                 if (obj.activeSelf)
                     TriggerAppearAnimation(obj);
 
-                GridManager.Instance?.PlaceUnit(x, y, obj, CellState.Resource);
+                PlaceOnCorrectLayer(x, y, obj, envData);
                 POIManager.Instance?.RegisterEnvPOI(new Vector2Int(x, y), envData.assetName);
 
                 count++;

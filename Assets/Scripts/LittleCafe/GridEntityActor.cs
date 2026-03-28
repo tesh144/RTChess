@@ -687,7 +687,30 @@ namespace LittleCafe
                 }
 
                 GameObject occupant = gm.GetCellOccupant(checkX, checkY);
-                if (occupant == null) continue;
+                if (occupant == null)
+                {
+                    // No object — check for attackable surface (Water has HP, Corruption is ignored by workers)
+                    if (gm.HasSurface(checkX, checkY))
+                    {
+                        var surface = gm.GetSurface(checkX, checkY);
+                        if (surface == ClockworkGrid.SurfaceType.Water)
+                        {
+                            GameObject surfaceGO = gm.GetSurfaceOccupant(checkX, checkY);
+                            if (surfaceGO != null)
+                            {
+                                GridEntityHealth surfaceHealth = surfaceGO.GetComponent<GridEntityHealth>();
+                                if (surfaceHealth != null && !surfaceHealth.IsDestroyed)
+                                {
+                                    ResetIdleCounter();
+                                    yield return PerformStrongInteraction(surfaceHealth, checkX, checkY);
+                                    yield break;
+                                }
+                            }
+                        }
+                        // Other surface types (Corruption, Lava) — workers ignore them
+                    }
+                    continue;
+                }
                 if (occupant == gameObject) continue; // Multi-cell: skip own footprint cells
 
                 // Skip meal sources while the buff is active — don't interact until it expires
