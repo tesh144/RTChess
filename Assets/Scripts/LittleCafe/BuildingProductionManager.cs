@@ -247,8 +247,8 @@ namespace LittleCafe
 
             entries.Add(entry);
 
-            // Show insert bubble for buildings that start in a waiting state (not HoldToFill — that has its own fill bar)
-            if ((entry.waitingForInput || entry.waitingForResources) && !entry.waitingForHoldFill)
+            // Show insert bubble for buildings that start in a waiting state (including HoldToFill)
+            if (entry.waitingForInput || entry.waitingForResources || entry.waitingForHoldFill)
                 SpawnInsertBubble(entry);
 
             if (stats.productionInputType == ProductionInputType.HoldToFill)
@@ -430,12 +430,7 @@ namespace LittleCafe
             }
 
             // Cache the fill bar Image for updating in IncrementHoldFill
-            if (bubble.ActiveChild != null)
-            {
-                var fillTransform = bubble.ActiveChild.transform.Find("Fill");
-                if (fillTransform != null)
-                    entry.insertFillImage = fillTransform.GetComponent<Image>();
-            }
+            entry.insertFillImage = bubble.GetFillImage();
 
             // Initialize fill bar to current progress
             UpdateInsertFillBar(entry);
@@ -1329,8 +1324,8 @@ namespace LittleCafe
                 OnHoldFillStateChanged?.Invoke(entry.buildingObj, true);
             }
 
-            // Show insert bubble again for buildings returning to waiting state (not HoldToFill)
-            if ((entry.waitingForInput || entry.waitingForResources) && !entry.waitingForHoldFill)
+            // Show insert bubble again for buildings returning to waiting state (including HoldToFill)
+            if (entry.waitingForInput || entry.waitingForResources || entry.waitingForHoldFill)
                 SpawnInsertBubble(entry);
 
             // Hide timer until next tick reveals it

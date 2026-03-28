@@ -117,6 +117,15 @@ namespace ClockworkCraft
             return null;
         }
 
+        /// <summary>Find the Image named "Fill" within the active variant (for HoldToFill progress bar).</summary>
+        public Image GetFillImage()
+        {
+            if (activeChild == null) return null;
+            foreach (var img in activeChild.GetComponentsInChildren<Image>(true))
+                if (img.gameObject.name == "Fill") return img;
+            return null;
+        }
+
         /// <summary>Returns true if UIPanel has a child for this BubbleType.</summary>
         public bool HasVariant(BubbleType type)
         {
