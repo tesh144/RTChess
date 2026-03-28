@@ -177,9 +177,6 @@ namespace ClockworkCraft
         [Tooltip("WorldCanvas_Popups prefab — used for POI bubbles and as the default for both Insert and Collect building bubbles. Individual overrides can be set directly on BuildingProductionManager.")]
         public GameObject buildingBubblePrefab;
 
-        [Tooltip("World-space scale for building bubbles. Increase to make Insert/Collect bubbles bigger.")]
-        public float buildingBubbleScale = 0.005f;
-
         [Header("Center")]
         [Tooltip("EnvironmentDatabase entry to place at dead center.")]
         public string centerEnvironmentName = "Goldmine";
@@ -354,7 +351,7 @@ namespace ClockworkCraft
             {
                 var bpm = new GameObject("BuildingProductionManager").AddComponent<BuildingProductionManager>();
                 bpm.workerDatabase = workerDatabase;
-                bpm.SetBubblePrefabs(buildingBubblePrefab, buildingBubblePrefab, buildingBubbleScale);
+                bpm.SetBubblePrefabs(buildingBubblePrefab, buildingBubblePrefab);
             }
             else
             {
@@ -362,7 +359,7 @@ namespace ClockworkCraft
                 if (bpm.workerDatabase == null && workerDatabase != null)
                     bpm.workerDatabase = workerDatabase;
                 if (buildingBubblePrefab != null)
-                    bpm.SetBubblePrefabs(buildingBubblePrefab, buildingBubblePrefab, buildingBubbleScale);
+                    bpm.SetBubblePrefabs(buildingBubblePrefab, buildingBubblePrefab);
             }
 
             // Ensure hold-to-fill handler (input handler for HoldToFill buildings like Kitchen)

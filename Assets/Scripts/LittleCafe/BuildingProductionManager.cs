@@ -55,13 +55,12 @@ namespace LittleCafe
         [Tooltip("Prefab shown over buildings that want the card currently being dragged. Must have a POIBubble component (Bubble_Need variant). If null, no need bubble is shown.")]
         public GameObject needBubblePrefab;
 
-        // Fallback scale used only if POIManager isn't available at spawn time.
-        [HideInInspector] public float buildingBubbleScale = 0.005f;
+        private const float FALLBACK_BUBBLE_SCALE = 0.005f;
 
-        /// <summary>Bubble scale — reads from POIManager so all bubbles stay in sync. Falls back to buildingBubbleScale if POIManager isn't up yet.</summary>
+        /// <summary>Bubble scale — single source of truth is POIManager.BubbleWorldScale.</summary>
         private float BubbleScale => ClockworkCraft.POIManager.Instance != null
             ? ClockworkCraft.POIManager.Instance.BubbleWorldScale
-            : buildingBubbleScale;
+            : FALLBACK_BUBBLE_SCALE;
 
         // Procedural collect popup appearance — only used when collectBubblePrefab is null
         [HideInInspector] public float popupHeight = 2.0f;
@@ -140,6 +139,11 @@ namespace LittleCafe
         private readonly List<ProductionEntry> entries = new List<ProductionEntry>();
         private Camera mainCamera;
 
+        // Bubble pools — avoid Instantiate/Destroy per cycle
+        private readonly List<POIBubble> insertPool = new List<POIBubble>();
+        private readonly List<POIBubble> collectPool = new List<POIBubble>();
+        private readonly List<POIBubble> needPool = new List<POIBubble>();
+
         // Cached circle sprites for radial fill (generated once)
         private static Sprite circleSprite;
         private static Sprite ringSprite;
@@ -171,19 +175,35 @@ namespace LittleCafe
         /// <summary>True if the designed bubble prefab system is active (replaces legacy procedural popups).</summary>
         public bool HasBubblePrefab => insertBubblePrefab != null || collectBubblePrefab != null;
 
-        /// <summary>Set the bubble prefabs and scale at runtime (called by MapGeneratorV2 since BPM is AddComponent'd).
-        /// Pass the same prefab for both if using a single WorldCanvas_Popups with Bubble_Insert/Bubble_Collect variants.</summary>
-        public void SetBubblePrefabs(GameObject insertPrefab, GameObject collectPrefab, float scale = 0.005f)
+        /// <summary>Get an inactive bubble from the pool, or instantiate overflow.</summary>
+        private POIBubble GetFromPool(List<POIBubble> pool, GameObject prefab)
+        {
+            foreach (var b in pool)
+                if (!b.IsActive && !b.gameObject.activeSelf)
+                    return b;
+
+            // Overflow — create a new one
+            if (prefab == null) return null;
+            var obj = Instantiate(prefab, transform);
+            var bubble = obj.GetComponent<POIBubble>();
+            if (bubble == null) bubble = obj.AddComponent<POIBubble>();
+            obj.SetActive(false);
+            pool.Add(bubble);
+            return bubble;
+        }
+
+        /// <summary>Set the bubble prefabs at runtime (called by MapGeneratorV2 since BPM is AddComponent'd).
+        /// Scale is read from POIManager.BubbleWorldScale — single source of truth.</summary>
+        public void SetBubblePrefabs(GameObject insertPrefab, GameObject collectPrefab)
         {
             if (insertBubblePrefab == null) insertBubblePrefab = insertPrefab;
             if (collectBubblePrefab == null) collectBubblePrefab = collectPrefab;
-            buildingBubbleScale = scale;
-            Debug.Log($"[BuildingProduction] Bubble prefabs set — insert: {(insertBubblePrefab != null ? insertBubblePrefab.name : "NULL")}, collect: {(collectBubblePrefab != null ? collectBubblePrefab.name : "NULL")}, scale: {scale}");
+            Debug.Log($"[BuildingProduction] Bubble prefabs set — insert: {(insertBubblePrefab != null ? insertBubblePrefab.name : "NULL")}, collect: {(collectBubblePrefab != null ? collectBubblePrefab.name : "NULL")}");
         }
 
         /// <summary>Legacy single-prefab setter — sets both insert and collect to the same prefab if not already assigned.</summary>
-        public void SetBubblePrefab(GameObject prefab, float scale = 0.005f)
-            => SetBubblePrefabs(prefab, prefab, scale);
+        public void SetBubblePrefab(GameObject prefab)
+            => SetBubblePrefabs(prefab, prefab);
 
         void OnDestroy()
         {
@@ -385,10 +405,20 @@ namespace LittleCafe
 
         private void DestroyEntryVisuals(ProductionEntry entry)
         {
-            if (entry.popupCanvasObj != null) Destroy(entry.popupCanvasObj);
+            DismissCollectBubble(entry);
             if (entry.timerCanvasObj != null) Destroy(entry.timerCanvasObj);
             DismissInsertBubble(entry);
             DismissNeedBubble(entry);
+        }
+
+        private void DismissCollectBubble(ProductionEntry entry)
+        {
+            if (entry.popupCanvasObj == null) return;
+            var bubble = entry.popupCanvasObj.GetComponent<POIBubble>();
+            if (bubble != null && bubble.IsActive)
+                bubble.Dismiss();
+            entry.popupCanvasObj = null;
+            entry.popupIconImage = null;
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -414,12 +444,9 @@ namespace LittleCafe
                     ClockworkCraft.POIManager.Instance?.DismissBubble(new Vector2Int(gx, gy));
             }
 
-            var obj = Instantiate(insertBubblePrefab, transform);
-            obj.name = $"InsertBubble_{entry.buildingObj.name}";
-            obj.transform.position = pos;
-
-            var bubble = obj.GetComponent<POIBubble>();
-            if (bubble == null) bubble = obj.AddComponent<POIBubble>();
+            var bubble = GetFromPool(insertPool, insertBubblePrefab);
+            if (bubble == null) return;
+            bubble.gameObject.name = $"InsertBubble_{entry.buildingObj.name}";
             bubble.SetTargetScale(Vector3.one * BubbleScale);
             bubble.SetAnimParams(0.25f, bobAmplitude, bobSpeed * 0.5f, 0.3f);
             bubble.Setup(BubbleType.Bubble_Insert, "", pos);
@@ -443,7 +470,7 @@ namespace LittleCafe
             // Initialize fill bar to current progress
             UpdateInsertFillBar(entry);
 
-            entry.insertBubbleObj = obj;
+            entry.insertBubbleObj = bubble.gameObject;
         }
 
         /// <summary>Update the fill bar on the insert bubble to reflect current holdFillProgress.</summary>
@@ -454,20 +481,14 @@ namespace LittleCafe
             entry.insertFillImage.fillAmount = cost > 0 ? (float)entry.holdFillProgress / cost : 0f;
         }
 
-        /// <summary>Dismiss and destroy the insert bubble for a building.</summary>
+        /// <summary>Dismiss the insert bubble — returns to pool after fade-out.</summary>
         private void DismissInsertBubble(ProductionEntry entry)
         {
             if (entry.insertBubbleObj == null) return;
 
             var bubble = entry.insertBubbleObj.GetComponent<POIBubble>();
             if (bubble != null && bubble.IsActive)
-                bubble.Dismiss(); // Animated fade-out
-            else
-                Destroy(entry.insertBubbleObj); // Immediate cleanup
-
-            // Schedule destruction after dismiss animation
-            if (entry.insertBubbleObj != null)
-                Destroy(entry.insertBubbleObj, 1f);
+                bubble.Dismiss(); // Animated fade-out → deactivates → back in pool
 
             entry.insertBubbleObj = null;
             entry.insertFillImage = null;
@@ -506,17 +527,14 @@ namespace LittleCafe
 
             Vector3 pos = entry.buildingObj.transform.position + Vector3.up * GetPopupY(entry);
 
-            var obj = Instantiate(needBubblePrefab, transform);
-            obj.name = $"NeedBubble_{entry.buildingObj.name}";
-            obj.transform.position = pos;
-
-            var bubble = obj.GetComponent<POIBubble>();
-            if (bubble == null) bubble = obj.AddComponent<POIBubble>();
+            var bubble = GetFromPool(needPool, needBubblePrefab);
+            if (bubble == null) return;
+            bubble.gameObject.name = $"NeedBubble_{entry.buildingObj.name}";
             bubble.SetTargetScale(Vector3.one * BubbleScale);
             bubble.SetAnimParams(0.2f, bobAmplitude * 1.2f, bobSpeed * 1.2f, 0.25f);
             bubble.Setup(BubbleType.Bubble_Need, "", pos);
 
-            entry.needBubbleObj = obj;
+            entry.needBubbleObj = bubble.gameObject;
         }
 
         private void DismissNeedBubble(ProductionEntry entry)
@@ -526,11 +544,6 @@ namespace LittleCafe
             var bubble = entry.needBubbleObj.GetComponent<POIBubble>();
             if (bubble != null && bubble.IsActive)
                 bubble.Dismiss();
-            else
-                Destroy(entry.needBubbleObj);
-
-            if (entry.needBubbleObj != null)
-                Destroy(entry.needBubbleObj, 1f);
 
             entry.needBubbleObj = null;
         }
@@ -945,12 +958,9 @@ namespace LittleCafe
             // ── Designed Bubble path (Bubble_Collect) ──
             if (collectBubblePrefab != null)
             {
-                GameObject canvasObj = Instantiate(collectBubblePrefab, transform);
-                canvasObj.name = $"ProductionPopup_{entry.buildingObj.name}";
-                canvasObj.transform.position = popupPos;
-
-                var bubble = canvasObj.GetComponent<POIBubble>();
-                if (bubble == null) bubble = canvasObj.AddComponent<POIBubble>();
+                var bubble = GetFromPool(collectPool, collectBubblePrefab);
+                if (bubble == null) return;
+                bubble.gameObject.name = $"ProductionPopup_{entry.buildingObj.name}";
                 bubble.SetTargetScale(Vector3.one * BubbleScale);
                 bubble.SetAnimParams(0.25f, bobAmplitude, bobSpeed * 0.5f, 0.3f);
                 bubble.Setup(BubbleType.Bubble_Collect, "", popupPos);
@@ -963,7 +973,7 @@ namespace LittleCafe
                     iconImg.enabled = true;
                 }
                 entry.popupIconImage = iconImg;
-                entry.popupCanvasObj = canvasObj;
+                entry.popupCanvasObj = bubble.gameObject;
 
                 // Use UI tap via POIBubble.OnTapped instead of physics collider
                 int capturedIndex = entries.IndexOf(entry);
@@ -1333,10 +1343,7 @@ namespace LittleCafe
 
             entry.collectCount++;
 
-            if (entry.popupCanvasObj != null)
-                Destroy(entry.popupCanvasObj);
-            entry.popupCanvasObj = null;
-            entry.popupIconImage = null;
+            DismissCollectBubble(entry);
             entry.popupCollider = null;
             entry.isReady = false;
             entry.elapsedTime = 0f;

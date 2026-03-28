@@ -239,23 +239,17 @@ namespace ClockworkCraft
 
         private void HideAllVariants()
         {
-            // Hide EVERY descendant — not just direct children.
-            // This ensures nested variants (inside AllBubbles etc.) are all off.
-            var all = GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < all.Length; i++)
-            {
-                if (all[i] == transform) continue;
-                all[i].gameObject.SetActive(false);
-            }
+            // Zero-allocation: recursively deactivate all children
+            for (int i = 0; i < transform.childCount; i++)
+                SetActiveRecursive(transform.GetChild(i), false);
             activeChild = null;
         }
 
         /// <summary>Enable obj, all its descendants, and every parent up to root.</summary>
         private void EnableWithParents(GameObject obj)
         {
-            // Enable the variant and ALL its children (Icon, Fill, backgrounds, etc.)
-            foreach (var child in obj.GetComponentsInChildren<Transform>(true))
-                child.gameObject.SetActive(true);
+            // Zero-allocation: recursively enable the variant and all children
+            SetActiveRecursive(obj.transform, true);
 
             // Enable parent chain so the variant is actually visible
             Transform t = obj.transform.parent;
@@ -264,6 +258,13 @@ namespace ClockworkCraft
                 t.gameObject.SetActive(true);
                 t = t.parent;
             }
+        }
+
+        private static void SetActiveRecursive(Transform t, bool active)
+        {
+            t.gameObject.SetActive(active);
+            for (int i = 0; i < t.childCount; i++)
+                SetActiveRecursive(t.GetChild(i), active);
         }
 
         // ── Tether ───────────────────────────────────────────────────────
