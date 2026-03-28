@@ -585,6 +585,42 @@ namespace ClockworkGrid
                     anim.SetTrigger("appear");
             }
 
+            // Torches (revealRadius >= 2) colorize nearby objects when placed
+            if (currentDraggingIcon?.UnitStats != null && currentDraggingIcon.UnitStats.revealRadius >= 2)
+            {
+                // Colorize objects in 1-tile radius around each footprint cell
+                var colorizeOffsets = currentShape.GetOffsets(currentRotation);
+                foreach (var offset in colorizeOffsets)
+                {
+                    int cx = targetGridX + offset.x;
+                    int cy = targetGridY + offset.y;
+                    for (int dx = -1; dx <= 1; dx++)
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        if (dx == 0 && dy == 0) continue;
+                        GameObject occupant = GridManager.Instance.GetCellOccupant(cx + dx, cy + dy);
+                        if (occupant == null) continue;
+                        var desat = occupant.GetComponentInChildren<ClockworkCraft.EnvironmentDesaturation>();
+                        if (desat != null && !desat.HasColorized)
+                            desat.Colorize();
+                    }
+                }
+
+                // Subscribe to future fog reveals so newly-appearing objects also get colorized
+                if (FogManager.Instance != null)
+                {
+                    int torchX = targetGridX;
+                    int torchY = targetGridY;
+                    FogManager.Instance.OnCellRevealed += (x, y) =>
+                    {
+                        if (Mathf.Abs(x - torchX) > 1 || Mathf.Abs(y - torchY) > 1) return;
+                        // Delay one frame so FogHideable re-enables the object first
+                        if (Instance != null)
+                            Instance.StartCoroutine(ColorizeAfterFrame(x, y));
+                    };
+                }
+            }
+
             // Update furniture connectivity after placement
             if (placedWithFurniture && LittleCafe.FurnitureConnectivityManager.Instance != null)
             {
@@ -743,6 +779,16 @@ namespace ClockworkGrid
             linearPoint.y += height;
 
             return linearPoint;
+        }
+
+        private static System.Collections.IEnumerator ColorizeAfterFrame(int x, int y)
+        {
+            yield return null;
+            GameObject occupant = GridManager.Instance?.GetCellOccupant(x, y);
+            if (occupant == null) yield break;
+            var desat = occupant.GetComponentInChildren<ClockworkCraft.EnvironmentDesaturation>();
+            if (desat != null && !desat.HasColorized)
+                desat.Colorize();
         }
 
         private void CleanupDragVisuals()
