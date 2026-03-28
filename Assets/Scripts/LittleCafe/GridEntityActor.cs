@@ -34,6 +34,7 @@ namespace LittleCafe
 
         [Header("Behavior")]
         [SerializeField] private BehaviorType behaviorType = BehaviorType.RotateAndInteract;
+        private string walkableSurfaces = "None"; // Surface types this unit can walk on
 
         [Header("Rotation")]
         [SerializeField] private bool rotateClockwise = true;
@@ -128,12 +129,13 @@ namespace LittleCafe
         /// Configure actor from database values. Called by GridEntityManager after attaching.
         /// </summary>
         public void Initialize(bool clockwise = true, int range = 1, int intervalMultiplier = 1,
-            BehaviorType behavior = BehaviorType.RotateAndInteract)
+            BehaviorType behavior = BehaviorType.RotateAndInteract, string walkable = "None")
         {
             rotateClockwise = clockwise;
             attackRange = range;
             attackIntervalMultiplier = intervalMultiplier;
             behaviorType = behavior;
+            walkableSurfaces = walkable ?? "None";
 
             CacheReferences();
 
@@ -467,6 +469,35 @@ namespace LittleCafe
 
         /// <summary>
         /// Attempt to move one cell in the current facing direction.
+        /// <summary>
+        /// Check if this unit can walk on the given tile based on its walkable string.
+        /// "None" = only tiles with no surface. "Corruption" = only corruption tiles. Supports "+" for multiple.
+        /// </summary>
+        private bool CanWalkOnTile(GridManager gm, int x, int y)
+        {
+            string walkableStr = walkableSurfaces;
+            if (string.IsNullOrEmpty(walkableStr)) walkableStr = "None";
+
+            SurfaceType tileSurface = gm.GetSurface(x, y);
+
+            // Parse comma/plus-separated list of allowed surface types
+            string[] allowed = walkableStr.Split('+', ',');
+            for (int i = 0; i < allowed.Length; i++)
+            {
+                string s = allowed[i].Trim();
+                if (s.Equals("None", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    if (tileSurface == SurfaceType.None) return true;
+                }
+                else if (System.Enum.TryParse<SurfaceType>(s, true, out var requiredSurface))
+                {
+                    if (tileSurface == requiredSurface) return true;
+                }
+            }
+
+            return false;
+        }
+
         /// Checks if the target cell is empty and in-bounds, then smoothly moves there.
         /// Updates grid occupancy (old cell freed, new cell claimed).
         /// </summary>
@@ -499,13 +530,10 @@ namespace LittleCafe
                 yield break;
             }
 
-            // Corruption gate — RotateAndMoveCorrupted only moves onto corrupted tiles.
-            // If the target tile is not corrupted, silently skip (no bump), same as dino skipping a tree.
-            if (behaviorType == BehaviorType.RotateAndMoveCorrupted)
-            {
-                if (CorruptionManager.Instance == null || !CorruptionManager.Instance.IsCorrupted(newX, newY))
-                    yield break;
-            }
+            // Walkable surface check — each unit specifies which surface types it can walk on.
+            // "None" = only empty tiles (no surface). "Corruption" = only corruption tiles. etc.
+            if (!CanWalkOnTile(gm, newX, newY))
+                yield break;
 
             // Check if target cell is empty — if occupied, check for wild-animal interaction
             if (!gm.IsCellEmpty(newX, newY))
@@ -1187,11 +1215,41 @@ namespace LittleCafe
         /// </summary>
         private void ResetIdleCounter()
         {
+            bool wasCountingDown = idleTickCount > graceThreshold;
             if (idleTickCount > 0 && verboseLogging)
             {
                 Debug.Log($"[GridEntityActor] {gameObject.name} idle counter reset (was {idleTickCount})");
             }
             idleTickCount = 0;
+
+            if (wasCountingDown)
+                SetStarvationTint(false);
+        }
+
+        // ── Starvation Tint ──────────────────────────────────────────────
+
+        private static readonly Color starvationColor = new Color(0.9f, 0.15f, 0.15f);
+        private bool hasStarvationTint;
+
+        private void SetStarvationTint(bool tinted)
+        {
+            if (tinted == hasStarvationTint) return;
+            hasStarvationTint = tinted;
+
+            var renderers = GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0) return;
+
+            var mpb = new MaterialPropertyBlock();
+            int colorID = Shader.PropertyToID("_TintColor");
+            int strengthID = Shader.PropertyToID("_TintStrength");
+
+            foreach (var rend in renderers)
+            {
+                rend.GetPropertyBlock(mpb);
+                mpb.SetColor(colorID, tinted ? starvationColor : Color.white);
+                mpb.SetFloat(strengthID, tinted ? 0.5f : 0f);
+                rend.SetPropertyBlock(mpb);
+            }
         }
 
         /// <summary>
@@ -1211,6 +1269,10 @@ namespace LittleCafe
 
             if (idleTickCount > graceThreshold && idleTickCount <= totalThreshold)
             {
+                // Apply red tint on first countdown tick
+                if (!hasStarvationTint)
+                    SetStarvationTint(true);
+
                 // Phase 2: Countdown — show red number
                 int remaining = totalThreshold - idleTickCount;
                 // remaining goes from (countdownThreshold-1) down to 0
