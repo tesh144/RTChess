@@ -1,5 +1,6 @@
 #pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using ClockworkGrid;
 
@@ -50,6 +51,9 @@ namespace LittleCafe
 
         [Tooltip("Scale applied to the corruption visual. Overrides any inherited scale from the parent tile.")]
         [SerializeField] private float corruptionVisualScale = 1f;
+
+        [Tooltip("Delay in seconds between each ring of tiles being killed during the wave clear when a heart dies.")]
+        [SerializeField] private float waveClearDelay = 0.15f;
 
         /// <summary>The corruption tile visual prefab. Assigned in the Inspector.</summary>
         public GameObject CorruptionOverlayPrefab => corruptionOverlayPrefab;
@@ -250,16 +254,69 @@ namespace LittleCafe
         }
 
         /// <summary>
-        /// Destroy a heart's entire cluster — called when the heart dies.
-        /// Clears every tile owned by this heart only; other hearts are unaffected.
+        /// Kill a heart's entire cluster in a wave propagating outward from the heart.
+        /// Each tile's HP is set to zero (letting the normal death animation play),
+        /// ring by ring with waveClearDelay between each ring.
+        /// </summary>
+        public void ClearHeartClusterWave(CorruptionHeart heart)
+        {
+            if (!heartTiles.ContainsKey(heart)) return;
+
+            Debug.Log($"[CorruptionManager] Wave-clearing cluster for heart at {heart.GridPosition} ({heartTiles[heart].Count} tiles).");
+
+            StartCoroutine(WaveClearCoroutine(heart));
+        }
+
+        private IEnumerator WaveClearCoroutine(CorruptionHeart heart)
+        {
+            if (!heartTiles.ContainsKey(heart)) yield break;
+
+            var tiles = new List<Vector2Int>(heartTiles[heart]);
+            Vector2Int origin = heart.GridPosition;
+
+            // Sort tiles into rings by Chebyshev distance from the heart
+            var rings = new SortedDictionary<int, List<Vector2Int>>();
+            foreach (var coord in tiles)
+            {
+                int dist = Mathf.Max(Mathf.Abs(coord.x - origin.x), Mathf.Abs(coord.y - origin.y));
+                if (!rings.ContainsKey(dist))
+                    rings[dist] = new List<Vector2Int>();
+                rings[dist].Add(coord);
+            }
+
+            // Kill each ring outward with a delay between rings
+            foreach (var kvp in rings)
+            {
+                foreach (var coord in kvp.Value)
+                {
+                    var tile = GridManager.Instance != null ? GridManager.Instance.GetGridTile(coord.x, coord.y) : null;
+                    if (tile == null) continue;
+
+                    var overlay = tile.GetComponent<CorruptionOverlay>();
+                    if (overlay == null) continue;
+
+                    // Set HP to zero — triggers the normal death/removal animation
+                    if (overlay.Health != null && !overlay.Health.IsDestroyed)
+                        overlay.Health.TakeDamage(overlay.Health.CurrentHP);
+                }
+
+                if (waveClearDelay > 0f)
+                    yield return new WaitForSeconds(waveClearDelay);
+            }
+
+            // Clean up data structures after wave completes
+            heartTiles.Remove(heart);
+            allHearts.Remove(heart);
+        }
+
+        /// <summary>
+        /// Destroy a heart's entire cluster immediately — no wave animation.
+        /// Kept as fallback; prefer ClearHeartClusterWave for visual effect.
         /// </summary>
         public void ClearHeartCluster(CorruptionHeart heart)
         {
             if (!heartTiles.ContainsKey(heart)) return;
 
-            Debug.Log($"[CorruptionManager] Clearing cluster for heart at {heart.GridPosition} ({heartTiles[heart].Count} tiles).");
-
-            // Snapshot to avoid modifying the set during iteration
             var tiles = new List<Vector2Int>(heartTiles[heart]);
             foreach (var coord in tiles)
                 ClearTile(coord.x, coord.y, heart);

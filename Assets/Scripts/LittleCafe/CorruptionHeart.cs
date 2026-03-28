@@ -203,9 +203,9 @@ namespace LittleCafe
         private void OnHeartDestroyed(GridEntityHealth _)
         {
             if (CorruptionManager.Instance != null)
-                CorruptionManager.Instance.ClearHeartCluster(this);
+                CorruptionManager.Instance.ClearHeartClusterWave(this);
 
-            Destroy(gameObject);
+            // Don't Destroy — let the normal death animation system handle heart removal.
         }
 
         /// <summary>

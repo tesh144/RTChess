@@ -93,6 +93,8 @@ namespace ClockworkGrid
         private float coinBasePitch = 0.9f;
         [SerializeField, Tooltip("Pitch of the last coin in a large batch (top of the ramp)")]
         private float coinMaxPitch = 1.3f;
+        [SerializeField, Tooltip("Maximum coins that can queue in a single batch")]
+        private int coinBatchMax = 20;
 
         private int coinQueueCount;
         private Coroutine flushTimerCoroutine;
@@ -252,6 +254,7 @@ namespace ClockworkGrid
         /// </summary>
         public void PlayCoinCollect()
         {
+            if (coinQueueCount >= coinBatchMax) return;
             coinQueueCount++;
 
             if (flushTimerCoroutine != null)
