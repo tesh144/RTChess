@@ -330,7 +330,7 @@ namespace LittleCafe.Editor
 
             Check("Workers & Entities",
                 "Entity", "Type", "Active", "HP", "Attack Power",
-                "Movement Behavior", "Draw Weight", "Killer's Behavior", "Tier (button)");
+                "Movement Behavior", "Draw Weight", "Killer's Behavior", "Tier (button)", "Walkable");
 
             Check("Environment & Loot",
                 "Object", "Active", "MapGenerated", "Type", "Drops", "Loot per Hit",
@@ -648,6 +648,11 @@ namespace LittleCafe.Editor
                         }
                     }
                 }
+
+                // Walkable (surface types this unit can move on)
+                string walkableStr = GetValue(row, "Walkable");
+                if (!string.IsNullOrEmpty(walkableStr) && existing.walkable != walkableStr)
+                { existing.walkable = walkableStr; changed = true; }
 
                 // Draw weight
                 float dw = 0;

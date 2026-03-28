@@ -54,6 +54,9 @@ namespace LittleCafe
         [Tooltip("Clockwork behavior pattern. RotateAndInteract = worker-style (attack). RotateAndMove = animal-style (wander).")]
         public BehaviorType behaviorType = BehaviorType.RotateAndMove;
 
+        [Tooltip("Surface types this unit can walk on. 'None' = only empty tiles. 'Corruption' = only corruption tiles. Comma-separated for multiple (e.g. 'None+Water'). Synced from Walkable column.")]
+        public string walkable = "None";
+
         [Tooltip("When this unit is killed, does the attacker advance into its cell? Advance = true, Stay = false. Mirrors sheet 'Killer's Behavior' column.")]
         public bool killerAdvances = false;
 

@@ -84,6 +84,9 @@ namespace ClockworkGrid
         [Tooltip("Clockwork behavior pattern. RotateAndInteract = worker-style (attack). RotateAndMove = animal-style (wander).")]
         public BehaviorType behaviorType = BehaviorType.RotateAndInteract;
 
+        [Tooltip("Surface types this unit can walk on. 'None' = only empty tiles. 'Corruption' = only corruption tiles. Comma-separated with + for multiple.")]
+        public string walkable = "None";
+
         [Tooltip("Allied entities (workers, buildings) are never attacked by the player's own workers.")]
         public bool isAllied = false;
 

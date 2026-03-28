@@ -73,7 +73,8 @@ namespace LittleCafe
         /// <param name="killerAdvances">When killed, does the attacker advance into this cell? Maps to sheet "Killer's Behavior" (Advance/Stay).</param>
         public void AttachComponents(GameObject go, int hp, int attackPower, bool isActive,
             BehaviorType behaviorType = BehaviorType.RotateAndInteract,
-            string registryName = null, bool allied = false, bool killerAdvances = true)
+            string registryName = null, bool allied = false, bool killerAdvances = true,
+            string walkable = "None")
         {
             if (go == null) return;
 
@@ -112,7 +113,7 @@ namespace LittleCafe
                 if (actor == null)
                     actor = go.AddComponent<GridEntityActor>();
 
-                actor.Initialize(clockwise: true, range: 1, intervalMultiplier: 1, behavior: behaviorType);
+                actor.Initialize(clockwise: true, range: 1, intervalMultiplier: 1, behavior: behaviorType, walkable: walkable);
                 allActors.Add(actor);
 
                 Debug.Log($"[GridEntityManager] Attached actor to {go.name}: behavior={behaviorType}");
@@ -132,10 +133,11 @@ namespace LittleCafe
         public void AttachComponents(GameObject go, int hp, int attackPower, bool isActive,
             ResourceType lootResourceType, int lootHpCost = 1, int lootYield = 1,
             BehaviorType behaviorType = BehaviorType.RotateAndInteract,
-            string registryName = null, bool allied = false, bool killerAdvances = true)
+            string registryName = null, bool allied = false, bool killerAdvances = true,
+            string walkable = "None")
         {
             // Attach base health + actor
-            AttachComponents(go, hp, attackPower, isActive, behaviorType, registryName, allied, killerAdvances);
+            AttachComponents(go, hp, attackPower, isActive, behaviorType, registryName, allied, killerAdvances, walkable);
 
             // Attach ResourceNode for loot if a resource type is specified
             if (lootResourceType != ResourceType.None && go != null)
@@ -192,7 +194,8 @@ namespace LittleCafe
             if (data == null) return;
             AttachComponents(go, data.hp, data.attackPower, data.isActive,
                 data.lootResourceType, data.lootHpCost, data.lootYield, data.behaviorType,
-                registryName: data.assetName, allied: false, killerAdvances: data.killerAdvances);
+                registryName: data.assetName, allied: false, killerAdvances: data.killerAdvances,
+                walkable: data.walkable);
         }
 
         /// <summary>
