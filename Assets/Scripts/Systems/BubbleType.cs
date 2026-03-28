@@ -11,7 +11,7 @@ namespace ClockworkCraft
         POI_Red,        // Danger POI (corruption hearts)
         Bubble_Insert,  // Building waiting for input/resources
         Bubble_Collect, // Output ready to collect
-        Bubble_Need,    // Building wants the card currently being dragged
+        Arrow_Need,     // Building wants the card currently being dragged
         Bubble_Alert    // Attention/problem state (future)
     }
 }

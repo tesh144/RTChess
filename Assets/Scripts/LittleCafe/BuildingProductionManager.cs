@@ -52,7 +52,7 @@ namespace LittleCafe
 
         // ─── Need Bubble ─────────────────────────────────────────────────
         [Header("Need Bubble")]
-        [Tooltip("Prefab shown over buildings that want the card currently being dragged. Must have a POIBubble component (Bubble_Need variant). If null, no need bubble is shown.")]
+        [Tooltip("Prefab shown over buildings that want the card currently being dragged. Must have a POIBubble component (Arrow_Need variant). If null, no need bubble is shown.")]
         public GameObject needBubblePrefab;
 
         private const float FALLBACK_BUBBLE_SCALE = 0.005f;
@@ -198,7 +198,7 @@ namespace LittleCafe
         {
             if (insertBubblePrefab == null) insertBubblePrefab = insertPrefab;
             if (collectBubblePrefab == null) collectBubblePrefab = collectPrefab;
-            // Need bubble uses the same WorldCanvas_Popups prefab — just activates Bubble_Need child
+            // Need bubble uses the same WorldCanvas_Popups prefab — just activates Arrow_Need child
             if (needBubblePrefab == null) needBubblePrefab = insertPrefab;
             Debug.Log($"[BuildingProduction] Bubble prefabs set — insert: {(insertBubblePrefab != null ? insertBubblePrefab.name : "NULL")}, collect: {(collectBubblePrefab != null ? collectBubblePrefab.name : "NULL")}, need: {(needBubblePrefab != null ? needBubblePrefab.name : "NULL")}");
         }
@@ -270,7 +270,7 @@ namespace LittleCafe
             entries.Add(entry);
 
             // Show insert bubble for HoldToFill buildings only — card-input buildings
-            // (Any/Worker/Fighter) show Bubble_Need dynamically during drag instead
+            // (Any/Worker/Fighter) show Arrow_Need dynamically during drag instead
             bool isCardInput = entry.inputType == ProductionInputType.Any ||
                                entry.inputType == ProductionInputType.Worker ||
                                entry.inputType == ProductionInputType.Fighter;
@@ -502,10 +502,10 @@ namespace LittleCafe
         }
 
         // ─────────────────────────────────────────────────────────────────
-        // Need Bubble (Bubble_Need — shown during drag when building wants the dragged card)
+        // Need Bubble (Arrow_Need — shown during drag when building wants the dragged card)
         // ─────────────────────────────────────────────────────────────────
 
-        /// <summary>Show Bubble_Need on all buildings that are currently waiting and accept the given input type.
+        /// <summary>Show Arrow_Need on all buildings that are currently waiting and accept the given input type.
         /// Called by DragDropHandler when a drag begins.</summary>
         public void ShowNeedBubbles(ProductionInputType inputType)
         {
@@ -545,7 +545,7 @@ namespace LittleCafe
             bubble.gameObject.name = $"NeedBubble_{entry.buildingObj.name}";
             bubble.SetTargetScale(Vector3.one * BubbleScale);
             bubble.SetAnimParams(0.2f, bobAmplitude * 1.2f, bobSpeed * 1.2f, 0.25f);
-            bubble.Setup(BubbleType.Bubble_Need, "", pos);
+            bubble.Setup(BubbleType.Arrow_Need, "", pos);
 
             entry.needBubbleObj = bubble.gameObject;
         }
@@ -880,7 +880,12 @@ namespace LittleCafe
 
                 entry.elapsedTime += tickDuration;
 
-                if (entry.elapsedTime >= entry.EffectiveInterval)
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                float effectiveInterval = ClockworkGrid.DevCheatMenu.InstantProduction ? 1f : entry.EffectiveInterval;
+#else
+                float effectiveInterval = entry.EffectiveInterval;
+#endif
+                if (entry.elapsedTime >= effectiveInterval)
                 {
                     entry.elapsedTime = 0f;
                     entry.isReady = true;
@@ -1833,6 +1838,23 @@ namespace LittleCafe
         {
             var entry = entries.Find(e => e.buildingObj == building);
             return entry != null && entry.waitingForHoldFill;
+        }
+
+        /// <summary>
+        /// DEV CHEAT: Instantly complete all buildings that are currently running their
+        /// production timer. Skips buildings waiting for card input, resource cost, or
+        /// hold-to-fill (those require player action and aren't time-gated).
+        /// </summary>
+        public void CheatCompleteAllTimers()
+        {
+            foreach (var entry in entries)
+            {
+                if (entry == null || entry.buildingObj == null) continue;
+                if (entry.waitingForInput || entry.waitingForResources || entry.waitingForHoldFill) continue;
+                if (!entry.isReady)
+                    entry.elapsedTime = entry.EffectiveInterval + 1f;
+            }
+            Debug.Log("[DevCheat] Completed all production timers.");
         }
 
         /// <summary>
