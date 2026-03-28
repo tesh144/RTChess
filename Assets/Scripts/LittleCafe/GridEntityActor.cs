@@ -90,7 +90,7 @@ namespace LittleCafe
         // State
         private bool isInitialized = false;
         private bool isFirstTick = true; // Skip rotation on first tick so we act in initial facing
-        private bool skipNextTick = true; // Skip the very first bar tick after placement (grace period)
+        private int placedOnBar = -1; // Bar number when this actor was placed (-1 = not set)
         private bool isMoving = false;   // Prevent overlapping moves
         private bool rrm_isRotateTick = true; // RotateRotateMove: alternates between rotate-only and rotate+move ticks
 
@@ -136,6 +136,9 @@ namespace LittleCafe
             attackIntervalMultiplier = intervalMultiplier;
             behaviorType = behavior;
             walkableSurfaces = walkable ?? "None";
+
+            // Record which bar we were placed on so we skip only that same-tick call
+            placedOnBar = IntervalTimer.Instance != null ? IntervalTimer.Instance.CurrentBar : -1;
 
             CacheReferences();
 
@@ -303,11 +306,11 @@ namespace LittleCafe
             if (health != null && health.IsDestroyed) return;
             if (isCorruptionPaused) return;
 
-            // Grace period: skip the first tick after placement so the worker
-            // doesn't immediately attack/act the moment it's placed.
-            if (skipNextTick)
+            // Grace period: skip only if this tick is the same bar we were placed on.
+            // Prevents instant action on placement without adding a full extra bar delay.
+            if (placedOnBar >= 0 && bar == placedOnBar)
             {
-                skipNextTick = false;
+                placedOnBar = -1; // Clear so future ticks are not affected
                 return;
             }
 
