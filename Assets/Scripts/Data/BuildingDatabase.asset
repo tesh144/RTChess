@@ -30,6 +30,7 @@ MonoBehaviour:
     visualScale: 0
     gridSize: {x: 1, y: 1}
     killerAdvances: 1
+    buildOn: Empty
     fogRevealRadius: 1
     prefab: {fileID: 4760405268050885137, guid: 2f41e9bf7cf6d4fccb70a1e8398e442a, type: 3}
     icon: {fileID: 21300000, guid: 10ee5d5e55d1b4296ba901f70537cb11, type: 3}
@@ -64,6 +65,7 @@ MonoBehaviour:
     visualScale: 0
     gridSize: {x: 1, y: 1}
     killerAdvances: 1
+    buildOn: Empty
     fogRevealRadius: 2
     prefab: {fileID: 5555927305428753834, guid: 471a7dabafbc84b92b19de4645e04a6a, type: 3}
     icon: {fileID: 21300000, guid: b563bf17c7d14435dacdf47712dd94e9, type: 3}
@@ -98,6 +100,7 @@ MonoBehaviour:
     visualScale: 0
     gridSize: {x: 1, y: 1}
     killerAdvances: 1
+    buildOn: Empty
     fogRevealRadius: 1
     prefab: {fileID: 8342170868413443855, guid: 9f7736c07d2744d04b0f1d11ae3b4e6f, type: 3}
     icon: {fileID: 21300000, guid: 50d71c0a9f632478ebbd1ff2d6448173, type: 3}
@@ -132,6 +135,7 @@ MonoBehaviour:
     visualScale: 0
     gridSize: {x: 1, y: 1}
     killerAdvances: 1
+    buildOn: Empty
     fogRevealRadius: 1
     prefab: {fileID: 1729936463556100942, guid: 47b7e0cce81224b9f987986ef1ad5a4b, type: 3}
     icon: {fileID: 21300000, guid: 00b957c6072a847cebd4706c63d67dfd, type: 3}
@@ -166,6 +170,7 @@ MonoBehaviour:
     visualScale: 0
     gridSize: {x: 1, y: 1}
     killerAdvances: 1
+    buildOn: Empty
     fogRevealRadius: 1
     prefab: {fileID: 1971429362272892409, guid: e494573a8fc0240988e475bb1bacde5b, type: 3}
     icon: {fileID: 21300000, guid: 2cb6279402fb4440faebc237ebe32010, type: 3}
@@ -200,9 +205,10 @@ MonoBehaviour:
     visualScale: 0
     gridSize: {x: 1, y: 1}
     killerAdvances: 0
+    buildOn: Empty
     fogRevealRadius: 1
-    prefab: {fileID: 4912067625501910485, guid: 9ed5ac8420c704bb495cb77fdd709507, type: 3}
-    icon: {fileID: 21300000, guid: 433aa7d7cdc5040448be5385d4ca39ac, type: 3}
+    prefab: {fileID: 4069388665601599064, guid: 5cfe09c1bdd804de3a2fa60089dad974, type: 3}
+    icon: {fileID: 21300000, guid: 8a401058293854ec38fc11f322ac7245, type: 3}
     isRandomBuilding: 1
     allyInteractible: 1
     enemyInteractible: 1
@@ -234,6 +240,7 @@ MonoBehaviour:
     visualScale: 0
     gridSize: {x: 1, y: 1}
     killerAdvances: 1
+    buildOn: Empty
     fogRevealRadius: 1
     prefab: {fileID: 5927109788316665394, guid: f95fd6d4394764a679abc5b7e2950e65, type: 3}
     icon: {fileID: 21300000, guid: 8382b74377f3849a19cba4826c9efc90, type: 3}
@@ -268,6 +275,7 @@ MonoBehaviour:
     visualScale: 0
     gridSize: {x: 1, y: 1}
     killerAdvances: 1
+    buildOn: Empty
     fogRevealRadius: 1
     prefab: {fileID: 6611601216155316018, guid: b9b16457d79f346f2808e28e4dcf60b2, type: 3}
     icon: {fileID: 21300000, guid: d317cb0f2a65a4eeeb4bc8d9cc32aaa1, type: 3}
@@ -302,6 +310,7 @@ MonoBehaviour:
     visualScale: 0
     gridSize: {x: 1, y: 1}
     killerAdvances: 1
+    buildOn: Empty
     fogRevealRadius: 1
     prefab: {fileID: 703771162908890900, guid: cafe9388b89334ca78fca6b6ee83a739, type: 3}
     icon: {fileID: 21300000, guid: 19927fa1c46ec465e96a55e955d65636, type: 3}

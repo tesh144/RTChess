@@ -433,7 +433,13 @@ namespace ClockworkGrid
 
             if (usesEconomyManager)
             {
-                if (!ClockworkGrid.EconomyManager.Instance.SpendForPlacement(placementItemName))
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                bool economySpendOk = LittleCafe.DevCheatMenu.FreeCosts ||
+                    ClockworkGrid.EconomyManager.Instance.SpendForPlacement(placementItemName);
+#else
+                bool economySpendOk = ClockworkGrid.EconomyManager.Instance.SpendForPlacement(placementItemName);
+#endif
+                if (!economySpendOk)
                 {
                     // SFX: can't afford placement
                     if (GameSFXManager.Instance != null)
@@ -448,6 +454,9 @@ namespace ClockworkGrid
             else
             {
                 int placementCost = currentDraggingIcon.UnitStats != null ? currentDraggingIcon.UnitStats.resourceCost : 0;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                if (LittleCafe.DevCheatMenu.FreeCosts) placementCost = 0;
+#endif
                 if (placementCost > 0)
                 {
                     if (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.SpendTokens(placementCost))
@@ -830,14 +839,26 @@ namespace ClockworkGrid
                 if (ClockworkGrid.EconomyManager.Instance != null &&
                     ClockworkGrid.EconomyManager.Instance.HasConfiguredCost(itemName))
                 {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                    if (!LittleCafe.DevCheatMenu.FreeCosts &&
+                        !ClockworkGrid.EconomyManager.Instance.CanAfford(itemName))
+                        return false;
+#else
                     if (!ClockworkGrid.EconomyManager.Instance.CanAfford(itemName))
                         return false;
+#endif
                 }
                 else
                 {
                     int cost = currentDraggingIcon.UnitStats.resourceCost;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                    if (!LittleCafe.DevCheatMenu.FreeCosts &&
+                        cost > 0 && (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost)))
+                        return false;
+#else
                     if (cost > 0 && (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost)))
                         return false;
+#endif
                 }
             }
 

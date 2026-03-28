@@ -158,8 +158,10 @@ namespace ClockworkGrid
             }
 
             int cost = CalculateDrawCost();
-
-            if (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost))
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            if (LittleCafe.DevCheatMenu.FreeCosts) cost = 0;
+#endif
+            if (cost > 0 && (ResourceTokenManager.Instance == null || !ResourceTokenManager.Instance.HasEnoughTokens(cost)))
             {
                 Debug.Log($"[DockBarManager] Draw failed — not enough tokens (need {cost})");
                 if (GameSFXManager.Instance != null)
@@ -167,7 +169,8 @@ namespace ClockworkGrid
                 return;
             }
 
-            ResourceTokenManager.Instance.SpendTokens(cost);
+            if (cost > 0)
+                ResourceTokenManager.Instance.SpendTokens(cost);
 
             drawCount++;
 

@@ -36,6 +36,12 @@ namespace LittleCafe
             new GameObject("[DevCheatMenu]").AddComponent<DevCheatMenu>();
         }
 
+        // ── Global cheat flags (read by DragDropHandler, DockBarManager, BPM, etc.) ─
+        /// <summary>When true, all placement and draw costs are bypassed. Dev builds only.</summary>
+        public static bool FreeCosts = false;
+        /// <summary>When true, all building production intervals are forced to 1 second. Dev builds only.</summary>
+        public static bool InstantProduction = false;
+
         // ── Window state ──────────────────────────────────────────────────────
         private bool isOpen = false;
         private int selectedTab = 0;
@@ -127,6 +133,26 @@ namespace LittleCafe
             }
 
             GUILayout.EndScrollView();
+
+            // ── Always-visible global cheats ──────────────────────────────────
+            GUILayout.Space(6);
+            GUILayout.BeginHorizontal();
+
+            // Toggle instant production (all intervals → 1 second while ON)
+            Color prevBg = GUI.backgroundColor;
+            GUI.backgroundColor = InstantProduction ? new Color(0.2f, 0.85f, 0.3f) : new Color(0.3f, 0.6f, 1f);
+            string timerLabel = InstantProduction ? "⚡ Skip Timers  [ON]" : "⚡ Skip Timers [OFF]";
+            if (GUILayout.Button(timerLabel))
+                InstantProduction = !InstantProduction;
+
+            // Toggle free costs (placement + draw button)
+            GUI.backgroundColor = FreeCosts ? new Color(0.2f, 0.85f, 0.3f) : new Color(0.5f, 0.5f, 0.5f);
+            string freeCostLabel = FreeCosts ? "💸 Free Costs  [ON]" : "💸 Free Costs [OFF]";
+            if (GUILayout.Button(freeCostLabel))
+                FreeCosts = !FreeCosts;
+
+            GUI.backgroundColor = prevBg;
+            GUILayout.EndHorizontal();
 
             GUILayout.Space(4);
             if (GUILayout.Button("Close"))
