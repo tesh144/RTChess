@@ -459,9 +459,14 @@ namespace LittleCafe
                 iconImg.sprite = inputIcon;
                 iconImg.enabled = true;
             }
+            else
+            {
+                Debug.LogWarning($"[BuildingProduction] Insert bubble icon issue — iconImg: {(iconImg != null ? iconImg.name : "NULL")}, inputIcon: {(inputIcon != null ? inputIcon.name : "NULL")}, costType: {entry.productionCostResourceType}, inputType: {entry.inputType}");
+            }
 
             // Cache the fill bar Image for updating in IncrementHoldFill
             entry.insertFillImage = bubble.GetFillImage();
+            Debug.Log($"[BuildingProduction] Insert bubble for {entry.buildingObj.name}: fillImage={entry.insertFillImage != null}, activeChild={bubble.ActiveChild?.name ?? "NULL"}");
 
             // Tint the fill bar to match the requested resource color
             if (entry.insertFillImage != null && entry.productionCostResourceType != ResourceType.None)
