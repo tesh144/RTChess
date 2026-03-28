@@ -247,8 +247,12 @@ namespace LittleCafe
 
             entries.Add(entry);
 
-            // Show insert bubble for buildings that start in a waiting state (including HoldToFill)
-            if (entry.waitingForInput || entry.waitingForResources || entry.waitingForHoldFill)
+            // Show insert bubble for HoldToFill buildings only — card-input buildings
+            // (Any/Worker/Fighter) show Bubble_Need dynamically during drag instead
+            bool isCardInput = entry.inputType == ProductionInputType.Any ||
+                               entry.inputType == ProductionInputType.Worker ||
+                               entry.inputType == ProductionInputType.Fighter;
+            if (!isCardInput && (entry.waitingForInput || entry.waitingForResources || entry.waitingForHoldFill))
                 SpawnInsertBubble(entry);
 
             if (stats.productionInputType == ProductionInputType.HoldToFill)
@@ -418,13 +422,7 @@ namespace LittleCafe
             if (bubble == null) bubble = obj.AddComponent<POIBubble>();
             bubble.SetTargetScale(Vector3.one * BubbleScale);
             bubble.SetAnimParams(0.25f, bobAmplitude, bobSpeed * 0.5f, 0.3f);
-            // Card-based inputs (Any, Worker, Fighter) use Bubble_Need (arrow style);
-            // resource-based inputs (HoldToFill) use Bubble_Insert (fill bar style)
-            bool isCardInput = entry.inputType == ProductionInputType.Any ||
-                               entry.inputType == ProductionInputType.Worker ||
-                               entry.inputType == ProductionInputType.Fighter;
-            BubbleType insertType = isCardInput ? BubbleType.Bubble_Need : BubbleType.Bubble_Insert;
-            bubble.Setup(insertType, "", pos);
+            bubble.Setup(BubbleType.Bubble_Insert, "", pos);
 
             // Set the input icon (what the building needs)
             Sprite inputIcon = ResolveInputIcon(entry);
@@ -1330,8 +1328,11 @@ namespace LittleCafe
                 OnHoldFillStateChanged?.Invoke(entry.buildingObj, true);
             }
 
-            // Show insert bubble again for buildings returning to waiting state (including HoldToFill)
-            if (entry.waitingForInput || entry.waitingForResources || entry.waitingForHoldFill)
+            // Show insert bubble again for non-card-input buildings returning to waiting state
+            bool isCardInput2 = entry.inputType == ProductionInputType.Any ||
+                                entry.inputType == ProductionInputType.Worker ||
+                                entry.inputType == ProductionInputType.Fighter;
+            if (!isCardInput2 && (entry.waitingForInput || entry.waitingForResources || entry.waitingForHoldFill))
                 SpawnInsertBubble(entry);
 
             // Hide timer until next tick reveals it
