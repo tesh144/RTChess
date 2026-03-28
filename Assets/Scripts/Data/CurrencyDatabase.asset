@@ -39,7 +39,7 @@ MonoBehaviour:
     unlockedAtStart: 0
   - currencyName: Water
     resourceType: 5
-    icon: {fileID: 21300000, guid: 598d993a02b92434a97fa907a1cbb83f, type: 3}
+    icon: {fileID: 21300000, guid: 12295f694bf1f4803b5ac278f1e09a8c, type: 3}
     fallbackEmoji: "\U0001F4A7"
     startingAmount: 0
     unlockedAtStart: 0

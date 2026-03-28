@@ -86,11 +86,15 @@ Buildings & Production, Workers & Entities, Environment & Loot, DrawButton, Poin
 | Sheet Column | Code Field | Notes |
 |---|---|---|
 | Object | assetName | |
+| Type | layerType | `EnvironmentLayerType` enum: Object (Tier 1) or Surface (Tier 2). Surfaces coexist with Objects on the same tile. |
 | Drops | lootResourceType | Dropdown with emoji (e.g. "💰 Gold"). StripEmoji → Enum.TryParse |
 | Loot per Hit | lootYield | int |
 | HP | hp | int |
 | Total Yield | (formula) | =Loot per Hit × HP. Not a code field. |
 | Killer's Behavior | killerAdvances | Advance = true, Stay = false. Controls whether attacker moves into cell on kill. |
+
+**BuildOn (Buildings & Production, column E):**
+Dropdown populated from all Environment & Loot entry names + "Empty". Controls which tile surface type is valid for placement when the player drags a building. "Empty" = standard unoccupied tile. Any surface name (e.g. "Water") = only valid on a tile bearing that surface. Synced from sheet via SheetSyncEditor → `buildOn` string field on `BuildingData`.
 
 **Sync Tool:** `Assets/Scripts/Editor/SheetSyncEditor.cs` reads `Assets/Scripts/Editor/SheetCache.json` (written by Claude via MCP) and updates ScriptableObject .asset files. Open via ClockworkCraft → Sheet Sync in Unity.
 

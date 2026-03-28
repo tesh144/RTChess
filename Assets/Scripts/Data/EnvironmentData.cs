@@ -5,7 +5,8 @@ using ClockworkCraft;
 namespace LittleCafe
 {
     /// <summary>
-    /// Classification of environment object types.
+    /// Visual/category classification of environment objects.
+    /// Used for grouping and art direction purposes.
     /// </summary>
     public enum EnvironmentType
     {
@@ -17,6 +18,19 @@ namespace LittleCafe
         Fence,          // Fences, walls, gates
         Terrain,        // Hills, mounds, terrain features
         Flora           // Flowers, grass, crops
+    }
+
+    /// <summary>
+    /// Tile layer classification. Determines which grid layer this environment entry occupies.
+    /// Maps directly to the "Type" column in the Environment &amp; Loot sheet.
+    ///   Object  — Tier 1: occupies the object slot (trees, rocks, buildings, etc.)
+    ///   Surface — Tier 2: occupies the surface/overlay slot (water, corruption, lava, etc.)
+    ///             Surfaces do not block object placement — a tile can hold both.
+    /// </summary>
+    public enum EnvironmentLayerType
+    {
+        Object,     // Default — occupies the Object layer (Tier 1)
+        Surface     // Overlay — occupies the Surface layer (Tier 2), coexists with Objects
     }
 
     /// <summary>
@@ -39,6 +53,8 @@ namespace LittleCafe
 
         [Header("Environment Properties")]
         public EnvironmentType type = EnvironmentType.Generic;
+        [Tooltip("Tile layer this object occupies. Object = Tier 1 (blocks placement). Surface = Tier 2 (overlay, coexists with objects). Synced from the 'Type' column in Environment & Loot sheet.")]
+        public EnvironmentLayerType layerType = EnvironmentLayerType.Object;
         public bool isFunctional = false;
         public bool isWalkable = false;
         [Tooltip("Active objects perform an action each interval tick. Environment objects are passive by default.")]

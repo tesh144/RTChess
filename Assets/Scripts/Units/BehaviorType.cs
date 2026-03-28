@@ -23,6 +23,13 @@ namespace ClockworkGrid
         /// Heavy beast behavior: rotate → rotate again → attempt to move one cell forward.
         /// Two rotations per tick give a more deliberate, lumbering movement pattern.
         /// </summary>
-        RotateRotateMove = 2
+        RotateRotateMove = 2,
+
+        /// <summary>
+        /// Corrupted mover behavior: rotate → attempt to move one cell forward, but ONLY
+        /// if the target tile is corrupted. If the tile ahead is empty but not corrupted,
+        /// the move action is silently skipped (no bump). Attack logic is identical to RotateAndMove.
+        /// </summary>
+        RotateAndMoveCorrupted = 3
     }
 }

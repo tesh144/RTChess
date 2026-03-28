@@ -143,7 +143,7 @@ namespace LittleCafe
             }
             else
             {
-                // Random initial facing for wandering entities (RotateAndMove, RotateRotateMove)
+                // Random initial facing for wandering entities (RotateAndMove, RotateRotateMove, RotateAndMoveCorrupted)
                 Facing[] facings = { Facing.North, Facing.East, Facing.South, Facing.West };
                 currentFacing = facings[Random.Range(0, facings.Length)];
             }
@@ -325,6 +325,7 @@ namespace LittleCafe
                     interactionCoroutine = StartCoroutine(ClockworkTickInteract());
                     break;
                 case BehaviorType.RotateAndMove:
+                case BehaviorType.RotateAndMoveCorrupted:
                     interactionCoroutine = StartCoroutine(ClockworkTickMove());
                     break;
                 case BehaviorType.RotateRotateMove:
@@ -487,6 +488,14 @@ namespace LittleCafe
             {
                 if (animator != null) animator.SetTrigger("interact_weak");
                 yield break;
+            }
+
+            // Corruption gate — RotateAndMoveCorrupted only moves onto corrupted tiles.
+            // If the target tile is not corrupted, silently skip (no bump), same as dino skipping a tree.
+            if (behaviorType == BehaviorType.RotateAndMoveCorrupted)
+            {
+                if (CorruptionManager.Instance == null || !CorruptionManager.Instance.IsCorrupted(newX, newY))
+                    yield break;
             }
 
             // Check if target cell is empty — if occupied, check for wild-animal interaction
@@ -1125,6 +1134,7 @@ namespace LittleCafe
                     interactionCoroutine = StartCoroutine(ClockworkTickInteract());
                     break;
                 case BehaviorType.RotateAndMove:
+                case BehaviorType.RotateAndMoveCorrupted:
                     interactionCoroutine = StartCoroutine(ClockworkTickMove());
                     break;
                 case BehaviorType.RotateRotateMove:

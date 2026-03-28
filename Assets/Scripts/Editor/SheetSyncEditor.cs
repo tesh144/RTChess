@@ -333,7 +333,7 @@ namespace LittleCafe.Editor
                 "Movement Behavior", "Draw Weight", "Killer's Behavior", "Tier (button)");
 
             Check("Environment & Loot",
-                "Object", "Active", "MapGenerated", "Drops", "Loot per Hit",
+                "Object", "Active", "MapGenerated", "Type", "Drops", "Loot per Hit",
                 "HP", "Total Yield", "Ally Interactible", "Enemy Interactible",
                 "Wild Animal Interactible", "Killer's Behavior", "Drop on Death");
 
@@ -887,6 +887,16 @@ namespace LittleCafe.Editor
 
                 // HP
                 changed |= TrySetInt(ref existing.hp, GetValue(row, "HP"));
+
+                // Layer type (Object vs Surface — from "Type" column)
+                string layerTypeStr = GetValue(row, "Type");
+                if (!string.IsNullOrEmpty(layerTypeStr))
+                {
+                    if (System.Enum.TryParse<LittleCafe.EnvironmentLayerType>(layerTypeStr.Trim(), true, out var newLayerType))
+                    {
+                        if (existing.layerType != newLayerType) { existing.layerType = newLayerType; changed = true; }
+                    }
+                }
 
                 // Loot per hit
                 changed |= TrySetInt(ref existing.lootYield, GetValue(row, "Loot per Hit"));
