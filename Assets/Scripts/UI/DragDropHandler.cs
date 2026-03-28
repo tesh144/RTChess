@@ -179,7 +179,10 @@ namespace ClockworkGrid
                 GameSFXManager.Instance.PlayDragStart();
 
             // Show need bubbles on buildings that want this card
-            LittleCafe.BuildingProductionManager.Instance?.ShowNeedBubbles(GetCardInputType());
+            var bpm = LittleCafe.BuildingProductionManager.Instance;
+            var cardType = GetCardInputType();
+            Debug.Log($"[DragDrop] Drag start — BPM={bpm != null}, cardInputType={cardType}");
+            bpm?.ShowNeedBubbles(cardType);
 
             // Get GridShape: prefer GridObject on the prefab, fall back to UnitStats.shape,
             // final fallback to a 1×1 rectangle.
