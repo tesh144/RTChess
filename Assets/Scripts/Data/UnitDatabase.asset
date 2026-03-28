@@ -22,6 +22,7 @@ MonoBehaviour:
     isActive: 1
     isMapGenerated: 1
     behaviorType: 1
+    walkable: None
     killerAdvances: 0
     dropOnDeath: 0
     lootResourceType: 23
@@ -44,6 +45,7 @@ MonoBehaviour:
     isActive: 1
     isMapGenerated: 1
     behaviorType: 2
+    walkable: None
     killerAdvances: 0
     dropOnDeath: 0
     lootResourceType: 23
@@ -66,6 +68,7 @@ MonoBehaviour:
     isActive: 0
     isMapGenerated: 1
     behaviorType: 0
+    walkable: None
     killerAdvances: 1
     dropOnDeath: 0
     lootResourceType: 0
@@ -88,6 +91,7 @@ MonoBehaviour:
     isActive: 1
     isMapGenerated: 0
     behaviorType: 0
+    walkable: Corruption
     killerAdvances: 1
     dropOnDeath: 0
     lootResourceType: 0
@@ -110,6 +114,7 @@ MonoBehaviour:
     isActive: 1
     isMapGenerated: 0
     behaviorType: 0
+    walkable: Corruption
     killerAdvances: 1
     dropOnDeath: 0
     lootResourceType: 0
