@@ -170,12 +170,23 @@ namespace LittleCafe
             GridManager gm = GridManager.Instance;
             if (gm == null) yield break;
 
+            // Check Object layer
             GameObject occupant = gm.GetCellOccupant(x, y);
-            if (occupant == null) yield break;
+            if (occupant != null)
+            {
+                var desat = occupant.GetComponentInChildren<ClockworkCraft.EnvironmentDesaturation>();
+                if (desat != null && !desat.HasColorized)
+                    desat.Colorize();
+            }
 
-            var desat = occupant.GetComponentInChildren<ClockworkCraft.EnvironmentDesaturation>();
-            if (desat != null && !desat.HasColorized)
-                desat.Colorize();
+            // Check Surface layer (e.g. water)
+            GameObject surfaceOccupant = gm.GetSurfaceOccupant(x, y);
+            if (surfaceOccupant != null && surfaceOccupant != occupant)
+            {
+                var desat = surfaceOccupant.GetComponentInChildren<ClockworkCraft.EnvironmentDesaturation>();
+                if (desat != null && !desat.HasColorized)
+                    desat.Colorize();
+            }
         }
 
         protected virtual void OnDestroy()
@@ -198,11 +209,25 @@ namespace LittleCafe
                 for (int dy = -radius; dy <= radius; dy++)
                 {
                     if (dx == 0 && dy == 0) continue;
-                    GameObject occupant = gm.GetCellOccupant(gridX + dx, gridY + dy);
-                    if (occupant == null) continue;
-                    var desat = occupant.GetComponentInChildren<ClockworkCraft.EnvironmentDesaturation>();
-                    if (desat != null && !desat.HasColorized)
-                        desat.Colorize();
+                    int nx = gridX + dx, ny = gridY + dy;
+
+                    // Check Object layer
+                    GameObject occupant = gm.GetCellOccupant(nx, ny);
+                    if (occupant != null)
+                    {
+                        var desat = occupant.GetComponentInChildren<ClockworkCraft.EnvironmentDesaturation>();
+                        if (desat != null && !desat.HasColorized)
+                            desat.Colorize();
+                    }
+
+                    // Check Surface layer (e.g. water)
+                    GameObject surfaceOccupant = gm.GetSurfaceOccupant(nx, ny);
+                    if (surfaceOccupant != null && surfaceOccupant != occupant)
+                    {
+                        var desat = surfaceOccupant.GetComponentInChildren<ClockworkCraft.EnvironmentDesaturation>();
+                        if (desat != null && !desat.HasColorized)
+                            desat.Colorize();
+                    }
                 }
             }
         }
