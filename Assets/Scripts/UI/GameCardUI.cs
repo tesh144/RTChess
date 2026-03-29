@@ -1,6 +1,5 @@
 #pragma warning disable CS0414, CS0219, CS0618
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -10,32 +9,14 @@ using TMPro;
 namespace ClockworkGrid
 {
     /// <summary>
-    /// Self-scanning card component that replaces UnitIcon.
-    /// Combines the hierarchy scanning pattern from UIPanel with the
-    /// drag-and-drop integration from UnitIcon.
-    ///
-    /// Hierarchy scanning:
-    ///   On ScanHierarchy(), indexes all children (like UIPanel).
-    ///   Known elements resolved by name: Icon, Text, Notify_Count_Green,
-    ///   Notify_Count_Red, Icon_Lock.
-    ///   Custom Inspector has Rescan Hierarchy + Log All Elements buttons.
-    ///
-    /// Drag integration:
-    ///   Implements IBeginDragHandler/IDragHandler/IEndDragHandler.
-    ///   Routes to DragDropHandler for placement.
-    ///   Hover magnification (macOS dock style).
-    ///
-    /// Visual states:
-    ///   Normal   — icon + name, draggable, hover magnification
-    ///   New      — red badge shown (Notify_Count_Red)
-    ///   Locked   — greyed out, lock icon (Icon_Lock), text muted, not draggable
+    /// Self-scanning card component (replaces UnitIcon). Hierarchy scanning,
+    /// drag-and-drop via DragDropHandler, hover magnification, visual states
+    /// (Normal, New, Locked). Animation methods in GameCardUIAnimations.cs.
     /// </summary>
-    public class GameCardUI : MonoBehaviour,
+    public partial class GameCardUI : MonoBehaviour,
         IBeginDragHandler, IDragHandler, IEndDragHandler,
         IPointerEnterHandler, IPointerExitHandler
     {
-        // ── Serialized Element Registry (same pattern as UIPanel) ────
-
         [Serializable]
         public class CardElement
         {
@@ -63,15 +44,11 @@ namespace ClockworkGrid
         [SerializeField] private float hoverScale = 1.2f;
         [SerializeField] private Image characterSpriteImage;
 
-        // ── Runtime Dictionaries ─────────────────────────────────────
-
         private Dictionary<string, Transform> elementsByPath;
         private Dictionary<string, Transform> elementsByName;
         private Dictionary<string, Image> imageCache = new Dictionary<string, Image>();
         private Dictionary<string, TextMeshProUGUI> textCache = new Dictionary<string, TextMeshProUGUI>();
         private bool dictionariesBuilt;
-
-        // ── Known Element Shortcuts (resolved from hierarchy) ────────
 
         private Image _iconImage;
         private TextMeshProUGUI _nameText;
@@ -82,8 +59,6 @@ namespace ClockworkGrid
         private Button _cardButton;
         private Image _cardBackground;
 
-        // ── Drag State (from UnitIcon) ───────────────────────────────
-
         private GameObject unitPrefab;
         private UnitStats unitStats;
         private DockBarManager dockManager;
@@ -92,21 +67,16 @@ namespace ClockworkGrid
         private Vector2 originalPosition;
         private bool isDragging = false;
 
-        // ── Visual State ─────────────────────────────────────────────
-
         private bool isNew = false;
         private bool isLocked = false;
         private Color normalTextColor;
         private Color normalIconColor = Color.white;
         private bool hasStoredColors = false;
 
-        // ── Idle Animation State ──────────────────────────────────────
         private Coroutine badgeWobbleCoroutine;
         private Coroutine cardIdleCoroutine;
         private Coroutine appearCoroutine;
         private float idlePhaseOffset; // Random offset so cards don't all breathe in sync
-
-        // ── Public Properties ────────────────────────────────────────
 
         public UnitStats UnitStats => unitStats;
         public GameObject UnitPrefab => unitPrefab;
@@ -114,8 +84,6 @@ namespace ClockworkGrid
         public bool IsLocked => isLocked;
         public Image IconImage => _iconImage;
         public TextMeshProUGUI NameText => _nameText;
-
-        // ── Lifecycle ────────────────────────────────────────────────
 
         private void Awake()
         {
@@ -140,8 +108,6 @@ namespace ClockworkGrid
                     originalScale = rectTransform.localScale;
             }
         }
-
-        // ── Initialization ───────────────────────────────────────────
 
         /// <summary>
         /// Initialize with UnitStats and DockBarManager (replaces UnitIcon.Initialize).
@@ -200,11 +166,7 @@ namespace ClockworkGrid
             SetLocked(false);
         }
 
-        // ── Hierarchy Scanning ───────────────────────────────────────
-
-        /// <summary>
-        /// Builds fast lookup dictionaries from the serialized element list.
-        /// </summary>
+        /// <summary>Builds fast lookup dictionaries from the serialized element list.</summary>
         public void BuildRuntimeDictionaries()
         {
             if (dictionariesBuilt) return;
@@ -224,10 +186,7 @@ namespace ClockworkGrid
             }
         }
 
-        /// <summary>
-        /// Resolves known card elements. Tries the scanned element dictionary first,
-        /// falls back to transform.Find() so cards work even without a pre-scanned hierarchy.
-        /// </summary>
+        /// <summary>Resolves known card elements from scanned dictionary, falls back to transform.Find().</summary>
         private void ResolveKnownElements()
         {
             // Icon — the main image showing the worker/item sprite
@@ -271,9 +230,7 @@ namespace ClockworkGrid
                 Debug.LogWarning($"[GameCardUI] Could not find 'Text' child with TMP on {name}", this);
         }
 
-        /// <summary>
-        /// Editor-only: scans the live hierarchy and rebuilds the serialized element list.
-        /// </summary>
+        /// <summary>Editor-only: scans the live hierarchy and rebuilds the serialized element list.</summary>
         public void ScanHierarchy()
         {
             elementList.Clear();
@@ -310,8 +267,6 @@ namespace ClockworkGrid
                 ScanChildren(child, childPath);
             }
         }
-
-        // ── Element Access ───────────────────────────────────────────
 
         /// <summary>Get a Transform by full path or short name.</summary>
         public Transform Get(string pathOrName)
@@ -380,21 +335,13 @@ namespace ClockworkGrid
             if (i != null) i.sprite = sprite;
         }
 
-        // ── Card Name Formatting ─────────────────────────────────────
-
-        /// <summary>
-        /// Format a card display name with an optional tier prefix.
-        /// Tier 0 or below: just the plain name (e.g. "House").
-        /// Tier 1+: rich-text prefix in smaller grey text (e.g. "&lt;size=70%&gt;&lt;color=#999&gt;T1&lt;/color&gt;&lt;/size&gt; House").
-        /// </summary>
+        /// <summary>Format a card display name with an optional tier prefix.</summary>
         private static string FormatCardName(string baseName, int tier)
         {
             if (string.IsNullOrEmpty(baseName)) return baseName;
             if (tier <= 0) return baseName;
             return $"<size=70%><color=#999999>T{tier}</color></size> {baseName}";
         }
-
-        // ── Visual State: New ────────────────────────────────────────
 
         /// <summary>Show/hide red notification badge. Starts wobble animation when shown.</summary>
         public void SetNew(bool value)
@@ -421,12 +368,7 @@ namespace ClockworkGrid
             }
         }
 
-        // ── Visual State: Locked ─────────────────────────────────────
-
-        /// <summary>
-        /// Lock or unlock the card. Locked = greyed out, lock icon shown,
-        /// text muted, not draggable. Matches Clan button locked visual.
-        /// </summary>
+        /// <summary>Lock or unlock the card. Locked = greyed out, lock icon, text muted, not draggable.</summary>
         public void SetLocked(bool value)
         {
             isLocked = value;
@@ -462,8 +404,6 @@ namespace ClockworkGrid
             }
         }
 
-        // ── Visual State: Green Badge ────────────────────────────────
-
         /// <summary>Show green badge with a value (quantity, level, etc.).</summary>
         public void SetGreenBadge(int value)
         {
@@ -474,8 +414,6 @@ namespace ClockworkGrid
                     _greenBadgeText.text = value.ToString();
             }
         }
-
-        // ── Drag Handlers (from UnitIcon) ────────────────────────────
 
         public void OnPointerEnter(PointerEventData eventData)
         {
@@ -544,197 +482,10 @@ namespace ClockworkGrid
             StartIdleAnimation();
         }
 
-        // ── Token Cost Updates ───────────────────────────────────────
-
         private void OnTokensChanged(int newTotal)
         {
             // Future: update cost affordability display if needed
         }
 
-        // ── Card Idle Animation ────────────────────────────────────
-
-        /// <summary>
-        /// Starts the subtle idle breathing animation on this card.
-        /// Called after the card has settled into the dock.
-        /// Snapshots the current position as the idle base so it doesn't fight the layout.
-        /// </summary>
-        public void StartIdleAnimation()
-        {
-            if (cardIdleCoroutine != null) StopCoroutine(cardIdleCoroutine);
-            cardIdleCoroutine = StartCoroutine(CardIdleLoop());
-        }
-
-        /// <summary>
-        /// Stops the idle animation and resets scale to original.
-        /// </summary>
-        public void StopIdleAnimation()
-        {
-            if (cardIdleCoroutine != null)
-            {
-                StopCoroutine(cardIdleCoroutine);
-                cardIdleCoroutine = null;
-            }
-            if (rectTransform != null)
-                rectTransform.localScale = originalScale;
-        }
-
-        /// <summary>
-        /// Plays a pop-in appear animation when a card is added to the dock.
-        /// Scale from 0 → overshoot → settle, with a slight upward bounce.
-        /// </summary>
-        public void PlayAppearAnimation()
-        {
-            // Ensure the GameObject is active — StartCoroutine fails on inactive objects
-            if (!gameObject.activeSelf)
-                gameObject.SetActive(true);
-
-            // StartCoroutine requires the entire hierarchy to be active.
-            // During startup (SetupDeck), the card panel may still be inactive.
-            // Fall back gracefully — the card will just appear without animation.
-            if (!gameObject.activeInHierarchy)
-                return;
-
-            if (appearCoroutine != null) StopCoroutine(appearCoroutine);
-            appearCoroutine = StartCoroutine(AppearAnimationRoutine());
-        }
-
-        // ── Animation Coroutines ──────────────────────────────────────
-
-        /// <summary>
-        /// Badge wobble: subtle scale pulse + gentle rotation oscillation.
-        /// Runs continuously while the "new" badge is visible.
-        /// </summary>
-        private IEnumerator BadgeWobbleLoop()
-        {
-            float time = 0f;
-            while (true)
-            {
-                time += Time.deltaTime;
-
-                // Scale pulse: 1.0 → 1.12 → 1.0 over ~1.2s
-                float scaleT = Mathf.Sin(time * 5.2f) * 0.5f + 0.5f; // 0..1
-                float scale = 1f + scaleT * 0.12f;
-
-                // Gentle rotation: ±6 degrees
-                float rotation = Mathf.Sin(time * 3.7f) * 6f;
-
-                if (_redBadge != null)
-                {
-                    _redBadge.transform.localScale = new Vector3(scale, scale, 1f);
-                    _redBadge.transform.localRotation = Quaternion.Euler(0f, 0f, rotation);
-                }
-
-                yield return null;
-            }
-        }
-
-        /// <summary>
-        /// Card idle: periodic little bounce every 2-3 seconds.
-        /// Quick scale pop (1.0 → 1.08 → 1.0) then waits.
-        /// Each card has a random phase offset so they don't all bounce at once.
-        /// </summary>
-        private IEnumerator CardIdleLoop()
-        {
-            // Initial delay based on phase offset so cards don't sync
-            yield return new WaitForSeconds(idlePhaseOffset / (Mathf.PI * 2f) * 2f);
-
-            while (true)
-            {
-                if (!isDragging && rectTransform != null)
-                {
-                    // Quick bounce: 0.15s up, 0.15s down
-                    float bounceDuration = 0.15f;
-                    float bounceScale = 1.08f;
-
-                    // Scale up
-                    float elapsed = 0f;
-                    while (elapsed < bounceDuration)
-                    {
-                        elapsed += Time.deltaTime;
-                        float t = Mathf.Clamp01(elapsed / bounceDuration);
-                        float ease = t * (2f - t); // ease-out quad
-                        rectTransform.localScale = originalScale * Mathf.Lerp(1f, bounceScale, ease);
-                        yield return null;
-                    }
-
-                    // Scale back down
-                    elapsed = 0f;
-                    while (elapsed < bounceDuration)
-                    {
-                        elapsed += Time.deltaTime;
-                        float t = Mathf.Clamp01(elapsed / bounceDuration);
-                        float ease = t * t; // ease-in quad
-                        rectTransform.localScale = originalScale * Mathf.Lerp(bounceScale, 1f, ease);
-                        yield return null;
-                    }
-
-                    rectTransform.localScale = originalScale;
-                }
-
-                // Wait 2-3 seconds before next bounce
-                yield return new WaitForSeconds(UnityEngine.Random.Range(2f, 3f));
-            }
-        }
-
-        /// <summary>
-        /// Appear animation: scale pop from small to overshoot to settle.
-        /// Runs once when the card first appears in the dock.
-        /// </summary>
-        private IEnumerator AppearAnimationRoutine()
-        {
-            float duration = 0.4f;
-            float elapsed = 0f;
-
-            Vector3 startScale = originalScale * 0.3f;
-            Vector3 overshootScale = originalScale * 1.12f;
-            Vector3 targetScale = originalScale;
-
-            if (rectTransform != null)
-                rectTransform.localScale = startScale;
-
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
-
-                // Overshoot ease: quick ramp up with a bounce
-                float scale;
-                if (t < 0.6f)
-                {
-                    // Fast grow to overshoot
-                    float subT = t / 0.6f;
-                    subT = 1f - (1f - subT) * (1f - subT); // ease-out quad
-                    scale = Mathf.Lerp(0.3f, 1.12f, subT);
-                }
-                else
-                {
-                    // Settle from overshoot to target
-                    float subT = (t - 0.6f) / 0.4f;
-                    subT = subT * subT * (3f - 2f * subT); // ease-in-out
-                    scale = Mathf.Lerp(1.12f, 1f, subT);
-                }
-
-                if (rectTransform != null)
-                    rectTransform.localScale = originalScale * scale;
-
-                yield return null;
-            }
-
-            if (rectTransform != null)
-                rectTransform.localScale = originalScale;
-
-            // Start idle animation after appear settles
-            StartIdleAnimation();
-        }
-
-        // ── Debug ────────────────────────────────────────────────────
-
-        /// <summary>Logs the full element tree to the console.</summary>
-        public void DebugLogHierarchy()
-        {
-            Debug.Log($"[GameCardUI] {elementList.Count} elements indexed:");
-            foreach (var elem in elementList)
-                Debug.Log($"  {elem.path} {elem.components}");
-        }
     }
 }

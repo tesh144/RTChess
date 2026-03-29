@@ -322,111 +322,23 @@ namespace ClockworkGrid
             // Fly-in animation: from draw button, from a screen position, or just pop in
             if (animateFromDraw && drawButtonController != null)
             {
-                // Move card to the draw button position immediately so it doesn't
-                // flash at its final layout position during the one-frame settle
                 var rect = cardObj.GetComponent<RectTransform>();
                 if (drawButtonController.ButtonRect != null)
                     rect.position = drawButtonController.ButtonRect.position;
                 rect.localScale = Vector3.one * 0.01f;
-                StartCoroutine(CardFlyInAnimation(card, rect, null));
+                StartCoroutine(DockBarAnimations.CardFlyIn(card, rect, null, drawButtonController.ButtonRect));
             }
             else if (flyFromScreenPos.HasValue)
             {
                 var rect = cardObj.GetComponent<RectTransform>();
                 rect.position = flyFromScreenPos.Value;
                 rect.localScale = Vector3.one * 0.01f;
-                StartCoroutine(CardFlyInAnimation(card, rect, flyFromScreenPos.Value));
+                StartCoroutine(DockBarAnimations.CardFlyIn(card, rect, flyFromScreenPos.Value, null));
             }
             else
             {
-                // No fly-in — play appear pop + start idle
                 card.PlayAppearAnimation();
             }
-        }
-
-        /// <summary>
-        /// Animates a card flying into its dock slot with an upward arc.
-        /// If overrideStartScreenPos is null, flies from the draw button.
-        /// If provided, flies from that screen-space position (used by building production).
-        /// </summary>
-        private IEnumerator CardFlyInAnimation(GameCardUI card, RectTransform cardRect, Vector3? overrideStartScreenPos)
-        {
-            if (cardRect == null) yield break;
-
-            // Determine start position up front
-            Vector3 startPos;
-            if (overrideStartScreenPos.HasValue)
-            {
-                startPos = overrideStartScreenPos.Value;
-            }
-            else if (drawButtonController != null && drawButtonController.ButtonRect != null)
-            {
-                startPos = drawButtonController.ButtonRect.position;
-            }
-            else
-            {
-                cardRect.localScale = Vector3.one;
-                card.PlayAppearAnimation();
-                yield break;
-            }
-
-            // Card is already at startPos with tiny scale (set in AddCard).
-            // Yield one frame so the HorizontalLayoutGroup recalculates slot positions,
-            // then force a rebuild to get the target position without the card visually
-            // jumping there (it stays at startPos because we override position each frame).
-            yield return null;
-            if (cardRect == null) yield break;
-
-            // Temporarily restore scale so layout computes correct slot size
-            cardRect.localScale = Vector3.one;
-            LayoutRebuilder.ForceRebuildLayoutImmediate(cardRect.parent as RectTransform);
-            Vector3 finalPos = cardRect.position;
-            Vector3 finalScale = Vector3.one;
-
-            // Snap back to start before the next frame renders
-            cardRect.position = startPos;
-            cardRect.localScale = finalScale * 0.2f;
-
-            // Arc height in world-space units (scales with screen)
-            float arcHeight = Mathf.Abs(finalPos.y - startPos.y) * 0.5f + 80f;
-
-            float duration = 0.45f;
-            float elapsed = 0f;
-
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
-
-                if (cardRect == null) yield break;
-
-                float easeT = t * t * (3f - 2f * t);
-
-                Vector3 pos = Vector3.Lerp(startPos, finalPos, easeT);
-                pos.y += Mathf.Sin(t * Mathf.PI) * arcHeight;
-                cardRect.position = pos;
-
-                float scaleT;
-                if (t < 0.7f)
-                {
-                    scaleT = Mathf.Lerp(0.2f, 1.1f, t / 0.7f);
-                }
-                else
-                {
-                    float settleT = (t - 0.7f) / 0.3f;
-                    scaleT = Mathf.Lerp(1.1f, 1f, settleT);
-                }
-                cardRect.localScale = finalScale * scaleT;
-
-                yield return null;
-            }
-
-            if (cardRect == null) yield break;
-            cardRect.position = finalPos;
-            cardRect.localScale = finalScale;
-
-            if (card != null)
-                card.StartIdleAnimation();
         }
 
         /// <summary>Add a starting worker to the dock from a WorkerDatabase.</summary>
@@ -528,77 +440,14 @@ namespace ClockworkGrid
 
         // ── Hand Full Popup ──────────────────────────────────────────
 
-        /// <summary>
-        /// Show a brief "Hand Full!" floating text at the given screen position.
-        /// Floats upward and fades out over 1 second.
-        /// </summary>
         public void ShowHandFullPopup(Vector2 screenPos)
         {
-            Canvas canvas = FindFirstObjectByType<Canvas>();
-            if (canvas == null) return;
-
-            GameObject popupObj = new GameObject("HandFullPopup");
-            popupObj.transform.SetParent(canvas.transform, false);
-
-            RectTransform rt = popupObj.AddComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0.5f);
-            rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(200f, 40f);
-
-            Camera canvasCam = (canvas.renderMode != RenderMode.ScreenSpaceOverlay) ? canvas.worldCamera : null;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                canvas.GetComponent<RectTransform>(), screenPos, canvasCam, out Vector2 localPoint);
-            rt.anchoredPosition = localPoint;
-
-            Canvas overrideCanvas = popupObj.AddComponent<Canvas>();
-            overrideCanvas.overrideSorting = true;
-            overrideCanvas.sortingOrder = 100;
-
-            TextMeshProUGUI tmp = popupObj.AddComponent<TextMeshProUGUI>();
-            tmp.text = "Hand Full!";
-            tmp.fontSize = 24f;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = new Color(1f, 0.4f, 0.4f, 1f);
-            tmp.raycastTarget = false;
-            tmp.enableAutoSizing = false;
-            tmp.fontStyle = FontStyles.Bold;
-
-            StartCoroutine(FloatAndFadePopup(rt, tmp, popupObj));
+            StartCoroutine(DockBarAnimations.ShowHandFullPopup(screenPos));
         }
 
-        /// <summary>Show hand-full popup at the current mouse/touch position.</summary>
-        public void ShowHandFullPopupAtCursor()
+        private void ShowHandFullPopupAtCursor()
         {
-            Vector2 pos = Input.mousePosition;
-            ShowHandFullPopup(pos);
-        }
-
-        private IEnumerator FloatAndFadePopup(RectTransform rt, TextMeshProUGUI tmp, GameObject obj)
-        {
-            float duration = 1f;
-            float elapsed = 0f;
-            Vector2 startPos = rt.anchoredPosition;
-
-            while (elapsed < duration)
-            {
-                if (rt == null || obj == null)
-                    yield break;
-
-                elapsed += Time.deltaTime;
-                float t = elapsed / duration;
-
-                rt.anchoredPosition = startPos + new Vector2(0f, 40f * t);
-
-                float alpha = t < 0.5f ? 1f : 1f - ((t - 0.5f) * 2f);
-                if (tmp != null)
-                    tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, alpha);
-
-                yield return null;
-            }
-
-            if (obj != null)
-                Destroy(obj);
+            ShowHandFullPopup(Input.mousePosition);
         }
 
         // ── Internal ────────────────────────────────────────────────
