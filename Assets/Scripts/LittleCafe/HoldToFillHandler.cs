@@ -345,14 +345,14 @@ namespace LittleCafe
             audioSource.PlayOneShot(completionSFX);
         }
 
-        private void SpawnResourceStream(GameObject targetBuilding, ResourceType resourceType)
+        public void SpawnResourceStream(GameObject targetBuilding, ResourceType resourceType, System.Action onArrival = null)
         {
             if (targetBuilding == null) return;
 
-            StartCoroutine(StreamParticleCoroutine(targetBuilding, resourceType));
+            StartCoroutine(StreamParticleCoroutine(targetBuilding, resourceType, onArrival));
         }
 
-        private IEnumerator StreamParticleCoroutine(GameObject targetBuilding, ResourceType resourceType)
+        private IEnumerator StreamParticleCoroutine(GameObject targetBuilding, ResourceType resourceType, System.Action onArrival = null)
         {
             // Resolve the canvas used by ResourceLootFX / ResourceDisplayUI.
             // Prefer the canvas that hosts ResourceDisplayUI to avoid grabbing a world-space canvas.
@@ -496,13 +496,31 @@ namespace LittleCafe
 
             if (icon != null)
                 Destroy(icon);
+
+            onArrival?.Invoke();
         }
 
-        private void StopHold()
+        public void StopHold()
         {
             if (audioSource != null) audioSource.pitch = 1.0f;
             activeBuilding = null;
             chunksThisSession = 0;
+        }
+
+        /// <summary>Start a hold-to-fill on a building directly (called from bubble OnHoldStarted).</summary>
+        public void StartHoldOnBuilding(GameObject building)
+        {
+            if (building == null) return;
+            var bpm = BuildingProductionManager.Instance;
+            if (bpm == null) return;
+            if (!bpm.IsWaitingForHoldFill(building)) return;
+            if (bpm.IsBuildingPaused(building)) return;
+
+            StopHold();
+            activeBuilding = building;
+            chunksThisSession = 0;
+            currentChunkInterval = baseChunkInterval;
+            chunkTimer = 0f;
         }
 
         public void InterruptIfActive(GameObject building)

@@ -182,19 +182,24 @@ namespace LittleCafe
             }
 
             // Check cost
-            if (entry.costValue > 0 && ResourceManager.Instance != null)
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            int effectiveCost = DevCheatMenu.FreeCosts ? 0 : entry.costValue;
+#else
+            int effectiveCost = entry.costValue;
+#endif
+            if (effectiveCost > 0 && ResourceManager.Instance != null)
             {
                 int available = ResourceManager.Instance.GetResource(entry.costCurrency);
-                if (available < entry.costValue)
+                if (available < effectiveCost)
                 {
-                    Debug.Log($"[DrawButton] Can't afford draw — need {entry.costValue} {entry.costCurrency}, have {available}");
+                    Debug.Log($"[DrawButton] Can't afford draw — need {effectiveCost} {entry.costCurrency}, have {available}");
                     if (GameSFXManager.Instance != null)
                         GameSFXManager.Instance.PlayError();
                     return;
                 }
 
                 // Spend the cost
-                ResourceManager.Instance.AddResource(entry.costCurrency, -entry.costValue);
+                ResourceManager.Instance.AddResource(entry.costCurrency, -effectiveCost);
             }
 
             // Button click SFX
@@ -560,6 +565,9 @@ namespace LittleCafe
 
         private IEnumerator CooldownRoutine(float duration)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            if (LittleCafe.DevCheatMenu.InstantProduction) duration = 1f;
+#endif
             isOnCooldown = true;
             cooldownRemaining = duration;
 

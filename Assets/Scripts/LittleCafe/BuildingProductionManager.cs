@@ -187,6 +187,12 @@ namespace LittleCafe
             var obj = Instantiate(prefab, transform);
             var bubble = obj.GetComponent<POIBubble>();
             if (bubble == null) bubble = obj.AddComponent<POIBubble>();
+
+            // WorldSpace canvas needs a camera for GraphicRaycaster (UI tap detection)
+            var canvas = obj.GetComponent<Canvas>();
+            if (canvas != null && canvas.renderMode == RenderMode.WorldSpace && canvas.worldCamera == null)
+                canvas.worldCamera = Camera.main;
+
             obj.SetActive(false);
             pool.Add(bubble);
             return bubble;
@@ -275,7 +281,8 @@ namespace LittleCafe
                                entry.inputType == ProductionInputType.Worker ||
                                entry.inputType == ProductionInputType.Fighter;
             if (!isCardInput && (entry.waitingForInput || entry.waitingForResources || entry.waitingForHoldFill))
-                SpawnInsertBubble(entry);
+                StartCoroutine(DelayedSpawnInsertBubble(entry, 1f));
+
 
             if (stats.productionInputType == ProductionInputType.HoldToFill)
                 OnHoldFillStateChanged?.Invoke(buildingObj, true);
@@ -431,6 +438,13 @@ namespace LittleCafe
         /// Show a Bubble_Insert above a building that is waiting for input or resources.
         /// Only used when insertBubblePrefab is assigned.
         /// </summary>
+        private System.Collections.IEnumerator DelayedSpawnInsertBubble(ProductionEntry entry, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            if (entry != null && entry.buildingObj != null && entry.insertBubbleObj == null)
+                SpawnInsertBubble(entry);
+        }
+
         private void SpawnInsertBubble(ProductionEntry entry)
         {
             if (insertBubblePrefab == null) return;
@@ -478,8 +492,92 @@ namespace LittleCafe
             // Initialize fill bar to current progress
             UpdateInsertFillBar(entry);
 
+            // Tap on the bubble = insert 1 resource; hold = continuous fill
+            bubble.OnTapped += () => TapInsertOne(entry);
+            bubble.OnHoldStarted += () =>
+            {
+                if (HoldToFillHandler.Instance != null)
+                    HoldToFillHandler.Instance.StartHoldOnBuilding(entry.buildingObj);
+            };
+            bubble.OnHoldEnded += () =>
+            {
+                if (HoldToFillHandler.Instance != null)
+                    HoldToFillHandler.Instance.StopHold();
+            };
+
             entry.insertBubbleObj = bubble.gameObject;
         }
+
+        /// <summary>Quick tap on insert bubble = insert 1 unit of the required resource.
+        /// Resource is NOT deducted immediately — it flies from the bar to the bubble,
+        /// and both the deduction and fill increment happen when it arrives.</summary>
+        private void TapInsertOne(ProductionEntry entry)
+        {
+            if (entry == null || entry.buildingObj == null) return;
+            if (!entry.waitingForHoldFill) return;
+            if (entry.productionCostResourceType == ResourceType.None) return;
+            if (ResourceManager.Instance == null) return;
+            if (ResourceManager.Instance.GetResource(entry.productionCostResourceType) <= 0) return;
+
+            // Immediate punch scale on the bubble for tactile feedback
+            if (entry.insertBubbleObj != null)
+                StartCoroutine(PunchScale(entry.insertBubbleObj.transform, 0.15f, 1.15f));
+
+            // Target is the bubble, not the building
+            GameObject target = entry.insertBubbleObj != null ? entry.insertBubbleObj : entry.buildingObj;
+
+            // VFX: resource stream flies from bar to bubble — deduct + fill on arrival
+            if (HoldToFillHandler.Instance != null)
+            {
+                HoldToFillHandler.Instance.SpawnResourceStream(target, entry.productionCostResourceType, () =>
+                {
+                    if (entry == null || entry.buildingObj == null || !entry.waitingForHoldFill) return;
+                    if (ResourceManager.Instance == null) return;
+                    if (ResourceManager.Instance.GetResource(entry.productionCostResourceType) <= 0) return;
+
+                    ResourceManager.Instance.AddResource(entry.productionCostResourceType, -1);
+                    IncrementHoldFill(entry.buildingObj);
+
+                    // Punch the bubble on arrival
+                    if (entry.insertBubbleObj != null)
+                        StartCoroutine(PunchScale(entry.insertBubbleObj.transform, 0.12f, 1.1f));
+                });
+            }
+
+            // SFX
+            if (GameSFXManager.Instance != null)
+                GameSFXManager.Instance.PlayClockTick();
+        }
+
+        private System.Collections.IEnumerator PunchScale(Transform t, float duration, float punchSize)
+        {
+            if (t == null) yield break;
+            Vector3 original = t.localScale;
+            Vector3 punched = original * punchSize;
+            float elapsed = 0f;
+            float half = duration * 0.4f;
+
+            // Scale up
+            while (elapsed < half)
+            {
+                elapsed += Time.deltaTime;
+                t.localScale = Vector3.Lerp(original, punched, elapsed / half);
+                yield return null;
+            }
+
+            // Scale back
+            elapsed = 0f;
+            float rest = duration - half;
+            while (elapsed < rest)
+            {
+                elapsed += Time.deltaTime;
+                t.localScale = Vector3.Lerp(punched, original, elapsed / rest);
+                yield return null;
+            }
+            if (t != null) t.localScale = original;
+        }
+
+
 
         /// <summary>Update the fill bar on the insert bubble to reflect current holdFillProgress.</summary>
         private void UpdateInsertFillBar(ProductionEntry entry)
@@ -1286,6 +1384,22 @@ namespace LittleCafe
                     }
                 }
             }
+
+            // Check 4: tapped a building waiting for hold-fill — insert 1 resource
+            for (int i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (!entry.waitingForHoldFill) continue;
+
+                if (entry.buildingObj != null &&
+                    (hitObj == entry.buildingObj ||
+                     hitObj.transform.IsChildOf(entry.buildingObj.transform)))
+                {
+                    TapInsertOne(entry);
+                    ClickConsumedThisFrame = true;
+                    return;
+                }
+            }
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -1391,7 +1505,7 @@ namespace LittleCafe
                                 entry.inputType == ProductionInputType.Worker ||
                                 entry.inputType == ProductionInputType.Fighter;
             if (!isCardInput2 && (entry.waitingForInput || entry.waitingForResources || entry.waitingForHoldFill))
-                SpawnInsertBubble(entry);
+                StartCoroutine(DelayedSpawnInsertBubble(entry, 1f));
 
             // Hide timer until next tick reveals it
             if (entry.timerCanvasObj != null)
