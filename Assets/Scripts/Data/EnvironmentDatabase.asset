@@ -231,8 +231,8 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 7095887754009917822, guid: abd7f52415a6e4d2389c71974565de0d, type: 3}
-    icon: {fileID: 0}
+    prefab: {fileID: 8685741589378069755, guid: abd7f52415a6e4d2389c71974565de0d, type: 3}
+    icon: {fileID: 21300000, guid: dcceb7956328742f5bf173c1a5f75ffe, type: 3}
   - active: 1
     isMapGenerated: 0
     assetName: Corruption
@@ -255,3 +255,25 @@ MonoBehaviour:
     dropOnDeath: 0
     prefab: {fileID: 5352704816085721666, guid: 404728650a61047f6b20fe952d355519, type: 3}
     icon: {fileID: 21300000, guid: a6988ea2d54c64903a55a1f022728571, type: 3}
+  - active: 1
+    isMapGenerated: 1
+    assetName: Lotus
+    type: 7
+    layerType: 0
+    isFunctional: 0
+    isWalkable: 0
+    isActive: 0
+    killerAdvances: 1
+    allyInteractible: 1
+    enemyInteractible: 0
+    wildAnimalInteractible: 0
+    lootResourceType: 7
+    lootHpCost: 1
+    lootYield: 1
+    hp: 5
+    attackPower: 0
+    gridSize: {x: 1, y: 1}
+    visualScale: 0
+    dropOnDeath: 0
+    prefab: {fileID: 0}
+    icon: {fileID: 0}

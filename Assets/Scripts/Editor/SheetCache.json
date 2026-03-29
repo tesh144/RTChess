@@ -4628,6 +4628,22 @@
       "Wild Animal Interactible": "FALSE",
       "Killer's Behavior": "Advance",
       "Drop on Death": "❌ None"
+    },
+    {
+      "Active": "TRUE",
+      "Icon": "🌻",
+      "MapGenerated": "TRUE",
+      "Object": "Lotus",
+      "Type": "Object",
+      "Drops": "🌻 Flowers",
+      "Loot per Hit": "1",
+      "HP": "5",
+      "Total Yield": "5",
+      "Ally Interactible": "TRUE",
+      "Enemy Interactible": "FALSE",
+      "Wild Animal Interactible": "FALSE",
+      "Killer's Behavior": "Advance",
+      "Drop on Death": "❌ None"
     }
   ],
   "Workers & Entities": [
