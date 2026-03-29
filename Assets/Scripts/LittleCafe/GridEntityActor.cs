@@ -61,15 +61,15 @@ namespace LittleCafe
         [SerializeField] private bool verboseLogging = false;
 
         // Cached references
-        private PlacedObject _furnitureObject;
+        private FurnitureObject _furnitureObject;
         private bool _furnitureObjectCached;
-        private PlacedObject furnitureObject
+        private FurnitureObject furnitureObject
         {
             get
             {
                 if (!_furnitureObjectCached)
                 {
-                    _furnitureObject = GetComponent<PlacedObject>();
+                    _furnitureObject = GetComponent<FurnitureObject>();
                     if (_furnitureObject != null)
                         _furnitureObjectCached = true;
                 }
@@ -257,7 +257,7 @@ namespace LittleCafe
             }
 
             if (furnitureObject == null)
-                Debug.LogWarning($"[GridEntityActor] No PlacedObject on {gameObject.name} — grid position unknown");
+                Debug.LogWarning($"[GridEntityActor] No FurnitureObject on {gameObject.name} — grid position unknown");
             if (animatorHolder == null)
                 Debug.LogWarning($"[GridEntityActor] No AnimatorHolder on {gameObject.name} — animations won't play");
         }

@@ -254,7 +254,7 @@ namespace LittleCafe
                 stats.drawWeight = data.drawWeight; // Per-item weight from FurnitureData
                 stats.furnitureTypeOverride = (int)data.type; // Override prefab's serialized type at runtime
                 stats.iconSprite = data.icon;
-                stats.unitColor = Color.white; // No tint — icons are already coloured by their sprites
+                stats.unitColor = Color.white; // TODO: Generate icons with colors
                 stats.unitPrefab = data.prefab;
                 stats.resourceCost = 0; // Free placement in cafe mode
                 stats.gridSize = data.gridSize;
@@ -275,11 +275,10 @@ namespace LittleCafe
         /// </summary>
         private UnitType ConvertFurnitureTypeToUnitType(FurnitureType furnitureType)
         {
-            // All furniture currently registers under UnitType.Soldier because CardPool
-            // was built for unit cards and has no dedicated furniture slot. A proper
-            // FurnitureCardPool would remove this dependency, but until then all furniture
-            // is retrieved via GetUnitStats(UnitType.Soldier).
-            return UnitType.Soldier;
+            // Use unused UnitType values or create a mapping
+            // For now, just cast (they're both enums)
+            // This is a temporary hack until we refactor CardPool to support furniture
+            return UnitType.Soldier; // Default to Soldier for now
         }
 
         // --- Dock Bar ---
@@ -315,10 +314,7 @@ namespace LittleCafe
                 FurnitureData firstFurniture = furnitureDatabase.AllFurniture[0];
                 if (firstFurniture.prefab != null)
                 {
-                    // ConvertFurnitureTypeToUnitType maps all furniture to UnitType.Soldier while
-                    // CardPool doesn't natively support furniture types. Use the converter for
-                    // clarity so this stays consistent if the mapping is ever updated.
-                    UnitStats startingStats = CardPool.Instance.GetUnitStats(ConvertFurnitureTypeToUnitType(firstFurniture.type));
+                    UnitStats startingStats = CardPool.Instance.GetUnitStats(UnitType.Soldier); // TODO: Fix this mapping
                     if (startingStats != null)
                     {
                         dockManager.AddCard(startingStats);
