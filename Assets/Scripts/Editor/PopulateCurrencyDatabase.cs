@@ -66,6 +66,10 @@ public static class PopulateCurrencyDatabase
             (ResourceType.GoldBag,     "Gold Bag",     "\U0001F4B0", "Assets/Icons/Icon_30px/World/Gold Bag - World.png",               0, false),
             (ResourceType.Approval,    "Approval",     "\U0001F44D", "Assets/Icons/Icon_25px/ThumbsUp - Bubble.png",                    0, false),
             (ResourceType.Heart,       "Heart",        "\U0001F49C", "Assets/Icons/Icon_25px/PinkHeart - Bubble.png",                   0, false),
+
+            // ── Produced Resources ─────────────
+            (ResourceType.Scrap,       "Scrap",        "\U0001F529", "Assets/Icons/Icon_30px/Currency/RockB - Currency.png",            0, false),
+            (ResourceType.Reed,        "Reed",         "\U0001F33E", "Assets/Icons/Icon_30px/Currency/Moss - Currency.png",             0, false),
         };
 
         bool dirty = false;

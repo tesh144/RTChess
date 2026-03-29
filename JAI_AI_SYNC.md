@@ -43,8 +43,11 @@
 
 | Date | Agent | Summary |
 |------|-------|---------|
+| 2026-03-29 | Claude Code | Fix #177: Added Scrap (32) and Reed (33) to CurrencyDatabase.asset + PopulateCurrencyDatabase.cs. Scrapper can now produce Scrap. → Ready for Review |
 | 2026-03-29 | Co-Work | Project cleanup: Active Work cleared, RTChess.md + CLAUDE_USER_JAI.md updated from post-mortem, Re-Entry Protocol created. |
 | 2026-03-29 | Co-Work | Skills library: 26 external game-dev skills added to RTChess/.claude/skills/. All 37 in ClaudeAI/shared-skills/. 7 planned skill cards (#165–#172) updated with skill-creator build process. JAI_AI_SYNC.md archiving system established. |
+| 2026-03-29 | Co-Work | Tech debt audit: 9 refactor cards created (#179–#187) for files over 500 lines. 4 critical (🔴), 5 medium (🟠). All in Tasks (Claude). |
+| 2026-03-29 | Co-Work | Config cleanup: CLOCKWORK.md → RTChess.md rename complete. CLAUDE_USER_JAI.md split into 3 files: CLAUDE.md (RTChess), CLAUDE_USER_JAI.md (portable, Notion removed), CLAUDE_KINGS.md (King's Renewal). Skills wired into working rules. Session start reads reduced. |
 
 _Older entries → JAI_AI_SYNC_ARCHIVE.md_
 
