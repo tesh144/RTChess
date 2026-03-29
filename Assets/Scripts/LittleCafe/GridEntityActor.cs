@@ -193,8 +193,8 @@ namespace LittleCafe
                         break;
 
                     // Corruption priority — corrupted tiles are valid targets even if unoccupied
-                    GameObject scanTile = gm.GetGridTile(checkX, checkY);
-                    CorruptionOverlay scanCorruption = scanTile != null ? scanTile.GetComponent<CorruptionOverlay>() : null;
+                    CorruptionOverlay scanCorruption = CorruptionManager.Instance != null
+                        ? CorruptionManager.Instance.GetOverlay(checkX, checkY) : null;
                     if (scanCorruption != null && scanCorruption.Health != null && !scanCorruption.Health.IsDestroyed)
                     {
                         if (step < bestDist)
@@ -339,8 +339,10 @@ namespace LittleCafe
                     interactionCoroutine = StartCoroutine(ClockworkTickInteract());
                     break;
                 case BehaviorType.RotateAndMove:
-                case BehaviorType.RotateAndMoveCorrupted:
                     interactionCoroutine = StartCoroutine(ClockworkTickMove());
+                    break;
+                case BehaviorType.RotateAndMoveCorrupted:
+                    interactionCoroutine = StartCoroutine(ClockworkTickMoveCorrupted());
                     break;
                 case BehaviorType.RotateRotateMove:
                     interactionCoroutine = StartCoroutine(ClockworkTickRotateRotateMove());
@@ -414,6 +416,40 @@ namespace LittleCafe
             yield return StartCoroutine(ScanAndInteractWildAnimal(result => interacted = result));
 
             // Step 4: If nothing to interact with, try to move forward
+            if (!interacted)
+                yield return StartCoroutine(TryMoveForward());
+
+            interactionCoroutine = null;
+        }
+
+        // ===============================================================
+        // BEHAVIOR: RotateAndMoveCorrupted (Corruption spike pattern)
+        // ===============================================================
+
+        /// <summary>
+        /// Corruption spike tick: rotate, try to attack allied targets (using
+        /// InteractorType.Enemy), then move if nothing to attack.
+        /// Identical to ClockworkTickMove except uses ScanAndInteractEnemy
+        /// so spikes check enemyInteractible instead of wildAnimalInteractible.
+        /// </summary>
+        private IEnumerator ClockworkTickMoveCorrupted()
+        {
+            if (isMoving) yield break;
+
+            if (isFirstTick)
+            {
+                isFirstTick = false;
+                yield return new WaitForSeconds(INTERACTION_DELAY);
+            }
+            else
+            {
+                Rotate();
+                yield return new WaitForSeconds(ROTATION_DURATION + INTERACTION_DELAY);
+            }
+
+            bool interacted = false;
+            yield return StartCoroutine(ScanAndInteractEnemy(result => interacted = result));
+
             if (!interacted)
                 yield return StartCoroutine(TryMoveForward());
 
@@ -717,8 +753,8 @@ namespace LittleCafe
                     break;
 
                 // Corruption priority — attack tile overlay before the occupant underneath
-                GameObject attackTile = gm.GetGridTile(checkX, checkY);
-                CorruptionOverlay tileCorruption = attackTile != null ? attackTile.GetComponent<CorruptionOverlay>() : null;
+                CorruptionOverlay tileCorruption = CorruptionManager.Instance != null
+                    ? CorruptionManager.Instance.GetOverlay(checkX, checkY) : null;
                 if (tileCorruption != null && tileCorruption.Health != null && !tileCorruption.Health.IsDestroyed)
                 {
                     ResetIdleCounter();
@@ -862,6 +898,56 @@ namespace LittleCafe
                 string targetName = occupant.name.Replace("(Clone)", "").Trim();
                 bool canInteract = ClockworkCraft.InteractionRegistry.Instance != null
                     && ClockworkCraft.InteractionRegistry.Instance.CanInteract(targetName, ClockworkCraft.InteractorType.WildAnimal);
+
+                if (canInteract)
+                {
+                    yield return PerformStrongInteraction(targetHealth, checkX, checkY);
+                    result(true);
+                    yield break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Scan for allied targets and attack using InteractorType.Enemy.
+        /// Used by corruption spikes — identical to ScanAndInteractWildAnimal
+        /// except checks enemyInteractible instead of wildAnimalInteractible.
+        /// </summary>
+        private IEnumerator ScanAndInteractEnemy(System.Action<bool> result)
+        {
+            result(false);
+
+            if (furnitureObject == null) yield break;
+            GridManager gm = GridManager.Instance;
+            if (gm == null) yield break;
+
+            currentFacing.ToGridOffset(out int dx, out int dy);
+            int startX = furnitureObject.GridX;
+            int startY = furnitureObject.GridY;
+
+            for (int step = 1; step <= attackRange; step++)
+            {
+                int checkX = startX + (dx * step);
+                int checkY = startY + (dy * step);
+
+                if (checkX < 0 || checkX >= gm.Width || checkY < 0 || checkY >= gm.Height)
+                    break;
+
+                GameObject occupant = gm.GetCellOccupant(checkX, checkY);
+                if (occupant == null) continue;
+                if (occupant == gameObject) continue;
+
+                GridEntityHealth targetHealth = occupant.GetComponent<GridEntityHealth>();
+                if (targetHealth == null || targetHealth.IsDestroyed) continue;
+
+                // Enemies only attack allied targets (workers, buildings)
+                if (!targetHealth.IsAllied)
+                    continue;
+
+                // Check InteractionRegistry for enemyInteractible
+                string targetName = occupant.name.Replace("(Clone)", "").Trim();
+                bool canInteract = ClockworkCraft.InteractionRegistry.Instance != null
+                    && ClockworkCraft.InteractionRegistry.Instance.CanInteract(targetName, ClockworkCraft.InteractorType.Enemy);
 
                 if (canInteract)
                 {
@@ -1197,8 +1283,10 @@ namespace LittleCafe
                     interactionCoroutine = StartCoroutine(ClockworkTickInteract());
                     break;
                 case BehaviorType.RotateAndMove:
-                case BehaviorType.RotateAndMoveCorrupted:
                     interactionCoroutine = StartCoroutine(ClockworkTickMove());
+                    break;
+                case BehaviorType.RotateAndMoveCorrupted:
+                    interactionCoroutine = StartCoroutine(ClockworkTickMoveCorrupted());
                     break;
                 case BehaviorType.RotateRotateMove:
                     interactionCoroutine = StartCoroutine(ClockworkTickRotateRotateMove());
