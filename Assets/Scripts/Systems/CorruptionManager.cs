@@ -212,6 +212,16 @@ namespace LittleCafe
             GameObject obj = mapGen.SpawnEnvironmentAt(x, y, envData);
             if (obj == null) return;
 
+            // Apply the height offset so the corruption visual sits on top of the map base mesh
+            // rather than clipping underneath it. corruptionVisualHeight defaults to 0 but can
+            // be tuned per-scene in the Inspector if the ground plane sits above world Y=0.
+            if (corruptionVisualHeight != 0f)
+            {
+                Vector3 p = obj.transform.position;
+                p.y += corruptionVisualHeight;
+                obj.transform.position = p;
+            }
+
             // Add CorruptionOverlay component for HP, owner tracking, and building pausing
             var overlay = obj.GetComponent<CorruptionOverlay>();
             if (overlay == null) overlay = obj.AddComponent<CorruptionOverlay>();
@@ -419,21 +429,4 @@ namespace LittleCafe
 
             // 2. If this revealed tile is corrupted, reveal the whole cluster instantly
             var coord = new Vector2Int(x, y);
-            if (!allCorruptedTiles.Contains(coord)) return;
-            if (FogManager.Instance == null) return;
-
-            if (!overlayMap.TryGetValue(coord, out var overlay)) return;
-            if (overlay.OwnerHeart == null) return;
-
-            var owner = overlay.OwnerHeart;
-            if (!heartTiles.ContainsKey(owner)) return;
-
-            // Reveal all tiles in this heart's cluster
-            foreach (var c in heartTiles[owner])
-                FogManager.Instance.RevealCell(c.x, c.y);
-
-            // Also reveal the heart's own tile
-            FogManager.Instance.RevealCell(owner.GridPosition.x, owner.GridPosition.y);
-        }
-    }
-}
+            if (!allCorruptedTile

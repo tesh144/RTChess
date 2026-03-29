@@ -61,15 +61,15 @@ namespace LittleCafe
         [SerializeField] private bool verboseLogging = false;
 
         // Cached references
-        private FurnitureObject _furnitureObject;
+        private PlacedObject _furnitureObject;
         private bool _furnitureObjectCached;
-        private FurnitureObject furnitureObject
+        private PlacedObject furnitureObject
         {
             get
             {
                 if (!_furnitureObjectCached)
                 {
-                    _furnitureObject = GetComponent<FurnitureObject>();
+                    _furnitureObject = GetComponent<PlacedObject>();
                     if (_furnitureObject != null)
                         _furnitureObjectCached = true;
                 }
@@ -257,7 +257,7 @@ namespace LittleCafe
             }
 
             if (furnitureObject == null)
-                Debug.LogWarning($"[GridEntityActor] No FurnitureObject on {gameObject.name} — grid position unknown");
+                Debug.LogWarning($"[GridEntityActor] No PlacedObject on {gameObject.name} — grid position unknown");
             if (animatorHolder == null)
                 Debug.LogWarning($"[GridEntityActor] No AnimatorHolder on {gameObject.name} — animations won't play");
         }
@@ -461,19 +461,4 @@ namespace LittleCafe
             mealBuffTicksRemaining = 0;
 
             if (IntervalTimer.Instance != null)
-                IntervalTimer.Instance.OnHalfBar -= OnHalfBarTick;
-
-            if (verboseLogging)
-                Debug.Log($"[GridEntityActor] {gameObject.name} meal buff expired");
-        }
-
-        // ---------------------------------------------------------------
-        // Lifecycle
-        // ---------------------------------------------------------------
-
-        private void OnDestroy()
-        {
-            // Countdown popups are self-destructing — no cleanup needed
-        }
-    }
-}
+                IntervalTimer.Instance.On

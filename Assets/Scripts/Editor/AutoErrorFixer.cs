@@ -142,7 +142,8 @@ public class AutoErrorFixer
         {
             { "GridObject", "ClockworkGrid" },
             { "GridManager", "ClockworkGrid" },
-            { "FurnitureObject", "LittleCafe" },
+            { "PlacedObject", "LittleCafe" },
+            { "FurnitureObject", "LittleCafe" }, // shim — keep until prefabs migrate
             { "FurnitureDatabase", "LittleCafe" },
             { "FurnitureData", "LittleCafe" },
             { "FurnitureType", "LittleCafe" },

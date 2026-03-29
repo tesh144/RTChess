@@ -177,7 +177,7 @@ public class PEPOPrefabGenerator : EditorWindow
         }
 
         // Configure component properties via reflection (since they're serialized fields)
-        var furniture = root.GetComponent<FurnitureObject>();
+        var furniture = root.GetComponent<PlacedObject>();
         if (furniture != null)
         {
             SerializedObject so = new SerializedObject(furniture);
