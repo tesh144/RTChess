@@ -92,6 +92,7 @@ namespace ClockworkCraft
         // ─────────────────────────────────────────────────────────────────
 
         private string[,] planGrid;
+        private string[,] onTopPlanGrid;
         private int width;
         private int height;
         private Vector2Int center;
@@ -292,6 +293,7 @@ namespace ClockworkCraft
             // ── Plan (fast — pure array math, no Instantiate) ─────────
             InitPlanGrid();
             PlaceAllEntries();
+            PlaceOnTopEntries();
             PlaceCorruptionEntities(); // runs after env + units so it respects their cells
             detectedGatherings.Clear();
             detectedGatherings.AddRange(GatheringDetector.DetectGatherings(planGrid, width, height));
@@ -318,6 +320,9 @@ namespace ClockworkCraft
             // ── Spawn environment (staggered) ─────────────────────────
             yield return StartCoroutine(SpawnAllStaggered());
 
+            // ── Spawn on-top environment (staggered) ─────────────────
+            yield return StartCoroutine(SpawnAllOnTopStaggered());
+
             // ── Spawn units (staggered) ───────────────────────────────
             yield return StartCoroutine(SpawnAllUnitsStaggered());
 
@@ -339,6 +344,7 @@ namespace ClockworkCraft
         {
             planGrid = new string[width, height];
             planGrid[center.x, center.y] = "__center__";
+            onTopPlanGrid = new string[width, height];
         }
 
         void PlaceAllEntries()
@@ -347,6 +353,11 @@ namespace ClockworkCraft
             planner.PlaceAllEntries(spawnEntries, environmentDatabase, unitSpawnEntries, unitDatabase, mapDensity);
         }
 
+        void PlaceOnTopEntries()
+        {
+            var planner = new MapPlanner(planGrid, rng, width, height, center, clearCenterCardinal);
+            planner.PlaceOnTopEntries(spawnEntries, environmentDatabase, onTopPlanGrid);
+        }
 
         // Gathering detection moved to GatheringDetector.cs
 
@@ -506,6 +517,82 @@ namespace ClockworkCraft
                 if (count % BATCH_SIZE == 0)
                     yield return null; // Breathe — let the frame render
             }
+        }
+
+        /// <summary>
+        /// Spawns "On Top" objects from the onTopPlanGrid — objects placed on the
+        /// Object layer above existing Surface tiles (e.g. water lilies on water).
+        /// Runs after SpawnAllStaggered so the surface GameObjects already exist.
+        /// </summary>
+        System.Collections.IEnumerator SpawnAllOnTopStaggered()
+        {
+            if (onTopPlanGrid == null) yield break;
+
+            const int BATCH_SIZE = 25;
+            int count = 0;
+
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                string envName = onTopPlanGrid[x, y];
+                if (envName == null) continue;
+
+                EnvironmentData envData = environmentDatabase.GetByName(envName);
+                if (envData == null || envData.prefab == null) continue;
+
+                Vector3 worldPos = GridManager.Instance.GridToWorldPosition(x, y);
+                worldPos.y += 0.01f;
+                Quaternion randomRot = Quaternion.Euler(0f, 90f * rng.Next(4), 0f);
+                GameObject obj = Instantiate(envData.prefab, worldPos, randomRot);
+                obj.name = envData.assetName;
+
+                if (obj.TryGetComponent<ResourceNode>(out var node))
+                {
+                    node.hp              = envData.hp;
+                    node.lootHpCost      = envData.lootHpCost;
+                    node.lootYield       = envData.lootYield;
+                    node.lootBonusAmount = envData.lootYield;
+                    node.isInteractable  = InteractionRegistry.Instance != null
+                                           ? InteractionRegistry.Instance.IsUnlocked(envData.assetName) : true;
+                    node.resourceType    = envData.lootResourceType != ResourceType.None
+                                           ? envData.lootResourceType
+                                           : GuessResourceType(envName);
+                    node.Initialize(x, y);
+
+                    float dist = Vector2Int.Distance(new Vector2Int(x, y), center);
+                    node.tier = dist < 10f ? 1
+                              : dist < 20f ? (rng.NextDouble() < 0.5 ? 1 : 2)
+                              :              (rng.NextDouble() < 0.4 ? 2 : 3);
+
+                    NodeManager.Instance?.RegisterNode(node);
+                }
+
+                if (enableFog)
+                {
+                    var fogHideable = obj.AddComponent<FogHideable>();
+                    fogHideable.Initialize(x, y);
+                }
+
+                if (GridEntityManager.Instance != null)
+                {
+                    GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
+                    ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
+                }
+
+                if (obj.activeSelf)
+                    TriggerAppearAnimation(obj);
+
+                // OnTop objects go on the Object layer — the surface is already placed
+                GridManager.Instance?.PlaceUnit(x, y, obj, CellState.Resource);
+                POIManager.Instance?.RegisterEnvPOI(new Vector2Int(x, y), envData.assetName);
+
+                count++;
+                if (count % BATCH_SIZE == 0)
+                    yield return null;
+            }
+
+            if (count > 0)
+                Debug.Log($"[MapGenV2] Spawned {count} OnTop environment objects");
         }
 
         /// <summary>

@@ -156,7 +156,7 @@ namespace ClockworkCraft
             // ── Combined weight + budget for all entries ────────────
             float totalCombinedWeight = 0f;
             foreach (var e in gen.spawnEntries)
-                if (e.spawnWeight > 0f) totalCombinedWeight += e.spawnWeight;
+                if (e.spawnWeight > 0f && e.spawnMode != SpawnMode.OnTop) totalCombinedWeight += e.spawnWeight;
             foreach (var e in gen.unitSpawnEntries)
                 if (e.spawnWeight > 0f) totalCombinedWeight += e.spawnWeight;
 
@@ -186,7 +186,17 @@ namespace ClockworkCraft
                         : 0;
 
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                    EditorGUILayout.LabelField($"\u2618  {entryName}  \u2014  {relPct:F0}% (~{entryBudget} tiles)", EditorStyles.boldLabel);
+                    if (mode == SpawnMode.OnTop)
+                    {
+                        SerializedProperty covProp = entryProp.FindPropertyRelative("coveragePercent");
+                        EditorGUILayout.LabelField(
+                            $"\u2618  {entryName}  \u2014  OnTop ({covProp.floatValue * 100f:F0}% coverage)",
+                            EditorStyles.boldLabel);
+                    }
+                    else
+                    {
+                        EditorGUILayout.LabelField($"\u2618  {entryName}  \u2014  {relPct:F0}% (~{entryBudget} tiles)", EditorStyles.boldLabel);
+                    }
 
                     EditorGUI.indentLevel++;
                     DrawSpawnModeFields(entryProp, modeProp, weightProp, spacingProp, mode, allNameArray, "edgeBorderOf", "Border Of");
@@ -368,6 +378,17 @@ namespace ClockworkCraft
                     {
                         EditorGUILayout.PropertyField(borderProp, new GUIContent(borderLabel));
                     }
+                    break;
+
+                case SpawnMode.OnTop:
+                    SerializedProperty surfaceProp = entryProp.FindPropertyRelative("requiredSurface");
+                    SerializedProperty coverageProp = entryProp.FindPropertyRelative("coveragePercent");
+                    EditorGUILayout.PropertyField(surfaceProp, new GUIContent("Required Surface",
+                        "Surface type this object spawns on top of."));
+                    EditorGUILayout.PropertyField(coverageProp, new GUIContent("Coverage %",
+                        "Fraction of qualifying surface tiles to cover (0-1)."));
+                    EditorGUILayout.PropertyField(spacingProp, new GUIContent("Min Spacing",
+                        "Minimum cell distance between instances."));
                     break;
             }
         }

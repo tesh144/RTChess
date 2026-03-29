@@ -248,6 +248,87 @@ namespace ClockworkCraft
             Debug.Log($"[MapPlanner] Plan complete: {totalPlaced} tiles placed (budget was {totalBudget}, {(float)totalPlaced / availableTiles:P1} actual coverage)");
         }
 
+        /// <summary>
+        /// Second-pass placement for OnTop entries. Scans planGrid for tiles
+        /// matching each entry's requiredSurface and places objects into a
+        /// separate onTopPlanGrid at the configured coverage percentage.
+        /// Must be called AFTER PlaceAllEntries so surface tiles are already planned.
+        /// </summary>
+        public void PlaceOnTopEntries(
+            List<EnvironmentSpawnEntry> envEntries, EnvironmentDatabase envDB,
+            string[,] onTopPlanGrid)
+        {
+            var onTopEntries = new List<(EnvironmentSpawnEntry entry, EnvironmentData data)>();
+            foreach (var entry in envEntries)
+            {
+                if (entry.spawnMode != SpawnMode.OnTop) continue;
+                var data = envDB.GetByName(entry.environmentName);
+                if (data == null || data.prefab == null) continue;
+                onTopEntries.Add((entry, data));
+            }
+
+            if (onTopEntries.Count == 0) return;
+
+            // Build a lookup: for each environment name, what SurfaceType does it map to?
+            // Surface entries in planGrid are stored by their environment name (e.g. "Water").
+            // We need to know which planGrid names correspond to which SurfaceType.
+            // Mirrors the mapping logic in MapGeneratorV2.PlaceOnCorrectLayer().
+            var nameToSurface = new Dictionary<string, ClockworkGrid.SurfaceType>();
+            foreach (var envData in envDB.AllEnvironment)
+            {
+                if (envData.layerType != LittleCafe.EnvironmentLayerType.Surface) continue;
+                string lower = envData.assetName.ToLowerInvariant();
+                if (lower.Contains("corrupt"))
+                    nameToSurface[envData.assetName] = ClockworkGrid.SurfaceType.Corruption;
+                else if (lower.Contains("lava"))
+                    nameToSurface[envData.assetName] = ClockworkGrid.SurfaceType.Lava;
+                else
+                    nameToSurface[envData.assetName] = ClockworkGrid.SurfaceType.Water;
+            }
+
+            foreach (var (entry, data) in onTopEntries)
+            {
+                // Find all planGrid tiles with a surface matching requiredSurface
+                var qualifying = new List<Vector2Int>();
+                for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++)
+                {
+                    string cellName = planGrid[x, y];
+                    if (cellName == null) continue;
+                    if (!nameToSurface.TryGetValue(cellName, out var surfType)) continue;
+                    if (surfType != entry.requiredSurface) continue;
+                    // Skip if onTopPlanGrid already has something here
+                    if (onTopPlanGrid[x, y] != null) continue;
+                    qualifying.Add(new Vector2Int(x, y));
+                }
+
+                if (qualifying.Count == 0)
+                {
+                    Debug.Log($"[MapPlanner] OnTop '{entry.environmentName}': 0 qualifying {entry.requiredSurface} tiles found");
+                    continue;
+                }
+
+                int targetCount = Mathf.RoundToInt(qualifying.Count * entry.coveragePercent);
+                if (targetCount <= 0) continue;
+
+                ShuffleList(qualifying);
+
+                var placed = new List<Vector2Int>();
+                foreach (var pos in qualifying)
+                {
+                    if (placed.Count >= targetCount) break;
+
+                    if (entry.minSpacing > 0 && IsTooClose(pos.x, pos.y, placed, entry.minSpacing))
+                        continue;
+
+                    onTopPlanGrid[pos.x, pos.y] = entry.environmentName;
+                    placed.Add(pos);
+                }
+
+                Debug.Log($"[MapPlanner] OnTop '{entry.environmentName}' on {entry.requiredSurface}: {placed.Count} tiles (target={targetCount}, qualifying={qualifying.Count})");
+            }
+        }
+
         // ─────────────────────────────────────────────────────────────────
         // Environment placement
         // ─────────────────────────────────────────────────────────────────
