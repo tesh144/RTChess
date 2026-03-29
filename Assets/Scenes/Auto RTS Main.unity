@@ -1649,10 +1649,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1817720487229440558, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: corruptionOverlayPrefab
-      value: 
-      objectReference: {fileID: 5352704816085721666, guid: 404728650a61047f6b20fe952d355519, type: 3}
     - target: {fileID: 1872223307927959791, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: titleLogo
       value: 
@@ -1720,22 +1716,6 @@ PrefabInstance:
     - target: {fileID: 3909088470510346116, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].spawnMode
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].spawnWeight
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].edgeBorderOf
-      value: Water
-      objectReference: {fileID: 0}
-    - target: {fileID: 5008381677469321732, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
-      propertyPath: spawnEntries.Array.data[6].clearFromCenter
-      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7692711440160710592, guid: 9e7e2d0948b3749ffb7e5ee33693404e, type: 3}
       propertyPath: m_Name

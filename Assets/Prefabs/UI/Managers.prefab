@@ -287,7 +287,7 @@ MonoBehaviour:
     edgeBorderOf: 
   - environmentName: Coral
     spawnMode: 0
-    spawnWeight: 1
+    spawnWeight: 0.5
     minSpacing: 6
     clearFromCenter: 4
     fragmentation: 0.3
@@ -573,6 +573,7 @@ MonoBehaviour:
   coinStaggerInterval: 0.05
   coinBasePitch: 0.9
   coinMaxPitch: 1.3
+  coinBatchMax: 20
 --- !u!1 &7692711440160710592
 GameObject:
   m_ObjectHideFlags: 0
@@ -667,6 +668,7 @@ MonoBehaviour:
   corruptionOverlayPrefab: {fileID: 5352704816085721666, guid: 404728650a61047f6b20fe952d355519, type: 3}
   corruptionVisualHeight: 0
   corruptionVisualScale: 1
+  waveClearDelay: 0.15
 --- !u!1 &9035113113404508760
 GameObject:
   m_ObjectHideFlags: 0
