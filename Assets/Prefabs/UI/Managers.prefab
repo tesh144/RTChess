@@ -665,7 +665,7 @@ MonoBehaviour:
   spreadSound: {fileID: 8300000, guid: 7d26ee037917106469ecbcd5289ed47d, type: 3}
   spreadSoundVolume: 0.6
   corruptionOverlayPrefab: {fileID: 5352704816085721666, guid: 404728650a61047f6b20fe952d355519, type: 3}
-  corruptionVisualHeight: 0
+  corruptionVisualHeight: 0.55
   corruptionVisualScale: 1
 --- !u!1 &9035113113404508760
 GameObject:
