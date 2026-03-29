@@ -461,4 +461,19 @@ namespace LittleCafe
             mealBuffTicksRemaining = 0;
 
             if (IntervalTimer.Instance != null)
-                IntervalTimer.Instance.On
+                IntervalTimer.Instance.OnHalfBar -= OnHalfBarTick;
+
+            if (verboseLogging)
+                Debug.Log($"[GridEntityActor] {gameObject.name} meal buff expired");
+        }
+
+        // ---------------------------------------------------------------
+        // Lifecycle
+        // ---------------------------------------------------------------
+
+        private void OnDestroy()
+        {
+            // Countdown popups are self-destructing — no cleanup needed
+        }
+    }
+}
