@@ -240,21 +240,36 @@ namespace LittleCafe
                 if (!isHeart)
                     validSpikes.Add(u);
             }
-            if (validSpikes.Count == 0) return;
+            if (validSpikes.Count == 0)
+            {
+                Debug.Log($"[CorruptionHeart] {GridPosition} — no valid spike types in UnitDatabase.");
+                return;
+            }
 
             // Scan this heart's cluster for cells that qualify as spike-growth sites
             var clusterTiles = CorruptionManager.Instance.GetHeartTiles(this);
-            if (clusterTiles == null || clusterTiles.Count == 0) return;
+            if (clusterTiles == null || clusterTiles.Count == 0)
+            {
+                Debug.Log($"[CorruptionHeart] {GridPosition} — no cluster tiles owned by this heart.");
+                return;
+            }
 
             var candidates = new List<Vector2Int>();
+            int notEmpty = 0, notEnoughNeighbors = 0;
             foreach (var coord in clusterTiles)
             {
                 if (!GridManager.Instance.IsValidCell(coord.x, coord.y)) continue;
-                if (!GridManager.Instance.IsCellEmpty(coord.x, coord.y)) continue;
-                if (CountCorruptedNeighbors(coord.x, coord.y) < spikeMinCorruptedNeighbors) continue;
+                if (!GridManager.Instance.IsCellEmpty(coord.x, coord.y)) { notEmpty++; continue; }
+                int neighbors = CountCorruptedNeighbors(coord.x, coord.y);
+                if (neighbors < spikeMinCorruptedNeighbors) { notEnoughNeighbors++; continue; }
                 candidates.Add(coord);
             }
-            if (candidates.Count == 0) return;
+            if (candidates.Count == 0)
+            {
+                Debug.Log($"[CorruptionHeart] {GridPosition} — 0 spike candidates (cluster={clusterTiles.Count}, " +
+                          $"occupied={notEmpty}, too few neighbors={notEnoughNeighbors}, threshold={spikeMinCorruptedNeighbors}).");
+                return;
+            }
 
             // Pick a random qualifying cell and a random spike type
             Vector2Int target   = candidates[Random.Range(0, candidates.Count)];
@@ -273,7 +288,8 @@ namespace LittleCafe
                 behaviorType: spikeData.behaviorType,
                 registryName: spikeData.assetName,
                 allied:       false,
-                killerAdvances: spikeData.killerAdvances);
+                killerAdvances: spikeData.killerAdvances,
+                walkable:     spikeData.walkable);
 
             Debug.Log($"[CorruptionHeart] Grew {spikeData.assetName} at ({target.x},{target.y}) " +
                       $"(corrupted neighbours: {CountCorruptedNeighbors(target.x, target.y)}).");

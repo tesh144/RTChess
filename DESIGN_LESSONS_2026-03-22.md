@@ -133,5 +133,5 @@ When working on this project with other agents:
 
 - `CLAUDE_USER_JAI.md` — Updated with systemic change rules (2026-03-22)
 - `GRID_PLACEMENT_STRATEGY.md` — Initial design doc (incomplete, needs validation)
-- `CLOCKWORK.md` — Project architecture and standing rules
+- `RTChess.md` — Project architecture and standing rules
 - `JAI_AI_SYNC.md` — Work summary log

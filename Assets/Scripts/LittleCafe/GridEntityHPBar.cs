@@ -27,7 +27,7 @@ namespace LittleCafe
 
         [Header("Damage Popup Toggle")]
         [Tooltip("When false, the red -N damage popups are disabled. Loot particles provide enough feedback.")]
-        [SerializeField] private bool showDamagePopup = false;
+        [SerializeField] private bool showDamagePopup = false; // Legacy — kept to avoid serialization warnings
 
         [SerializeField] private float labelHeight = 2.0f;
         [SerializeField] private float labelFontSize = 3.5f;
@@ -79,6 +79,7 @@ namespace LittleCafe
         {
             entityHealth = health;
             entityHealth.OnDamaged += OnEntityDamaged;
+            entityHealth.OnDamagedBy += OnEntityDamagedBy;
 
             // Force soft colors — overrides any stale serialized values from older prefabs
             lowHPColor = new Color(0.85f, 0.55f, 0.5f, 1f);  // Warm muted rose, not screaming red
@@ -89,13 +90,6 @@ namespace LittleCafe
             // the loot particles flying out provide enough feedback.
             if (!health.IsAllied)
                 showHPLabel = false;
-
-            // Buildings (allied, non-environment) get red damage popups when attacked.
-            // Environment objects (goldmines, trees) are excluded — constant interaction
-            // would make the popups noisy and unhelpful.
-            bool isEnvironmentObject = GetComponent<ClockworkCraft.ResourceNode>() != null;
-            if (health.IsAllied && !isEnvironmentObject)
-                showDamagePopup = true;
 
             // Resolve entity-type tint from ResourceNode (if present)
             ResolveEntityTint();
@@ -234,8 +228,30 @@ namespace LittleCafe
         {
             if (showHPLabel)
                 UpdateHPLabel(currentHP, maxHP);
-            if (showDamagePopup)
-                SpawnDamagePopup(damageDealt, currentHP, maxHP);
+            // Damage popup is now handled by OnEntityDamagedBy (relationship-based)
+        }
+
+        /// <summary>
+        /// Show damage popup only when attacker and target are enemies.
+        /// Neutral resources (trees, rocks, goldmines) have no actor — no popup.
+        /// Active enemies (dinos, mammoths, spikes) have an actor — popup shows.
+        ///   - Worker (allied) attacks Dino (not allied, has actor) → popup
+        ///   - Spike (not allied) attacks Worker (allied) → popup
+        ///   - Worker (allied) attacks Tree (not allied, no actor = neutral) → no popup
+        /// </summary>
+        private void OnEntityDamagedBy(GridEntityHealth attacker, int damageDealt)
+        {
+            if (entityHealth == null || attacker == null) return;
+
+            // Only show when attacker and target are on opposite sides
+            bool opposingSides = entityHealth.IsAllied != attacker.IsAllied;
+            if (!opposingSides) return;
+
+            // Non-allied targets without an actor are neutral resources (trees, goldmine, rocks).
+            // They don't show damage popups — loot particles provide the feedback instead.
+            if (!entityHealth.IsAllied && GetComponent<GridEntityActor>() == null) return;
+
+            SpawnDamagePopup(damageDealt, entityHealth.CurrentHP, entityHealth.MaxHP);
         }
 
         // ---------------------------------------------------------------

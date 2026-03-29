@@ -371,9 +371,14 @@ namespace ClockworkCraft
         // Spawn Phase
         // ─────────────────────────────────────────────────────────────────
 
-        void ApplyEnvironmentDesaturationDefaults(GameObject obj, bool addIfMissing = false)
+        void ApplyEnvironmentDesaturationDefaults(GameObject obj, bool addIfMissing = false,
+            EnvironmentData envData = null)
         {
             if (obj == null) return;
+
+            // Surface tiles (Water, Corruption, etc.) always appear at full color — no desaturation.
+            if (envData != null && envData.layerType == EnvironmentLayerType.Surface)
+                return;
 
             var desat = obj.GetComponent<ClockworkCraft.EnvironmentDesaturation>();
             if (desat == null)
@@ -434,7 +439,7 @@ namespace ClockworkCraft
             if (GridEntityManager.Instance != null)
             {
                 GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
-                ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
+                ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true, envData: envData);
             }
 
             // Animation
@@ -506,7 +511,7 @@ namespace ClockworkCraft
             if (GridEntityManager.Instance != null)
             {
                 GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
-                ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
+                ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true, envData: envData);
             }
 
             PlaceOnCorrectLayer(center.x, center.y, obj, envData);
@@ -570,7 +575,7 @@ namespace ClockworkCraft
                 if (GridEntityManager.Instance != null)
                 {
                     GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
-                    ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
+                    ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true, envData: envData);
                 }
 
                 if (obj.activeSelf)
@@ -642,7 +647,7 @@ namespace ClockworkCraft
                 if (GridEntityManager.Instance != null)
                 {
                     GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
-                    ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
+                    ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true, envData: envData);
                 }
 
                 if (obj.activeSelf)

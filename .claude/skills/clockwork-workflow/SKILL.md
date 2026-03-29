@@ -25,7 +25,7 @@ post-task self-review. Follow it every session.
 | SheetSyncEditor | `Assets/Scripts/Editor/SheetSyncEditor.cs` |
 | Trello Board | Board ID `69bd0b7483af459744b7a24c` |
 | AI Sync Log | `JAI_AI_SYNC.md` (repo root) |
-| Project Docs | `CLOCKWORK.md` (repo root) |
+| Project Docs | `RTChess.md` (repo root) |
 | User Prefs | `CLAUDE_USER_JAI.md` (repo root) |
 
 **Sheet IDs (for batch_update):**
@@ -268,7 +268,7 @@ killerAdvances, drawWeight, productionInterval, productionOutputType.
 
 ### 2.4 Column-to-Code Reference
 
-When reading sheet data, use these mappings. CLOCKWORK.md has the full table, but the
+When reading sheet data, use these mappings. RTChess.md has the full table, but the
 key gotchas that trip agents up are:
 
 **Emoji-prefixed values** (e.g. "💰 Gold", "👷 Worker"): The SheetSyncEditor has a

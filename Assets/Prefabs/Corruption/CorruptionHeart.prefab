@@ -50,8 +50,8 @@ MonoBehaviour:
   maxHP: 10
   attackPower: 1
   thornsDamage: 1
-  spikeSpawnInterval: 20
-  spikeMinCorruptedNeighbors: 8
+  spikeSpawnInterval: 8
+  spikeMinCorruptedNeighbors: 4
   floatingIndicatorPrefab: {fileID: 0}
 --- !u!23 &2110942132008005354
 MeshRenderer:

@@ -574,30 +574,28 @@ namespace LittleCafe
             if (!CanWalkOnTile(gm, newX, newY))
                 yield break;
 
-            // Check if target cell is empty — if occupied, check for wild-animal interaction
+            // Check if target cell is empty — if occupied, check for interaction
             if (!gm.IsCellEmpty(newX, newY))
             {
-                // Wild animals can interact with certain objects (e.g. Feast)
-                // Check the InteractionRegistry for wildAnimalInteractible flag
                 GameObject occupant = gm.GetCellOccupant(newX, newY);
                 if (occupant != null)
                 {
                     GridEntityHealth targetHealth = occupant.GetComponent<GridEntityHealth>();
                     if (targetHealth != null && !targetHealth.IsDestroyed)
                     {
-                        // Same-faction skip: don't attack fellow non-allied entities
-                        if (!targetHealth.IsAllied)
+                        // Pick interactor type based on behavior — corruption spikes use Enemy, others use WildAnimal
+                        var interactorType = behaviorType == BehaviorType.RotateAndMoveCorrupted
+                            ? ClockworkCraft.InteractorType.Enemy
+                            : ClockworkCraft.InteractorType.WildAnimal;
+
+                        // Same-faction skip: enemies don't attack enemies, allies don't attack allies
+                        bool sameTeam = (targetHealth.IsAllied == false && interactorType == ClockworkCraft.InteractorType.Enemy);
+                        if (!sameTeam)
                         {
-                            // Target is also an enemy — just bump, don't attack
-                        }
-                        else
-                        {
-                            // Look up the occupant name in InteractionRegistry
                             string targetName = occupant.name.Replace("(Clone)", "").Trim();
                             if (ClockworkCraft.InteractionRegistry.Instance != null
-                                && ClockworkCraft.InteractionRegistry.Instance.CanInteract(targetName, ClockworkCraft.InteractorType.WildAnimal))
+                                && ClockworkCraft.InteractionRegistry.Instance.CanInteract(targetName, interactorType))
                             {
-                                // Wild animal can interact with allied target — perform attack
                                 yield return StartCoroutine(PerformStrongInteraction(targetHealth, newX, newY));
                                 yield break;
                             }
@@ -752,20 +750,23 @@ namespace LittleCafe
                 if (checkX < 0 || checkX >= gm.Width || checkY < 0 || checkY >= gm.Height)
                     break;
 
-                // Corruption priority — attack tile overlay before the occupant underneath
-                CorruptionOverlay tileCorruption = CorruptionManager.Instance != null
-                    ? CorruptionManager.Instance.GetOverlay(checkX, checkY) : null;
-                if (tileCorruption != null && tileCorruption.Health != null && !tileCorruption.Health.IsDestroyed)
-                {
-                    ResetIdleCounter();
-                    yield return PerformStrongInteraction(tileCorruption.Health, checkX, checkY);
-                    yield break;
-                }
-
+                // Object layer first, then surface layer (corruption, water).
+                // Workers interact with the object on a tile before touching the surface underneath.
                 GameObject occupant = gm.GetCellOccupant(checkX, checkY);
                 if (occupant == null)
                 {
-                    // No object — check for attackable surface (Water has HP, Corruption is ignored by workers)
+                    // No object — check for attackable surface (corruption, water)
+                    // Corruption overlay
+                    CorruptionOverlay tileCorruption = CorruptionManager.Instance != null
+                        ? CorruptionManager.Instance.GetOverlay(checkX, checkY) : null;
+                    if (tileCorruption != null && tileCorruption.Health != null && !tileCorruption.Health.IsDestroyed)
+                    {
+                        ResetIdleCounter();
+                        yield return PerformStrongInteraction(tileCorruption.Health, checkX, checkY);
+                        yield break;
+                    }
+
+                    // Water surface
                     if (gm.HasSurface(checkX, checkY))
                     {
                         var surface = gm.GetSurface(checkX, checkY);
@@ -783,7 +784,6 @@ namespace LittleCafe
                                 }
                             }
                         }
-                        // Other surface types (Corruption, Lava) — workers ignore them
                     }
                     continue;
                 }

@@ -386,9 +386,15 @@ namespace LittleCafe
 
         private void TrySpreadTo(int x, int y, CorruptionHeart owner)
         {
-            if (GridManager.Instance == null) return;
-            if (!GridManager.Instance.IsValidCell(x, y)) return;
+            var gm = GridManager.Instance;
+            if (gm == null) return;
+            if (!gm.IsValidCell(x, y)) return;
             if (IsCorrupted(x, y)) return;
+
+            // Each tile can only have one surface type — skip tiles that already have water
+            if (gm.HasSurface(x, y) && gm.GetSurface(x, y) == ClockworkGrid.SurfaceType.Water)
+                return;
+
             if (Random.value > spreadChance) return;
             CorruptTile(x, y, owner);
         }

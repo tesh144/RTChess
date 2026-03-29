@@ -135,7 +135,7 @@ namespace ClockworkCraft
             // ── Environment production cards (Lizard, Scrap) ──
             // These are outputs from Hutch and Scrapper buildings.
             // They live in EnvironmentDatabase but need UnitStats in CardPool for FindByName().
-            string[] envProductionNames = { "Lizard", "Scrap" };
+            string[] envProductionNames = { "Lizard", "Scrap", "Tree" };
             if (environmentDB != null)
             {
                 foreach (string envName in envProductionNames)
