@@ -24,6 +24,11 @@ namespace LittleCafe
     ///
     /// Attach to any placed object with isActive=true in its database entry.
     /// Works alongside GridEntityHealth (for HP/damage) and FurnitureObject (for grid state).
+    ///
+    /// Split into three partial files:
+    ///   GridEntityActor.cs          — Core: state, lifecycle, tick dispatch, meal buff, corruption
+    ///   GridEntityActor.Movement.cs — Movement, rotation, behavior coroutines
+    ///   GridEntityActor.Interaction.cs — Scanning, combat, starvation
     /// </summary>
     public partial class GridEntityActor : MonoBehaviour
     {
@@ -101,8 +106,6 @@ namespace LittleCafe
         // Meal buff state
         private bool hasMealBuff = false;
         private int mealBuffTicksRemaining = 0;
-
-        // Starvation countdown — no persistent object; each tick spawns a popup
 
         // --- Public Accessors ---
         public Facing CurrentFacing => currentFacing;
@@ -297,7 +300,7 @@ namespace LittleCafe
         }
 
         // ---------------------------------------------------------------
-        // Clockwork Tick
+        // Clockwork Tick Dispatch
         // ---------------------------------------------------------------
 
         private void OnBarTick(int bar)
@@ -353,66 +356,124 @@ namespace LittleCafe
             }
         }
 
-        // ===============================================================
-        // Rotation (shared by all behaviors)
-        // ===============================================================
-
-        private void Rotate()
+        /// <summary>
+        /// Only subscribed while the meal buff is active (see GrantMealBuff/ExpireMealBuff).
+        /// Fires at beats 1 and 3, doubling the worker's action rate.
+        /// </summary>
+        private void OnHalfBarTick(int bar)
         {
-            // Advance facing direction
-            currentFacing = rotateClockwise
-                ? currentFacing.RotateClockwise()
-                : currentFacing.RotateCounterClockwise();
+            if (!isInitialized) return;
+            if (health != null && health.IsDestroyed) return;
+            if (isCorruptionPaused) return;
 
-            // Animate the rotation smoothly
-            ApplyFacingRotation(instant: false);
+            // Respect interval multiplier — same barNumber check as OnBarTick.
+            // Both beat-1 and beat-3 of a given bar share the same barNumber,
+            // so both fire or both skip together on multiplier workers.
+            if (attackIntervalMultiplier > 1 && bar % attackIntervalMultiplier != 0)
+                return;
+
+            if (interactionCoroutine != null)
+                StopCoroutine(interactionCoroutine);
+
+            switch (behaviorType)
+            {
+                case BehaviorType.RotateAndInteract:
+                    interactionCoroutine = StartCoroutine(ClockworkTickInteract());
+                    break;
+                case BehaviorType.RotateAndMove:
+                    interactionCoroutine = StartCoroutine(ClockworkTickMove());
+                    break;
+                case BehaviorType.RotateAndMoveCorrupted:
+                    interactionCoroutine = StartCoroutine(ClockworkTickMoveCorrupted());
+                    break;
+                case BehaviorType.RotateRotateMove:
+                    interactionCoroutine = StartCoroutine(ClockworkTickRotateRotateMove());
+                    break;
+                default:
+                    interactionCoroutine = StartCoroutine(ClockworkTickInteract());
+                    break;
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Corruption Pause
+        // ---------------------------------------------------------------
+
+        /// <summary>Pause this actor — stops all tick behavior. Called by CorruptionOverlay.</summary>
+        public void PauseForCorruption()
+        {
+            isCorruptionPaused = true;
+            // Stop any in-progress movement/interaction coroutines
+            if (rotationCoroutine != null) { StopCoroutine(rotationCoroutine); rotationCoroutine = null; }
+            if (interactionCoroutine != null) { StopCoroutine(interactionCoroutine); interactionCoroutine = null; }
+        }
+
+        /// <summary>Resume this actor after corruption is cleared.</summary>
+        public void ResumeFromCorruption()
+        {
+            isCorruptionPaused = false;
+        }
+
+        // ---------------------------------------------------------------
+        // Meal Buff
+        // ---------------------------------------------------------------
+
+        /// <summary>
+        /// Converts mealBuffDurationSeconds to bar ticks using the current IntervalTimer bar duration.
+        /// </summary>
+        private int ConvertDurationToTicks()
+        {
+            if (IntervalTimer.Instance == null)
+            {
+                // IntervalTimer not ready — should not happen in normal play.
+                // FallbackBarDuration must match IntervalTimer.baseIntervalDuration inspector default (2.0f).
+                // If that default changes, update this constant to match.
+                const float FallbackBarDuration = 2f;
+                Debug.LogWarning("[GridEntityActor] IntervalTimer.Instance is null — using fallback bar duration");
+                return Mathf.Max(1, Mathf.RoundToInt(mealBuffDurationSeconds / FallbackBarDuration));
+            }
+            float barDuration = Mathf.Max(float.Epsilon, IntervalTimer.Instance.IntervalDuration);
+            return Mathf.Max(1, Mathf.RoundToInt(mealBuffDurationSeconds / barDuration));
         }
 
         /// <summary>
-        /// Apply the current facing as a Y rotation on the ROOT transform.
-        /// We rotate the root (not AnimatorHolder) because the Animator controls
-        /// AnimatorHolder and would override code-driven rotation. Rotating the
-        /// root means animation clips (which push along local Z) correctly follow
-        /// the facing direction.
+        /// Grant a meal buff lasting the specified number of interval ticks.
+        /// While active, the worker subscribes to OnHalfBar for double-speed movement
+        /// and skips MealBuffSource targets during scan.
         /// </summary>
-        private void ApplyFacingRotation(bool instant)
+        public void GrantMealBuff(int durationTicks)
         {
-            float targetYRotation = currentFacing.ToYRotation();
-            Quaternion targetRotation = Quaternion.Euler(0f, targetYRotation, 0f);
+            if (hasMealBuff) return; // already buffed — prevents double-subscription
 
-            if (instant)
-            {
-                transform.rotation = targetRotation;
-                return;
-            }
+            hasMealBuff = true;
+            mealBuffTicksRemaining = durationTicks;
 
-            // Smooth animated rotation
-            if (rotationCoroutine != null)
-                StopCoroutine(rotationCoroutine);
-            rotationCoroutine = StartCoroutine(RotateCoroutine(targetRotation));
+            if (IntervalTimer.Instance != null)
+                IntervalTimer.Instance.OnHalfBar += OnHalfBarTick;
         }
 
-        private IEnumerator RotateCoroutine(Quaternion targetRotation)
+        /// <summary>
+        /// Clears the meal buff and unsubscribes from OnHalfBar, returning the worker to bar-cadence timing.
+        /// </summary>
+        private void ExpireMealBuff()
         {
-            Quaternion startRotation = transform.rotation;
-            float elapsed = 0f;
+            hasMealBuff = false;
+            mealBuffTicksRemaining = 0;
 
-            while (elapsed < ROTATION_DURATION)
-            {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / ROTATION_DURATION);
+            if (IntervalTimer.Instance != null)
+                IntervalTimer.Instance.OnHalfBar -= OnHalfBarTick;
 
-                // Ease-in-out curve
-                float easedT = t * t * (3f - 2f * t);
-                transform.rotation = Quaternion.Slerp(startRotation, targetRotation, easedT);
-
-                yield return null;
-            }
-
-            // Snap to exact final rotation
-            transform.rotation = targetRotation;
-            rotationCoroutine = null;
+            if (verboseLogging)
+                Debug.Log($"[GridEntityActor] {gameObject.name} meal buff expired");
         }
 
+        // ---------------------------------------------------------------
+        // Lifecycle
+        // ---------------------------------------------------------------
+
+        private void OnDestroy()
+        {
+            // Countdown popups are self-destructing — no cleanup needed
+        }
     }
 }
