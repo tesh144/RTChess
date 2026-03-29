@@ -429,4 +429,21 @@ namespace LittleCafe
 
             // 2. If this revealed tile is corrupted, reveal the whole cluster instantly
             var coord = new Vector2Int(x, y);
-            if (!allCorruptedTile
+            if (!allCorruptedTiles.Contains(coord)) return;
+            if (FogManager.Instance == null) return;
+
+            if (!overlayMap.TryGetValue(coord, out var overlay)) return;
+            if (overlay.OwnerHeart == null) return;
+
+            var owner = overlay.OwnerHeart;
+            if (!heartTiles.ContainsKey(owner)) return;
+
+            // Reveal all tiles in this heart's cluster
+            foreach (var c in heartTiles[owner])
+                FogManager.Instance.RevealCell(c.x, c.y);
+
+            // Also reveal the heart's own tile
+            FogManager.Instance.RevealCell(owner.GridPosition.x, owner.GridPosition.y);
+        }
+    }
+}
