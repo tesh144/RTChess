@@ -258,6 +258,8 @@ namespace ClockworkCraft
             List<EnvironmentSpawnEntry> envEntries, EnvironmentDatabase envDB,
             string[,] onTopPlanGrid)
         {
+            if (envDB == null) return;
+
             var onTopEntries = new List<(EnvironmentSpawnEntry entry, EnvironmentData data)>();
             foreach (var entry in envEntries)
             {
