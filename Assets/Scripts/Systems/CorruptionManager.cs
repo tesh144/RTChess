@@ -47,7 +47,7 @@ namespace LittleCafe
         [SerializeField] private GameObject corruptionOverlayPrefab;
 
         [Tooltip("Height offset above the tile where the corruption visual spawns.")]
-        [SerializeField] private float corruptionVisualHeight = 0.05f;
+        [SerializeField] private float corruptionVisualHeight = 0f;
 
         [Tooltip("Scale applied to the corruption visual. Overrides any inherited scale from the parent tile.")]
         [SerializeField] private float corruptionVisualScale = 1f;
@@ -74,6 +74,10 @@ namespace LittleCafe
 
         // Flat set for O(1) IsCorrupted() checks — always kept in sync with heartTiles
         private readonly HashSet<Vector2Int> allCorruptedTiles = new HashSet<Vector2Int>();
+
+        // Overlay lookup by grid position — replaces tile.GetComponent<CorruptionOverlay>()
+        private readonly Dictionary<Vector2Int, CorruptionOverlay> overlayMap
+            = new Dictionary<Vector2Int, CorruptionOverlay>();
 
         private float spreadTimer;
         private float spreadPauseTimer;
@@ -221,6 +225,7 @@ namespace LittleCafe
             // Track in data structures
             heartTiles[owner].Add(coord);
             allCorruptedTiles.Add(coord);
+            overlayMap[coord] = overlay;
 
             // Play spread sound at the tile's world position
             if (spreadSound != null)
@@ -237,15 +242,11 @@ namespace LittleCafe
         {
             var coord = new Vector2Int(x, y);
 
-            var tile = GridManager.Instance != null ? GridManager.Instance.GetGridTile(x, y) : null;
-            if (tile != null)
+            if (overlayMap.TryGetValue(coord, out var overlay))
             {
-                var overlay = tile.GetComponent<CorruptionOverlay>();
-                if (overlay != null)
-                {
-                    overlay.Cleanup();
-                    Destroy(overlay);
-                }
+                overlay.Cleanup();
+                Destroy(overlay.gameObject);
+                overlayMap.Remove(coord);
             }
 
             // Update both data structures together
@@ -297,11 +298,7 @@ namespace LittleCafe
             {
                 foreach (var coord in kvp.Value)
                 {
-                    var tile = GridManager.Instance != null ? GridManager.Instance.GetGridTile(coord.x, coord.y) : null;
-                    if (tile == null) continue;
-
-                    var overlay = tile.GetComponent<CorruptionOverlay>();
-                    if (overlay == null) continue;
+                    if (!overlayMap.TryGetValue(coord, out var overlay)) continue;
 
                     // Set HP to zero — triggers the normal death/removal animation
                     if (overlay.Health != null && !overlay.Health.IsDestroyed)
@@ -335,6 +332,13 @@ namespace LittleCafe
 
         /// <summary>Returns true if the tile at (x, y) is currently corrupted by any heart.</summary>
         public bool IsCorrupted(int x, int y) => allCorruptedTiles.Contains(new Vector2Int(x, y));
+
+        /// <summary>Returns the CorruptionOverlay at the given grid position, or null if none.</summary>
+        public CorruptionOverlay GetOverlay(int x, int y)
+        {
+            overlayMap.TryGetValue(new Vector2Int(x, y), out var overlay);
+            return overlay;
+        }
 
         /// <summary>
         /// Pause corruption spreading. Called when a worker hits a corruption tile.
@@ -412,11 +416,8 @@ namespace LittleCafe
             if (!allCorruptedTiles.Contains(coord)) return;
             if (FogManager.Instance == null) return;
 
-            var tile = GridManager.Instance != null ? GridManager.Instance.GetGridTile(x, y) : null;
-            if (tile == null) return;
-
-            var overlay = tile.GetComponent<CorruptionOverlay>();
-            if (overlay == null || overlay.OwnerHeart == null) return;
+            if (!overlayMap.TryGetValue(coord, out var overlay)) return;
+            if (overlay.OwnerHeart == null) return;
 
             var owner = overlay.OwnerHeart;
             if (!heartTiles.ContainsKey(owner)) return;

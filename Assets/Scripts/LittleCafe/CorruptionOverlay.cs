@@ -5,11 +5,11 @@ using ClockworkGrid;
 namespace LittleCafe
 {
     /// <summary>
-    /// Added at runtime to a tile's GameObject when corruption spreads to that tile.
+    /// Standalone GameObject spawned at a tile's world position when corruption spreads.
     /// Holds corruption HP and owns the visual overlay. Workers must destroy this before
     /// they can interact with whatever occupant is underneath.
     ///
-    /// OwnerHeart and GridPosition must be set by CorruptionManager immediately after AddComponent.
+    /// OwnerHeart and GridPosition must be set by CorruptionManager immediately after creation.
     /// Call InitWithOccupant() to pause any building on this tile.
     /// Call Cleanup() before Destroy() to resume buildings and remove visuals.
     /// </summary>
@@ -213,7 +213,7 @@ namespace LittleCafe
             // Parent under tile but compensate for tile's scale so the visual
             // appears at a consistent world-space size regardless of cellSize.
             visualChild = Instantiate(prefab, transform);
-            visualChild.transform.localPosition = new Vector3(0f, height, 0f);
+            visualChild.transform.localPosition = Vector3.zero;
             float scale = CorruptionManager.Instance != null
                 ? CorruptionManager.Instance.CorruptionVisualScale : 1f;
             float parentScale = transform.lossyScale.x;

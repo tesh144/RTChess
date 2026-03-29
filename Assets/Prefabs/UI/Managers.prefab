@@ -269,6 +269,8 @@ MonoBehaviour:
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
+    requiredSurface: 1
+    coveragePercent: 0.3
   - environmentName: Tree
     spawnMode: 0
     spawnWeight: 6.6
@@ -277,6 +279,8 @@ MonoBehaviour:
     fragmentation: 0.35
     clusterSpread: 0.15
     edgeBorderOf: 
+    requiredSurface: 1
+    coveragePercent: 0.3
   - environmentName: Rock
     spawnMode: 0
     spawnWeight: 5
@@ -285,6 +289,8 @@ MonoBehaviour:
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
+    requiredSurface: 1
+    coveragePercent: 0.3
   - environmentName: Coral
     spawnMode: 0
     spawnWeight: 0.5
@@ -293,6 +299,8 @@ MonoBehaviour:
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: 
+    requiredSurface: 1
+    coveragePercent: 0.3
   - environmentName: Water
     spawnMode: 1
     spawnWeight: 4
@@ -301,22 +309,28 @@ MonoBehaviour:
     fragmentation: 0.763
     clusterSpread: 0.7
     edgeBorderOf: 
+    requiredSurface: 1
+    coveragePercent: 0.3
   - environmentName: Flowers
     spawnMode: 2
-    spawnWeight: 1.7
+    spawnWeight: 5.5
     minSpacing: 0
     clearFromCenter: 2
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: Tree
+    requiredSurface: 1
+    coveragePercent: 0.3
   - environmentName: Reed
     spawnMode: 2
-    spawnWeight: 3
+    spawnWeight: 2.8
     minSpacing: 0
     clearFromCenter: 2
     fragmentation: 0.3
     clusterSpread: 0.6
     edgeBorderOf: Water
+    requiredSurface: 1
+    coveragePercent: 0.3
   unitSpawnEntries:
   - unitName: Dinosaur
     spawnMode: 0
@@ -668,7 +682,7 @@ MonoBehaviour:
   corruptionOverlayPrefab: {fileID: 5352704816085721666, guid: 404728650a61047f6b20fe952d355519, type: 3}
   corruptionVisualHeight: 0
   corruptionVisualScale: 1
-  waveClearDelay: 0.15
+  waveClearDelay: 0.5
 --- !u!1 &9035113113404508760
 GameObject:
   m_ObjectHideFlags: 0

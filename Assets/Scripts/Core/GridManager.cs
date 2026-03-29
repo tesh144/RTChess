@@ -65,10 +65,21 @@ namespace ClockworkGrid
             Instance = this;
         }
 
+        /// <summary>
+        /// Call from another script's Awake() to prevent the default auto-init in Start().
+        /// Use this when an external system (e.g. MapGeneratorV2) will call
+        /// InitializeGrid() with the correct dimensions later.
+        /// </summary>
+        public void SuppressAutoInit() => autoInitOnStart = false;
+
+        private bool autoInitOnStart = true;
+
         private void Start()
         {
-            // Initialize in Start so scene setup scripts can set fields first
-            if (cellStates == null)
+            // Initialize in Start so scene setup scripts can set fields first.
+            // Skipped if SuppressAutoInit() was called during Awake (e.g. by MapGeneratorV2)
+            // to avoid spawning a throwaway default grid before the real dimensions are known.
+            if (cellStates == null && autoInitOnStart)
                 InitializeGrid();
         }
 

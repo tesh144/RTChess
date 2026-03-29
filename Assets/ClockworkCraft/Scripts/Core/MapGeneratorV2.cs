@@ -110,6 +110,12 @@ namespace ClockworkCraft
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+
+            // Prevent GridManager from auto-initializing in Start() with its default
+            // inspector dimensions. We'll call InitializeGrid(mapWidth, mapHeight) later
+            // with the correct size. Awake() is guaranteed to run before any Start().
+            var gm = FindFirstObjectByType<GridManager>();
+            gm?.SuppressAutoInit();
         }
 
         void Start()
@@ -757,83 +763,4 @@ namespace ClockworkCraft
 
         // ─────────────────────────────────────────────────────────────────
         // Corruption Entities — Planning
-        // ─────────────────────────────────────────────────────────────────
-
-        public void SyncCorruptionSpawnEntries()
-        {
-            if (unitDatabase != null)
-                corruptionSpawnEntries = SpawnEntrySyncer.SyncCorruptionEntries(corruptionSpawnEntries, unitDatabase);
-        }
-
-        void PlaceCorruptionEntities()
-        {
-            // RNG SEQUENCE: planner must run after env/unit planner for deterministic output
-            var corrPlanner = new CorruptionPlanner(planGrid, rng, width, height, center, clearCenterCardinal);
-            corrPlanner.PlaceCorruptionEntities(corruptionSpawnEntries);
-        }
-
-        // ─────────────────────────────────────────────────────────────────
-        // Corruption Entities — Spawning
-        // ─────────────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Reads all "corruption:" planGrid entries and instantiates the corresponding
-        /// prefabs. Stats are serialized on the CorruptionHeart prefab itself.
-        /// </summary>
-        System.Collections.IEnumerator SpawnAllCorruptionEntitiesStaggered()
-        {
-            const int BATCH_SIZE = 10;
-            int spawnCount = 0;
-
-            for (int x = 0; x < width; x++)
-            for (int y = 0; y < height; y++)
-            {
-                string planName = planGrid[x, y];
-                if (planName == null || !planName.StartsWith(MapGenHelpers.CORRUPTION_PREFIX)) continue;
-
-                string entityName = planName.Substring(MapGenHelpers.CORRUPTION_PREFIX.Length);
-                var entry = corruptionSpawnEntries.Find(e => e.entityName == entityName);
-                if (entry == null || entry.prefab == null) continue;
-
-                Vector3 worldPos = GridManager.Instance.GridToWorldPosition(x, y);
-                worldPos.y += 0.01f;
-                GameObject obj = Instantiate(entry.prefab, worldPos, Quaternion.identity);
-                obj.name = $"{entityName}_{spawnCount}";
-
-                // Stats are serialized on the prefab's CorruptionHeart component — set grid position,
-                // inject UnitDatabase so the heart can grow spikes at runtime, and tell it how many
-                // surrounding tiles to pre-corrupt on Start().
-                var heart = obj.GetComponent<LittleCafe.CorruptionHeart>();
-                if (heart != null)
-                {
-                    heart.GridPosition            = new Vector2Int(x, y);
-                    heart.UnitDatabase            = unitDatabase;
-                    heart.InitialCorruptedRadius  = entry.initialCorruptionRadius;
-
-                    // Register and seed corruption BEFORE FogHideable can deactivate the GO.
-                    // Start() never fires on deactivated GameObjects, so without this the heart
-                    // would never register with CorruptionManager and surrounding tiles would
-                    // have no corruption fog when the player reveals the area.
-                    heart.EnsureInitialized();
-                }
-
-                if (enableFog)
-                {
-                    var fogHideable = obj.AddComponent<FogHideable>();
-                    fogHideable.Initialize(x, y);
-                }
-
-                GridManager.Instance?.PlaceUnit(x, y, obj, CellState.EnemyUnit);
-
-                spawnCount++;
-                if (spawnCount % BATCH_SIZE == 0)
-                    yield return null;
-            }
-
-            if (spawnCount > 0)
-                Debug.Log($"[MapGenV2] Spawned {spawnCount} corruption entities.");
-        }
-
-        static ResourceType GuessResourceType(string envName) => MapGenHelpers.GuessResourceType(envName);
-    }
-}
+        // ───────────────────────────────────────�

@@ -1,5 +1,5 @@
 {
-  "lastSynced": "2026-03-28 09:17",
+  "lastSynced": "2026-03-29 00:00",
   "spreadsheetId": "1UvfldgEvr3dM_OqHfNyDHi_8qGoiO72CwTDrCRbUNy0",
   "sheets": {
     "Buildings & Production": {
@@ -249,6 +249,7 @@
         "Attack Power",
         "Movement Behavior",
         "Movement",
+        "Walkable",
         "Attack Behavior",
         "Killer's Behavior",
         "OnAttacked",
@@ -270,6 +271,7 @@
           "Attack Power": "1",
           "Movement Behavior": "RotateAndInteract",
           "Movement": "Mobile",
+          "Walkable": "None",
           "Attack Behavior": "Hostile",
           "Killer's Behavior": "Advance",
           "OnAttacked": "None",
@@ -290,6 +292,7 @@
           "Attack Power": "1",
           "Movement Behavior": "RotateAndInteract",
           "Movement": "Mobile",
+          "Walkable": "None",
           "Attack Behavior": "Hostile",
           "Killer's Behavior": "Advance",
           "OnAttacked": "None",
@@ -310,6 +313,7 @@
           "Attack Power": "1",
           "Movement Behavior": "RotateAndMove",
           "Movement": "Mobile",
+          "Walkable": "None",
           "Attack Behavior": "Hostile",
           "Killer's Behavior": "Stay",
           "OnAttacked": "None",
@@ -330,6 +334,7 @@
           "Attack Power": "1",
           "Movement Behavior": "RotateRotateMove",
           "Movement": "Mobile",
+          "Walkable": "None",
           "Attack Behavior": "Hostile",
           "Killer's Behavior": "Stay",
           "OnAttacked": "None",
@@ -350,13 +355,13 @@
           "Attack Power": "0",
           "Movement Behavior": "None",
           "Movement": "Stationary",
+          "Walkable": "None",
           "Attack Behavior": "Peaceful",
           "Killer's Behavior": "Advance",
           "OnAttacked": "Thorns",
           "Drops": "None",
           "Loot per Hit": "1",
-          "Drop on Death": "None",
-          "Draw Weight": ""
+          "Drop on Death": "None"
         },
         {
           "Active": "TRUE",
@@ -370,6 +375,7 @@
           "Attack Power": "1",
           "Movement Behavior": "RotateAndMoveCorrupt",
           "Movement": "Stationary",
+          "Walkable": "Corruption",
           "Attack Behavior": "Hostile",
           "Killer's Behavior": "Advance",
           "OnAttacked": "None",
@@ -390,6 +396,7 @@
           "Attack Power": "1",
           "Movement Behavior": "RotateAndMoveCorrupt",
           "Movement": "Stationary",
+          "Walkable": "Corruption",
           "Attack Behavior": "Hostile",
           "Killer's Behavior": "Advance",
           "OnAttacked": "None",
@@ -588,6 +595,22 @@
           "Loot per Hit": "1",
           "HP": "5",
           "Total Yield": "0",
+          "Ally Interactible": "TRUE",
+          "Enemy Interactible": "FALSE",
+          "Wild Animal Interactible": "FALSE",
+          "Killer's Behavior": "Advance",
+          "Drop on Death": "❌ None"
+        },
+        {
+          "Active": "TRUE",
+          "Icon": "🌻",
+          "MapGenerated": "TRUE",
+          "Object": "Lotus",
+          "Type": "Object",
+          "Drops": "🌻 Flowers",
+          "Loot per Hit": "1",
+          "HP": "5",
+          "Total Yield": "5",
           "Ally Interactible": "TRUE",
           "Enemy Interactible": "FALSE",
           "Wild Animal Interactible": "FALSE",
@@ -957,36 +980,6 @@
           "Color": "Gold",
           "Reward Type": "🌙 Moonstone",
           "Reward Quantity": "3"
-        },
-        {
-          "Active": "FALSE",
-          "Object": "",
-          "Grouping": "",
-          "Quantity Minimum": "",
-          "Name": "",
-          "Color": "",
-          "Reward Type": "",
-          "Reward Quantity": ""
-        },
-        {
-          "Active": "FALSE",
-          "Object": "",
-          "Grouping": "",
-          "Quantity Minimum": "",
-          "Name": "",
-          "Color": "",
-          "Reward Type": "",
-          "Reward Quantity": ""
-        },
-        {
-          "Active": "FALSE",
-          "Object": "",
-          "Grouping": "",
-          "Quantity Minimum": "",
-          "Name": "",
-          "Color": "",
-          "Reward Type": "",
-          "Reward Quantity": ""
         }
       ]
     },

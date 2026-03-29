@@ -247,7 +247,7 @@ MonoBehaviour:
     wildAnimalInteractible: 0
     lootResourceType: 0
     lootHpCost: 1
-    lootYield: 0
+    lootYield: 1
     hp: 5
     attackPower: 0
     gridSize: {x: 1, y: 1}
