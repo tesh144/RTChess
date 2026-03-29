@@ -26,55 +26,20 @@
 
 ## Active Work
 
+> **Project Status: Post-mortem complete. Paused for clean re-entry.**
+> Last active session: 2026-03-28. All active tasks below are paused, not abandoned.
+
 | Agent | Task | Status | Files |
 |-------|------|--------|-------|
-| Claude Code | #155 Building Bubble Migration (Insert/Collect) | In Progress — Insert fill bar + icon done, Collect already wired, HideAllVariants + EnableWithParents fixed, scale exposed on MapGenV2. Tether: POI-only, wider top, behind canvas. | `POIBubble.cs`, `BuildingProductionManager.cs`, `MapGeneratorV2.cs`, `WorldCanvas_Popups.prefab` |
-| Co-Work | #130 POI Bubble System | In Progress — Design doc written, POI sheet + Ref tab created, data pipeline pending | `POIBubble.cs`, `POIManager.cs`, `WorldCanvas_Popups.prefab` |
-| Co-Work | #117 New Buildings: Scrapper, Garden, Rabbit Farm | In Progress — DB entries synced; scene spawn cleanup done; production logic pending | `BuildingProductionManager.cs`, `DragDropHandler.cs` |
-| Co-Work | #22 Corruption System | In Progress — data arch + thorns + spike spawning done; scene entries cleaned up | |
-| Co-Work | Enemy interaction fix | In Progress — ScanAndInteract faction-aware, loot gated for enemies, Enemy tag synced | |
+| Claude Code | #155 Building Bubble Migration | Paused — Insert fill bar + icon done, Collect wired. HoldToFill bubble wiring remaining (#157). | `POIBubble.cs`, `BuildingProductionManager.cs` |
+| Co-Work | #159 Tile Layer System | Paused — Surface API done, CorruptionManager wired, walkableSurfaces done, buildOn synced. Remaining: water migration, EnvironmentDatabase Corruption surface entry. | `GridManager.cs`, `CorruptionManager.cs`, `GridEntityActor.cs` |
+| Co-Work | #22 Corruption System | Paused — Code complete, awaiting human steps (prefab assignment, sync from database). | Trello card has human checklist |
+| Will/DMoT | #63 Multi-cell placement | Paused — Architecture designed, implementation not started. | Design doc in Trello |
 
-**⚠️ CONFLICT ZONE — ALL HANDS ON POI BUBBLES (2026-03-27)**
-
-Both agents working on the bubble system. Check ownership before editing:
-
-**Claude Code owns:**
-- `POIBubble.cs` — animation states, tether, variant toggling, Setup()
-- `POIManager.cs` — bubble pool, stagger queue, ShowBubble, DismissBubble, reward, icon lookup
-- `GridCamera.cs` — zoom, ortho padding, all camera behaviour
-
-**Co-Work owns:**
-- `SheetSyncEditor.cs` — SyncPOI(), SyncEnvironment() column fixes
-- `SheetCache.json` — PointsOfInterest data section
-- Google Sheets structure and validation
-
-**Shared (coordinate before editing):**
-- `BuildingProductionManager.cs` — building bubble creation (Insert/Collect)
-- `DragDropHandler.cs` — camera zoom during drag
-- `POITypeData.cs` — data fields
-- `WorldCanvas_Popups.prefab` — the shared bubble prefab
-- `MapGeneratorV2.cs` — bubble scale, EnsureManagers
-
-**Claude Code done (2026-03-27):**
-- POIBubble.cs full refactor: clean state machine, serialized params, dead code removed
-- POIManager.cs cleanup: removed duplicate anim fields, DismissBubble now public
-- Bubble 2-phase appear animation (rise 2.5u + tether draw)
-- Staggered appearances (1.2s queue), activity-based priority
-- Icon from database auto-lookup, discovery reward loot fly
-- Fix bubble stacking (building bubbles dismiss POI at same pos)
-- Tether sortingOrder fix (renders in front of tiles)
-- Replaced physics SphereCollider tap with UI Button (OnTapped event on POIBubble)
-- Matched building bubble scale to POI scale (both 0.005)
-- Camera audit: orthoDistancePadding, ZoomToDefault preserves zoom, dead fields removed
-- ClockworkCraftSceneSetup no longer destroys existing GridCamera
-- Reverted ortho fixed-distance (broke other behaviours), reverted ZoomToDefault removal
-- POIDiscoveryFX starburst effect added
-- Currency bar pop-in animation on first appearance
-- Loot icon size: fixed Inspector-tunable iconSize (72), screen-fraction removed
-- Appear animation trigger moved to DragDropHandler (no FurnitureObject dependency)
-- Torch colorize + worker interaction cascade for desaturation
-- MealBuffVisual _Color guard on Unlit/Texture materials
-- ClockworkCraftSceneSetup no longer destroys existing GridCamera
+**Completed and removed from Active (2026-03-29 cleanup):**
+- #130 POI Bubble System — design + data pipeline done, merged into #155 bubble migration
+- #117 New Buildings (Scrapper/Garden/Rabbit Farm) — DB entries synced, scene cleanup done, production logic complete
+- Conflict zone (POI bubbles) — resolved, no longer needed
 
 ---
 
@@ -169,6 +134,19 @@ Both agents working on the bubble system. Check ownership before editing:
 | 2026-03-26 | Co-Work | POI bubble scale fix: Root cause was WorldCanvas_Popups (2560×1440) at localScale 1 = each pixel was 1 world unit (bubbles invisible/enormous). Added targetScale to POIBubble (animations scale relative to it), bubbleWorldScale field to POIManager (default 0.005). Added diagnostic logging + Diagnose button. |
 | 2026-03-26 | Co-Work | Building bubble integration: BuildingProductionManager now supports designed bubbles via buildingBubblePrefab field. Bubble_Collect replaces procedural popup (shows reward icon). Bubble_Insert shows when building awaits input/resources (not HoldToFill). SpawnInsertBubble/DismissInsertBubble lifecycle managed at register, feed, resource-gate, and collect. |
 | 2026-03-26 | Co-Work | POIBubble.GetIconImage(): New method finds "Icon" Image within active variant — used by BuildingProductionManager for reward/input icons on Bubble_Collect/Bubble_Insert. |
+| 2026-03-28 | Co-Work | BehaviorType.RotateAndMoveCorrupted (=3): New enum value for corruption spikes — moves only onto tiles where SurfaceType == Corruption. Silent skip (no bump) when target is non-corrupted. GridEntityActor switch cases updated. |
+| 2026-03-28 | Co-Work | Tile Layer System (partial, #159): SurfaceType enum (None/Water/Corruption/Lava) + PlaceSurface/RemoveSurface/GetSurface/HasSurface API on GridManager. cellSurfaces[,] + surfaceOccupants[,] arrays added. Object layer (IsCellEmpty) unchanged. |
+| 2026-03-28 | Co-Work | CorruptionManager surface registration: MarkAsCorrupted() calls PlaceSurface(SurfaceType.Corruption), ClearCorruption() calls RemoveSurface(). |
+| 2026-03-28 | Co-Work | GridEntityActor walkableSurfaces: New string field ("None", "Corruption", or "+" combos). CanWalkOnTile() method gate in TryMoveForward(). Initialize() + GridEntityManager.AttachComponents() accept walkable param. UnitData/UnitStats both have walkable field. |
+| 2026-03-28 | Co-Work | EnvironmentLayerType enum (Object/Surface) + layerType on EnvironmentData. SheetSyncEditor syncs "Type" column → layerType. CLOCKWORK.md Environment column mapping updated. |
+| 2026-03-28 | Co-Work | BuildingData.buildOn (string, default "Empty"): Placement surface requirement. Synced from BuildOn column (col E) in Buildings & Production sheet. Google Sheets dropdown populated with all Environment entry names + Empty. |
+| 2026-03-28 | Co-Work | Ref sheet #REF! fix: FILTER formula was blocked by manual ☠️ Corruption entry in Ref!A12. Fixed by adding ☠️ icon to Environment sheet B14 and clearing A12. |
+| 2026-03-28 | Co-Work | Need bubble fix: BuildingProductionManager.SetBubblePrefabs() auto-assigns needBubblePrefab = insertPrefab when null — Arrow_Need variant was never appearing. |
+| 2026-03-28 | Co-Work | DevCheatMenu — FreeCosts toggle: Bypasses token placement cost, EconomyManager placement cost (SpendForPlacement + CanAfford), draw button token cost (DockBarManager), and draw button upgrade cost (DrawButtonController.OnDrawButtonClicked). Static bool read under #if DEVELOPMENT_BUILD || UNITY_EDITOR in DragDropHandler + DockBarManager + DrawButtonController. |
+| 2026-03-28 | Co-Work | DevCheatMenu — InstantProduction toggle: Forces all building production effectiveIntervals to 1s in BPM update loop, and DrawButtonController.CooldownRoutine duration to 1s. Both wrapped in #if DEVELOPMENT_BUILD || UNITY_EDITOR. |
+| 2026-03-28 | Co-Work | Particle prefab fix: VelocityModule minMaxState mismatch in Corruption Tile.prefab, CorruptedLighthouse.prefab, Mu_TinyChair.prefab. orbitalX/Y/Z, orbitalOffset, radial, speedModifier were mode 0 while x/y/z were mode 1 or 2. All 11 fields now consistent per prefab. |
+| 2026-03-28 | Co-Work | Post-mortem audit: Individual self-audits (3 agents on card #164), cross-agent synthesis + independent doc-based audit (card #160). Identified 10 ranked pain points, proposed 6 skills. Full report: ClockworkCraft_PostMortem_Audit.docx. |
+| 2026-03-29 | Co-Work | Project cleanup: JAI_AI_SYNC.md Active Work cleaned (stale entries removed, paused status applied). CLOCKWORK.md updated with forward-looking rules from post-mortem. CLAUDE_USER_JAI.md rules restructured by category. Re-Entry Protocol created. |
 
 ---
 
@@ -186,6 +164,8 @@ _Decisions made during sessions that the other agent should know about._
 - 2026-03-21: Meals are NOT allied — workers interact with them like enemies. HP=3 means ~1-3 worker hits to consume.
 - 2026-03-21: Per-faction interaction model: InteractionRegistry now has 3 bool columns (ally/enemy/wildAnimal) per entry, matching Google Sheet. Legacy `unlocked` field preserved as fallback.
 - 2026-03-21: Wild animals use PerformStrongInteraction (same as workers) when attacking interactible targets. Feast has killerAdvances=false so animals won't advance into its cell.
+- 2026-03-28: DevCheatMenu cheat flags are persistent toggles (green=ON, blue=OFF), not one-shot buttons. FreeCosts and InstantProduction. "No timers" = 1s minimum, NOT 0 (avoids divide-by-zero / frame-hitch).
+- 2026-03-28: Tile Layer System — Object layer (IsCellEmpty, cellOccupants) and Surface layer (cellSurfaces, surfaceOccupants) are fully independent. IsCellEmpty does NOT block on surfaces. CorruptionManager is the authority for SurfaceType.Corruption registration.
 
 ---
 

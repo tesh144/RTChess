@@ -102,7 +102,7 @@ Dropdown populated from all Environment & Loot entry names + "Empty". Controls w
 A Unity-based grid strategy game that evolved from a real-time chess prototype (RTChess) through a cafe builder (LittleCafe) into a world-building simulation (ClockworkCraft). All three share a common core of grid, camera, and placement systems.
 
 **Unity Version:** 2022.3.62f3
-**Last Updated:** 2026-02-27
+**Last Updated:** 2026-03-29
 
 ## Current Status
 
@@ -230,6 +230,20 @@ All managers use the `Instance` singleton pattern:
 - `InitializeGrid(width, height)` — Called by MapGeneratorV2 or CafeSceneSetupV2
 - Cell size: 1.5 units
 
+**Dual-Layer Grid (Tier 1 = Object, Tier 2 = Surface):**
+A tile can hold one Object AND one Surface simultaneously. `IsCellEmpty()` only checks the Object layer — Surface tiles are always buildable.
+```csharp
+public enum SurfaceType { None, Water, Corruption, Lava }
+```
+Surface API on GridManager:
+- `PlaceSurface(x, y, SurfaceType, GameObject)` — registers a surface (does NOT touch cellStates)
+- `RemoveSurface(x, y)` — clears surface entry
+- `GetSurface(x, y)` → SurfaceType
+- `HasSurface(x, y)` → bool
+- `GetSurfaceOccupant(x, y)` → GameObject
+
+CorruptionManager calls `PlaceSurface(SurfaceType.Corruption)` on spread and `RemoveSurface()` on clear, so corruption tiles are queryable via `GetSurface()` without touching the Object layer.
+
 ### Placement Flow (Dock → Grid)
 1. `DockBarManager` shows cards, player drags a `UnitIcon`
 2. `UnitIcon.OnBeginDrag()` calls `DragDropHandler.StartDrag()`
@@ -338,6 +352,16 @@ The clockwork interaction loop brings auto-rotate-and-interact behavior to the w
   4. **Interact** — If target has `GridEntityHealth` → `interact_strong` + `TakeDamage()`. If occupant but no health → `interact_weak`. If empty → idle.
 - Faces target before animation (rotates AnimatorHolder to look at target cell)
 - Respects `attackIntervalMultiplier` (e.g., only act every 2nd tick)
+- `walkableSurfaces` (string) — surface type(s) this unit can step on. `"None"` = only tiles with no surface. `"Corruption"` = only corrupted tiles. Use `"+"` for multiple (e.g. `"None+Water"`). Parsed by `CanWalkOnTile()` — called in `TryMoveForward()` after bounds check, before occupancy check.
+
+**BehaviorType enum** (`Assets/Scripts/Units/BehaviorType.cs`):
+```csharp
+RotateAndInteract = 0   // Stays in place; rotates and attacks adjacent targets
+RotateAndMove = 1       // Walks forward each tick; bumps on occupied/invalid cells
+RotateRotateMove = 2    // Two rotate ticks then one move tick
+RotateAndMoveCorrupted = 3  // Like RotateAndMove but only steps onto Corruption surface tiles; silent skip otherwise
+```
+`RotateAndMoveCorrupted` is used by corruption spikes — they patrol within the corruption cluster but never leave it.
 
 **GridEntityManager** (`Assets/Scripts/LittleCafe/GridEntityManager.cs`)
 - Singleton registry and factory
@@ -366,10 +390,29 @@ Singleton that manages per-building production timers and reward collection.
 
 **Flow:** IntervalTimer tick → elapsed time accumulates → when >= EffectiveInterval → draw reward + show popup → player taps → collect reward (fly animation) → increment collectCount → next interval is longer
 
+**InstantProduction cheat flag:** When `DevCheatMenu.InstantProduction` is true (editor/dev builds only), `effectiveInterval` is clamped to `1f` on every tick — buildings fire almost immediately. `DrawButtonController.CooldownRoutine` also clamps its duration to `1f` so the draw button cooldown is equally bypassed.
+
 **Current Building Stats (BuildingDatabase.asset):**
 - ConeTent: interval=30s, bonus=6s, output=Worker
 - Statue: interval=45s, bonus=10s, output=RandomBuilding
 - Torch: no production (decoration)
+
+### Dev Cheat Menu (`Assets/Scripts/UI/DevCheatMenu.cs`, namespace: `LittleCafe`)
+
+Editor-only overlay (IMGUI) that exposes gameplay cheats. Only compiled in `DEVELOPMENT_BUILD || UNITY_EDITOR` builds. Toggle via the hidden debug button or keyboard shortcut.
+
+**Static cheat flags** (read by game systems under `#if DEVELOPMENT_BUILD || UNITY_EDITOR`):
+
+| Flag | Default | Effect |
+|------|---------|--------|
+| `DevCheatMenu.FreeCosts` | false | Bypasses all placement costs: token cost (DragDropHandler), EconomyManager.SpendForPlacement, EconomyManager.CanAfford, draw button token cost (DockBarManager), and draw button upgrade cost (DrawButtonController). Green toggle button labeled "💰 Free Costs [ON/OFF]". |
+| `DevCheatMenu.InstantProduction` | false | Forces all building effectiveIntervals to 1s (BuildingProductionManager update loop) and the draw button cooldown to 1s (DrawButtonController.CooldownRoutine). Green toggle button labeled "⚡ Skip Timers [ON/OFF]". |
+
+**Files that read these flags:**
+- `DragDropHandler.cs` — FreeCosts bypass on token spend + EconomyManager spend + CanAfford gate
+- `DockBarManager.cs` — FreeCosts bypass on draw button token cost
+- `DrawButtonController.cs` — FreeCosts bypass on upgrade cost + InstantProduction clamp on cooldown duration
+- `BuildingProductionManager.cs` — InstantProduction override of effectiveInterval
 
 ### Currency Display System
 
@@ -567,6 +610,7 @@ Assets/
 │   │   ├── DockBarManager.cs          # Bottom dock bar + AddCard/AddWorkerCard
 │   │   ├── DragDropHandler.cs         # Drag state, arc line, placement
 │   │   ├── DrawButtonController.cs    # Draw button with animation + shake
+│   │   ├── DevCheatMenu.cs            # Editor cheat overlay (FreeCosts, InstantProduction)
 │   │   ├── GameCardUI.cs             # Redesigned dock card visuals
 │   │   ├── UnitIcon.cs                # Draggable card with weight badge
 │   │   ├── UIPanel.cs                 # Auto-indexed UI hierarchy access
@@ -725,11 +769,36 @@ Uses Chebyshev distance (`Mathf.Max(|dx|, |dy|) <= clearingRadius`) for square c
 
 See CLAUDE_USER.md for the full Notion workflow process.
 
+## Forward-Looking Rules (from 2026-03-29 Post-Mortem)
+
+Rules derived from 12 agent sessions of hard-won lessons. All agents must follow these.
+
+### File Integrity
+1. **Verify every edit** — `wc -l` after every file modification, restore from git if count drops.
+2. **Keep files small** — target 200–400 lines, hard limit at 600. Design for modularity from day one. MapGeneratorV2.cs at 2695 lines is the highest-priority decomposition target.
+3. **Use proper parsers** — Python for JSON, never sed/awk on structured data.
+
+### Data Integrity
+4. **Document data formats immediately** — any shared data file (JSON cache, config) gets its format spec in this file before the second session touches it.
+5. **Always fetch live data** — never treat caches as source of truth, never hardcode data from memory.
+6. **Validate the full pipeline** — parsing cleanly isn't enough; cross-reference column names, enum values, and entry names across all systems in the chain.
+
+### Code Discipline
+7. **Read before writing** — understand the consumer before modifying the producer.
+8. **Inspector values override code defaults** — check serialized data first when debugging runtime behavior. Before any new Inspector field, answer: is this component scene-placed or AddComponent'd?
+9. **Before any change, verify 3 things** — (1) Does the target exist as I think (read it now, don't trust memory)? (2) How is this component created at runtime? (3) Who calls or references this (grep)?
+
+### Session Management
+10. **End sessions cleanly** — NEXT STEPS in the log, conventions in CLOCKWORK.md, code in a known-good state.
+11. **Docs are part of the task, not cleanup** — update JAI_AI_SYNC.md and CLOCKWORK.md immediately after each change, not at session end.
+12. **Defer Unity-specific operations** — asset renames, .meta changes, and prefab modifications go through the Unity Editor, not the Linux sandbox.
+
 ## Pending Work
 - Wire EconomyManager into actual placement spending
 - Delete one-time editor scripts (SetupIdleBounceAnimation, PopulateCurrencyDatabase, etc.) — they log "DONE — You can safely delete" when no longer needed
 - Create EconomyBalanceConfig .asset and assign to MapGeneratorV2
 - Consider removing DrawButtonController once Statue building is confirmed working as replacement
+- **Decompose MapGeneratorV2.cs** — 2695 lines, 10+ responsibilities. Needs splitting into focused subsystems (<600 lines each). See post-mortem audit for details.
 
 ## Credits
 Built with Claude Code (Anthropic)

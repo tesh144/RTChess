@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using ClockworkGrid;
 
@@ -51,6 +52,8 @@ namespace ClockworkCraft
         private BubbleType currentType;
         private GameObject activeChild;
         private Vector3 targetScale = Vector3.one;
+        private Image cachedIconImage;
+        private Image cachedFillImage;
 
         private enum State { Inactive, RisingIn, DrawingTether, Bobbing, Dismissing }
         private State state = State.Inactive;
@@ -61,16 +64,6 @@ namespace ClockworkCraft
         // Tether
         private LineRenderer tether;
         private Vector3 groundPosition;
-
-        // Cached enum names for variant lookup
-        private static readonly string[] bubbleTypeNames;
-        static POIBubble()
-        {
-            var values = System.Enum.GetValues(typeof(BubbleType));
-            bubbleTypeNames = new string[values.Length];
-            for (int i = 0; i < values.Length; i++)
-                bubbleTypeNames[i] = values.GetValue(i).ToString();
-        }
 
         // ── Lifecycle ────────────────────────────────────────────────────
 
@@ -93,8 +86,16 @@ namespace ClockworkCraft
         public GameObject ActiveChild => activeChild;
         public UIPanel Panel => panel;
 
-        /// <summary>Fired when the bubble is tapped/clicked. Subscribe to handle collect/interact.</summary>
+        /// <summary>Fired on quick tap (pointer down + up within holdThreshold).</summary>
         public event Action OnTapped;
+        /// <summary>Fired when pointer is held down beyond holdThreshold.</summary>
+        public event Action OnHoldStarted;
+        /// <summary>Fired when pointer is released after a hold.</summary>
+        public event Action OnHoldEnded;
+
+        internal void FireTapped() => OnTapped?.Invoke();
+        internal void FireHoldStarted() => OnHoldStarted?.Invoke();
+        internal void FireHoldEnded() => OnHoldEnded?.Invoke();
 
         /// <summary>Set the world-space scale for this bubble. Animations scale relative to this.</summary>
         public void SetTargetScale(Vector3 scale) => targetScale = scale;
@@ -108,21 +109,23 @@ namespace ClockworkCraft
             fadeOutDuration = fadeOut;
         }
 
-        /// <summary>Find the Image named "Icon" within the active variant.</summary>
+        /// <summary>Find the Image named "Icon" within the active variant. Cached after first lookup.</summary>
         public Image GetIconImage()
         {
+            if (cachedIconImage != null) return cachedIconImage;
             if (activeChild == null) return null;
             foreach (var img in activeChild.GetComponentsInChildren<Image>(true))
-                if (img.gameObject.name == "Icon") return img;
+                if (img.gameObject.name == "Icon") { cachedIconImage = img; return img; }
             return null;
         }
 
-        /// <summary>Find the Image named "Fill" within the active variant (for HoldToFill progress bar).</summary>
+        /// <summary>Find the Image named "Fill" within the active variant. Cached after first lookup.</summary>
         public Image GetFillImage()
         {
+            if (cachedFillImage != null) return cachedFillImage;
             if (activeChild == null) return null;
             foreach (var img in activeChild.GetComponentsInChildren<Image>(true))
-                if (img.gameObject.name == "Fill") return img;
+                if (img.gameObject.name == "Fill") { cachedFillImage = img; return img; }
             return null;
         }
 
@@ -156,6 +159,7 @@ namespace ClockworkCraft
                     var tmp = obj.GetComponentInChildren<TextMeshProUGUI>();
                     if (tmp != null) tmp.text = text;
 
+                    // Set icon if provided, otherwise leave as-is (caller sets after Setup)
                     if (icon != null)
                     {
                         var iconImg = GetIconImage();
@@ -194,26 +198,20 @@ namespace ClockworkCraft
             bobTimer = 0f;
         }
 
-        /// <summary>Add a Button to the variant so UI taps fire OnTapped.</summary>
+        /// <summary>Wire up pointer events on the variant for tap/hold detection.</summary>
         private void WireUpButton(GameObject variant)
         {
-            // Need a raycast-target Image for the Button to work.
-            // Use the first Image found, or add a transparent one.
             var img = variant.GetComponent<Image>();
             if (img != null)
                 img.raycastTarget = true;
 
-            var btn = variant.GetComponent<Button>();
-            if (btn == null) btn = variant.AddComponent<Button>();
-            btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => OnTapped?.Invoke());
+            // Remove old Button if present (we use BubbleTapHandler instead)
+            var oldBtn = variant.GetComponent<Button>();
+            if (oldBtn != null) Destroy(oldBtn);
 
-            // Make the button fully transparent (no visual change on press)
-            var colors = btn.colors;
-            colors.highlightedColor = Color.white;
-            colors.pressedColor = Color.white;
-            colors.selectedColor = Color.white;
-            btn.colors = colors;
+            var handler = variant.GetComponent<BubbleTapHandler>();
+            if (handler == null) handler = variant.AddComponent<BubbleTapHandler>();
+            handler.Setup(this);
         }
 
         /// <summary>Start fade-out, then deactivate.</summary>
@@ -222,7 +220,9 @@ namespace ClockworkCraft
             if (state == State.Inactive || state == State.Dismissing) return;
             if (canvasGroup != null) canvasGroup.alpha = 1f;
             transform.localScale = targetScale;
-            OnTapped = null; // Clear subscribers so pooled bubbles don't fire stale callbacks
+            OnTapped = null;
+            OnHoldStarted = null;
+            OnHoldEnded = null;
             state = State.Dismissing;
             timer = 0f;
         }
@@ -239,10 +239,11 @@ namespace ClockworkCraft
 
         private void HideAllVariants()
         {
-            // Zero-allocation: recursively deactivate all children
             for (int i = 0; i < transform.childCount; i++)
                 SetActiveRecursive(transform.GetChild(i), false);
             activeChild = null;
+            cachedIconImage = null;
+            cachedFillImage = null;
         }
 
         /// <summary>Enable obj, all its descendants, and every parent up to root.</summary>
@@ -425,6 +426,53 @@ namespace ClockworkCraft
                 state = State.Inactive;
                 HideAllVariants();
                 gameObject.SetActive(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles pointer down/up on a bubble variant to distinguish tap vs hold.
+    /// Tap (< 0.3s) fires OnTapped. Hold (>= 0.3s) fires OnHoldStarted/OnHoldEnded.
+    /// </summary>
+    public class BubbleTapHandler : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
+    {
+        private POIBubble bubble;
+        private float pointerDownTime;
+        private bool isDown;
+        private bool holdFired;
+        private const float HOLD_THRESHOLD = 0.3f;
+
+        public void Setup(POIBubble owner) => bubble = owner;
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            pointerDownTime = Time.time;
+            isDown = true;
+            holdFired = false;
+        }
+
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            if (!isDown) return;
+            isDown = false;
+
+            if (holdFired)
+            {
+                bubble?.FireHoldEnded();
+            }
+            else
+            {
+                bubble?.FireTapped();
+            }
+        }
+
+        private void Update()
+        {
+            if (!isDown || holdFired) return;
+            if (Time.time - pointerDownTime >= HOLD_THRESHOLD)
+            {
+                holdFired = true;
+                bubble?.FireHoldStarted();
             }
         }
     }

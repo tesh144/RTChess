@@ -275,5 +275,5 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 0}
-    icon: {fileID: 0}
+    prefab: {fileID: 4414194465890767553, guid: 08c8c2207050047f1892be3b60b5c4ef, type: 3}
+    icon: {fileID: 21300000, guid: 1eaf25a79ccf04be1bc14dd94fe98479, type: 3}
