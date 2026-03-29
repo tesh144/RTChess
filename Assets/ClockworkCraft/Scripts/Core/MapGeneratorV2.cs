@@ -763,4 +763,70 @@ namespace ClockworkCraft
 
         // ─────────────────────────────────────────────────────────────────
         // Corruption Entities — Planning
-        // ───────────────────────────────────────�
+        // ─────────────────────────────────────────────────────────────────
+
+        public void SyncCorruptionSpawnEntries()
+        {
+            if (unitDatabase != null)
+                corruptionSpawnEntries = SpawnEntrySyncer.SyncCorruptionEntries(corruptionSpawnEntries, unitDatabase);
+        }
+
+        void PlaceCorruptionEntities()
+        {
+            var corrPlanner = new CorruptionPlanner(planGrid, rng, width, height, center, clearCenterCardinal);
+            corrPlanner.PlaceCorruptionEntities(corruptionSpawnEntries);
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // Corruption Entities — Spawning
+        // ─────────────────────────────────────────────────────────────────
+
+        System.Collections.IEnumerator SpawnAllCorruptionEntitiesStaggered()
+        {
+            const int BATCH_SIZE = 10;
+            int spawnCount = 0;
+
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                string planName = planGrid[x, y];
+                if (planName == null || !planName.StartsWith(MapGenHelpers.CORRUPTION_PREFIX)) continue;
+
+                string entityName = planName.Substring(MapGenHelpers.CORRUPTION_PREFIX.Length);
+                var entry = corruptionSpawnEntries.Find(e => e.entityName == entityName);
+                if (entry == null || entry.prefab == null) continue;
+
+                Vector3 worldPos = GridManager.Instance.GridToWorldPosition(x, y);
+                worldPos.y += 0.01f;
+                GameObject obj = Instantiate(entry.prefab, worldPos, Quaternion.identity);
+                obj.name = $"{entityName}_{spawnCount}";
+
+                var heart = obj.GetComponent<LittleCafe.CorruptionHeart>();
+                if (heart != null)
+                {
+                    heart.GridPosition            = new Vector2Int(x, y);
+                    heart.UnitDatabase            = unitDatabase;
+                    heart.InitialCorruptedRadius  = entry.initialCorruptionRadius;
+                    heart.EnsureInitialized();
+                }
+
+                if (enableFog)
+                {
+                    var fogHideable = obj.AddComponent<FogHideable>();
+                    fogHideable.Initialize(x, y);
+                }
+
+                GridManager.Instance?.PlaceUnit(x, y, obj, CellState.EnemyUnit);
+
+                spawnCount++;
+                if (spawnCount % BATCH_SIZE == 0)
+                    yield return null;
+            }
+
+            if (spawnCount > 0)
+                Debug.Log($"[MapGenV2] Spawned {spawnCount} corruption entities.");
+        }
+
+        static ResourceType GuessResourceType(string envName) => MapGenHelpers.GuessResourceType(envName);
+    }
+}

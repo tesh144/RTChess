@@ -227,9 +227,9 @@ namespace LittleCafe
             allCorruptedTiles.Add(coord);
             overlayMap[coord] = overlay;
 
-            // Play spread sound at the tile's world position
+            // Play spread sound at the spawned object's position
             if (spreadSound != null)
-                AudioSource.PlayClipAtPoint(spreadSound, tile.transform.position, spreadSoundVolume);
+                AudioSource.PlayClipAtPoint(spreadSound, obj.transform.position, spreadSoundVolume);
 
             Debug.Log($"[CorruptionManager] Corrupted tile ({x},{y}) owned by heart at {owner.GridPosition}.");
         }
