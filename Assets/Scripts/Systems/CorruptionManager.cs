@@ -212,16 +212,6 @@ namespace LittleCafe
             GameObject obj = mapGen.SpawnEnvironmentAt(x, y, envData);
             if (obj == null) return;
 
-            // Apply the height offset so the corruption visual sits on top of the map base mesh
-            // rather than clipping underneath it. corruptionVisualHeight defaults to 0 but can
-            // be tuned per-scene in the Inspector if the ground plane sits above world Y=0.
-            if (corruptionVisualHeight != 0f)
-            {
-                Vector3 p = obj.transform.position;
-                p.y += corruptionVisualHeight;
-                obj.transform.position = p;
-            }
-
             // Add CorruptionOverlay component for HP, owner tracking, and building pausing
             var overlay = obj.GetComponent<CorruptionOverlay>();
             if (overlay == null) overlay = obj.AddComponent<CorruptionOverlay>();

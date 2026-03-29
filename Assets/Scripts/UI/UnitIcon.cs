@@ -1,5 +1,4 @@
 #pragma warning disable CS0414, CS0219, CS0618
-using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -26,14 +25,9 @@ namespace ClockworkGrid
         private GameObject costBadge;
         private GameObject typeLabel;
         private TextMeshProUGUI costTextRef; // Cached reference for dynamic color updates
-        private Coroutine snapBackCoroutine;
 
         [SerializeField] private float hoverScale = 1.2f; // Phase 2: ~20% scale up
         [SerializeField] private Image characterSpriteImage; // Assign the CharacterSprite Image in prefab
-
-        [Header("Snap-back Animation")]
-        [SerializeField] private float snapBackDuration = 0.25f;
-        [SerializeField] private AnimationCurve snapBackCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
         public GameObject UnitPrefab => unitPrefab;
         public UnitStats UnitStats => unitStats;
@@ -176,35 +170,13 @@ namespace ClockworkGrid
         }
 
         /// <summary>
-        /// Animate icon snapping back to its dock slot with a smooth ease-out motion.
-        /// Cancels any in-progress snap-back before starting a new one.
+        /// Animate icon snapping back to original position
         /// </summary>
         public void SnapBackToOriginalPosition()
         {
-            if (snapBackCoroutine != null)
-                StopCoroutine(snapBackCoroutine);
-            snapBackCoroutine = StartCoroutine(SnapBackRoutine());
-        }
-
-        private System.Collections.IEnumerator SnapBackRoutine()
-        {
-            Vector2 startPos   = rectTransform.anchoredPosition;
-            Vector3 startScale = rectTransform.localScale;
-            float   elapsed    = 0f;
-
-            while (elapsed < snapBackDuration)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                float t = snapBackCurve.Evaluate(Mathf.Clamp01(elapsed / snapBackDuration));
-                rectTransform.anchoredPosition = Vector2.LerpUnclamped(startPos,   originalPosition, t);
-                rectTransform.localScale       = Vector3.LerpUnclamped(startScale, originalScale,    t);
-                yield return null;
-            }
-
-            // Guarantee exact final values
+            // TODO Phase 4: Implement smooth snap-back animation
             rectTransform.anchoredPosition = originalPosition;
-            rectTransform.localScale       = originalScale;
-            snapBackCoroutine = null;
+            rectTransform.localScale = originalScale;
         }
 
         /// <summary>

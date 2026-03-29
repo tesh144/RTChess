@@ -24,11 +24,6 @@ namespace LittleCafe
     ///
     /// Attach to any placed object with isActive=true in its database entry.
     /// Works alongside GridEntityHealth (for HP/damage) and FurnitureObject (for grid state).
-    ///
-    /// Split into three partial files:
-    ///   GridEntityActor.cs          — Core: state, lifecycle, tick dispatch, meal buff, corruption
-    ///   GridEntityActor.Movement.cs — Movement, rotation, behavior coroutines
-    ///   GridEntityActor.Interaction.cs — Scanning, combat, starvation
     /// </summary>
     public partial class GridEntityActor : MonoBehaviour
     {
@@ -106,6 +101,8 @@ namespace LittleCafe
         // Meal buff state
         private bool hasMealBuff = false;
         private int mealBuffTicksRemaining = 0;
+
+        // Starvation countdown — no persistent object; each tick spawns a popup
 
         // --- Public Accessors ---
         public Facing CurrentFacing => currentFacing;
@@ -300,7 +297,7 @@ namespace LittleCafe
         }
 
         // ---------------------------------------------------------------
-        // Clockwork Tick Dispatch
+        // Clockwork Tick
         // ---------------------------------------------------------------
 
         private void OnBarTick(int bar)
@@ -354,6 +351,67 @@ namespace LittleCafe
                     interactionCoroutine = StartCoroutine(ClockworkTickInteract());
                     break;
             }
+        }
+
+        // ===============================================================
+        // Rotation (shared by all behaviors)
+        // ===============================================================
+
+        private void Rotate()
+        {
+            // Advance facing direction
+            currentFacing = rotateClockwise
+                ? currentFacing.RotateClockwise()
+                : currentFacing.RotateCounterClockwise();
+
+            // Animate the rotation smoothly
+            ApplyFacingRotation(instant: false);
+        }
+
+        /// <summary>
+        /// Apply the current facing as a Y rotation on the ROOT transform.
+        /// We rotate the root (not AnimatorHolder) because the Animator controls
+        /// AnimatorHolder and would override code-driven rotation. Rotating the
+        /// root means animation clips (which push along local Z) correctly follow
+        /// the facing direction.
+        /// </summary>
+        private void ApplyFacingRotation(bool instant)
+        {
+            float targetYRotation = currentFacing.ToYRotation();
+            Quaternion targetRotation = Quaternion.Euler(0f, targetYRotation, 0f);
+
+            if (instant)
+            {
+                transform.rotation = targetRotation;
+                return;
+            }
+
+            // Smooth animated rotation
+            if (rotationCoroutine != null)
+                StopCoroutine(rotationCoroutine);
+            rotationCoroutine = StartCoroutine(RotateCoroutine(targetRotation));
+        }
+
+        private IEnumerator RotateCoroutine(Quaternion targetRotation)
+        {
+            Quaternion startRotation = transform.rotation;
+            float elapsed = 0f;
+
+            while (elapsed < ROTATION_DURATION)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / ROTATION_DURATION);
+
+                // Ease-in-out curve
+                float easedT = t * t * (3f - 2f * t);
+                transform.rotation = Quaternion.Slerp(startRotation, targetRotation, easedT);
+
+                yield return null;
+            }
+
+            // Snap to exact final rotation
+            transform.rotation = targetRotation;
+            rotationCoroutine = null;
         }
 
     }

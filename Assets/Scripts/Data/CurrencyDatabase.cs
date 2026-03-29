@@ -135,6 +135,9 @@ namespace ClockworkCraft
                 (ResourceType.GoldBag,     "Gold Bag",     "\U0001F4B0",  0, false),  // 💰
                 (ResourceType.Approval,    "Approval",     "\U0001F44D",  0, false),  // 👍
                 (ResourceType.Heart,       "Heart",        "\U0001F49C",  0, false),  // 💜
+                // ── Building Production Resources ────
+                (ResourceType.Scrap,       "Scrap",        "\U0001F527",  0, false),  // 🔧 — produced by Scrapper
+                (ResourceType.Reed,        "Reed",         "\U0001F33E",  0, false),  // 🌾 — harvested from reed tiles
             };
 
             foreach (var d in defaults)
@@ -199,6 +202,10 @@ namespace ClockworkCraft
                 (ResourceType.GoldBag,     "Assets/Icons/Icon_30px/World/Gold Bag - World.png"),
                 (ResourceType.Approval,    "Assets/Icons/Icon_25px/ThumbsUp - Bubble.png"),
                 (ResourceType.Heart,       "Assets/Icons/Icon_25px/PinkHeart - Bubble.png"),
+                // ── Building Production Resources ────
+                // TODO: add art and update these paths once Scrap/Reed icons are created
+                (ResourceType.Scrap,       "Assets/Icons/Icon_30px/Currency/Scrap - Currency.png"),
+                (ResourceType.Reed,        "Assets/Icons/Icon_30px/Currency/Reed - Currency.png"),
             };
 
             int assigned = 0;
