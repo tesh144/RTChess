@@ -27,7 +27,7 @@
 ## Active Work
 
 > **Project Status: Post-mortem complete. Paused for clean re-entry.**
-> Last active session: 2026-03-28. All active tasks below are paused, not abandoned.
+> Last active session: 2026-03-29. All active tasks below are paused, not abandoned.
 
 | Agent | Task | Status | Files |
 |-------|------|--------|-------|
@@ -280,6 +280,17 @@ _Anything one agent needs to flag for the other._
   - **POIManager.cs**: Added `RegisterGatherings(IReadOnlyList<EnvironmentGathering>)` — filters gatherings against POIDatabase, only Cluster/Area types that meet quantityMinimum get registered at centroid. `RegisterEnvPOI()` now only handles Singular-type POIs (skips Cluster/Area to avoid double-registration).
   - **MapGeneratorV2.cs cleanup**: Fully reverted prior unauthorized cluster detection code (DetectClusters, FloodFillCluster, RegisterClusterPOIs, poiDatabase field, EnvironmentCluster class all removed). Restored per-object RegisterEnvPOI call.
   - **Design decisions** (confirmed via AskUserQuestion): 4-connected adjacency, one-time on generation, MapGen stores all gatherings blindly + POIManager filters via POIDatabase, "Gathering" naming.
+- 2026-03-29: CLAUDE AI SKILLS LIBRARY ADOPTION (Co-Work):
+  - **Context**: Reviewed Claude-Code-Game-Studios open-source repo (37 skills). User wants all skills available for RTChess + future projects.
+  - **Result**: 26 generic game-dev skills copied into `RTChess/.claude/skills/`. Skipped: brainstorm (RTChess already has `brainstorming`), team-* specialists, onboard/start/setup-engine (first-time only).
+  - **Shared library**: All 37 skills copied to `/Users/jai/FINIFUGU Games/ClaudeAI/shared-skills/` for use in any future game project.
+  - **Key skills now available**: `code-review`, `tech-debt`, `architecture-decision`, `reverse-document`, `balance-check`, `retrospective`, `sprint-plan`, `scope-check`, `gate-check`, `bug-report`, `hotfix`, `perf-profile`, `playtest-report`, `prototype`, and more.
+  - **Assessment**: Our 7 planned skills (#165-#172 in To Do Humans) do NOT overlap with the external skills — they address AI coding behaviour gates (pre-change verification, error triage, doc hygiene, file integrity, data sync, architecture planning, sheet reconciliation). All 7 still need to be built.
+- 2026-03-29: POST-MORTEM + PHASE 1-2 EXECUTION (Co-Work, previous session):
+  - **Post-mortem .docx regenerated**: `ClockworkCraft_PostMortem_Audit.docx` saved to project root. Fixed two Python bugs (invalid Table constructor, missing BorderStyle import). Section 7 now in execution order (5-phase plan, cross-ref table).
+  - **Phase 1-2 items completed** (from #171 checklist): CLAUDE.md section audit, doc ownership split, stale items removed, JAI_AI_SYNC.md restructured, large file audit (9 files > 600 lines identified), FurnitureObject rename analysis saved to Trello #173.
+  - **FurnitureObject rename** (#173 Tasks Claude): Full analysis on card. Blocker = Will's MapGeneratorV2 references it. Approach = compatibility shim (PlacedObject base + thin FurnitureObject wrapper). Coordinate with Will before removing shim.
+  - **Trello board cleanup**: Suggestions list tidied — done/duplicate cards archived, 7 skill cards moved to To Do Humans, #173 FurnitureObject rename added to Tasks Claude.
 - 2026-03-22: DATA CONSISTENCY AUDIT & FIXES:
   - **TrainingFacility**: Removed from BuildingDatabase.asset (correctly — not in Google Sheets)
   - **Fighter**: Restored to WorkerDatabase.asset (was incorrectly deleted; Google Sheets shows it as Worker type with tier 3, hp 10). Values synced from sheet.

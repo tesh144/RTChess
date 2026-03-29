@@ -180,8 +180,7 @@ namespace LittleCafe
             if (allCorruptedTiles.Contains(coord)) return;
             if (!heartTiles.ContainsKey(owner)) return;
 
-            // Never corrupt the tile occupied by a CorruptionHeart — the heart IS corruption;
-            // adding an overlay on top of it would block players from attacking it directly.
+            // Never corrupt the tile occupied by a CorruptionHeart
             if (GridManager.Instance != null)
             {
                 var occupant = GridManager.Instance.GetCellOccupant(x, y);
@@ -195,24 +194,33 @@ namespace LittleCafe
                 immuneTiles.Remove(coord);
             }
 
-            var tile = GridManager.Instance != null ? GridManager.Instance.GetGridTile(x, y) : null;
-            if (tile == null) return;
+            // Spawn the corruption tile as a standard environment entity — same as water, trees, etc.
+            var mapGen = ClockworkCraft.MapGeneratorV2.Instance;
+            if (mapGen == null || mapGen.environmentDatabase == null) return;
 
-            // Add overlay to the tile GameObject
-            var overlay = tile.AddComponent<CorruptionOverlay>();
+            var envData = mapGen.environmentDatabase.GetByName("Corruption");
+            if (envData == null || envData.prefab == null)
+            {
+                Debug.LogWarning("[CorruptionManager] 'Corruption' entry not found in EnvironmentDatabase.");
+                return;
+            }
+
+            GameObject obj = mapGen.SpawnEnvironmentAt(x, y, envData);
+            if (obj == null) return;
+
+            // Add CorruptionOverlay component for HP, owner tracking, and building pausing
+            var overlay = obj.GetComponent<CorruptionOverlay>();
+            if (overlay == null) overlay = obj.AddComponent<CorruptionOverlay>();
             overlay.OwnerHeart = owner;
             overlay.GridPosition = coord;
 
-            // Pass occupant for building pausing
-            var tileOccupant = GridManager.Instance.GetCellOccupant(x, y);
+            // Pause any building occupant on this tile
+            var tileOccupant = GridManager.Instance?.GetCellOccupant(x, y);
             overlay.InitWithOccupant(tileOccupant);
 
-            // Update both data structures together
+            // Track in data structures
             heartTiles[owner].Add(coord);
             allCorruptedTiles.Add(coord);
-
-            // Register on the surface layer
-            GridManager.Instance?.PlaceSurface(x, y, ClockworkGrid.SurfaceType.Corruption, null);
 
             // Play spread sound at the tile's world position
             if (spreadSound != null)
