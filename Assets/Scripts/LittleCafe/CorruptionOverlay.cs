@@ -37,26 +37,21 @@ namespace LittleCafe
 
         private void Awake()
         {
-            Health = gameObject.AddComponent<GridEntityHealth>();
-            // workerCanInteract=true, isAllied=false so workers target it
-            // isSlotTakeable=true — worker advances into the tile after clearing corruption
-            Health.Initialize(maxHP, atkPower: 0, canInteract: true, allied: false, slotTakeable: true);
+            // Health may already be attached by GridEntityManager.AttachFromEnvironmentData
+            Health = GetComponent<GridEntityHealth>();
+            if (Health == null)
+            {
+                Health = gameObject.AddComponent<GridEntityHealth>();
+                Health.Initialize(maxHP, atkPower: 0, canInteract: true, allied: false, slotTakeable: true);
+            }
         }
 
         private void Start()
         {
             Health.OnEntityDestroyed += OnOverlayDestroyed;
             Health.OnDamaged += OnOverlayDamaged;
-            SpawnVisual();
-
-            // Hide visual if tile is in fog — show when revealed
-            if (visualChild != null && FogManager.Instance != null &&
-                !FogManager.Instance.IsCellRevealed(GridPosition.x, GridPosition.y))
-            {
-                visualChild.SetActive(false);
-                FogManager.Instance.OnCellRevealed += OnFogRevealed;
-                _subscribedToFog = true;
-            }
+            // Visual and fog handling are now managed by the standard spawn pipeline
+            // (SpawnEnvironmentAt adds FogHideable). No bespoke visual/fog code needed.
         }
 
         private void OnDestroy()
@@ -215,13 +210,18 @@ namespace LittleCafe
 
             float height = CorruptionManager.Instance != null
                 ? CorruptionManager.Instance.CorruptionVisualHeight : 0.05f;
+            // Parent under tile but compensate for tile's scale so the visual
+            // appears at a consistent world-space size regardless of cellSize.
             visualChild = Instantiate(prefab, transform);
             visualChild.transform.localPosition = new Vector3(0f, height, 0f);
             float scale = CorruptionManager.Instance != null
                 ? CorruptionManager.Instance.CorruptionVisualScale : 1f;
-            visualChild.transform.localScale = Vector3.one * scale;
+            float parentScale = transform.lossyScale.x;
+            float compensated = parentScale > 0.001f ? scale / parentScale : scale;
+            visualChild.transform.localScale = Vector3.one * compensated;
             visualChild.name = "CorruptionVisual";
             visualChild.SetActive(true);
+            Debug.Log($"[CorruptionOverlay] SpawnVisual at ({GridPosition}): parentScale={parentScale:F3}, compensated={compensated:F3}, height={height}");
         }
 
         /// <summary>Find a child named "RefHeight" in the hierarchy.</summary>

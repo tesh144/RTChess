@@ -382,6 +382,66 @@ namespace ClockworkCraft
         }
 
         /// <summary>
+        /// Spawn an environment entity at a grid position using the full pipeline.
+        /// Works for ANY environment type (trees, rocks, water, corruption tiles, etc.)
+        /// whether called during map generation or during gameplay at runtime.
+        /// </summary>
+        public GameObject SpawnEnvironmentAt(int x, int y, EnvironmentData envData)
+        {
+            if (envData == null || envData.prefab == null) return null;
+            if (GridManager.Instance == null) return null;
+
+            Vector3 worldPos = GridManager.Instance.GridToWorldPosition(x, y);
+            worldPos.y += 0.01f;
+            Quaternion rot = rng != null
+                ? Quaternion.Euler(0f, 90f * rng.Next(4), 0f)
+                : Quaternion.identity;
+
+            GameObject obj = Instantiate(envData.prefab, worldPos, rot);
+            obj.name = envData.assetName;
+
+            // ResourceNode setup
+            if (obj.TryGetComponent<ResourceNode>(out var node))
+            {
+                node.hp              = envData.hp;
+                node.lootHpCost      = envData.lootHpCost;
+                node.lootYield       = envData.lootYield;
+                node.lootBonusAmount = envData.lootYield;
+                node.isInteractable  = InteractionRegistry.Instance != null
+                                       ? InteractionRegistry.Instance.IsUnlocked(envData.assetName) : true;
+                node.resourceType    = envData.lootResourceType != ResourceType.None
+                                       ? envData.lootResourceType
+                                       : GuessResourceType(envData.assetName);
+                node.Initialize(x, y);
+                NodeManager.Instance?.RegisterNode(node);
+            }
+
+            // Fog
+            if (enableFog)
+            {
+                var fogHideable = obj.GetComponent<FogHideable>();
+                if (fogHideable == null) fogHideable = obj.AddComponent<FogHideable>();
+                fogHideable.Initialize(x, y);
+            }
+
+            // Entity components (health, actor, loot)
+            if (GridEntityManager.Instance != null)
+            {
+                GridEntityManager.Instance.AttachFromEnvironmentData(obj, envData);
+                ApplyEnvironmentDesaturationDefaults(obj, addIfMissing: true);
+            }
+
+            // Animation
+            if (obj.activeSelf)
+                TriggerAppearAnimation(obj);
+
+            // Grid layer placement
+            PlaceOnCorrectLayer(x, y, obj, envData);
+
+            return obj;
+        }
+
+        /// <summary>
         /// Place an environment object on the correct grid layer based on its EnvironmentLayerType.
         /// Surface types (Water, Corruption) go on the surface layer; Objects go on the object layer.
         /// </summary>
