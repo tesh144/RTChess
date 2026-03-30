@@ -49,6 +49,8 @@ namespace ClockworkCraft
             ResourceType.Meat2, ResourceType.Meat3, ResourceType.Boar,
             ResourceType.Fish, ResourceType.Pumpkin,
             ResourceType.GoldBag, ResourceType.Approval, ResourceType.Heart,
+            ResourceType.Scrap,   // Produced by the Scrapper building
+            ResourceType.Reed,    // Harvested from reed environment objects
         };
 
         // ── Lifecycle ──────────────────────────────────────────────────
