@@ -291,9 +291,13 @@ namespace LittleCafe
             // Write
             try
             {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                Debug.Log($"[GameplayRecorder] CSV export skipped on WebGL ({eventLines.Count} events, {snapshotLines.Count} snapshots recorded)");
+#else
                 File.WriteAllText(path, csv.ToString());
                 Debug.Log($"[GameplayRecorder] CSV saved: {path}");
                 Debug.Log($"[GameplayRecorder] {eventLines.Count} events, {snapshotLines.Count} snapshots recorded");
+#endif
             }
             catch (Exception e)
             {
