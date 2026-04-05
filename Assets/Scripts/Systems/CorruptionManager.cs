@@ -23,7 +23,7 @@ namespace LittleCafe
 
         [Tooltip("Probability (0–1) that corruption spreads to each eligible neighbouring tile per tick. 1 = guaranteed, 0.25 = 25% chance.")]
         [Range(0f, 1f)]
-        [SerializeField] private float spreadChance = 0.25f;
+        [SerializeField] private float spreadChance = 0.5f;
 
         [Tooltip("Seconds that spreading is paused after a corruption tile is hit by a worker.")]
         [SerializeField] private float spreadPauseOnHit = 5f;
