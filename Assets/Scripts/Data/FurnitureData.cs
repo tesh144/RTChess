@@ -1,6 +1,7 @@
 #pragma warning disable CS0414, CS0219, CS0618
 using UnityEngine;
 using ClockworkGrid;
+using ClockworkCraft;
 
 namespace LittleCafe
 {
@@ -24,6 +25,18 @@ namespace LittleCafe
         [Header("Draw Weight")]
         [Tooltip("Relative likelihood of being drawn. Default 1. Set to 2 for 2x more likely, 3 for 3x, etc.")]
         public float drawWeight = 1f;
+
+        [Header("Production")]
+        public ProductionInputType productionInputType = ProductionInputType.None;
+        public float productionInterval = 0f;
+        public float productionIntervalBonus = 0f;
+        public ProductionOutputType productionOutputType = ProductionOutputType.None;
+        public ResourceType producedResourceType = ResourceType.None;
+        public int productionAmount = 1;
+        [Header("Production Cost")]
+        public ResourceType productionCostResourceType = ResourceType.None;
+        public int productionCostAmount = 0;
+        public int productionCostIncrement = 0;
 
         [Header("Grid Shape")]
         [Tooltip("Cell footprint for this furniture. Replaces the legacy gridSize field.")]
