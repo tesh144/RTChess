@@ -263,6 +263,18 @@ namespace LittleCafe
                 stats.isActive = data.isActive; // From database (furniture defaults to false)
                 stats.maxHP = 0; // Furniture has no HP
                 stats.attackDamage = 0; // Furniture has no attack
+
+                // Production config — required for HoldToFill, auto-produce, etc.
+                stats.productionInputType = data.productionInputType;
+                stats.productionOutputType = data.productionOutputType;
+                stats.productionInterval = data.productionInterval;
+                stats.productionIntervalBonus = data.productionIntervalBonus;
+                stats.producedResourceType = data.producedResourceType;
+                stats.productionAmount = data.productionAmount;
+                stats.productionCostResourceType = data.productionCostResourceType;
+                stats.productionCostAmount = data.productionCostAmount;
+                stats.productionCostIncrement = data.productionCostIncrement;
+
                 furnitureStats.Add(stats);
             }
 

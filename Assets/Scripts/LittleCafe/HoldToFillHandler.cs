@@ -97,6 +97,10 @@ namespace LittleCafe
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.sortingOrder = 55;
 
+            // Depth-based sorting: closer bubbles render in front
+            var depthSorter = root.AddComponent<BubbleDepthSorter>();
+            depthSorter.Initialize(50);
+
             // Disable raycasting — we handle input ourselves
             GraphicRaycaster gr = root.AddComponent<GraphicRaycaster>();
             gr.enabled = false;

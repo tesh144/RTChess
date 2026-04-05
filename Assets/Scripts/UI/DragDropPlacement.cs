@@ -219,9 +219,14 @@ namespace ClockworkGrid
             var stats = currentDraggingIcon.UnitStats;
             int hp = stats.maxHP > 0 ? stats.maxHP : 0;
             int attackPower = stats.attackDamage > 0 ? stats.attackDamage : 0;
+
+            // Resource nodes (trees, rocks) must be non-allied so workers target them,
+            // matching AttachFromEnvironmentData behavior. Only truly player units stay allied.
+            bool allied = stats.isAllied && stats.lootResourceType == ClockworkCraft.ResourceType.None;
+
             LittleCafe.GridEntityManager.Instance.AttachComponents(unitObj, hp, attackPower, stats.isActive,
                 stats.lootResourceType, stats.lootHpCost, stats.lootYield, stats.behaviorType,
-                registryName: stats.unitName, allied: stats.isAllied, killerAdvances: stats.killerAdvances);
+                registryName: stats.unitName, allied: allied, killerAdvances: stats.killerAdvances);
         }
     }
 }

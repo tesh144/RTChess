@@ -193,6 +193,13 @@ namespace LittleCafe
             if (canvas != null && canvas.renderMode == RenderMode.WorldSpace && canvas.worldCamera == null)
                 canvas.worldCamera = Camera.main;
 
+            // Depth-based sorting for prefab-based bubbles
+            if (canvas != null && obj.GetComponent<BubbleDepthSorter>() == null)
+            {
+                var depthSorter = obj.AddComponent<BubbleDepthSorter>();
+                depthSorter.Initialize(50);
+            }
+
             obj.SetActive(false);
             pool.Add(bubble);
             return bubble;
@@ -771,6 +778,10 @@ namespace LittleCafe
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.sortingOrder = 50;
 
+            // Depth-based sorting: closer bubbles render in front
+            var depthSorter = root.AddComponent<BubbleDepthSorter>();
+            depthSorter.Initialize(50);
+
             RectTransform canvasRect = root.GetComponent<RectTransform>();
             canvasRect.sizeDelta = new Vector2(100f, 100f); // 100 canvas units
             canvasRect.localScale = Vector3.one * (timerWorldSize / 100f); // Scale to world size
@@ -1172,6 +1183,10 @@ namespace LittleCafe
             Canvas canvas = root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.sortingOrder = 60;
+
+            // Depth-based sorting: closer bubbles render in front
+            var depthSorter = root.AddComponent<BubbleDepthSorter>();
+            depthSorter.Initialize(50);
 
             RectTransform canvasRect = root.GetComponent<RectTransform>();
             canvasRect.sizeDelta = new Vector2(100f, 100f);

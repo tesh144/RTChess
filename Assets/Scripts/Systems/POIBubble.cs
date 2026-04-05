@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using ClockworkGrid;
+using LittleCafe;
 
 namespace ClockworkCraft
 {
@@ -52,6 +53,7 @@ namespace ClockworkCraft
         private BubbleType currentType;
         private GameObject activeChild;
         private Vector3 targetScale = Vector3.one;
+        private float animScaleMultiplier = 1f;
         private Image cachedIconImage;
         private Image cachedFillImage;
 
@@ -219,7 +221,7 @@ namespace ClockworkCraft
         {
             if (state == State.Inactive || state == State.Dismissing) return;
             if (canvasGroup != null) canvasGroup.alpha = 1f;
-            transform.localScale = targetScale;
+            animScaleMultiplier = 1f;
             OnTapped = null;
             OnHoldStarted = null;
             OnHoldEnded = null;
@@ -330,9 +332,21 @@ namespace ClockworkCraft
 
         private void LateUpdate()
         {
+            if (state == State.Inactive) return;
+
             // Billboard: face camera
-            if (state != State.Inactive && Camera.main != null)
+            if (Camera.main != null)
                 transform.rotation = Camera.main.transform.rotation;
+
+            // Combine animation scale with zoom compensation
+            float zoomMul = 1f;
+            if (GridCamera.Instance != null)
+            {
+                float currentZoom = GridCamera.Instance.CurrentDistance;
+                float zoomT = Mathf.Clamp01((currentZoom - 5f) / (40f - 5f));
+                zoomMul = 1f + zoomT * 0.3f;
+            }
+            transform.localScale = targetScale * (animScaleMultiplier * zoomMul);
         }
 
         private void UpdateRiseIn()
@@ -346,7 +360,7 @@ namespace ClockworkCraft
 
             // Scale: OutBack
             float s = 1f + 2.70158f * Mathf.Pow(t - 1f, 3f) + 1.70158f * Mathf.Pow(t - 1f, 2f);
-            transform.localScale = targetScale * s;
+            animScaleMultiplier = s;
 
             // Alpha: fade in over first 60%
             if (canvasGroup != null)
@@ -355,7 +369,7 @@ namespace ClockworkCraft
             if (t >= 1f)
             {
                 transform.position = basePosition;
-                transform.localScale = targetScale;
+                animScaleMultiplier = 1f;
                 if (canvasGroup != null) canvasGroup.alpha = 1f;
 
                 if (tether != null)
@@ -415,7 +429,7 @@ namespace ClockworkCraft
             timer += Time.deltaTime;
             float t = Mathf.Clamp01(timer / fadeOutDuration);
 
-            transform.localScale = targetScale * (1f - t);
+            animScaleMultiplier = 1f - t;
             if (canvasGroup != null) canvasGroup.alpha = 1f - t;
 
             if (tether != null && tether.gameObject.activeSelf)

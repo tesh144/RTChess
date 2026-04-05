@@ -449,7 +449,8 @@ namespace ClockworkGrid
         /// </summary>
         public bool AreOffsetCellsAvailable(int anchorX, int anchorY, GridShape shape, int rotation = 0)
         {
-            if (shape == null || shape.IsEmpty) return IsCellEmpty(anchorX, anchorY);
+            if (shape == null || shape.IsEmpty)
+                return IsCellEmpty(anchorX, anchorY) && !HasSurface(anchorX, anchorY);
 
             List<Vector2Int> offsets = shape.GetOffsets(rotation);
             foreach (var offset in offsets)
@@ -458,6 +459,7 @@ namespace ClockworkGrid
                 int cy = anchorY + offset.y;
                 if (!IsCellEmpty(cx, cy)) return false;
                 if (!IsTileRevealed(cx, cy)) return false;
+                if (HasSurface(cx, cy)) return false;
             }
             return true;
         }
