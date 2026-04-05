@@ -97,6 +97,10 @@ namespace LittleCafe
 
         // Auto-rotation
         private bool isAutoRotating;
+        private const float AutoRotateCooldown = 5f;  // Seconds to wait after manual rotation
+        private const float AutoRotateRampDuration = 2f; // Seconds to ramp from 0→full speed
+        private float manualRotateCooldownTimer;          // Counts down from AutoRotateCooldown
+        private float autoRotateRampUp;                   // 0→1 multiplier during ramp
 
         // Shake
         private float shakeIntensity;
@@ -161,6 +165,7 @@ namespace LittleCafe
                 cam.orthographicSize = baseDefaultDistance;
 
             isAutoRotating = autoRotateOnStart;
+            autoRotateRampUp = 1f; // Full speed at start — no ramp on first load
         }
 
         private void OnEnable()
@@ -314,6 +319,9 @@ namespace LittleCafe
                 // Match auto-rotation direction to the player's last swipe
                 if (Mathf.Abs(lastDragDeltaX) > 0.01f)
                     autoRotateDirection = Mathf.Sign(lastDragDeltaX);
+                // Pause auto-rotation then gradually ramp back in
+                manualRotateCooldownTimer = AutoRotateCooldown;
+                autoRotateRampUp = 0f;
             }
             if (isRightDragging && !dragHandlesInput)
             {
@@ -360,7 +368,19 @@ namespace LittleCafe
         private void UpdateAutoRotation()
         {
             if (!isAutoRotating || isRightDragging) return;
-            targetYaw += autoRotateDirection * autoRotateSpeed * Time.deltaTime;
+
+            // Cooldown after manual rotation — no auto-rotate during this period
+            if (manualRotateCooldownTimer > 0f)
+            {
+                manualRotateCooldownTimer -= Time.deltaTime;
+                return;
+            }
+
+            // Ramp up from 0→1 over AutoRotateRampDuration
+            if (autoRotateRampUp < 1f)
+                autoRotateRampUp = Mathf.MoveTowards(autoRotateRampUp, 1f, Time.deltaTime / AutoRotateRampDuration);
+
+            targetYaw += autoRotateDirection * autoRotateSpeed * autoRotateRampUp * Time.deltaTime;
             if (targetYaw > 360f) targetYaw -= 360f;
             if (targetYaw < 0f) targetYaw += 360f;
         }

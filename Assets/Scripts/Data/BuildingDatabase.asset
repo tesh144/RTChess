@@ -44,6 +44,7 @@ MonoBehaviour:
     productionIntervalBonus: 20
     productionOutputType: 1
     producedResourceType: 0
+    producedCardName: 
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
@@ -79,6 +80,7 @@ MonoBehaviour:
     productionIntervalBonus: 0
     productionOutputType: 0
     producedResourceType: 0
+    producedCardName: 
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
@@ -92,7 +94,7 @@ MonoBehaviour:
     hp: 10
     attackPower: 0
     tier: 0
-    drawWeight: 1
+    drawWeight: 0.75
     placementCost: 0
     shape:
       offsets:
@@ -114,6 +116,7 @@ MonoBehaviour:
     productionIntervalBonus: 30
     productionOutputType: 3
     producedResourceType: 0
+    producedCardName: 
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
@@ -149,6 +152,7 @@ MonoBehaviour:
     productionIntervalBonus: 30
     productionOutputType: 4
     producedResourceType: 0
+    producedCardName: 
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
@@ -184,6 +188,7 @@ MonoBehaviour:
     productionIntervalBonus: 20
     productionOutputType: 5
     producedResourceType: 0
+    producedCardName: 
     productionAmount: 1
     productionCostResourceType: 23
     productionCostAmount: 3
@@ -219,6 +224,7 @@ MonoBehaviour:
     productionIntervalBonus: 15
     productionOutputType: 0
     producedResourceType: 0
+    producedCardName: 
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
@@ -254,6 +260,7 @@ MonoBehaviour:
     productionIntervalBonus: 30
     productionOutputType: 14
     producedResourceType: 32
+    producedCardName: Scrap
     productionAmount: 1
     productionCostResourceType: 0
     productionCostAmount: 0
@@ -289,6 +296,7 @@ MonoBehaviour:
     productionIntervalBonus: 20
     productionOutputType: 15
     producedResourceType: 0
+    producedCardName: Lizard
     productionAmount: 1
     productionCostResourceType: 18
     productionCostAmount: 3
@@ -324,6 +332,7 @@ MonoBehaviour:
     productionIntervalBonus: 20
     productionOutputType: 16
     producedResourceType: 0
+    producedCardName: Tree
     productionAmount: 1
     productionCostResourceType: 5
     productionCostAmount: 3

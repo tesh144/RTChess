@@ -75,6 +75,7 @@ namespace ClockworkCraft
                     stats.productionInterval      = data.productionInterval;
                     stats.productionIntervalBonus = data.productionIntervalBonus;
                     stats.producedResourceType    = data.producedResourceType;
+                    stats.producedCardName        = data.producedCardName;
                     stats.productionAmount        = data.productionAmount;
                     stats.killerAdvances          = data.killerAdvances;
                     stats.productionCostResourceType = data.productionCostResourceType;

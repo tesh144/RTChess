@@ -158,6 +158,8 @@ namespace ClockworkGrid
         public float productionIntervalBonus = 0f;
         [Tooltip("For Currency output: which resource type to award.")]
         public ResourceType producedResourceType = ResourceType.None;
+        [Tooltip("For card-producing outputs: the exact card name to find in CardPool.")]
+        public string producedCardName = "";
         [Tooltip("How many units of the reward per production cycle.")]
         public int productionAmount = 1;
 

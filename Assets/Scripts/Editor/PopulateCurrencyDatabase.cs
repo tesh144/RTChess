@@ -68,7 +68,6 @@ public static class PopulateCurrencyDatabase
             (ResourceType.Heart,       "Heart",        "\U0001F49C", "Assets/Icons/Icon_25px/PinkHeart - Bubble.png",                   0, false),
 
             // ── Produced Resources ─────────────
-            (ResourceType.Scrap,       "Scrap",        "\U0001F529", "Assets/Icons/Icon_30px/Currency/RockB - Currency.png",            0, false),
             (ResourceType.Reed,        "Reed",         "\U0001F33E", "Assets/Icons/Icon_30px/Currency/Moss - Currency.png",             0, false),
         };
 

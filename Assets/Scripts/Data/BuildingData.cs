@@ -54,7 +54,7 @@ namespace LittleCafe
         Tier1Unit,          // Random unit/worker from tier 1 pool
         Tier2Unit,          // Random unit/worker from tier 2 pool
         Tier3Unit,          // Random unit/worker from tier 3 pool
-        Scrap,              // Produces Scrap resource (from Scrapper — any card in → Scrap out)
+        Scrap,              // Produces a Scrap environment card (from Scrapper — any card in → placeable Scrap entity)
         Lizard,             // Produces a Lizard environment entity (Hutch)
         TreeSeed            // Produces a Tree Seed entity (Garden)
     }
@@ -154,6 +154,9 @@ namespace LittleCafe
 
         [Tooltip("For Currency output: which resource type to award.")]
         public ResourceType producedResourceType = ResourceType.None;
+
+        [Tooltip("For card-producing outputs (Scrap, Lizard, TreeSeed, etc.): the exact card name to find in CardPool. Populated by sheet sync from the OutputCardName column.")]
+        public string producedCardName = "";
 
         [Tooltip("How many units of the reward per production cycle.")]
         public int productionAmount = 1;

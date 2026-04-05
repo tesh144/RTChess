@@ -90,6 +90,7 @@ namespace LittleCafe
             public float baseInterval;
             public float intervalBonus;
             public ResourceType producedResourceType;
+            public string producedCardName;
             public int amount;
 
             // Timer state
@@ -256,6 +257,7 @@ namespace LittleCafe
                 baseInterval = stats.productionInterval,
                 intervalBonus = stats.productionIntervalBonus,
                 producedResourceType = stats.producedResourceType,
+                producedCardName = stats.producedCardName,
                 amount = stats.productionAmount,
                 elapsedTime = 0f,
                 collectCount = 0,
@@ -1008,12 +1010,8 @@ namespace LittleCafe
                         entry.pendingCard = FindFighterCard();
                     else if (entry.outputType == ProductionOutputType.Meal)
                         entry.pendingCard = FindMealCard();
-                    else if (entry.outputType == ProductionOutputType.Scrap)
-                    { } // Scrap is a currency reward, no pending card needed
-                    else if (entry.outputType == ProductionOutputType.Lizard)
-                        entry.pendingCard = CardPool.Instance?.FindByName("Lizard");
-                    else if (entry.outputType == ProductionOutputType.TreeSeed)
-                        entry.pendingCard = CardPool.Instance?.FindByName("Tree");
+                    else if (!string.IsNullOrEmpty(entry.producedCardName))
+                        entry.pendingCard = CardPool.Instance?.FindByName(entry.producedCardName);
                     else if (IsTierBuildingOutput(entry.outputType))
                         entry.pendingCard = DrawRandomBuildingByTier(GetTierFromOutput(entry.outputType));
                     else if (IsTierUnitOutput(entry.outputType))
@@ -1065,17 +1063,7 @@ namespace LittleCafe
                 rewardIcon = entry.pendingWorker.icon;
             else if (entry.outputType == ProductionOutputType.Currency)
                 rewardIcon = ResourceDisplayUI.GetIconForResource(entry.producedResourceType);
-            else if (entry.outputType == ProductionOutputType.RandomBuilding && entry.pendingCard != null)
-                rewardIcon = entry.pendingCard.iconSprite;
-            else if (entry.outputType == ProductionOutputType.Fighter && entry.pendingCard != null)
-                rewardIcon = entry.pendingCard.iconSprite;
-            else if (entry.outputType == ProductionOutputType.Meal && entry.pendingCard != null)
-                rewardIcon = entry.pendingCard.iconSprite;
-            else if (entry.outputType == ProductionOutputType.Scrap)
-                rewardIcon = ResourceDisplayUI.GetIconForResource(entry.producedResourceType);
-            else if ((entry.outputType == ProductionOutputType.Lizard || entry.outputType == ProductionOutputType.TreeSeed) && entry.pendingCard != null)
-                rewardIcon = entry.pendingCard.iconSprite;
-            else if ((IsTierBuildingOutput(entry.outputType) || IsTierUnitOutput(entry.outputType)) && entry.pendingCard != null)
+            else if (entry.pendingCard != null)
                 rewardIcon = entry.pendingCard.iconSprite;
 
             // Dismiss any lingering insert bubble when the collect popup appears
@@ -1154,19 +1142,7 @@ namespace LittleCafe
                 string rewardName = "";
                 if (entry.outputType == ProductionOutputType.Worker && entry.pendingWorker != null)
                     rewardName = $" (worker: {entry.pendingWorker.GetCleanName()})";
-                else if (entry.outputType == ProductionOutputType.RandomBuilding && entry.pendingCard != null)
-                    rewardName = $" (random: {entry.pendingCard.unitName})";
-                else if (entry.outputType == ProductionOutputType.Fighter && entry.pendingCard != null)
-                    rewardName = $" (fighter: {entry.pendingCard.unitName})";
-                else if (entry.outputType == ProductionOutputType.Meal && entry.pendingCard != null)
-                    rewardName = $" (feast: {entry.pendingCard.unitName})";
-                else if (entry.outputType == ProductionOutputType.Scrap)
-                    rewardName = " (scrap)";
-                else if (entry.outputType == ProductionOutputType.Lizard && entry.pendingCard != null)
-                    rewardName = $" (lizard: {entry.pendingCard.unitName})";
-                else if (entry.outputType == ProductionOutputType.TreeSeed && entry.pendingCard != null)
-                    rewardName = $" (tree seed: {entry.pendingCard.unitName})";
-                else if ((IsTierBuildingOutput(entry.outputType) || IsTierUnitOutput(entry.outputType)) && entry.pendingCard != null)
+                else if (entry.pendingCard != null)
                     rewardName = $" ({entry.outputType}: {entry.pendingCard.unitName})";
 
                 float nextInterval = entry.baseInterval + (entry.intervalBonus * (entry.collectCount + 1));
@@ -1453,25 +1429,10 @@ namespace LittleCafe
                     collected = CollectMealReward(entry, buildingWorldPos);
                     break;
 
-                case ProductionOutputType.Scrap:
-                    CollectCurrencyReward(entry, buildingWorldPos);
-                    collected = true;
-                    break;
-
-                case ProductionOutputType.Lizard:
-                case ProductionOutputType.TreeSeed:
-                    collected = CollectRandomBuildingReward(entry, buildingWorldPos);
-                    break;
-
-                case ProductionOutputType.Tier0Building:
-                case ProductionOutputType.Tier1Building:
-                case ProductionOutputType.Tier2Building:
-                case ProductionOutputType.Tier3Building:
-                case ProductionOutputType.Tier0Unit:
-                case ProductionOutputType.Tier1Unit:
-                case ProductionOutputType.Tier2Unit:
-                case ProductionOutputType.Tier3Unit:
-                    collected = CollectRandomBuildingReward(entry, buildingWorldPos);
+                default:
+                    // All other output types produce a card (Scrap, Lizard, TreeSeed, tier draws, etc.)
+                    if (entry.pendingCard != null)
+                        collected = CollectRandomBuildingReward(entry, buildingWorldPos);
                     break;
             }
 
