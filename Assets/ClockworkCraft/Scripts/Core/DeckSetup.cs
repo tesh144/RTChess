@@ -155,10 +155,13 @@ namespace ClockworkCraft
                     envCard.iconSprite      = envData.icon;
                     envCard.unitPrefab      = envData.prefab;
                     envCard.isActive        = envData.isActive;
-                    envCard.isAllied        = true;
+                    envCard.isAllied        = false; // Environment entities must be non-allied so workers target them
                     envCard.maxHP           = envData.hp;
                     envCard.attackDamage    = envData.attackPower;
                     envCard.killerAdvances  = envData.killerAdvances;
+                    envCard.lootResourceType = envData.lootResourceType;
+                    envCard.lootHpCost      = envData.lootHpCost;
+                    envCard.lootYield       = envData.lootYield;
                     envCard.gridSize        = envData.gridSize;
                     envCard.modelScale      = envData.visualScale;
                     envCard.active          = envData.active;

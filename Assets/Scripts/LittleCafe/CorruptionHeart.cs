@@ -195,8 +195,9 @@ namespace LittleCafe
             if (thornsDamage <= 0) return;
             if (attacker == null || attacker.IsDestroyed) return;
 
-            // Use TakeDamage (not TakeDamageFrom) to avoid infinite retaliation loops
-            attacker.TakeDamage(thornsDamage);
+            // Pass our own health as the attacker so the damage popup renders correctly.
+            // This won't cause infinite retaliation because the attacker (worker) has no thorns.
+            attacker.TakeDamageFrom(thornsDamage, Health);
             Debug.Log($"[CorruptionHeart] Thorns dealt {thornsDamage} damage back to {attacker.gameObject.name}.");
         }
 
