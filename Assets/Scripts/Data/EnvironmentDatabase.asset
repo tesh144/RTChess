@@ -187,8 +187,8 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 3124352143673571361, guid: e7052d49fb943410a9e9d0c082ff1c79, type: 3}
-    icon: {fileID: 0}
+    prefab: {fileID: 2733815263638812786, guid: e7052d49fb943410a9e9d0c082ff1c79, type: 3}
+    icon: {fileID: 21300000, guid: 19dc92e99f50b4124a6de10a707b3082, type: 3}
   - active: 1
     isMapGenerated: 0
     assetName: Lizard
@@ -199,7 +199,7 @@ MonoBehaviour:
     isActive: 0
     killerAdvances: 1
     allyInteractible: 1
-    enemyInteractible: 0
+    enemyInteractible: 1
     wildAnimalInteractible: 0
     lootResourceType: 23
     lootHpCost: 1
@@ -253,7 +253,7 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 2881067372029442596, guid: 1edc148ad0f4c48159f40a43193655de, type: 3}
+    prefab: {fileID: 5352704816085721666, guid: 404728650a61047f6b20fe952d355519, type: 3}
     icon: {fileID: 21300000, guid: a6988ea2d54c64903a55a1f022728571, type: 3}
   - active: 1
     isMapGenerated: 1
@@ -263,7 +263,7 @@ MonoBehaviour:
     isFunctional: 0
     isWalkable: 0
     isActive: 0
-    killerAdvances: 1
+    killerAdvances: 0
     allyInteractible: 1
     enemyInteractible: 0
     wildAnimalInteractible: 0

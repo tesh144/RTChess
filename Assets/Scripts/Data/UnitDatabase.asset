@@ -90,7 +90,7 @@ MonoBehaviour:
     isWalkable: 0
     isActive: 1
     isMapGenerated: 0
-    behaviorType: 0
+    behaviorType: 3
     walkable: Corruption
     killerAdvances: 1
     dropOnDeath: 0
@@ -113,7 +113,7 @@ MonoBehaviour:
     isWalkable: 0
     isActive: 1
     isMapGenerated: 0
-    behaviorType: 0
+    behaviorType: 3
     walkable: Corruption
     killerAdvances: 1
     dropOnDeath: 0

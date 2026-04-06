@@ -1377,6 +1377,7 @@ namespace LittleCafe
             }
 
             // Check 4: tapped a building waiting for hold-fill — insert 1 resource
+            // Direct hit on building or child
             for (int i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
@@ -1389,6 +1390,29 @@ namespace LittleCafe
                     TapInsertOne(entry);
                     ClickConsumedThisFrame = true;
                     return;
+                }
+            }
+
+            // Check 4b: ground-tile fallback for hold-fill buildings (no collider on prefab)
+            if (GridManager.Instance != null)
+            {
+                int gx2, gy2;
+                if (GridManager.Instance.WorldToGridPosition(hit.point, out gx2, out gy2))
+                {
+                    GameObject occupant2 = GridManager.Instance.GetCellOccupant(gx2, gy2);
+                    if (occupant2 != null)
+                    {
+                        for (int i = 0; i < entries.Count; i++)
+                        {
+                            var entry = entries[i];
+                            if (entry.waitingForHoldFill && entry.buildingObj == occupant2)
+                            {
+                                TapInsertOne(entry);
+                                ClickConsumedThisFrame = true;
+                                return;
+                            }
+                        }
+                    }
                 }
             }
         }
