@@ -222,6 +222,9 @@ namespace LittleCafe
             var tileOccupant = GridManager.Instance?.GetCellOccupant(x, y);
             overlay.InitWithOccupant(tileOccupant);
 
+            // Register corruption as a surface — same as water/lava
+            GridManager.Instance?.PlaceSurface(x, y, ClockworkGrid.SurfaceType.Corruption, obj);
+
             // Track in data structures
             heartTiles[owner].Add(coord);
             allCorruptedTiles.Add(coord);

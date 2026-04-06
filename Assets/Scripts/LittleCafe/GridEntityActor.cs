@@ -51,6 +51,9 @@ namespace LittleCafe
 
         [Header("Corruption")]
         private bool isCorruptionPaused = false;
+        private static readonly Color CorruptionTint = new Color(0.75f, 0.3f, 0.55f); // purple-pink
+        private Material[] corruptionTintedMaterials;
+        private Color[] originalColors;
 
         [Header("Debug")]
         [SerializeField] private bool verboseLogging = false;

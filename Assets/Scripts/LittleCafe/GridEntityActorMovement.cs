@@ -148,6 +148,9 @@ namespace LittleCafe
             yield return new WaitForSeconds(0.3f);
             yield return null;
 
+            // Don't advance onto tiles with surfaces (corruption/water/lava)
+            if (gm.HasSurface(targetX, targetY)) yield break;
+
             GameObject occupant = gm.GetCellOccupant(targetX, targetY);
             if (occupant != null && occupant != gameObject)
             {

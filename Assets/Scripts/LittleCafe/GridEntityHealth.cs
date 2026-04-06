@@ -125,6 +125,18 @@ namespace LittleCafe
                 animator.SetTrigger("interact_weak");
             }
 
+            // Directional knockback bump — push away from attacker
+            if (attacker != null && currentHP > 0)
+            {
+                Vector3 dir = (transform.position - attacker.transform.position).normalized;
+                dir.y = 0f;
+                if (dir.sqrMagnitude > 0.01f)
+                {
+                    var bump = gameObject.GetComponent<HitBump>() ?? gameObject.AddComponent<HitBump>();
+                    bump.Trigger(dir);
+                }
+            }
+
             // SFX: damage impact feedback
             if (GameSFXManager.Instance != null)
                 GameSFXManager.Instance.PlayDamageImpact();

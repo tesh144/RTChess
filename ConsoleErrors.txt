@@ -3531,3 +3531,7 @@
 [ERROR] Particle Velocity curves must all be in the same mode
 [ERROR] Particle Velocity curves must all be in the same mode
 
+[PLAY_MODE] 2026-04-06 10:09:58
+[ERROR] Assets/Scripts/LittleCafe/GridEntityActorSurvival.cs(19,21): error CS0111: Type 'GridEntityActor' already defines a member called 'PauseForCorruption' with the same parameter types
+[ERROR] Assets/Scripts/LittleCafe/GridEntityActorSurvival.cs(27,21): error CS0111: Type 'GridEntityActor' already defines a member called 'ResumeFromCorruption' with the same parameter types
+

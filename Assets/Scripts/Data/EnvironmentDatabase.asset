@@ -253,7 +253,7 @@ MonoBehaviour:
     gridSize: {x: 1, y: 1}
     visualScale: 0
     dropOnDeath: 0
-    prefab: {fileID: 2881067372029442596, guid: 1edc148ad0f4c48159f40a43193655de, type: 3}
+    prefab: {fileID: 5352704816085721666, guid: 404728650a61047f6b20fe952d355519, type: 3}
     icon: {fileID: 21300000, guid: a6988ea2d54c64903a55a1f022728571, type: 3}
   - active: 1
     isMapGenerated: 1

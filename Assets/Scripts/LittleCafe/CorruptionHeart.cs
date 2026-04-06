@@ -40,7 +40,7 @@ namespace LittleCafe
                  "8 = fully surrounded (all neighbours must be corrupted). " +
                  "Lower values allow spikes to appear on the edges of the cluster.")]
         [Range(1, 8)]
-        [SerializeField] private int spikeMinCorruptedNeighbors = 8;
+        [SerializeField] private int spikeMinCorruptedNeighbors = 4;
 
         public bool IsActive { get; private set; } = false;
 
@@ -64,6 +64,8 @@ namespace LittleCafe
 
         private float spikeSpawnTimer;
         private bool hasInitialized;
+
+        private Animator heartAnimator;
 
         private void Awake()
         {
@@ -114,13 +116,22 @@ namespace LittleCafe
         private void Update()
         {
             if (!IsActive) return;
-            if (spikeSpawnInterval <= 0f) return;
 
-            spikeSpawnTimer -= Time.deltaTime;
-            if (spikeSpawnTimer <= 0f)
+            // Spike spawning
+            if (spikeSpawnInterval > 0f)
             {
-                spikeSpawnTimer = spikeSpawnInterval;
-                TryGrowSpike();
+                spikeSpawnTimer -= Time.deltaTime;
+                if (spikeSpawnTimer <= 0f)
+                {
+                    spikeSpawnTimer = spikeSpawnInterval;
+                    TryGrowSpike();
+
+                    // Bounce on each interval tick
+                    if (heartAnimator == null)
+                        heartAnimator = GetComponentInChildren<Animator>();
+                    if (heartAnimator != null)
+                        heartAnimator.SetTrigger("idle_bounce");
+                }
             }
         }
 

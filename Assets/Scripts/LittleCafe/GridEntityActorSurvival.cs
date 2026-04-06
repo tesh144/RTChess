@@ -21,12 +21,40 @@ namespace LittleCafe
             isCorruptionPaused = true;
             if (rotationCoroutine != null) { StopCoroutine(rotationCoroutine); rotationCoroutine = null; }
             if (interactionCoroutine != null) { StopCoroutine(interactionCoroutine); interactionCoroutine = null; }
+
+            // Tint renderers purple
+            var renderers = GetComponentsInChildren<Renderer>();
+            var tintable = new System.Collections.Generic.List<Renderer>();
+            foreach (var r in renderers)
+            {
+                if (r is LineRenderer || r is TrailRenderer) continue;
+                tintable.Add(r);
+            }
+            corruptionTintedMaterials = new Material[tintable.Count];
+            originalColors = new Color[tintable.Count];
+            for (int i = 0; i < tintable.Count; i++)
+            {
+                corruptionTintedMaterials[i] = tintable[i].material;
+                originalColors[i] = corruptionTintedMaterials[i].color;
+                corruptionTintedMaterials[i].color = Color.Lerp(originalColors[i], CorruptionTint, 0.5f);
+            }
         }
 
         /// <summary>Resume this actor after corruption is cleared.</summary>
         public void ResumeFromCorruption()
         {
             isCorruptionPaused = false;
+
+            if (corruptionTintedMaterials != null)
+            {
+                for (int i = 0; i < corruptionTintedMaterials.Length; i++)
+                {
+                    if (corruptionTintedMaterials[i] != null)
+                        corruptionTintedMaterials[i].color = originalColors[i];
+                }
+                corruptionTintedMaterials = null;
+                originalColors = null;
+            }
         }
 
         // ── Meal Buff ────────────────────────────────────────────────────
